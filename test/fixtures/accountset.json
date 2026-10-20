@@ -1,0 +1,27 @@
+{
+  "type": "transaction",
+  "engine_result": "tesSUCCESS",
+  "engine_result_code": 0,
+  "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+  "ledger_hash": "0000000000000000000000000000000000000000000000000000000000000ABC",
+  "ledger_index": 93401220,
+  "close_time_iso": "2026-10-19T22:14:31Z",
+  "meta": {
+    "AffectedNodes": [],
+    "TransactionIndex": 12,
+    "TransactionResult": "tesSUCCESS"
+  },
+  "transaction": {
+    "Fee": "12",
+    "Flags": 0,
+    "Sequence": 1234,
+    "SigningPubKey": "03ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB",
+    "TxnSignature": "304444444444444444444444444444444444444444444444444444444444444444444444",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000015",
+    "TransactionType": "AccountSet",
+    "Account": "rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH",
+    "SetFlag": 8,
+    "Domain": "6578616D706C652E636F6D"
+  },
+  "validated": true
+}

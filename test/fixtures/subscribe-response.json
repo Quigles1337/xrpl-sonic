@@ -1,0 +1,21 @@
+{
+  "id": 1,
+  "status": "success",
+  "type": "response",
+  "result": {
+    "fee_base": 10,
+    "fee_ref": 10,
+    "hostid": "ABBY",
+    "ledger_hash": "0000000000000000000000000000000000000000000000000000000000000ABB",
+    "ledger_index": 93401219,
+    "ledger_time": 846109451,
+    "load_base": 256,
+    "load_factor": 256,
+    "pubkey_node": "n9KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK",
+    "random": "0000000000000000000000000000000000000000000000000000000000000077",
+    "reserve_base": 1000000,
+    "reserve_inc": 200000,
+    "server_status": "full",
+    "validated_ledgers": "32570-93401219"
+  }
+}
