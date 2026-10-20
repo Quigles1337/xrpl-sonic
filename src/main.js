@@ -6,15 +6,31 @@ import { AudioEngine } from './audio.js';
 import { Visualizer } from './visual.js';
 import { loadSettings, saveSettings, mappingOptions } from './settings.js';
 import { parseHash, buildHash } from './params.js';
+import { parseReplayRange, scheduleReplay, replayIntervalMs, replayLedgerMessage } from './replay.js';
 import { createUI } from './ui.js';
+
+const SITE_URL = 'https://quigles1337.github.io/xrpl-sonic/';
 
 const settings = loadSettings();
 const params = new URLSearchParams(location.search);
 if (params.get('network') === 'testnet' || params.get('network') === 'mainnet') settings.network = params.get('network');
 
-// Shareable state lives in the URL hash: #account=r... (and #replay=, see below).
+// Shareable state lives in the URL hash: #account=r... and #replay=<ledger>|<from>-<to>.
 const urlState = parseHash(location.hash);
 settings.account = urlState.account ?? '';
+
+// Replay: fetch validated ledgers over the same socket and play them back at the real pace.
+const replay = {
+  range: urlState.replay ? parseReplayRange(urlState.replay) : null,
+  armed: false, // start() arms it; the next 'connected' status runs it
+  active: false,
+  speed: 1,
+  ledgerIndex: null,
+  done: 0,
+  total: 0,
+  cache: new Map(),
+  wake: null,
+};
 
 const canvas = document.getElementById('scene');
 const viz = new Visualizer(canvas);
@@ -38,6 +54,12 @@ const pendingTimers = new Set();
 const ui = createUI({
   settings,
   onToggleRun: () => (running ? stop() : start()),
+  onReplaySpeed: (speed) => {
+    replay.speed = speed;
+    if (replay.active) ui.logMessage(`Replay speed ${speed}× from the next ledger.`);
+  },
+  onReplayCancel: () => cancelReplay(),
+  onShare: () => share(),
   onChange: (patch) => {
     saveSettings(settings);
     options = mappingOptions(settings);
@@ -100,9 +122,11 @@ function clearPending() {
   pendingTimers.clear();
 }
 
-function onLedger(ev) {
+function onLedger(ev, intervalSeconds) {
   const now = performance.now();
-  if (ledgerState.lastCloseAt) {
+  if (intervalSeconds) {
+    ledgerState.interval = intervalSeconds; // replay: the real close interval, already divided by speed
+  } else if (ledgerState.lastCloseAt) {
     const gap = (now - ledgerState.lastCloseAt) / 1000;
     if (gap > 0.5 && gap < 30) ledgerState.interval = 0.7 * ledgerState.interval + 0.3 * gap;
   }
@@ -118,13 +142,20 @@ function onLedger(ev) {
   ui.setStats({ played: stats.played, dropped: stats.dropped, ledgers: ledgerState.count });
 }
 
+/** Account mode: 'play' when no account is watched or the tx involves it; otherwise 'dim' (silent) or 'skip'. */
+function accountGate(msg) {
+  if (!settings.account || involvesAccount(msg, settings.account)) return 'play';
+  return settings.accountMode === 'hide' ? 'skip' : 'dim';
+}
+
 function onTransaction(msg) {
   const ev = txToEvent(msg, options);
   if (!ev) return;
   recentTx.push(performance.now());
-  if (settings.account && !involvesAccount(msg, settings.account)) {
-    // Account mode: everything that does not touch the watched account is silent — dimmed or gone.
-    if (settings.accountMode !== 'hide') schedule(() => viz.spawn(ev, { dim: true }), Math.random() * engine.ledgerInterval * 0.85);
+  const gate = accountGate(msg);
+  if (gate !== 'play') {
+    // Everything that does not touch the watched account is silent — dimmed or gone.
+    if (gate === 'dim') schedule(() => viz.spawn(ev, { dim: true }), Math.random() * engine.ledgerInterval * 0.85);
     return;
   }
   const audible = engine.state === 'running' && !settings.muted;
@@ -145,9 +176,11 @@ function onTransaction(msg) {
 function onMessage(msg) {
   switch (classifyMessage(msg)) {
     case 'ledger':
+      if (replay.active) break; // the live stream is paused while a replay plays
       onLedger(ledgerToEvent(msg));
       break;
     case 'transaction':
+      if (replay.active) break;
       onTransaction(msg);
       break;
     case 'response': {
@@ -174,8 +207,12 @@ function onStatus(s) {
       ui.setStatus('connecting', `Connecting to ${host}…`, s.endpoint);
       break;
     case 'connected':
-      ui.setStatus('connected', `Live · ${host}`, s.endpoint);
+      ui.setStatus('connected', replay.active ? replayStatusText() : `Live · ${host}`, s.endpoint);
       ui.logMessage(`Connected to ${host}`);
+      if (replay.armed && replay.range) {
+        replay.armed = false;
+        runReplay(replay.range);
+      }
       break;
     case 'reconnecting':
       ui.setStatus('reconnecting', `Reconnecting (${host}) in ${Math.round((s.delayMs ?? 0) / 1000)} s…`, s.endpoint);
@@ -198,6 +235,7 @@ async function start() {
     ui.logMessage('Web Audio is unavailable in this browser; running visuals only.', 'error');
   }
   viz.start();
+  replay.armed = Boolean(replay.range);
   stream = new XrplStream({ endpoints: NETWORKS[settings.network].endpoints, onMessage, onStatus });
   stream.connect();
 }
@@ -205,6 +243,9 @@ async function start() {
 async function stop() {
   if (!running) return;
   running = false;
+  replay.armed = false;
+  replay.active = false;
+  replay.wake?.();
   stream?.close();
   stream = null;
   clearPending();
@@ -216,10 +257,154 @@ async function stop() {
   ui.setMetronome(0);
 }
 
+// ---------------------------------------------------------------------------
+// Replay
+// ---------------------------------------------------------------------------
+
+function replayStatusText() {
+  const r = replay.range;
+  if (!r) return 'Replay';
+  const f = (n) => `#${n.toLocaleString('en-US')}`;
+  return r.count > 1 ? `Replay · ${f(r.from)}–${f(r.to)}` : `Replay · ${f(r.from)}`;
+}
+
+function fetchLedger(index, { full = true } = {}) {
+  const key = `${index}:${full ? 'full' : 'head'}`;
+  if (replay.cache.has(key)) return replay.cache.get(key);
+  if (!stream) return Promise.reject(new Error('not connected'));
+  const command = full ? { command: 'ledger', ledger_index: index, transactions: true, expand: true } : { command: 'ledger', ledger_index: index };
+  const p = stream.request(command).then((res) => res?.result?.ledger ?? Promise.reject(new Error('malformed ledger response')));
+  replay.cache.set(key, p);
+  p.catch(() => replay.cache.delete(key));
+  return p;
+}
+
+function replayWait(ms) {
+  return new Promise((resolve) => {
+    const id = setTimeout(() => {
+      pendingTimers.delete(id);
+      replay.wake = null;
+      resolve();
+    }, ms);
+    pendingTimers.add(id);
+    replay.wake = () => {
+      clearTimeout(id);
+      pendingTimers.delete(id);
+      replay.wake = null;
+      resolve();
+    };
+  });
+}
+
+async function runReplay(range) {
+  const f = (n) => `#${n.toLocaleString('en-US')}`;
+  replay.active = true;
+  replay.done = 0;
+  replay.total = range.count;
+  replay.ledgerIndex = range.from;
+  resetLedgerState();
+  ui.setReplay({ active: true, range });
+  ui.setReplaySpeed(replay.speed);
+  ui.setStatus('connected', replayStatusText(), undefined);
+  ui.logMessage(`Replaying ${range.count > 1 ? `ledgers ${f(range.from)}–${f(range.to)}` : `ledger ${f(range.from)}`} at ${replay.speed}×…`);
+  if (range.clamped) ui.logMessage('Replay ranges are capped at 50 ledgers.', 'error');
+  try {
+    for (let n = range.from; n <= range.to && replay.active; n++) {
+      replay.ledgerIndex = n;
+      const [ledger, next] = await Promise.all([fetchLedger(n), fetchLedger(n + 1, { full: n + 1 <= range.to }).catch(() => null)]);
+      if (!replay.active) break;
+      if (n + 2 <= range.to) fetchLedger(n + 2).catch(() => {}); // keep one ledger ahead
+      const speed = replay.speed;
+      const intervalMs = replayIntervalMs(ledger, next?.close_time) / speed;
+      onLedger(ledgerToEvent(replayLedgerMessage(ledger)), intervalMs / 1000);
+      for (const { tx, offsetMs } of scheduleReplay(ledger, next?.close_time)) {
+        const ev = txToEvent(tx, options);
+        if (!ev) continue;
+        if (ev.ledgerIndex == null) ev.ledgerIndex = ledger.ledger_index;
+        const gate = accountGate(tx);
+        if (gate === 'skip') continue;
+        schedule(() => {
+          recentTx.push(performance.now());
+          if (gate === 'dim') {
+            viz.spawn(ev, { dim: true });
+            return;
+          }
+          const audible = engine.state === 'running' && !settings.muted;
+          const delay = audible ? engine.playAt(ev, 0.02) : 0;
+          if (delay < 0) {
+            stats.dropped += 1;
+            viz.spawn(ev, { dim: true });
+            return;
+          }
+          if (audible) stats.played += 1;
+          viz.spawn(ev);
+          ui.log(ev);
+        }, offsetMs / speed / 1000);
+      }
+      replay.cache.delete(`${n}:full`);
+      await replayWait(intervalMs);
+      replay.done += 1;
+    }
+    if (replay.active) ui.logMessage('Replay finished — back to live.');
+  } catch (err) {
+    if (replay.active) {
+      console.warn('[xrpl-sonic] replay failed', err);
+      ui.logMessage(`Replay failed: ${err?.message ?? err}`, 'error');
+    }
+  } finally {
+    endReplay();
+  }
+}
+
+function endReplay() {
+  replay.active = false;
+  replay.wake?.();
+  replay.cache.clear();
+  clearPending();
+  ui.setReplay({ active: false });
+  if (running && stream) {
+    resetLedgerState();
+    const host = stream.endpoint ? stream.endpoint.replace(/^wss:\/\//, '') : '';
+    if (stream.state === 'connected') ui.setStatus('connected', `Live · ${host}`, stream.endpoint);
+  }
+}
+
+function cancelReplay() {
+  if (!replay.active) return;
+  ui.logMessage('Replay cancelled — back to live.');
+  replay.active = false;
+  replay.wake?.();
+}
+
+function shareUrl() {
+  const index = replay.active ? replay.ledgerIndex : ledgerState.index;
+  return index == null ? null : `${SITE_URL}#replay=${index}`;
+}
+
+async function share() {
+  const url = shareUrl();
+  if (!url) {
+    ui.logMessage('Nothing to share yet — press Start and wait for a ledger to close.', 'error');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    ui.setShared(true);
+    ui.logMessage(`Copied ${url}`);
+  } catch (err) {
+    console.warn('[xrpl-sonic] clipboard unavailable', err);
+    ui.logMessage(`Could not copy — link: ${url}`, 'error');
+  }
+}
+
 // Metronome + tx/s readout, driven from the visualiser's frame loop.
 let lastReadout = 0;
 viz.onFrame = (ts) => {
   if (ledgerState.lastCloseAt) ui.setMetronome((ts - ledgerState.lastCloseAt) / 1000 / ledgerState.interval);
+  if (replay.active && replay.total) {
+    const within = ledgerState.lastCloseAt ? Math.min(1, (ts - ledgerState.lastCloseAt) / 1000 / ledgerState.interval) : 0;
+    ui.setReplayProgress((replay.done + within) / replay.total, replay.ledgerIndex, replay.done, replay.total);
+  }
   if (ts - lastReadout > 500) {
     lastReadout = ts;
     while (recentTx.length && ts - recentTx[0] > 5000) recentTx.shift();
@@ -260,10 +445,12 @@ ui.setStatus('idle', 'Ready', null);
 ui.setLedger(null, null);
 ui.setAccount(settings.account);
 for (const err of urlState.errors) ui.logMessage(err, 'error');
+if (urlState.replay && !replay.range) ui.logMessage(`Ignoring invalid replay range in URL: ${urlState.replay.slice(0, 24)}`, 'error');
+ui.setReplayPending(replay.range);
 if (settings.account) ui.logMessage(`Watching ${shortAddress(settings.account)} — other transactions are ${settings.accountMode === 'hide' ? 'hidden' : 'dimmed and silent'}.`);
 viz.start();
 
 if (params.get('autostart') === '1') start();
 
 // Exposed for debugging and smoke checks in the browser console.
-window.xrplSonic = { engine, viz, settings, start, stop, stats, get stream() { return stream; }, get running() { return running; } };
+window.xrplSonic = { engine, viz, settings, start, stop, stats, replay, shareUrl, get stream() { return stream; }, get running() { return running; } };

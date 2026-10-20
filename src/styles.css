@@ -271,6 +271,77 @@ body.running .btn.primary {
   gap: 8px;
 }
 
+/* ------------------------------------------------------------- replay bar */
+
+.replaybar {
+  position: fixed;
+  top: calc(var(--topbar-h) + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: grid;
+  grid-template-columns: auto 160px auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px 6px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.replaybar.hidden {
+  display: none;
+}
+
+.replay-label {
+  color: var(--text);
+}
+
+.replay-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.replay-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--accent-2);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+.replay-speed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-family: var(--font);
+}
+
+.replay-speed select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px 6px;
+}
+
+.btn.small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.btn.copied {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
 /* ------------------------------------------------------------------ panel */
 
 .panel {
@@ -677,6 +748,15 @@ body.running .btn.primary {
 
   .overlay-card h1 {
     font-size: 36px;
+  }
+
+  .replaybar {
+    top: 104px; /* below the three-row mobile top bar (the --topbar-h override above is scoped to .topbar) */
+    left: 8px;
+    right: 8px;
+    transform: none;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 8px;
   }
 }
 

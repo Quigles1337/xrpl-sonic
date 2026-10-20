@@ -4,6 +4,7 @@ import { CATEGORIES, CATEGORY_NAMES, SCALES, KEYS, isValidAddress, shortAddress 
 import { NETWORKS } from './ws.js';
 import { EXPLORERS, explorerUrl } from './explorers.js';
 import { ACCOUNT_MODES } from './settings.js';
+import { REPLAY_SPEEDS } from './replay.js';
 
 const MAX_LOG_LINES = 80;
 
@@ -31,8 +32,11 @@ function option(value, label, selected) {
  * @param {object} args.settings  current settings (mutated on change)
  * @param {(patch: object, settings: object) => void} args.onChange
  * @param {() => void} args.onToggleRun
+ * @param {(speed: number) => void} [args.onReplaySpeed]
+ * @param {() => void} [args.onReplayCancel]
+ * @param {() => void} [args.onShare]
  */
-export function createUI({ settings, onChange, onToggleRun }) {
+export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onReplayCancel, onShare }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -51,6 +55,14 @@ export function createUI({ settings, onChange, onToggleRun }) {
   const accountBadge = $('#account-badge');
   const accountShort = $('#account-short');
   const accountClear = $('#account-clear');
+  const replayBar = $('#replaybar');
+  const replayLabel = $('#replay-label');
+  const replayFill = $('#replay-fill');
+  const replaySpeed = $('#replay-speed');
+  const replayCancel = $('#replay-cancel');
+  const shareBtn = $('#share');
+  const overlayLede = $('#overlay .lede');
+  const defaultLede = overlayLede?.textContent ?? '';
 
   const update = (patch) => {
     Object.assign(settings, patch);
@@ -59,6 +71,15 @@ export function createUI({ settings, onChange, onToggleRun }) {
 
   // --- Start / stop ----------------------------------------------------------
   for (const b of startButtons) b.addEventListener('click', () => onToggleRun());
+
+  // --- Replay bar + share ----------------------------------------------------
+  for (const s of REPLAY_SPEEDS) replaySpeed.append(option(String(s), `${s}×`, s === 1));
+  replaySpeed.addEventListener('change', (e) => onReplaySpeed?.(Number(e.target.value)));
+  replayCancel.addEventListener('click', () => onReplayCancel?.());
+  shareBtn?.addEventListener('click', () => onShare?.());
+  let shareTimer = 0;
+  const fmt = (n) => `#${Number(n).toLocaleString('en-US')}`;
+  const rangeLabel = (range) => (range.from === range.to ? `ledger ${fmt(range.from)}` : `ledgers ${fmt(range.from)}–${fmt(range.to)}`);
 
   // --- Panel toggle (mobile) -------------------------------------------------
   const setPanelOpen = (open) => {
@@ -278,6 +299,40 @@ export function createUI({ settings, onChange, onToggleRun }) {
       ]);
       logList.prepend(line);
       while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
+    },
+
+    /** Show or hide the replay bar. */
+    setReplay({ active = false, range = null } = {}) {
+      replayBar.classList.toggle('hidden', !active);
+      document.body.classList.toggle('replaying', active);
+      if (active && range) replayLabel.textContent = `Replay · ${rangeLabel(range)}`;
+      if (!active) replayFill.style.transform = 'scaleX(0)';
+    },
+
+    setReplayProgress(fraction, ledgerIndex, done, total) {
+      replayFill.style.transform = `scaleX(${Math.min(1, Math.max(0, fraction)).toFixed(3)})`;
+      if (ledgerIndex != null) {
+        const text = total > 1 ? `Replay ${fmt(ledgerIndex)} · ${Math.min(done + 1, total)}/${total}` : `Replay ${fmt(ledgerIndex)}`;
+        if (replayLabel.textContent !== text) replayLabel.textContent = text;
+      }
+    },
+
+    setReplaySpeed(speed) {
+      replaySpeed.value = String(speed);
+    },
+
+    /** Tell the start overlay that pressing Start will replay rather than go live. */
+    setReplayPending(range) {
+      if (!overlayLede) return;
+      overlayLede.textContent = range ? `Replay of ${rangeLabel(range)}, played back at the pace the network closed it.` : defaultLede;
+    },
+
+    setShared(ok) {
+      if (!shareBtn) return;
+      clearTimeout(shareTimer);
+      shareBtn.textContent = ok ? 'Copied' : 'Share';
+      shareBtn.classList.toggle('copied', ok);
+      if (ok) shareTimer = setTimeout(() => this.setShared(false), 1600);
     },
 
     /** Show (or clear) the watched account in the top bar. */

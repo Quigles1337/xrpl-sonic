@@ -20,6 +20,7 @@ export const SUBSCRIBE_COMMAND = Object.freeze({ id: 'xrpl-sonic-subscribe', com
 
 const BACKOFF_BASE_MS = 1000;
 const BACKOFF_MAX_MS = 30000;
+const REQUEST_TIMEOUT_MS = 20000;
 const PING_AFTER_MS = 20000; // send a ping if nothing arrived for this long
 const DEAD_AFTER_MS = 45000; // reconnect if nothing arrived for this long
 
@@ -48,6 +49,8 @@ export class XrplStream {
     this.watchdogTimer = null;
     this.lastMessageAt = 0;
     this.state = 'idle';
+    this.pending = new Map(); // request id → {resolve, reject, timer}
+    this.requestSeq = 0;
   }
 
   get endpoint() {
@@ -63,6 +66,7 @@ export class XrplStream {
   close() {
     this.closedByUser = true;
     this._clearTimers();
+    this._rejectPending('disconnected');
     const ws = this.ws;
     this.ws = null;
     if (ws) {
@@ -93,6 +97,54 @@ export class XrplStream {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Send a command over the open socket and resolve with its response,
+   * matched by id. Rejects on an error response (`err.code` = rippled error
+   * name), when the socket drops, or after `timeoutMs`. Responses to requests
+   * are not passed to onMessage.
+   */
+  request(command, { timeoutMs = REQUEST_TIMEOUT_MS } = {}) {
+    if (!this.ws || this.ws.readyState !== 1) return Promise.reject(new Error('not connected'));
+    const id = `xrpl-sonic-req-${++this.requestSeq}`;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pending.delete(id);
+        reject(new Error(`${command?.command ?? 'request'} timed out after ${timeoutMs} ms`));
+      }, timeoutMs);
+      this.pending.set(id, { resolve, reject, timer });
+      try {
+        this.ws.send(JSON.stringify({ ...command, id }));
+      } catch (err) {
+        clearTimeout(timer);
+        this.pending.delete(id);
+        reject(err);
+      }
+    });
+  }
+
+  _settleRequest(msg) {
+    const entry = msg && typeof msg.id === 'string' ? this.pending.get(msg.id) : undefined;
+    if (!entry) return false;
+    this.pending.delete(msg.id);
+    clearTimeout(entry.timer);
+    if (msg.status === 'error') {
+      const err = new Error(msg.error_message ?? msg.error ?? 'request failed');
+      err.code = msg.error ?? 'unknown';
+      entry.reject(err);
+    } else {
+      entry.resolve(msg);
+    }
+    return true;
+  }
+
+  _rejectPending(reason) {
+    for (const [id, entry] of this.pending) {
+      clearTimeout(entry.timer);
+      entry.reject(new Error(reason));
+      this.pending.delete(id);
+    }
   }
 
   _setState(state, extra = {}) {
@@ -130,6 +182,7 @@ export class XrplStream {
       } catch {
         return;
       }
+      if (this._settleRequest(msg)) return;
       if (msg && msg.id === SUBSCRIBE_COMMAND.id && msg.status === 'error') {
         this._fail(`subscribe failed: ${msg.error ?? 'unknown'}`);
         return;
@@ -149,6 +202,7 @@ export class XrplStream {
 
   _fail(error) {
     this._clearTimers();
+    this._rejectPending(error);
     if (this.ws) {
       const ws = this.ws;
       this.ws = null;
