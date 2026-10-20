@@ -15,9 +15,11 @@ function hexToRgb(hex) {
 }
 
 export class Visualizer {
-  constructor(canvas) {
+  /** @param {{ transparent?: boolean }} [opts]  transparent: no background fill (overlay mode) */
+  constructor(canvas, { transparent = false } = {}) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.transparent = transparent;
+    this.ctx = canvas.getContext('2d', { alpha: transparent });
     this.particles = [];
     this.rings = [];
     this.flash = 0; // background pulse 0..1
@@ -43,8 +45,12 @@ export class Visualizer {
     this.canvas.width = Math.round(this.width * this.dpr);
     this.canvas.height = Math.round(this.height * this.dpr);
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    this.ctx.fillStyle = '#0b0f1a';
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    if (this.transparent) {
+      this.ctx.clearRect(0, 0, this.width, this.height);
+    } else {
+      this.ctx.fillStyle = '#0b0f1a';
+      this.ctx.fillRect(0, 0, this.width, this.height);
+    }
   }
 
   start() {
@@ -143,12 +149,20 @@ export class Visualizer {
     const w = this.width;
     const h = this.height;
 
-    // Background with a soft pulse on ledger close.
+    // Background with a soft pulse on ledger close (a translucent flash only, in overlay mode).
     this.flash = Math.max(0, this.flash - dt * 1.8);
     const f = this.flash;
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = `rgb(${11 + f * 10}, ${15 + f * 14}, ${26 + f * 22})`;
-    ctx.fillRect(0, 0, w, h);
+    if (this.transparent) {
+      ctx.clearRect(0, 0, w, h);
+      if (f > 0) {
+        ctx.fillStyle = `rgba(200, 220, 255, ${(f * 0.08).toFixed(3)})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+    } else {
+      ctx.fillStyle = `rgb(${11 + f * 10}, ${15 + f * 14}, ${26 + f * 22})`;
+      ctx.fillRect(0, 0, w, h);
+    }
 
     // Rings
     ctx.lineCap = 'round';

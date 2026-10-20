@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseHash, buildHash } from '../src/params.js';
+import { parseHash, buildHash, parseQuery } from '../src/params.js';
 
 const ADDR = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
 
@@ -32,6 +32,22 @@ describe('hash parsing', () => {
     assert.equal(parseHash('#replay=107777809-107777812').replay, '107777809-107777812');
     assert.equal(parseHash(`#replay=1-2&account=${ADDR}`).account, ADDR);
     assert.equal(parseHash('#other=1').replay, null);
+  });
+
+  test('parseQuery reads the network, autostart and the page mode', () => {
+    assert.deepEqual(parseQuery(''), { network: null, autostart: false, mode: 'full' });
+    assert.deepEqual(parseQuery(undefined), { network: null, autostart: false, mode: 'full' });
+    assert.deepEqual(parseQuery('?network=testnet'), { network: 'testnet', autostart: false, mode: 'full' });
+    assert.equal(parseQuery('?network=devnet').network, null);
+    assert.equal(parseQuery('?autostart=1').autostart, true);
+    assert.equal(parseQuery('?autostart=0').autostart, false);
+    assert.equal(parseQuery('?autostart=false').autostart, false);
+    assert.equal(parseQuery('?overlay=1').mode, 'overlay');
+    assert.equal(parseQuery('overlay=true').mode, 'overlay');
+    assert.equal(parseQuery('?embed=1').mode, 'embed');
+    assert.equal(parseQuery('?embed=1&overlay=1').mode, 'overlay', 'overlay wins');
+    assert.equal(parseQuery('?embed=0').mode, 'full');
+    assert.deepEqual(parseQuery('?embed=1&network=testnet&autostart=1'), { network: 'testnet', autostart: true, mode: 'embed' });
   });
 
   test('buildHash round-trips through parseHash and omits empty values', () => {
