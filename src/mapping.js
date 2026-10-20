@@ -407,7 +407,8 @@ export function txToEvent(msg, options) {
       break;
     }
     case 'offer': {
-      degree = Math.floor(degrees / 2);
+      // No pitch to speak of; spread market makers across the stage by account.
+      degree = len + stableIndex(tx.Account, 3 * len);
       variant = txType === 'OfferCancel' ? 'rim' : 'hat';
       velocity = variant === 'rim' ? 0.2 : 0.22;
       duration = variant === 'rim' ? 0.04 : 0.08;
@@ -453,7 +454,7 @@ export function txToEvent(msg, options) {
       break;
     }
     default: {
-      degree = Math.floor(degrees / 2);
+      degree = len + stableIndex(tx.Account, 3 * len);
       velocity = 0.12;
       duration = 0.05;
       notes = [degreeToMidi(degree, scale, key)];
