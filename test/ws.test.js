@@ -39,6 +39,57 @@ function makeFakeWebSocket(script) {
 
 const flush = () => new Promise((r) => setImmediate(r));
 
+describe('XrplStream requests', () => {
+  async function connected() {
+    const { FakeWebSocket, sockets } = makeFakeWebSocket((ws) => ws.open());
+    const messages = [];
+    const stream = new XrplStream({ endpoints: ['wss://a.example'], WebSocketImpl: FakeWebSocket, onMessage: (m) => messages.push(m) });
+    stream.connect();
+    await flush();
+    return { stream, ws: sockets[0], messages };
+  }
+
+  test('request() sends the command with an id and resolves with the matching response', async () => {
+    const { stream, ws, messages } = await connected();
+    const p = stream.request({ command: 'ledger', ledger_index: 5, transactions: true, expand: true });
+    const sent = ws.sent.at(-1);
+    assert.equal(sent.command, 'ledger');
+    assert.equal(sent.ledger_index, 5);
+    assert.equal(sent.expand, true);
+    assert.match(sent.id, /^xrpl-sonic-req-\d+$/);
+    ws.message({ id: 'xrpl-sonic-req-other', status: 'success', type: 'response', result: { nope: true } });
+    ws.message({ type: 'ledgerClosed', ledger_index: 5 });
+    ws.message({ id: sent.id, status: 'success', type: 'response', result: { ledger: { ledger_index: 5, transactions: [] } } });
+    const res = await p;
+    assert.equal(res.result.ledger.ledger_index, 5);
+    assert.deepEqual(
+      messages.map((m) => m.type),
+      ['response', 'ledgerClosed'],
+      'unmatched responses and stream messages still reach onMessage; the matched one does not',
+    );
+    assert.equal(stream.pending.size, 0);
+    stream.close();
+  });
+
+  test('request() rejects on an error response with the rippled error code', async () => {
+    const { stream, ws } = await connected();
+    const p = stream.request({ command: 'ledger', ledger_index: 999999999 });
+    ws.message({ id: ws.sent.at(-1).id, status: 'error', type: 'response', error: 'lgrNotFound', error_message: 'Ledger not found.' });
+    await assert.rejects(p, (err) => err.message === 'Ledger not found.' && err.code === 'lgrNotFound');
+    stream.close();
+  });
+
+  test('request() rejects on timeout, on socket drop, and when not connected', async () => {
+    const { stream, ws } = await connected();
+    await assert.rejects(stream.request({ command: 'ping' }, { timeoutMs: 5 }), /timed out/);
+    const dropped = stream.request({ command: 'ping' });
+    ws.drop();
+    await assert.rejects(dropped, /socket closed/);
+    stream.close();
+    await assert.rejects(stream.request({ command: 'ping' }), /not connected/);
+  });
+});
+
 describe('XrplStream', () => {
   test('network table has the documented endpoints', () => {
     assert.equal(NETWORKS.mainnet.endpoints[0], 'wss://xrplcluster.com');

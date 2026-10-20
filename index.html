@@ -43,10 +43,21 @@
         <div class="metronome" aria-hidden="true"><div id="metronome-fill" class="metronome-fill"></div></div>
       </div>
       <div class="actions">
+        <button id="share" class="btn" type="button" title="Copy a link that replays the current ledger">Share</button>
         <button id="toggle-panel" class="btn" aria-expanded="false" aria-controls="panel">Settings</button>
         <button id="start" class="btn primary" aria-pressed="false">Start</button>
       </div>
     </header>
+
+    <div id="replaybar" class="replaybar hidden" role="status" aria-live="polite">
+      <span id="replay-label" class="replay-label">Replay</span>
+      <div class="replay-track" aria-hidden="true"><div id="replay-fill" class="replay-fill"></div></div>
+      <label class="replay-speed">
+        <span>Speed</span>
+        <select id="replay-speed" aria-label="Replay speed"></select>
+      </label>
+      <button id="replay-cancel" class="btn small" type="button">Go live</button>
+    </div>
 
     <aside id="panel" class="panel" aria-label="Settings">
       <div id="controls" class="controls"></div>

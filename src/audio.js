@@ -198,6 +198,45 @@ export class AudioEngine {
     return t - now;
   }
 
+  /**
+   * Schedule a transaction event at an exact offset from now (used by replay,
+   * which lays events out itself). Skips the burst spreader but keeps the
+   * per-category cooldown and the polyphony cap. Returns the delay in seconds
+   * or -1 if dropped.
+   */
+  playAt(event, offsetSeconds = 0) {
+    if (!this.ctx || this.ctx.state !== 'running' || !event) return -1;
+    const now = this.ctx.currentTime;
+    this._pruneVoices(now);
+    const t = now + Math.max(0.005, Number(offsetSeconds) || 0);
+
+    const cooldown = this.cooldowns[event.category] ?? 0.05;
+    const last = this.lastByCategory.get(event.category) ?? -Infinity;
+    if (t - last < cooldown) {
+      this.stats.dropped++;
+      return -1;
+    }
+    const activeAt = this.voices.filter((v) => v.start <= t && v.end > t).length;
+    if (activeAt >= this.maxVoices) {
+      this.stats.dropped++;
+      return -1;
+    }
+
+    this.lastByCategory.set(event.category, t);
+    this.nextSlot = Math.max(this.nextSlot, t);
+    const tail = event.sound === 'pad' || event.sound === 'swell' ? 0.8 : 0.3;
+    this.voices.push({ start: t, end: t + event.duration + tail });
+    this.stats.played++;
+    const synth = SYNTHS[event.sound] ?? click;
+    try {
+      synth(this, event, t);
+      if (event.sub) subBass(this, event, t);
+    } catch (err) {
+      console.warn('[xrpl-sonic] synth error', err);
+    }
+    return t - now;
+  }
+
   /** Ledger close: a low tick, played immediately. */
   tick(ledgerEvent) {
     if (!this.ctx || this.ctx.state !== 'running') return;
