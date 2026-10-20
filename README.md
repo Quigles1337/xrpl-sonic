@@ -75,6 +75,10 @@ Press **Start** and the page fetches each ledger over the same WebSocket (`{"com
 
 Both modes honour `?network=testnet`, `#account=` and `#replay=`, so an embed can watch one account or replay a specific ledger. An **Open full page** link in the embed leads to the same URL with the full controls.
 
+## Snapshot and recording
+
+**Settings → Capture → Snapshot** composes the scene with a small stats box (network, ledger index, transactions in the last minute, timestamp, site URL) on an offscreen canvas and downloads it as `xrpl-sonic-<ledger>.png`. **Record 30 s** captures the canvas (`canvas.captureStream(30)`) together with the audio mix (a `MediaStreamDestination` on the master bus) through `MediaRecorder` and downloads `xrpl-sonic-<ledger>.webm` when the countdown ends — `video/webm;codecs=vp9,opus`, falling back to `vp8,opus`. The button is disabled where `MediaRecorder` or `canvas.captureStream` is missing (Safari records in a different container; use a screen recorder there).
+
 ## How it works
 
 The page sends `{"command":"subscribe","streams":["ledger","transactions"]}` to a public rippled or Clio node over WebSocket (`wss://xrplcluster.com` by default, rotating to `s1.ripple.com` and `s2.ripple.com` on failure, with capped exponential backoff and an idle watchdog; testnet uses `s.altnet.rippletest.net:51233`). Every `transaction` message goes through a pure mapping function (`src/mapping.js`) that reads the type, the delivered amount (`meta.delivered_amount`, then `DeliverMax`, then `Amount`, so partial payments report what actually moved) and the accounts involved, and returns a sound event: category, scale degree, velocity, duration, colour and size. The audio engine (`src/audio.js`) synthesises that event from oscillators and generated noise through a compressor and a synthetic convolution reverb, and the visualiser (`src/visual.js`) draws it at the same scheduled instant. `ledgerClosed` messages drive the tick, the ring and the metronome.
@@ -102,7 +106,7 @@ node --test          # Node 20 or newer, no dependencies
 node scripts/smoke.mjs   # Node 22+: connect to mainnet and print what the first transactions would sound like
 ```
 
-The mapping layer has no DOM or Web Audio imports, so it is tested against fixture stream messages in `test/fixtures/` (API v1 `transaction` and v2 `tx_json` shapes, XRP in drops, issued currencies, hex currency codes, partial payments, `DeliverMax`, failed transactions, and one of every sound category). Account matching (`involvesAccount`), explorer URL building, URL-hash parsing and replay scheduling (`scheduleReplay`, tested against a trimmed real mainnet ledger) are pure modules with their own tests. The WebSocket client is tested with a scripted socket and fake timers.
+The mapping layer has no DOM or Web Audio imports, so it is tested against fixture stream messages in `test/fixtures/` (API v1 `transaction` and v2 `tx_json` shapes, XRP in drops, issued currencies, hex currency codes, partial payments, `DeliverMax`, failed transactions, and one of every sound category). Account matching (`involvesAccount`), explorer URL building, URL parsing, replay scheduling (`scheduleReplay`, tested against a trimmed real mainnet ledger) and the capture helpers (MIME selection, filenames, overlay text) are pure and have their own tests. The WebSocket client is tested with a scripted socket and fake timers.
 
 ## Privacy
 
@@ -111,6 +115,11 @@ Your browser connects directly to the public XRPL node you choose. Nothing is se
 ## Questions and ideas
 
 Open a thread in [Discussions](https://github.com/Quigles1337/xrpl-sonic/discussions) — mapping suggestions, new voices, node endpoints and accessibility feedback are all welcome. Bugs go in [Issues](https://github.com/Quigles1337/xrpl-sonic/issues).
+
+## Related
+
+- [commit-tapestry](https://github.com/Quigles1337/commit-tapestry) — weaves a repository's git history into a textile SVG.
+- [agent-blame](https://github.com/Quigles1337/agent-blame) — measures AI co-authorship in a repository from `Co-Authored-By` trailers.
 
 ## License
 

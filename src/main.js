@@ -7,6 +7,16 @@ import { Visualizer } from './visual.js';
 import { loadSettings, saveSettings, mappingOptions } from './settings.js';
 import { parseHash, buildHash, parseQuery } from './params.js';
 import { parseReplayRange, scheduleReplay, replayIntervalMs, replayLedgerMessage } from './replay.js';
+import {
+  RECORD_SECONDS,
+  captureSupport,
+  snapshotLines,
+  snapshotFilename,
+  recordingFilename,
+  composeSnapshot,
+  downloadBlob,
+  startRecording,
+} from './capture.js';
 import { createUI } from './ui.js';
 
 const SITE_URL = 'https://quigles1337.github.io/xrpl-sonic/';
@@ -63,6 +73,9 @@ const ledgerState = {
 };
 const stats = { played: 0, dropped: 0 };
 const recentTx = []; // timestamps for the tx/s readout
+const lastMinute = []; // timestamps for the snapshot overlay (60 s window)
+const capture = captureSupport(globalThis);
+let recording = null; // { done, stop } while a recording runs
 const pendingTimers = new Set();
 
 const ui = createUI({
@@ -74,6 +87,9 @@ const ui = createUI({
   },
   onReplayCancel: () => cancelReplay(),
   onShare: () => share(),
+  onSnapshot: () => snapshot().catch((err) => ui.logMessage(`Snapshot failed: ${err?.message ?? err}`, 'error')),
+  onRecord: () => record().catch((err) => ui.logMessage(`Recording failed: ${err?.message ?? err}`, 'error')),
+  capture,
   onChange: (patch) => {
     saveSettings(settings);
     options = mappingOptions(settings);
@@ -166,6 +182,7 @@ function onTransaction(msg) {
   const ev = txToEvent(msg, options);
   if (!ev) return;
   recentTx.push(performance.now());
+  lastMinute.push(performance.now());
   const gate = accountGate(msg);
   if (gate !== 'play') {
     // Everything that does not touch the watched account is silent — dimmed or gone.
@@ -339,6 +356,7 @@ async function runReplay(range) {
         if (gate === 'skip') continue;
         schedule(() => {
           recentTx.push(performance.now());
+          lastMinute.push(performance.now());
           if (gate === 'dim') {
             viz.spawn(ev, { dim: true });
             return;
@@ -391,7 +409,8 @@ function cancelReplay() {
 }
 
 function shareUrl() {
-  const index = replay.active ? replay.ledgerIndex : ledgerState.index;
+  // Live index first; after a replay ends there is no live ledger until the next close, so fall back to the last replayed one.
+  const index = replay.active ? replay.ledgerIndex : (ledgerState.index ?? replay.ledgerIndex);
   return index == null ? null : `${SITE_URL}#replay=${index}`;
 }
 
@@ -408,6 +427,68 @@ async function share() {
   } catch (err) {
     console.warn('[xrpl-sonic] clipboard unavailable', err);
     ui.logMessage(`Could not copy — link: ${url}`, 'error');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Snapshot and recording
+// ---------------------------------------------------------------------------
+
+function currentLedgerIndex() {
+  return replay.active ? replay.ledgerIndex : ledgerState.index;
+}
+
+function txInLastMinute() {
+  const now = performance.now();
+  while (lastMinute.length && now - lastMinute[0] > 60_000) lastMinute.shift();
+  return lastMinute.length;
+}
+
+/** Compose the scene plus a stats box into a PNG; downloads it unless `download` is false. Returns the blob. */
+async function snapshot({ download = true } = {}) {
+  const ledgerIndex = currentLedgerIndex();
+  const lines = snapshotLines({
+    ledgerIndex,
+    txLastMinute: txInLastMinute(),
+    network: NETWORKS[settings.network].label,
+    timestamp: new Date(),
+    url: SITE_URL,
+  });
+  const blob = await composeSnapshot(canvas, lines, { transparent: query.mode === 'overlay', dpr: viz.dpr });
+  const filename = snapshotFilename(ledgerIndex);
+  if (download) {
+    downloadBlob(blob, filename);
+    ui.logMessage(`Saved ${filename} (${Math.round(blob.size / 1024)} kB)`);
+  }
+  return blob;
+}
+
+/** Record the canvas and the audio mix for 30 s (or `seconds`); downloads the WebM unless `download` is false. */
+async function record({ seconds = RECORD_SECONDS, download = true } = {}) {
+  if (recording) return recording.done;
+  if (!capture.recording) throw new Error('this browser cannot record (MediaRecorder or canvas.captureStream missing)');
+  if (!running) {
+    ui.logMessage('Press Start before recording, so there is something to hear.', 'error');
+    return null;
+  }
+  const startedAt = currentLedgerIndex();
+  recording = startRecording({
+    canvas,
+    audioStream: engine.recordingStream(),
+    seconds,
+    mimeType: capture.mimeType,
+    onTick: (remaining) => ui.setRecording(remaining),
+  });
+  ui.logMessage(`Recording ${seconds} s of video and audio…`);
+  try {
+    const blob = await recording.done;
+    const filename = recordingFilename(startedAt);
+    if (download) downloadBlob(blob, filename);
+    ui.logMessage(`${download ? 'Saved' : 'Recorded'} ${filename} (${Math.round(blob.size / 1024)} kB, ${blob.type})`);
+    return blob;
+  } finally {
+    recording = null;
+    ui.setRecording(null);
   }
 }
 
@@ -470,4 +551,21 @@ viz.start();
 if (query.autostart || query.mode === 'overlay') start();
 
 // Exposed for debugging and smoke checks in the browser console.
-window.xrplSonic = { engine, viz, settings, query, start, stop, stats, replay, shareUrl, get stream() { return stream; }, get running() { return running; } };
+window.xrplSonic = {
+  engine,
+  viz,
+  settings,
+  query,
+  start,
+  stop,
+  stats,
+  replay,
+  shareUrl,
+  capture: { support: capture, snapshot, record, stop: () => recording?.stop() },
+  get stream() {
+    return stream;
+  },
+  get running() {
+    return running;
+  },
+};

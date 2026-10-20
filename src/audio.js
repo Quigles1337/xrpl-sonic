@@ -101,6 +101,16 @@ export class AudioEngine {
     this._applyMaster();
   }
 
+  /** A MediaStream carrying the master output (post volume/mute), for recording. Null before start(). */
+  recordingStream() {
+    if (!this.ctx || !this.master) return null;
+    if (!this.recordingDestination) {
+      this.recordingDestination = this.ctx.createMediaStreamDestination();
+      this.master.connect(this.recordingDestination);
+    }
+    return this.recordingDestination.stream;
+  }
+
   setMuted(m) {
     this.muted = Boolean(m);
     this._applyMaster();
