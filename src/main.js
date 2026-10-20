@@ -5,15 +5,29 @@ import { XrplStream, NETWORKS } from './ws.js';
 import { AudioEngine } from './audio.js';
 import { Visualizer } from './visual.js';
 import { loadSettings, saveSettings, mappingOptions } from './settings.js';
-import { parseHash, buildHash } from './params.js';
+import { parseHash, buildHash, parseQuery } from './params.js';
 import { parseReplayRange, scheduleReplay, replayIntervalMs, replayLedgerMessage } from './replay.js';
 import { createUI } from './ui.js';
 
 const SITE_URL = 'https://quigles1337.github.io/xrpl-sonic/';
 
 const settings = loadSettings();
-const params = new URLSearchParams(location.search);
-if (params.get('network') === 'testnet' || params.get('network') === 'mainnet') settings.network = params.get('network');
+
+// Page modes from the query string: ?overlay=1 (transparent, no controls, for OBS browser
+// sources), ?embed=1 (compact chrome for an iframe), plus ?network= and ?autostart=1.
+const query = parseQuery(location.search);
+if (query.network) settings.network = query.network;
+document.documentElement.classList.add(`mode-${query.mode}`);
+document.body.classList.add(`mode-${query.mode}`);
+{
+  // "Open full page" (embed mode): the same URL without the embed flag, keeping network and hash.
+  const openFull = document.getElementById('open-full');
+  if (openFull) {
+    const url = new URL(location.href);
+    url.searchParams.delete('embed');
+    openFull.href = url.toString();
+  }
+}
 
 // Shareable state lives in the URL hash: #account=r... and #replay=<ledger>|<from>-<to>.
 const urlState = parseHash(location.hash);
@@ -33,7 +47,7 @@ const replay = {
 };
 
 const canvas = document.getElementById('scene');
-const viz = new Visualizer(canvas);
+const viz = new Visualizer(canvas, { transparent: query.mode === 'overlay' });
 const engine = new AudioEngine({ volume: settings.volume, muted: settings.muted });
 
 let stream = null;
@@ -426,8 +440,10 @@ document.addEventListener('visibilitychange', () => {
   else if (running) viz.start();
 });
 
-// Keyboard: Space toggles, M mutes (when focus is not in a control).
+// Keyboard: Space toggles, M mutes (when focus is not in a control). Not in overlay mode,
+// where any key is only the gesture that unlocks audio.
 window.addEventListener('keydown', (e) => {
+  if (query.mode === 'overlay') return;
   const tag = e.target?.tagName;
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
   if (e.code === 'Space') {
@@ -450,7 +466,8 @@ ui.setReplayPending(replay.range);
 if (settings.account) ui.logMessage(`Watching ${shortAddress(settings.account)} — other transactions are ${settings.accountMode === 'hide' ? 'hidden' : 'dimmed and silent'}.`);
 viz.start();
 
-if (params.get('autostart') === '1') start();
+// Overlay mode starts on load: visuals at once, sound as soon as the page receives a click or key.
+if (query.autostart || query.mode === 'overlay') start();
 
 // Exposed for debugging and smoke checks in the browser console.
-window.xrplSonic = { engine, viz, settings, start, stop, stats, replay, shareUrl, get stream() { return stream; }, get running() { return running; } };
+window.xrplSonic = { engine, viz, settings, query, start, stop, stats, replay, shareUrl, get stream() { return stream; }, get running() { return running; } };

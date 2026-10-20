@@ -27,6 +27,27 @@ export function parseHash(hash) {
   return out;
 }
 
+/**
+ * Parse the query string: page modes and the network.
+ * `mode` is 'overlay' (transparent, no controls, for OBS browser sources),
+ * 'embed' (compact chrome for an iframe) or 'full'. Overlay wins if both are set.
+ * @returns {{ network: 'mainnet'|'testnet'|null, autostart: boolean, mode: 'overlay'|'embed'|'full' }}
+ */
+export function parseQuery(search) {
+  const raw = typeof search === 'string' ? search.replace(/^\?/, '') : '';
+  const params = new URLSearchParams(raw);
+  const flag = (name) => {
+    const v = params.get(name);
+    return v != null && v !== '' && v !== '0' && v !== 'false';
+  };
+  const network = params.get('network');
+  return {
+    network: network === 'mainnet' || network === 'testnet' ? network : null,
+    autostart: flag('autostart'),
+    mode: flag('overlay') ? 'overlay' : flag('embed') ? 'embed' : 'full',
+  };
+}
+
 /** Build a hash string (with the leading `#`, or '' when there is nothing to carry). */
 export function buildHash({ account, replay } = {}) {
   const params = new URLSearchParams();

@@ -678,6 +678,121 @@ body.running .btn.primary {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* ------------------------------------------------------------ page modes */
+
+/* ?overlay=1 — transparent canvas only, for OBS browser sources and screens. */
+html.mode-overlay,
+body.mode-overlay {
+  background: transparent;
+}
+
+body.mode-overlay .topbar,
+body.mode-overlay .replaybar,
+body.mode-overlay .panel,
+body.mode-overlay .log-wrap,
+body.mode-overlay .overlay,
+body.mode-overlay .footer {
+  display: none !important;
+}
+
+/* ?embed=1 — compact chrome for an iframe. */
+.open-full {
+  display: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+body.mode-embed .open-full {
+  display: inline-flex;
+  align-items: center;
+}
+
+body.mode-embed .panel,
+body.mode-embed #toggle-panel,
+body.mode-embed #share,
+body.mode-embed .footer,
+body.mode-embed .brand-tag,
+body.mode-embed .tx-rate {
+  display: none !important;
+}
+
+body.mode-embed .topbar {
+  --topbar-h: 44px;
+  height: 44px;
+  grid-template-columns: auto 1fr auto auto;
+  grid-template-rows: auto;
+  gap: 10px;
+  padding: 0 10px;
+}
+
+/* Explicit cells: items with a definite row are placed before auto-placed ones, so
+   leaving the brand to auto-placement would push it into the last column. */
+body.mode-embed .brand {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+body.mode-embed .status {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+body.mode-embed .ledger {
+  grid-row: 1;
+  grid-column: 3;
+}
+
+body.mode-embed .actions {
+  grid-row: 1;
+  grid-column: 4;
+}
+
+body.mode-embed .ledger {
+  grid-template-columns: auto auto;
+}
+
+body.mode-embed .btn {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+body.mode-embed .btn.big {
+  font-size: 14px;
+  padding: 7px 20px;
+}
+
+body.mode-embed .overlay-card h1 {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
+body.mode-embed .overlay-card .lede {
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+body.mode-embed .overlay-card .fine {
+  display: none;
+}
+
+body.mode-embed .log-wrap {
+  bottom: 10px;
+  left: 10px;
+  max-height: 26vh;
+  width: min(420px, calc(100vw - 20px));
+}
+
+body.mode-embed .replaybar {
+  top: 50px;
+  padding: 4px 6px 4px 10px;
+}
+
+@media (max-width: 479px) {
+  body.mode-embed .status {
+    display: none;
+  }
+}
+
 /* --------------------------------------------------------------- desktop */
 
 @media (min-width: 900px) {

@@ -56,6 +56,25 @@ Press **Start** and the page fetches each ledger over the same WebSocket (`{"com
 
 **Share** in the top bar copies a permalink to the ledger currently playing (live or replayed), so a moment you heard can be sent to someone else. Replay honours `#account=` too, so a link can carry both: `#account=r...&replay=<from>-<to>`.
 
+## Overlay and embed
+
+**`?overlay=1`** strips the page down to the transparent canvas — particles and rings only, no controls — for OBS, streaming layouts and wall screens. The stream starts on load; sound starts as soon as the page receives any click or key press, because browsers block audio until a gesture. Two ways to satisfy that in OBS:
+
+1. Add a **Browser Source** with the URL `https://quigles1337.github.io/xrpl-sonic/?overlay=1` (optionally `#account=` or `#replay=`), then right-click the source, choose **Interact**, and click once inside the page. Audio stays on for the life of the source.
+2. Launch the browser with `--autoplay-policy=no-user-gesture-required` (Chrome, Chromium, Edge; OBS passes it through where its build exposes CEF flags), and no interaction is needed.
+
+**`?embed=1`** keeps a compact top bar with a small **Start** button, the log and the visualiser, for an iframe:
+
+```html
+<iframe
+  src="https://quigles1337.github.io/xrpl-sonic/?embed=1"
+  width="640" height="360" loading="lazy" allow="autoplay"
+  style="border: 0; border-radius: 12px"
+  title="xrpl-sonic — listen to the XRP Ledger"></iframe>
+```
+
+Both modes honour `?network=testnet`, `#account=` and `#replay=`, so an embed can watch one account or replay a specific ledger. An **Open full page** link in the embed leads to the same URL with the full controls.
+
 ## How it works
 
 The page sends `{"command":"subscribe","streams":["ledger","transactions"]}` to a public rippled or Clio node over WebSocket (`wss://xrplcluster.com` by default, rotating to `s1.ripple.com` and `s2.ripple.com` on failure, with capped exponential backoff and an idle watchdog; testnet uses `s.altnet.rippletest.net:51233`). Every `transaction` message goes through a pure mapping function (`src/mapping.js`) that reads the type, the delivered amount (`meta.delivered_amount`, then `DeliverMax`, then `Amount`, so partial payments report what actually moved) and the accounts involved, and returns a sound event: category, scale degree, velocity, duration, colour and size. The audio engine (`src/audio.js`) synthesises that event from oscillators and generated noise through a compressor and a synthetic convolution reverb, and the visualiser (`src/visual.js`) draws it at the same scheduled instant. `ledgerClosed` messages drive the tick, the ring and the metronome.
@@ -72,7 +91,7 @@ npx --yes serve -l 4173 .        # or: python -m http.server 4173
 
 Then open http://localhost:4173/. ES modules need an HTTP origin, so opening `index.html` from the filesystem will not work.
 
-Useful query parameters: `?network=testnet`, and `?autostart=1` for kiosk setups where the browser allows audio without a gesture (otherwise the page starts visuals immediately and sound on the first tap). Hash parameters carry shareable state: `#account=<r-address>` and `#replay=<ledger>` or `#replay=<from>-<to>` (see above).
+Useful query parameters: `?network=testnet`; `?autostart=1` for kiosk setups (visuals start immediately, sound on the first tap unless the browser allows audio without a gesture); `?overlay=1` and `?embed=1` (see above). Hash parameters carry shareable state: `#account=<r-address>` and `#replay=<ledger>` or `#replay=<from>-<to>` (see above).
 
 Keyboard: `Space` starts and stops, `M` mutes.
 

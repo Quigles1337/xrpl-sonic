@@ -69,16 +69,25 @@ export class AudioEngine {
     return this.ctx ? this.ctx.currentTime : 0;
   }
 
-  /** Must be called from a user gesture the first time. */
+  /**
+   * Start (or resume) the context. Call it from a user gesture when you can;
+   * when autoplay is blocked, Chrome leaves resume() pending until the next
+   * gesture, so this never waits on it for more than a moment. The pending
+   * resume still completes on its own once the user interacts.
+   */
   async start() {
     if (!this.ctx) this._build();
-    if (this.ctx.state !== 'running') await this.ctx.resume();
-    // iOS unlock: play a silent buffer.
-    const src = this.ctx.createBufferSource();
-    src.buffer = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
-    src.connect(this.ctx.destination);
-    src.start();
-    this.nextSlot = this.ctx.currentTime;
+    if (this.ctx.state !== 'running') {
+      await Promise.race([this.ctx.resume().catch(() => {}), new Promise((resolve) => setTimeout(resolve, 300))]);
+    }
+    if (this.ctx.state === 'running') {
+      // iOS unlock: play a silent buffer.
+      const src = this.ctx.createBufferSource();
+      src.buffer = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
+      src.connect(this.ctx.destination);
+      src.start();
+      this.nextSlot = this.ctx.currentTime;
+    }
     return this.ctx.state;
   }
 
