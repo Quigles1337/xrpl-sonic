@@ -32,6 +32,18 @@ Only validated, successful transactions sound by default; there is a toggle for 
 
 Transactions do not trickle in: each validated ledger arrives as a burst of anything from 50 to 600 transactions every few seconds. The audio engine spreads each burst across the expected inter-ledger interval, caps polyphony, and applies a short per-type cooldown. Events that do not fit are rate-limited rather than queued, so the sound never drifts behind the ledger; they still appear as dimmer particles. The **Session** panel shows how many were played versus rate-limited. **Quiet mode** keeps only transactions at or above a chosen XRP amount.
 
+## Hear one account
+
+Add `#account=<r-address>` to the URL, or paste an address into **Settings → Account**, to listen to a single account:
+
+```
+https://quigles1337.github.io/xrpl-sonic/#account=rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah
+```
+
+Only transactions that involve that account play: it is the sender, the destination, or it appears in the transaction's metadata (`AffectedNodes`), which covers trust lines, consumed offers, issued-currency flows and anything else that touched one of its ledger entries. Everything else is drawn dimmed and silent (**Mute others**) or not drawn at all (**Hide others**). The address is validated as a base58 r-address, shown in short form in the top bar, and kept in the URL hash rather than in your settings, so the link is the state. The hash is updated as you change the account, so the address bar is always shareable.
+
+Every line in the log is a link: the transaction opens on an explorer, each account opens its account page, and ledger lines open the ledger. The default explorer is XRPScan; Bithomp and xrpl.org are selectable, and the testnet equivalents are used when the page is on testnet. Links open in a new tab with `rel="noopener noreferrer"`.
+
 ## How it works
 
 The page sends `{"command":"subscribe","streams":["ledger","transactions"]}` to a public rippled or Clio node over WebSocket (`wss://xrplcluster.com` by default, rotating to `s1.ripple.com` and `s2.ripple.com` on failure, with capped exponential backoff and an idle watchdog; testnet uses `s.altnet.rippletest.net:51233`). Every `transaction` message goes through a pure mapping function (`src/mapping.js`) that reads the type, the delivered amount (`meta.delivered_amount`, then `DeliverMax`, then `Amount`, so partial payments report what actually moved) and the accounts involved, and returns a sound event: category, scale degree, velocity, duration, colour and size. The audio engine (`src/audio.js`) synthesises that event from oscillators and generated noise through a compressor and a synthetic convolution reverb, and the visualiser (`src/visual.js`) draws it at the same scheduled instant. `ledgerClosed` messages drive the tick, the ring and the metronome.
@@ -48,7 +60,7 @@ npx --yes serve -l 4173 .        # or: python -m http.server 4173
 
 Then open http://localhost:4173/. ES modules need an HTTP origin, so opening `index.html` from the filesystem will not work.
 
-Useful query parameters: `?network=testnet`, and `?autostart=1` for kiosk setups where the browser allows audio without a gesture (otherwise the page starts visuals immediately and sound on the first tap).
+Useful query parameters: `?network=testnet`, and `?autostart=1` for kiosk setups where the browser allows audio without a gesture (otherwise the page starts visuals immediately and sound on the first tap). Hash parameters carry shareable state: `#account=<r-address>` (see above).
 
 Keyboard: `Space` starts and stops, `M` mutes.
 
@@ -59,7 +71,7 @@ node --test          # Node 20 or newer, no dependencies
 node scripts/smoke.mjs   # Node 22+: connect to mainnet and print what the first transactions would sound like
 ```
 
-The mapping layer has no DOM or Web Audio imports, so it is tested against fixture stream messages in `test/fixtures/` (API v1 `transaction` and v2 `tx_json` shapes, XRP in drops, issued currencies, hex currency codes, partial payments, `DeliverMax`, failed transactions, and one of every sound category). The WebSocket client is tested with a scripted socket and fake timers.
+The mapping layer has no DOM or Web Audio imports, so it is tested against fixture stream messages in `test/fixtures/` (API v1 `transaction` and v2 `tx_json` shapes, XRP in drops, issued currencies, hex currency codes, partial payments, `DeliverMax`, failed transactions, and one of every sound category). Account matching (`involvesAccount`), explorer URL building and URL-hash parsing are pure modules with their own tests. The WebSocket client is tested with a scripted socket and fake timers.
 
 ## Privacy
 

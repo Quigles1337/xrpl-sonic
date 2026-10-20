@@ -1,7 +1,9 @@
 // xrpl-sonic — DOM controls, status, metronome and the scrolling log.
 
-import { CATEGORIES, CATEGORY_NAMES, SCALES, KEYS } from './mapping.js';
+import { CATEGORIES, CATEGORY_NAMES, SCALES, KEYS, isValidAddress, shortAddress } from './mapping.js';
 import { NETWORKS } from './ws.js';
+import { EXPLORERS, explorerUrl } from './explorers.js';
+import { ACCOUNT_MODES } from './settings.js';
 
 const MAX_LOG_LINES = 80;
 
@@ -45,6 +47,10 @@ export function createUI({ settings, onChange, onToggleRun }) {
   const logList = $('#log');
   const logWrap = $('#log-wrap');
   const controls = $('#controls');
+  const watch = $('#watch');
+  const accountBadge = $('#account-badge');
+  const accountShort = $('#account-short');
+  const accountClear = $('#account-clear');
 
   const update = (patch) => {
     Object.assign(settings, patch);
@@ -122,6 +128,48 @@ export function createUI({ settings, onChange, onToggleRun }) {
     checked: settings.showLog,
     onchange: (e) => update({ showLog: e.target.checked }),
   });
+  const accountHint = el('span', { class: 'hint', id: 'account-hint' });
+  const accountInput = el('input', {
+    type: 'text',
+    id: 'account',
+    placeholder: 'r… (one account)',
+    spellcheck: 'false',
+    autocomplete: 'off',
+    autocapitalize: 'off',
+    value: settings.account ?? '',
+    'aria-label': 'Account to watch',
+    'aria-describedby': 'account-hint',
+    onchange: (e) => {
+      const value = e.target.value.trim();
+      if (value && !isValidAddress(value)) {
+        e.target.setAttribute('aria-invalid', 'true');
+        accountHint.textContent = 'Not a valid r-address.';
+        accountHint.classList.add('error');
+        return;
+      }
+      e.target.removeAttribute('aria-invalid');
+      accountHint.classList.remove('error');
+      accountHint.textContent = '';
+      e.target.value = value;
+      update({ account: value });
+    },
+  });
+  const accountMode = el(
+    'select',
+    { id: 'account-mode', 'aria-label': 'What to do with other transactions', onchange: (e) => update({ accountMode: e.target.value }) },
+    Object.entries(ACCOUNT_MODES).map(([k, label]) => option(k, label, settings.accountMode === k)),
+  );
+  const explorer = el(
+    'select',
+    { id: 'explorer', 'aria-label': 'Explorer for links', onchange: (e) => update({ explorer: e.target.value }) },
+    Object.entries(EXPLORERS).map(([k, v]) => option(k, v.label, settings.explorer === k)),
+  );
+  accountClear.addEventListener('click', () => {
+    accountInput.value = '';
+    accountInput.removeAttribute('aria-invalid');
+    accountHint.textContent = '';
+    update({ account: '' });
+  });
 
   const row = (labelText, control, extra) =>
     el('label', { class: 'row' }, [el('span', { class: 'row-label', text: labelText }), control, ...(extra ? [extra] : [])]);
@@ -156,6 +204,12 @@ export function createUI({ settings, onChange, onToggleRun }) {
       check('Show log', showLog),
     ]),
     el('section', { class: 'group' }, [el('h2', { text: 'Transaction types' }), el('div', { class: 'chips' }, categoryToggles)]),
+    el('section', { class: 'group' }, [
+      el('h2', { text: 'Account' }),
+      el('label', { class: 'row stack' }, [el('span', { class: 'row-label', text: 'Watch one account' }), accountInput, accountHint]),
+      row('Other transactions', accountMode),
+      row('Explorer links', explorer),
+    ]),
     el('section', { class: 'group stats' }, [
       el('h2', { text: 'Session' }),
       el('dl', {}, [
@@ -220,10 +274,21 @@ export function createUI({ settings, onChange, onToggleRun }) {
       if (!settings.showLog) return;
       const line = el('li', { class: `log-${event.kind}` }, [
         el('span', { class: 'dot', style: `background: ${event.kind === 'tx' ? event.colour : '#c8dcff'}` }),
-        el('span', { class: 'line', text: event.kind === 'tx' ? `${event.text} · ${event.note}` : event.text }),
+        el('span', { class: 'line' }, event.kind === 'tx' ? txLine(event) : ledgerLine(event)),
       ]);
       logList.prepend(line);
       while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
+    },
+
+    /** Show (or clear) the watched account in the top bar. */
+    setAccount(address) {
+      const active = Boolean(address);
+      watch.classList.toggle('hidden', !active);
+      document.body.classList.toggle('watching', active);
+      accountShort.textContent = active ? shortAddress(address) : '';
+      accountBadge.href = (active && explorerUrl(settings.explorer, settings.network, 'account', address)) || '#';
+      accountBadge.title = active ? `${address} — open on ${EXPLORERS[settings.explorer]?.label ?? 'explorer'}` : '';
+      if (accountInput.value.trim() !== (address ?? '')) accountInput.value = address ?? '';
     },
 
     logMessage(text, cls = 'info') {
@@ -242,8 +307,32 @@ export function createUI({ settings, onChange, onToggleRun }) {
       quietThreshold.value = settings.quietThreshold;
       includeFailed.checked = settings.includeFailed;
       showLog.checked = settings.showLog;
+      accountInput.value = settings.account ?? '';
+      accountMode.value = settings.accountMode;
+      explorer.value = settings.explorer;
       for (const box of controls.querySelectorAll('input[data-category]')) box.checked = settings.enabled[box.dataset.category];
       applyLogVisibility();
     },
   };
+
+  // --- Log line builders -----------------------------------------------------
+  function link(kind, id, text, cls) {
+    const href = explorerUrl(settings.explorer, settings.network, kind, id);
+    if (!href) return el('span', { class: cls, text });
+    return el('a', { class: cls, href, target: '_blank', rel: 'noopener noreferrer', text });
+  }
+
+  function txLine(event) {
+    const nodes = [link('tx', event.hash, event.head, 'tx-link')];
+    for (const p of event.parties) {
+      const watched = settings.account && p.address === settings.account;
+      nodes.push(p.separator, link('account', p.address, p.short, `acct-link${watched ? ' watched' : ''}`));
+    }
+    nodes.push(` · ${event.note}`);
+    return nodes;
+  }
+
+  function ledgerLine(event) {
+    return [link('ledger', event.ledgerIndex, event.text, 'ledger-link')];
+  }
 }

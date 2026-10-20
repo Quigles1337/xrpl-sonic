@@ -24,6 +24,8 @@ import {
   midiToName,
   stableIndex,
   shortAddress,
+  isValidAddress,
+  involvesAccount,
   formatAmount,
   txToEvent,
   ledgerToEvent,
@@ -432,5 +434,102 @@ describe('ledger events and message classification', () => {
     assert.equal(shortAddress('rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH'), 'rN7n…fzRH');
     assert.equal(shortAddress(undefined), '');
     assert.equal(shortAddress('short'), 'short');
+  });
+});
+
+describe('account mode', () => {
+  const SENDER = 'rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH';
+  const DEST = 'rLHzPsX6oXkzU2qL12kHCH8G8cnZv1rBJh';
+  const OTHER = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
+  const ISSUER = 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B';
+
+  test('isValidAddress accepts base58 r-addresses and rejects everything else', () => {
+    assert.equal(isValidAddress(SENDER), true);
+    assert.equal(isValidAddress('rrrrrrrrrrrrrrrrrrrrrhoLvTp'), true); // ACCOUNT_ZERO, 27 chars
+    assert.equal(isValidAddress('rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzR0'), false); // 0 is not base58
+    assert.equal(isValidAddress('rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRl'), false); // l is not base58
+    assert.equal(isValidAddress('N7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH'), false); // no r prefix
+    assert.equal(isValidAddress('rShort'), false);
+    assert.equal(isValidAddress(`${SENDER}${SENDER}`), false);
+    assert.equal(isValidAddress('XVLhHMPHU98es4dbozjVtdWzVrDjtV18pX8yuPT7y4xaEHi'), false); // X-address
+    assert.equal(isValidAddress(null), false);
+    assert.equal(isValidAddress(42), false);
+  });
+
+  test('involvesAccount matches the sender', () => {
+    assert.equal(involvesAccount(fixture('payment-xrp-drops'), SENDER), true);
+    assert.equal(involvesAccount(fixture('offercreate'), fixture('offercreate').transaction.Account), true);
+  });
+
+  test('involvesAccount matches the Destination', () => {
+    assert.equal(involvesAccount(fixture('payment-xrp-drops'), DEST), true);
+    assert.equal(involvesAccount(fixture('escrowcreate'), DEST), true);
+  });
+
+  test('involvesAccount matches an account that only appears in AffectedNodes', () => {
+    const msg = fixture('payment-iou');
+    assert.equal(involvesAccount(msg, ISSUER), false, 'fixture has no affected nodes for the issuer yet');
+    const withNodes = {
+      ...msg,
+      meta: {
+        ...msg.meta,
+        AffectedNodes: [
+          {
+            ModifiedNode: {
+              LedgerEntryType: 'RippleState',
+              LedgerIndex: '00'.repeat(32),
+              FinalFields: {
+                Balance: { currency: 'USD', issuer: 'rrrrrrrrrrrrrrrrrrrrBZbvji', value: '-25.5' },
+                HighLimit: { currency: 'USD', issuer: ISSUER, value: '0' },
+                LowLimit: { currency: 'USD', issuer: DEST, value: '1000000000' },
+              },
+            },
+          },
+          { DeletedNode: { LedgerEntryType: 'Offer', FinalFields: { Account: OTHER } } },
+        ],
+      },
+    };
+    assert.equal(involvesAccount(withNodes, ISSUER), true, 'trust-line issuer');
+    assert.equal(involvesAccount(withNodes, OTHER), true, 'owner of a consumed offer');
+    assert.equal(involvesAccount(withNodes, 'rrrrrrrrrrrrrrrrrrrrrhoLvTp'), false);
+  });
+
+  test('involvesAccount is false for unrelated accounts, bad input and non-transactions', () => {
+    assert.equal(involvesAccount(fixture('payment-xrp-drops'), OTHER), false);
+    assert.equal(involvesAccount(fixture('payment-xrp-drops'), ''), false);
+    assert.equal(involvesAccount(fixture('payment-xrp-drops'), null), false);
+    assert.equal(involvesAccount(fixture('ledger-closed'), SENDER), false);
+    assert.equal(involvesAccount(null, SENDER), false);
+  });
+
+  test('involvesAccount also handles API v2 tx_json messages and bare ledger entries', () => {
+    const v2 = fixture('payment-delivermax-v2');
+    assert.equal(involvesAccount(v2, v2.tx_json.Account), true);
+    assert.equal(involvesAccount(v2, v2.tx_json.Destination), true);
+    const bare = { ...fixture('payment-xrp-drops').transaction, metaData: { AffectedNodes: [], TransactionResult: 'tesSUCCESS' } };
+    assert.equal(involvesAccount(bare, SENDER), true);
+    assert.equal(involvesAccount(bare, OTHER), false);
+  });
+
+  test('events carry a head and linkable parties that reproduce the text', () => {
+    const pay = txToEvent(fixture('payment-xrp-drops'));
+    assert.equal(pay.head, 'Payment · 12.5 XRP');
+    assert.deepEqual(
+      pay.parties.map((p) => [p.role, p.address]),
+      [
+        ['from', SENDER],
+        ['to', DEST],
+      ],
+    );
+    assert.equal(pay.head + pay.parties.map((p) => p.separator + p.short).join(''), pay.text);
+    const trust = txToEvent(fixture('trustset'));
+    assert.equal(trust.parties[1].role, 'issuer');
+    assert.match(trust.text, / ⇢ /);
+    const offer = txToEvent(fixture('offercreate'));
+    assert.equal(offer.parties.length, 1);
+    for (const name of txFixtureNames) {
+      const ev = txToEvent(fixture(name), { includeFailed: true });
+      for (const p of ev.parties) assert.ok(isValidAddress(p.address), `${name}: ${p.address}`);
+    }
   });
 });

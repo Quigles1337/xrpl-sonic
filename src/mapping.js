@@ -98,6 +98,11 @@ export function shortAddress(address) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
+/** Base58 r-address format check (XRPL alphabet, 25–35 characters). No checksum. */
+export function isValidAddress(address) {
+  return typeof address === 'string' && /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(address);
+}
+
 /** Decode a 160-bit hex currency code into something printable; 3-letter codes pass through. */
 export function decodeCurrency(code) {
   if (typeof code !== 'string') return '';
@@ -340,25 +345,64 @@ function mergeOptions(options) {
   };
 }
 
+/**
+ * Log text for a transaction, in pieces so the UI can link each address:
+ * `head` is "Type · amount", `parties` the accounts with the separator that
+ * precedes each one, and `text` the flat string of both.
+ */
 function describe(tx, category, amount) {
   const type = tx.TransactionType;
-  const parts = [type];
-  if (amount) parts.push(formatAmount(amount));
-  const from = shortAddress(tx.Account);
+  const head = amount ? `${type} · ${formatAmount(amount)}` : type;
+  const parties = [];
+  const party = (address, role, separator) => {
+    if (typeof address === 'string' && address) parties.push({ address, short: shortAddress(address), role, separator });
+  };
+  party(tx.Account, 'from', ' · ');
   switch (category) {
     case 'payment':
     case 'escrow':
     case 'paychan':
-      if (tx.Destination) parts.push(`${from} → ${shortAddress(tx.Destination)}`);
-      else parts.push(from);
+      party(tx.Destination, 'to', ' → ');
       break;
     case 'trust':
-      parts.push(`${from} ⇢ ${shortAddress(tx.LimitAmount?.issuer)}`);
+      party(tx.LimitAmount?.issuer, 'issuer', ' ⇢ ');
       break;
     default:
-      parts.push(from);
+      break;
   }
-  return parts.join(' · ');
+  const text = head + parties.map((p) => p.separator + p.short).join('');
+  return { head, parties, text };
+}
+
+function containsString(value, needle, depth) {
+  if (depth > 8 || value == null) return false;
+  if (typeof value === 'string') return value === needle;
+  if (Array.isArray(value)) return value.some((v) => containsString(v, needle, depth + 1));
+  if (typeof value === 'object') return Object.values(value).some((v) => containsString(v, needle, depth + 1));
+  return false;
+}
+
+/** Transaction fields that name an account directly (besides Account and Destination). */
+const ACCOUNT_FIELDS = Object.freeze(['Owner', 'Issuer', 'Authorize', 'Unauthorize', 'RegularKey', 'NFTokenMinter', 'Holder']);
+
+/**
+ * Does a transaction involve an account? True when the account is the sender,
+ * the destination, another direct account field, or appears anywhere in the
+ * metadata's AffectedNodes (balances, trust lines, offers it owns...).
+ * Accepts a stream message, a `ledger` command transaction entry, or a bare tx.
+ */
+export function involvesAccount(msg, address) {
+  if (typeof address !== 'string' || !address) return false;
+  const unwrapped = unwrapTransactionMessage(msg);
+  if (!unwrapped) return false;
+  const { tx, meta } = unwrapped;
+  if (tx.Account === address || tx.Destination === address) return true;
+  for (const field of ACCOUNT_FIELDS) if (tx[field] === address) return true;
+  const nodes = meta?.AffectedNodes;
+  if (Array.isArray(nodes)) {
+    for (const node of nodes) if (containsString(node, address, 0)) return true;
+  }
+  return false;
 }
 
 /**
@@ -463,6 +507,7 @@ export function txToEvent(msg, options) {
 
   const pitch = notes[0];
   const sub = category === 'payment' && amountXrp != null && amountXrp >= WHALE_THRESHOLD_XRP;
+  const described = describe(tx, category, amount);
 
   return {
     kind: 'tx',
@@ -488,7 +533,9 @@ export function txToEvent(msg, options) {
     account: tx.Account ?? null,
     destination: tx.Destination ?? null,
     ledgerIndex,
-    text: describe(tx, category, amount),
+    head: described.head,
+    parties: described.parties,
+    text: described.text,
   };
 }
 

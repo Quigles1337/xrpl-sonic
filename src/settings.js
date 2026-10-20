@@ -1,6 +1,7 @@
 // xrpl-sonic — settings persistence (localStorage, guarded).
 
 import { CATEGORY_NAMES, SCALES, KEYS } from './mapping.js';
+import { EXPLORERS, DEFAULT_EXPLORER } from './explorers.js';
 
 export const STORAGE_KEY = 'xrpl-sonic:settings:v1';
 
@@ -15,7 +16,11 @@ export const DEFAULT_SETTINGS = Object.freeze({
   includeFailed: false,
   enabled: Object.freeze(Object.fromEntries(CATEGORY_NAMES.map((c) => [c, true]))),
   showLog: true,
+  accountMode: 'mute', // transactions that do not involve the watched account: 'mute' (dim, silent) | 'hide'
+  explorer: DEFAULT_EXPLORER,
 });
+
+export const ACCOUNT_MODES = Object.freeze({ mute: 'Mute others', hide: 'Hide others' });
 
 function storage() {
   try {
@@ -45,6 +50,9 @@ export function sanitizeSettings(input) {
     }
   }
   if (typeof input.showLog === 'boolean') s.showLog = input.showLog;
+  if (typeof input.accountMode === 'string' && ACCOUNT_MODES[input.accountMode]) s.accountMode = input.accountMode;
+  if (typeof input.explorer === 'string' && EXPLORERS[input.explorer]) s.explorer = input.explorer;
+  // `account` is deliberately not persisted: the watched account lives in the URL hash only.
   return s;
 }
 
