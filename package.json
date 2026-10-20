@@ -1,0 +1,21 @@
+{
+  "name": "xrpl-sonic",
+  "version": "0.1.0",
+  "description": "Listen to the XRP Ledger: every transaction becomes a sound, every ledger close a pulse. Zero dependencies, runs in your browser.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quigles1337/xrpl-sonic.git"
+  },
+  "homepage": "https://quigles1337.github.io/xrpl-sonic/",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "smoke": "node scripts/smoke.mjs",
+    "serve": "npx --yes serve -l 4173 ."
+  }
+}

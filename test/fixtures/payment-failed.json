@@ -1,0 +1,31 @@
+{
+  "type": "transaction",
+  "engine_result": "tecPATH_DRY",
+  "engine_result_code": 104,
+  "engine_result_message": "Path could not send partial amount.",
+  "ledger_hash": "0000000000000000000000000000000000000000000000000000000000000ABC",
+  "ledger_index": 93401220,
+  "close_time_iso": "2026-10-19T22:14:31Z",
+  "meta": {
+    "AffectedNodes": [],
+    "TransactionIndex": 12,
+    "TransactionResult": "tecPATH_DRY"
+  },
+  "transaction": {
+    "Fee": "12",
+    "Flags": 0,
+    "Sequence": 1234,
+    "SigningPubKey": "03ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB",
+    "TxnSignature": "304444444444444444444444444444444444444444444444444444444444444444444444",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000009",
+    "TransactionType": "Payment",
+    "Account": "rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH",
+    "Destination": "rLHzPsX6oXkzU2qL12kHCH8G8cnZv1rBJh",
+    "Amount": {
+      "currency": "EUR",
+      "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+      "value": "10"
+    }
+  },
+  "validated": true
+}

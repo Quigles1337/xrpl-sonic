@@ -1,0 +1,36 @@
+{
+  "type": "transaction",
+  "engine_result": "tesSUCCESS",
+  "engine_result_code": 0,
+  "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+  "ledger_hash": "0000000000000000000000000000000000000000000000000000000000000ABC",
+  "ledger_index": 93401220,
+  "close_time_iso": "2026-10-19T22:14:31Z",
+  "meta": {
+    "AffectedNodes": [],
+    "TransactionIndex": 12,
+    "TransactionResult": "tesSUCCESS",
+    "delivered_amount": {
+      "currency": "534F4C4F00000000000000000000000000000000",
+      "issuer": "rsoLo2S1kiGeCcn6hCUXVrCpGMWLrRrLZz",
+      "value": "1000"
+    }
+  },
+  "transaction": {
+    "Fee": "12",
+    "Flags": 0,
+    "Sequence": 1234,
+    "SigningPubKey": "03ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB",
+    "TxnSignature": "304444444444444444444444444444444444444444444444444444444444444444444444",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000005",
+    "TransactionType": "Payment",
+    "Account": "rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH",
+    "Destination": "rLHzPsX6oXkzU2qL12kHCH8G8cnZv1rBJh",
+    "Amount": {
+      "currency": "534F4C4F00000000000000000000000000000000",
+      "issuer": "rsoLo2S1kiGeCcn6hCUXVrCpGMWLrRrLZz",
+      "value": "1000"
+    }
+  },
+  "validated": true
+}

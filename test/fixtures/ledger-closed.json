@@ -1,0 +1,12 @@
+{
+  "type": "ledgerClosed",
+  "fee_base": 10,
+  "fee_ref": 10,
+  "ledger_hash": "0000000000000000000000000000000000000000000000000000000000000ABC",
+  "ledger_index": 93401220,
+  "ledger_time": 846109455,
+  "reserve_base": 1000000,
+  "reserve_inc": 200000,
+  "txn_count": 87,
+  "validated_ledgers": "32570-93401220"
+}
