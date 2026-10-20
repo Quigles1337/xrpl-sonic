@@ -35,8 +35,11 @@ function option(value, label, selected) {
  * @param {(speed: number) => void} [args.onReplaySpeed]
  * @param {() => void} [args.onReplayCancel]
  * @param {() => void} [args.onShare]
+ * @param {() => void} [args.onSnapshot]
+ * @param {() => void} [args.onRecord]
+ * @param {{ recording: boolean, mimeType: string|null }} [args.capture]  what the browser supports
  */
-export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onReplayCancel, onShare }) {
+export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onReplayCancel, onShare, onSnapshot, onRecord, capture }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -192,6 +195,17 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
     update({ account: '' });
   });
 
+  const snapshotBtn = el('button', { type: 'button', class: 'btn', id: 'snapshot', text: 'Snapshot', title: 'Save the scene as a PNG with a stats overlay', onclick: () => onSnapshot?.() });
+  const recordBtn = el('button', {
+    type: 'button',
+    class: 'btn',
+    id: 'record',
+    text: 'Record 30 s',
+    disabled: !capture?.recording,
+    title: capture?.recording ? `Record 30 seconds of video and audio (${capture.mimeType})` : 'Recording needs MediaRecorder and canvas.captureStream, which this browser does not provide',
+    onclick: () => onRecord?.(),
+  });
+
   const row = (labelText, control, extra) =>
     el('label', { class: 'row' }, [el('span', { class: 'row-label', text: labelText }), control, ...(extra ? [extra] : [])]);
   const check = (labelText, control, hint) =>
@@ -230,6 +244,11 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
       el('label', { class: 'row stack' }, [el('span', { class: 'row-label', text: 'Watch one account' }), accountInput, accountHint]),
       row('Other transactions', accountMode),
       row('Explorer links', explorer),
+    ]),
+    el('section', { class: 'group' }, [
+      el('h2', { text: 'Capture' }),
+      el('div', { class: 'buttons' }, [snapshotBtn, recordBtn]),
+      el('p', { class: 'hint capture-hint', text: capture?.recording ? 'PNG with ledger, rate and time; WebM with the audio mix.' : 'Snapshot only: this browser cannot record.' }),
     ]),
     el('section', { class: 'group stats' }, [
       el('h2', { text: 'Session' }),
@@ -325,6 +344,15 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
     setReplayPending(range) {
       if (!overlayLede) return;
       overlayLede.textContent = range ? `Replay of ${rangeLabel(range)}, played back at the pace the network closed it.` : defaultLede;
+    },
+
+    /** Countdown on the record button; null restores it. */
+    setRecording(remainingSeconds) {
+      const active = remainingSeconds != null;
+      recordBtn.textContent = active ? `Recording… ${remainingSeconds} s` : 'Record 30 s';
+      recordBtn.classList.toggle('recording', active);
+      recordBtn.disabled = active || !capture?.recording;
+      document.body.classList.toggle('recording', active);
     },
 
     setShared(ok) {

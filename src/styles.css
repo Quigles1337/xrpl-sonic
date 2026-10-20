@@ -342,6 +342,29 @@ body.running .btn.primary {
   color: var(--ok);
 }
 
+.buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn.recording {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  animation: blink 1s infinite;
+}
+
+.capture-hint {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* ------------------------------------------------------------------ panel */
 
 .panel {
