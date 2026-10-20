@@ -1,15 +1,20 @@
 // xrpl-sonic — application wiring.
 
-import { txToEvent, ledgerToEvent, classifyMessage } from './mapping.js';
+import { txToEvent, ledgerToEvent, classifyMessage, involvesAccount, shortAddress } from './mapping.js';
 import { XrplStream, NETWORKS } from './ws.js';
 import { AudioEngine } from './audio.js';
 import { Visualizer } from './visual.js';
 import { loadSettings, saveSettings, mappingOptions } from './settings.js';
+import { parseHash, buildHash } from './params.js';
 import { createUI } from './ui.js';
 
 const settings = loadSettings();
 const params = new URLSearchParams(location.search);
 if (params.get('network') === 'testnet' || params.get('network') === 'mainnet') settings.network = params.get('network');
+
+// Shareable state lives in the URL hash: #account=r... (and #replay=, see below).
+const urlState = parseHash(location.hash);
+settings.account = urlState.account ?? '';
 
 const canvas = document.getElementById('scene');
 const viz = new Visualizer(canvas);
@@ -43,7 +48,36 @@ const ui = createUI({
       ui.logMessage(`Switching to ${NETWORKS[settings.network].label}…`);
       stream.setEndpoints(NETWORKS[settings.network].endpoints);
     }
+    if ('account' in patch) {
+      syncHash();
+      applyAccount();
+    }
+    if ('network' in patch || 'explorer' in patch) ui.setAccount(settings.account);
   },
+});
+
+function syncHash() {
+  const hash = buildHash({ account: settings.account, replay: urlState.replay });
+  const url = `${location.pathname}${location.search}${hash}`;
+  if (`${location.pathname}${location.search}${location.hash}` !== url) history.replaceState(null, '', url);
+}
+
+function applyAccount() {
+  ui.setAccount(settings.account);
+  if (settings.account) ui.logMessage(`Watching ${shortAddress(settings.account)} — other transactions are ${settings.accountMode === 'hide' ? 'hidden' : 'dimmed and silent'}.`);
+  else ui.logMessage('Watching all accounts.');
+}
+
+// The hash can change under us (back/forward, a pasted link): follow it.
+window.addEventListener('hashchange', () => {
+  const next = parseHash(location.hash);
+  for (const err of next.errors) ui.logMessage(err, 'error');
+  urlState.replay = next.replay;
+  const account = next.account ?? '';
+  if (account !== settings.account) {
+    settings.account = account;
+    applyAccount();
+  }
 });
 
 function resetLedgerState() {
@@ -88,6 +122,11 @@ function onTransaction(msg) {
   const ev = txToEvent(msg, options);
   if (!ev) return;
   recentTx.push(performance.now());
+  if (settings.account && !involvesAccount(msg, settings.account)) {
+    // Account mode: everything that does not touch the watched account is silent — dimmed or gone.
+    if (settings.accountMode !== 'hide') schedule(() => viz.spawn(ev, { dim: true }), Math.random() * engine.ledgerInterval * 0.85);
+    return;
+  }
   const audible = engine.state === 'running' && !settings.muted;
   const delay = audible ? engine.play(ev) : 0;
   if (delay < 0) {
@@ -219,6 +258,9 @@ window.addEventListener('keydown', (e) => {
 
 ui.setStatus('idle', 'Ready', null);
 ui.setLedger(null, null);
+ui.setAccount(settings.account);
+for (const err of urlState.errors) ui.logMessage(err, 'error');
+if (settings.account) ui.logMessage(`Watching ${shortAddress(settings.account)} — other transactions are ${settings.accountMode === 'hide' ? 'hidden' : 'dimmed and silent'}.`);
 viz.start();
 
 if (params.get('autostart') === '1') start();

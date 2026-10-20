@@ -71,6 +71,16 @@ describe('settings', () => {
     }
   });
 
+  test('account mode and explorer are validated; the watched account is never persisted', () => {
+    const s = sanitizeSettings({ accountMode: 'hide', explorer: 'bithomp', account: 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah' });
+    assert.equal(s.accountMode, 'hide');
+    assert.equal(s.explorer, 'bithomp');
+    assert.equal('account' in s, false);
+    const bad = sanitizeSettings({ accountMode: 'loud', explorer: 'etherscan' });
+    assert.equal(bad.accountMode, 'mute');
+    assert.equal(bad.explorer, 'xrpscan');
+  });
+
   test('mappingOptions applies the quiet threshold only in quiet mode', () => {
     const base = sanitizeSettings({ quietThreshold: 250 });
     assert.equal(mappingOptions(base).quietThreshold, 0);

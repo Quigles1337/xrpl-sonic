@@ -158,6 +158,65 @@ body.running .btn.primary {
   flex: none;
 }
 
+/* Watched account badge */
+.watch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+  flex: none;
+}
+
+.watch.hidden {
+  display: none;
+}
+
+.account-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 6px;
+  border: 1px solid rgba(76, 201, 240, 0.45);
+  border-radius: 999px;
+  color: var(--text);
+  text-decoration: none;
+  font-family: var(--mono);
+  background: rgba(76, 201, 240, 0.1);
+}
+
+.account-badge:hover {
+  background: rgba(76, 201, 240, 0.22);
+}
+
+.account-badge .watch-label {
+  font-family: var(--font);
+  color: var(--accent);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.account-clear {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 50%;
+}
+
+.account-clear:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.account-clear:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
 .status-dot[data-state="connecting"],
 .status-dot[data-state="reconnecting"] {
   background: var(--warn);
@@ -263,6 +322,46 @@ body.running .btn.primary {
   color: var(--muted);
   font-size: 12px;
   margin-top: -4px;
+}
+
+.row.stack {
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.row.stack .hint {
+  color: var(--muted);
+  font-size: 12px;
+  min-height: 0;
+}
+
+.row.stack .hint:empty {
+  display: none;
+}
+
+.row .hint.error {
+  color: var(--err);
+}
+
+.row input[type="text"] {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.row input[type="text"]:focus-visible,
+.row select:focus-visible,
+.row input[type="number"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.row input[aria-invalid="true"] {
+  border-color: var(--err);
 }
 
 .row input[type="range"] {
@@ -406,6 +505,24 @@ body.running .btn.primary {
 .log li .line {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.log li a {
+  pointer-events: auto;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.log li a:hover,
+.log li a:focus-visible {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  outline: none;
+}
+
+.log li a.watched {
+  color: var(--accent);
 }
 
 .log li.log-ledger {
