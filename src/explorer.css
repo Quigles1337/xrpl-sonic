@@ -1393,3 +1393,7 @@ kbd {
     animation: none;
   }
 }
+
+.hint.err {
+  color: #ffb3b3;
+}

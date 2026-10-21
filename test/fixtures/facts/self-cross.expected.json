@@ -1,0 +1,206 @@
+{
+  "network": "mainnet",
+  "hash": "2E505251DB1969FBECA63834DC88FF056FBA7BD6F97CF54399606F0EB53477CB",
+  "ledgerIndex": 107811515,
+  "case": "an account's new offer crossing its own existing offer: replaced one, removed the other without trading",
+  "source": {
+    "file": "self-cross.json",
+    "command": {
+      "command": "tx",
+      "transaction": "2E505251DB1969FBECA63834DC88FF056FBA7BD6F97CF54399606F0EB53477CB",
+      "binary": false
+    }
+  },
+  "expect": {
+    "transaction": {
+      "type": "OfferCreate",
+      "account": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+      "result": "tesSUCCESS",
+      "fee": "10",
+      "flags": [
+        "tfPassive"
+      ]
+    },
+    "offers": {
+      "0": {
+        "action": "deleted",
+        "owner": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+        "sequence": 90282500,
+        "role": "submitter-old",
+        "traded": "no",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "9507.16546"
+            },
+            "after": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "9507.16546"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "3.82304"
+            },
+            "after": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "3.82304"
+            }
+          }
+        },
+        "tradedAmounts": null,
+        "removal": "replaced",
+        "rules": [
+          "offer.removal.replaced"
+        ]
+      },
+      "4": {
+        "action": "deleted",
+        "owner": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+        "sequence": 90282503,
+        "role": "submitter-old",
+        "traded": "no",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "460.910407"
+            },
+            "after": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "460.910407"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "0.1844145575310508"
+            },
+            "after": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "0.1844145575310508"
+            }
+          }
+        },
+        "tradedAmounts": null,
+        "removal": "self-cross",
+        "rules": [
+          "offer.removal.self-cross"
+        ]
+      },
+      "9": {
+        "action": "created",
+        "owner": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+        "sequence": 90282523,
+        "role": "submitter-new",
+        "traded": "no",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "0.76508"
+            },
+            "after": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "0.76508"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "1914.81607"
+            },
+            "after": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "1914.81607"
+            }
+          }
+        },
+        "tradedAmounts": null,
+        "rules": [
+          "offer.placed"
+        ]
+      }
+    },
+    "headline": "rMsX…xgfY offered 0.76508 ETH (rvYA…s59B) for 1,915 RLUSD (rMxC…m5De); nothing crossed; placed on the book; passive; replacing its earlier offer #90282500; its own offer #90282503 on the other side was removed without trading. Fee 10 drops.",
+    "exchange": {
+      "book": {
+        "crossed": [],
+        "bridged": "no"
+      },
+      "amm": null,
+      "received": {
+        "currency": "RLUSD",
+        "code": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "0"
+      },
+      "spent": {
+        "currency": "ETH",
+        "code": "ETH",
+        "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "value": "0"
+      },
+      "fill": {
+        "status": "none",
+        "judgedBy": "takerPays-received",
+        "requested": {
+          "currency": "RLUSD",
+          "code": "524C555344000000000000000000000000000000",
+          "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+          "value": "1914.81607"
+        },
+        "achieved": {
+          "currency": "RLUSD",
+          "code": "524C555344000000000000000000000000000000",
+          "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+          "value": "0"
+        },
+        "placed": true
+      },
+      "corroboration": {
+        "received": "exact",
+        "spent": "exact"
+      }
+    },
+    "balances": [
+      {
+        "account": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "57639545",
+          "after": "57639535",
+          "delta": "-10"
+        },
+        "node": 8
+      }
+    ]
+  }
+}

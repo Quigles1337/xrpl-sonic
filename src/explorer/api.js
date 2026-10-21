@@ -1,6 +1,9 @@
 // xrpl-sonic explorer — reads from a public node over the same WebSocket client
 // the listening page uses. Every call is a documented rippled / Clio command;
 // results are cached per session so moving back and forth costs nothing.
+// Account reads take a `ledgerIndex` so one render can bind every part to
+// one validated ledger (src/explorer/account.js); without it they read the
+// node's current validated ledger, which may move between calls.
 
 import { XrplStream, NETWORKS } from '../ws.js';
 
@@ -70,25 +73,30 @@ export class ExplorerApi {
     return value;
   }
 
-  accountInfo(account) {
-    return this.request({ command: 'account_info', account, ledger_index: 'validated' }).then((r) => r.result);
+  /** The validated ledger's header (index, hash, close time): the snapshot an account render is bound to. */
+  validatedLedger() {
+    return this.request({ command: 'ledger', ledger_index: 'validated', transactions: false }, { ttl: 2000 }).then((r) => r.result);
   }
 
-  accountLines(account, { limit = 200, marker } = {}) {
-    return this.request({ command: 'account_lines', account, ledger_index: 'validated', limit, ...(marker ? { marker } : {}) }).then((r) => r.result);
+  accountInfo(account, { ledgerIndex } = {}) {
+    return this.request({ command: 'account_info', account, ledger_index: ledgerIndex ?? 'validated' }).then((r) => r.result);
   }
 
-  accountObjects(account, { limit = 200 } = {}) {
-    return this.request({ command: 'account_objects', account, ledger_index: 'validated', limit }).then((r) => r.result);
+  accountLines(account, { ledgerIndex, limit = 200, marker } = {}) {
+    return this.request({ command: 'account_lines', account, ledger_index: ledgerIndex ?? 'validated', limit, ...(marker ? { marker } : {}) }).then((r) => r.result);
   }
 
-  accountNfts(account, { limit = 100 } = {}) {
-    return this.request({ command: 'account_nfts', account, ledger_index: 'validated', limit }).then((r) => r.result);
+  accountObjects(account, { ledgerIndex, limit = 200 } = {}) {
+    return this.request({ command: 'account_objects', account, ledger_index: ledgerIndex ?? 'validated', limit }).then((r) => r.result);
   }
 
-  /** Newest first; `marker` pages further back. */
-  accountTx(account, { limit = 40, marker } = {}) {
-    return this.request({ command: 'account_tx', account, limit, ledger_index_min: -1, ledger_index_max: -1, forward: false, ...(marker ? { marker } : {}) }).then((r) => r.result);
+  accountNfts(account, { ledgerIndex, limit = 100 } = {}) {
+    return this.request({ command: 'account_nfts', account, ledger_index: ledgerIndex ?? 'validated', limit }).then((r) => r.result);
+  }
+
+  /** Newest first; `marker` pages further back; `ledgerIndexMax` pins every page to one validated ledger. */
+  accountTx(account, { limit = 40, marker, ledgerIndexMax } = {}) {
+    return this.request({ command: 'account_tx', account, limit, ledger_index_min: -1, ledger_index_max: ledgerIndexMax ?? -1, forward: false, ...(marker ? { marker } : {}) }).then((r) => r.result);
   }
 
   tx(hash) {

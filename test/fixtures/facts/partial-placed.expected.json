@@ -1,0 +1,267 @@
+{
+  "network": "mainnet",
+  "hash": "7DE912B7ED9F6F1868178FD4C75D96EFF1D2521C0C843ED7BC9426EECC35249F",
+  "ledgerIndex": 107811565,
+  "case": "partial fill with the remainder placed; ETH carries a transfer fee",
+  "source": {
+    "file": "partial-placed.json",
+    "command": {
+      "command": "tx",
+      "transaction": "7DE912B7ED9F6F1868178FD4C75D96EFF1D2521C0C843ED7BC9426EECC35249F",
+      "binary": false
+    }
+  },
+  "expect": {
+    "transaction": {
+      "type": "OfferCreate",
+      "account": "rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns",
+      "result": "tesSUCCESS",
+      "fee": "15",
+      "flags": [
+        "tfSell"
+      ]
+    },
+    "offers": {
+      "3": {
+        "action": "deleted",
+        "owner": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+        "sequence": 90282733,
+        "role": "book",
+        "traded": "yes",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "1910.7865"
+            },
+            "after": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "0"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "0.76544"
+            },
+            "after": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "0"
+            }
+          }
+        },
+        "tradedAmounts": {
+          "gave": {
+            "currency": "RLUSD",
+            "code": "524C555344000000000000000000000000000000",
+            "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+            "value": "1910.7865"
+          },
+          "got": {
+            "currency": "ETH",
+            "code": "ETH",
+            "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+            "value": "0.76544"
+          }
+        },
+        "removal": "consumed",
+        "rules": [
+          "offer.removal.consumed"
+        ]
+      },
+      "4": {
+        "action": "created",
+        "owner": "rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns",
+        "sequence": 109263646,
+        "role": "submitter-new",
+        "traded": "no",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "3.24556"
+            },
+            "after": {
+              "currency": "ETH",
+              "code": "ETH",
+              "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+              "value": "3.24556"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "8097.77605792"
+            },
+            "after": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "8097.77605792"
+            }
+          }
+        },
+        "tradedAmounts": null,
+        "rules": [
+          "offer.placed"
+        ]
+      }
+    },
+    "headline": "rURt…bKns offered 4.01 ETH (rvYA…s59B) for 10,008 RLUSD (rMxC…m5De); crossing 1 existing offer; partly filled: sold 0.76544 ETH of 4.01 ETH for 1,911 RLUSD; the rest was placed on the book. Fee 15 drops.",
+    "exchange": {
+      "book": {
+        "crossed": [
+          3
+        ],
+        "bridged": "no"
+      },
+      "amm": null,
+      "received": {
+        "currency": "RLUSD",
+        "code": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "1910.7865"
+      },
+      "spent": {
+        "currency": "ETH",
+        "code": "ETH",
+        "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "value": "0.76544"
+      },
+      "fill": {
+        "status": "partial",
+        "judgedBy": "takerGets-spent",
+        "requested": {
+          "currency": "ETH",
+          "code": "ETH",
+          "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+          "value": "4.011"
+        },
+        "achieved": {
+          "currency": "ETH",
+          "code": "ETH",
+          "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+          "value": "0.76544"
+        },
+        "placed": true
+      },
+      "corroboration": {
+        "received": "exact",
+        "spent": "consistent-with-transfer-fee"
+      }
+    },
+    "balances": [
+      {
+        "account": "rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns",
+        "currency": "RLUSD",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "exact": {
+          "before": "199639.3681360912",
+          "after": "201550.1546360912",
+          "delta": "1910.7865"
+        },
+        "node": 0
+      },
+      {
+        "account": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "currency": "RLUSD",
+        "issuer": "rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns",
+        "exact": {
+          "before": "-199639.3681360912",
+          "after": "-201550.1546360912",
+          "delta": "-1910.7865"
+        },
+        "node": 0
+      },
+      {
+        "account": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+        "currency": "RLUSD",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "exact": {
+          "before": "70021.43502807234",
+          "after": "68110.64852807234",
+          "delta": "-1910.7865"
+        },
+        "node": 5
+      },
+      {
+        "account": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "currency": "RLUSD",
+        "issuer": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+        "exact": {
+          "before": "-70021.43502807234",
+          "after": "-68110.64852807234",
+          "delta": "1910.7865"
+        },
+        "node": 5
+      },
+      {
+        "account": "rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "422039640771",
+          "after": "422039640756",
+          "delta": "-15"
+        },
+        "node": 7
+      },
+      {
+        "account": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "currency": "ETH",
+        "issuer": "rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns",
+        "exact": {
+          "before": "-70.25705451591551",
+          "after": "-69.49046635591551",
+          "delta": "0.76658816"
+        },
+        "node": 10
+      },
+      {
+        "account": "rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns",
+        "currency": "ETH",
+        "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "exact": {
+          "before": "70.25705451591551",
+          "after": "69.49046635591551",
+          "delta": "-0.76658816"
+        },
+        "node": 10
+      },
+      {
+        "account": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "currency": "ETH",
+        "issuer": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+        "exact": {
+          "before": "-20.62281729787651",
+          "after": "-21.38825729787651",
+          "delta": "-0.76544"
+        },
+        "node": 11
+      },
+      {
+        "account": "rMsXVzCug7nUsMYFGPXBTWY732fRZqxgfY",
+        "currency": "ETH",
+        "issuer": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "exact": {
+          "before": "20.62281729787651",
+          "after": "21.38825729787651",
+          "delta": "0.76544"
+        },
+        "node": 11
+      }
+    ]
+  }
+}

@@ -44,9 +44,14 @@ export function featuresOf(transactions, cast = []) {
   const members = Object.fromEntries((cast ?? []).map((m) => [m.id, { submitted: 0, involved: 0, offerCreate: 0 }]));
   let total = 0;
   let offerCreateTotal = 0;
+  const seen = new Set(); // a reconnect can replay a ledger's stream; the same hash counts once
   for (const raw of Array.isArray(transactions) ? transactions : []) {
     const u = unwrapTransactionMessage(raw);
     if (!u) continue;
+    if (u.hash) {
+      if (seen.has(u.hash)) continue;
+      seen.add(u.hash);
+    }
     total += 1;
     byCategory[categorize(u.tx.TransactionType)] += 1;
     const isOfferCreate = u.tx.TransactionType === 'OfferCreate';

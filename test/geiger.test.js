@@ -136,3 +136,16 @@ describe('Geiger', () => {
     assert.equal(text, 'ledger #7 carried 412 payment transactions; the previous 30 ledgers averaged 120.0 ± 40.0, so this is 7.3σ above the baseline (threshold 3σ).');
   });
 });
+
+describe('duplicate deliveries', () => {
+  test('the same transaction delivered twice (a reconnect replays the stream) is counted once', () => {
+    const once = featuresOf(ledger.transactions);
+    const twice = featuresOf([...ledger.transactions, ...ledger.transactions]);
+    assert.equal(twice.total, once.total);
+    assert.deepEqual(twice.byCategory, once.byCategory);
+    const asStream = ledger.transactions.map((t) => ({ type: 'transaction', transaction: t, meta: t.metaData, hash: t.hash, engine_result: t.metaData?.TransactionResult, validated: true }));
+    assert.equal(featuresOf([...asStream, ...asStream]).total, once.total, 'stream-shaped messages dedupe by hash too');
+    const noHash = [{ type: 'transaction', transaction: { TransactionType: 'Payment', Account: 'rA' } }, { type: 'transaction', transaction: { TransactionType: 'Payment', Account: 'rA' } }];
+    assert.equal(featuresOf(noHash).total, 2, 'without a hash nothing can be deduped, so nothing is dropped');
+  });
+});

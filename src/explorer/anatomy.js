@@ -5,11 +5,14 @@
 // what happened in plain words: who paid whom, which offers were placed,
 // replaced or consumed, which trust lines moved, what a result code means,
 // and what an account's flags and reserve amount to. Everything here is
-// derived from the record; nothing is inferred beyond it.
+// derived from the record; nothing is inferred beyond it: the sentences are
+// rendered from the typed findings of facts.js, and each keeps the ids of the
+// rules it rests on.
 //
 // Pure: no DOM, no network.
 
 import { parseAmount, formatAmount, decodeCurrency, shortAddress, DROPS_PER_XRP, RIPPLE_EPOCH_OFFSET, categorize } from '../mapping.js';
+import { facts, balanceFacts, valueOf } from './facts.js';
 
 /** What a result code means. tec codes were included in a ledger and charged a fee; the rest never were. */
 export const RESULT_CODES = Object.freeze({
@@ -115,47 +118,22 @@ export function reserveFor({ ownerCount = 0, reserveBase = 1, reserveInc = 0.2 }
 // Balance changes from AffectedNodes
 // ---------------------------------------------------------------------------
 
-function nodeOf(n) {
-  const kind = n.CreatedNode ? 'created' : n.ModifiedNode ? 'modified' : n.DeletedNode ? 'deleted' : null;
-  if (!kind) return null;
-  const e = n.CreatedNode ?? n.ModifiedNode ?? n.DeletedNode;
-  return { kind, type: e.LedgerEntryType, final: e.FinalFields ?? e.NewFields ?? {}, prev: e.PreviousFields ?? {}, fresh: e.NewFields ?? null, index: e.LedgerIndex };
-}
-
 const xrp = (drops) => Number(drops) / DROPS_PER_XRP;
 
 /**
  * Who gained and lost what. XRP from AccountRoot nodes (fees included);
  * issued currencies from RippleState nodes, reported for both sides of the
  * line (the low account's view, and the high account's as its negation).
- * @returns {{ account, currency, issuer, delta, before, after, created?, deleted? }[]}
+ * `delta`, `before` and `after` are numbers for the display layer; `exact`
+ * keeps the strings the ledger wrote (drops for XRP, decimals for issued
+ * currencies), and `node` is the AffectedNodes entry they came from.
+ * @returns {{ account, currency, issuer, delta, before, after, exact: { before, after, delta }, node, created?, deleted? }[]}
  */
 export function balanceChanges(meta) {
-  const out = [];
-  for (const raw of meta?.AffectedNodes ?? []) {
-    const n = nodeOf(raw);
-    if (!n) continue;
-    if (n.type === 'AccountRoot') {
-      const account = n.final.Account;
-      if (!account) continue;
-      if (n.kind === 'created') out.push({ account, currency: 'XRP', issuer: null, delta: xrp(n.final.Balance), before: 0, after: xrp(n.final.Balance), created: true });
-      else if (n.kind === 'deleted') out.push({ account, currency: 'XRP', issuer: null, delta: -xrp(n.final.Balance), before: xrp(n.final.Balance), after: 0, deleted: true });
-      else if (n.prev.Balance != null) out.push({ account, currency: 'XRP', issuer: null, delta: xrp(n.final.Balance) - xrp(n.prev.Balance), before: xrp(n.prev.Balance), after: xrp(n.final.Balance) });
-    } else if (n.type === 'RippleState') {
-      const bal = n.final.Balance;
-      const low = n.final.LowLimit?.issuer;
-      const high = n.final.HighLimit?.issuer;
-      if (!bal || !low || !high) continue;
-      const after = n.kind === 'deleted' ? 0 : Number(bal.value);
-      const before = n.kind === 'created' ? 0 : n.prev.Balance != null ? Number(n.prev.Balance.value) : n.kind === 'deleted' ? Number(bal.value) : after;
-      const delta = after - before;
-      if (delta === 0 && n.kind === 'modified') continue;
-      const currency = decodeCurrency(bal.currency);
-      out.push({ account: low, currency, issuer: high, delta, before, after, ...(n.kind !== 'modified' ? { [n.kind]: true } : {}) });
-      out.push({ account: high, currency, issuer: low, delta: -delta, before: -before, after: -after, ...(n.kind !== 'modified' ? { [n.kind]: true } : {}) });
-    }
-  }
-  return out;
+  return balanceFacts(meta).map((b) => {
+    const num = b.currency === 'XRP' ? xrp : Number;
+    return { ...b, delta: num(b.exact.delta), before: num(b.exact.before), after: num(b.exact.after) };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -167,197 +145,365 @@ function amountText(a) {
   return p ? formatAmount(p) : '?';
 }
 
+/** Display text for an exact amount from the facts layer (the display layer rounds; the facts keep the string). */
+function exactText(a) {
+  if (!a) return '?';
+  const p = parseAmount(a.currency === 'XRP' && a.drops != null ? a.drops : a.issuanceId ? { mpt_issuance_id: a.issuanceId, value: a.value } : { currency: a.code ?? a.currency, issuer: a.issuer, value: a.value });
+  return p ? formatAmount(p) : '?';
+}
+
 function issuerOf(a) {
   return a && typeof a === 'object' && a.issuer ? ` (${shortAddress(a.issuer)})` : '';
 }
 
+const fmtDrops = (drops) => `${xrp(drops).toLocaleString('en-US', { maximumFractionDigits: 6 })} XRP`;
+
+/** One Offer entry in words, from its findings. Returns { summary, rules }. */
+function offerSummary(o, f) {
+  const owner = shortAddress(o.owner);
+  const gets = exactText(o.amounts.takerGets.after);
+  const pays = exactText(o.amounts.takerPays.after);
+  const was = `(was giving ${exactText(o.amounts.takerGets.before)} for ${exactText(o.amounts.takerPays.before)})`;
+  if (o.action === 'created') return { summary: `Offer placed by ${owner}: gives ${gets}${issuerOf(o.amounts.takerGets.after)} for ${pays}${issuerOf(o.amounts.takerPays.after)}`, rules: o.role === 'submitter-new' ? ['offer.placed', 'offer.amounts.after'] : ['node.action', 'offer.amounts.after'] };
+  if (o.action === 'modified') {
+    if (o.traded === 'yes') return { summary: `Offer #${o.sequence} by ${owner} partly consumed: ${exactText(o.tradedAmounts.gave)} taken, ${gets} left`, rules: ['offer.modified.partial', 'offer.trade.delta'] };
+    if (o.traded === 'no') return { summary: `Offer #${o.sequence} by ${owner} updated`, rules: ['offer.modified.other'] };
+    return { summary: `Offer #${o.sequence} by ${owner} changed (the record does not say how much traded)`, rules: ['offer.trade.previous-fields'] };
+  }
+  switch (o.removal) {
+    case 'cancelled':
+      return { summary: `Earlier offer #${o.sequence} by ${owner} cancelled ${was}`, rules: ['offer.removal.cancelled'] };
+    case 'replaced':
+      return { summary: `Earlier offer #${o.sequence} by ${owner} replaced ${was}`, rules: ['offer.removal.replaced'] };
+    case 'self-cross':
+      return { summary: `Offer #${o.sequence} by ${owner} on the other side of its new offer removed without trading ${was}`, rules: ['offer.removal.self-cross'] };
+    case 'consumed':
+      return { summary: `Offer #${o.sequence} by ${owner} fully consumed: it gave ${exactText(o.tradedAmounts.gave)} for ${exactText(o.tradedAmounts.got)}`, rules: ['offer.removal.consumed', 'offer.trade.delta'] };
+    case 'traded-then-removed-unfunded':
+      return { summary: `Offer #${o.sequence} by ${owner} traded what it held and left the book: it gave ${exactText(o.tradedAmounts.gave)} for ${exactText(o.tradedAmounts.got)}, with ${gets} left unfunded`, rules: ['offer.removal.traded-unfunded', 'offer.trade.delta'] };
+    case 'cleanup-without-trade': {
+      const why = o.expired === 'yes' ? 'expired' : o.expired === 'no' ? (o.expiration != null ? 'not expired, so unfunded' : 'no expiration, so unfunded') : 'expired or unfunded';
+      return { summary: `Offer #${o.sequence} by ${owner} removed from the book without trading: ${why} ${was}`, rules: ['offer.removal.cleanup', 'offer.expired'] };
+    }
+    default:
+      return { summary: `Offer #${o.sequence} by ${owner} removed (the record does not say why) ${was}`, rules: ['offer.removal.unresolved'] };
+  }
+}
+
 /**
  * One line per ledger entry the transaction touched, with the action and a
- * few details. Directory nodes (bookkeeping) are counted, not listed.
- * @returns {{ entries: object[], directories: number }}
+ * few details, rendered from the findings. Each entry keeps the ids of the
+ * rules its summary rests on (`rules`) and of its findings (`findings`).
+ * Directory nodes (bookkeeping) are counted, not listed.
+ * @returns {{ entries: object[], directories: number, facts: object }}
  */
-export function describeAffected(meta, tx = {}) {
+export function describeAffected(meta, tx = {}, { facts: given = null } = {}) {
+  const f = given ?? facts(tx, meta, { closeTime: tx?.date ?? null });
+  const offersByNode = new Map(f.offers.map((o) => [o.node, o]));
+  const balancesByNode = new Map();
+  for (const b of f.balances) if (!balancesByNode.has(b.node)) balancesByNode.set(b.node, b);
   const entries = [];
   let directories = 0;
+  let n = -1;
   for (const raw of meta?.AffectedNodes ?? []) {
-    const n = nodeOf(raw);
-    if (!n) continue;
-    const f = n.final;
-    const base = { type: n.type, action: n.kind, index: n.index ?? null, details: [] };
-    switch (n.type) {
+    n += 1;
+    const wrapper = raw?.CreatedNode ? 'CreatedNode' : raw?.ModifiedNode ? 'ModifiedNode' : raw?.DeletedNode ? 'DeletedNode' : null;
+    if (!wrapper) continue;
+    const e = raw[wrapper];
+    const kind = wrapper === 'CreatedNode' ? 'created' : wrapper === 'ModifiedNode' ? 'modified' : 'deleted';
+    const fin = e.FinalFields ?? e.NewFields ?? {};
+    const prev = e.PreviousFields ?? {};
+    const type = e.LedgerEntryType;
+    const base = { node: n, type, action: kind, index: e.LedgerIndex ?? null, details: [], exact: {}, rules: ['node.action'], findings: f.findings.filter((x) => x.evidence.some((ev) => ev.node === n)).map((x) => x.id) };
+    switch (type) {
       case 'DirectoryNode':
         directories += 1;
         continue;
       case 'AccountRoot': {
-        const account = f.Account;
+        const account = fin.Account ?? null;
         const d = base.details;
-        if (n.prev.Balance != null) d.push(['Balance', `${xrp(n.prev.Balance).toLocaleString('en-US', { maximumFractionDigits: 6 })} → ${xrp(f.Balance).toLocaleString('en-US', { maximumFractionDigits: 6 })} XRP`]);
-        if (n.prev.OwnerCount != null) d.push(['Owned objects', `${n.prev.OwnerCount} → ${f.OwnerCount}`]);
-        if (n.prev.Sequence != null) d.push(['Sequence', `${n.prev.Sequence} → ${f.Sequence}`]);
-        if (n.prev.Domain != null || (n.kind === 'modified' && 'Domain' in n.prev)) d.push(['Domain', decodeDomain(f.Domain ?? '') || '(cleared)']);
-        if (n.prev.RegularKey !== undefined) d.push(['Regular key', f.RegularKey ?? '(removed)']);
-        if (n.prev.Flags != null) d.push(['Flags', `${n.prev.Flags} → ${f.Flags}`]);
-        entries.push({ ...base, account, summary: n.kind === 'created' ? `Account ${shortAddress(account)} created with ${xrp(f.Balance).toLocaleString('en-US', { maximumFractionDigits: 6 })} XRP` : n.kind === 'deleted' ? `Account ${shortAddress(account)} deleted` : `Account ${shortAddress(account)} updated` });
+        if (!account) {
+          entries.push({ ...base, account: null, summary: 'Account entry touched (only its last-transaction pointer changed)' });
+          break;
+        }
+        const bal = balancesByNode.get(n);
+        if (bal) {
+          d.push(['Balance', `${fmtDrops(bal.exact.before).replace(' XRP', '')} → ${fmtDrops(bal.exact.after)}`]);
+          base.exact.Balance = `${bal.exact.before} → ${bal.exact.after} drops`;
+          base.rules.push('balance.xrp');
+        }
+        if (prev.OwnerCount != null) d.push(['Owned objects', `${prev.OwnerCount} → ${fin.OwnerCount}`]);
+        if (prev.Sequence != null) d.push(['Sequence', `${prev.Sequence} → ${fin.Sequence}`]);
+        if (prev.Domain != null || (kind === 'modified' && 'Domain' in prev)) d.push(['Domain', decodeDomain(fin.Domain ?? '') || '(cleared)']);
+        if (prev.RegularKey !== undefined) d.push(['Regular key', fin.RegularKey ?? '(removed)']);
+        if (prev.Flags != null) d.push(['Flags', `${prev.Flags} → ${fin.Flags}`]);
+        if (fin.AMMID) d.push(['AMM pool', String(fin.AMMID)]);
+        entries.push({ ...base, account, summary: kind === 'created' ? `Account ${shortAddress(account)} created with ${fmtDrops(fin.Balance ?? '0')}` : kind === 'deleted' ? `Account ${shortAddress(account)} deleted` : fin.AMMID ? `AMM pool account ${shortAddress(account)} updated` : `Account ${shortAddress(account)} updated` });
         break;
       }
       case 'RippleState': {
-        const bal = f.Balance ?? {};
+        const bal = fin.Balance ?? {};
         const currency = decodeCurrency(bal.currency ?? '');
-        const low = f.LowLimit?.issuer;
-        const high = f.HighLimit?.issuer;
+        const low = fin.LowLimit?.issuer;
+        const high = fin.HighLimit?.issuer;
         const d = base.details;
-        if (n.prev.Balance != null) d.push(['Balance', `${Number(n.prev.Balance.value)} → ${Number(bal.value)} ${currency}`]);
-        else if (bal.value != null) d.push(['Balance', `${Number(bal.value)} ${currency}`]);
-        if (f.LowLimit) d.push(['Limit (low side)', `${Number(f.LowLimit.value)} ${currency} for ${shortAddress(low)}`]);
-        if (f.HighLimit) d.push(['Limit (high side)', `${Number(f.HighLimit.value)} ${currency} for ${shortAddress(high)}`]);
-        entries.push({ ...base, summary: `Trust line ${currency} between ${shortAddress(low)} and ${shortAddress(high)} ${n.kind}` });
+        const exact = balancesByNode.get(n);
+        if (exact) {
+          d.push(['Balance', `${Number(exact.exact.before)} → ${Number(exact.exact.after)} ${currency}`]);
+          base.exact.Balance = `${exact.exact.before} → ${exact.exact.after} ${currency}`;
+          base.rules.push('balance.issued');
+        } else if (bal.value != null) {
+          d.push(['Balance', `${Number(bal.value)} ${currency}`]);
+          base.exact.Balance = `${bal.value} ${currency}`;
+        }
+        if (fin.LowLimit) d.push(['Limit (low side)', `${Number(fin.LowLimit.value)} ${currency} for ${shortAddress(low)}`]);
+        if (fin.HighLimit) d.push(['Limit (high side)', `${Number(fin.HighLimit.value)} ${currency} for ${shortAddress(high)}`]);
+        entries.push({ ...base, summary: `Trust line ${currency} between ${shortAddress(low)} and ${shortAddress(high)} ${kind}` });
         break;
       }
       case 'Offer': {
-        const owner = f.Account;
-        const gets = amountText(f.TakerGets);
-        const pays = amountText(f.TakerPays);
-        let summary;
-        if (n.kind === 'created') summary = `Offer placed by ${shortAddress(owner)}: gives ${gets}${issuerOf(f.TakerGets)} for ${pays}${issuerOf(f.TakerPays)}`;
-        else if (n.kind === 'deleted') {
-          if (tx.OfferSequence != null && tx.OfferSequence === f.Sequence && tx.Account === owner) summary = `Earlier offer #${f.Sequence} by ${shortAddress(owner)} ${tx.TransactionType === 'OfferCancel' ? 'cancelled' : 'replaced'} (was giving ${gets} for ${pays})`;
-          else if (tx.Account === owner) summary = `Offer #${f.Sequence} by ${shortAddress(owner)} removed (was giving ${gets} for ${pays})`;
-          else summary = `Offer #${f.Sequence} by ${shortAddress(owner)} fully consumed: it gave ${amountText(n.prev.TakerGets ?? f.TakerGets)} for ${amountText(n.prev.TakerPays ?? f.TakerPays)}`;
-        } else {
-          const gotPrev = parseAmount(n.prev.TakerGets);
-          const gotNow = parseAmount(f.TakerGets);
-          const taken = gotPrev && gotNow ? gotPrev.value - gotNow.value : null;
-          summary = taken != null ? `Offer #${f.Sequence} by ${shortAddress(owner)} partly consumed: ${formatAmount({ ...gotNow, value: taken })} taken, ${gets} left` : `Offer #${f.Sequence} by ${shortAddress(owner)} updated`;
+        const o = offersByNode.get(n);
+        const { summary, rules } = offerSummary(o, f);
+        const unit = (a) => (a?.currency === 'XRP' ? 'drops' : a?.currency ?? '');
+        base.details.push(['Gives', `${exactText(o.amounts.takerGets.after)}${issuerOf(o.amounts.takerGets.after)}`], ['Wants', `${exactText(o.amounts.takerPays.after)}${issuerOf(o.amounts.takerPays.after)}`], ['Sequence', String(o.sequence)]);
+        base.exact.Gives = `${valueOf(o.amounts.takerGets.after)} ${unit(o.amounts.takerGets.after)}`;
+        base.exact.Wants = `${valueOf(o.amounts.takerPays.after)} ${unit(o.amounts.takerPays.after)}`;
+        if (o.traded === 'yes') {
+          base.details.push(['Traded', `gave ${exactText(o.tradedAmounts.gave)}, got ${exactText(o.tradedAmounts.got)}`]);
+          base.exact.Traded = `gave ${valueOf(o.tradedAmounts.gave)} ${unit(o.tradedAmounts.gave)}, got ${valueOf(o.tradedAmounts.got)} ${unit(o.tradedAmounts.got)}`;
         }
-        base.details.push(['Gives', `${gets}${issuerOf(f.TakerGets)}`], ['Wants', `${pays}${issuerOf(f.TakerPays)}`], ['Sequence', String(f.Sequence)]);
-        if (f.Expiration) base.details.push(['Expires', rippleTimeToIso(f.Expiration)]);
-        entries.push({ ...base, account: owner, summary });
+        if (o.expiration) base.details.push(['Expires', rippleTimeToIso(o.expiration)]);
+        if (o.removal) base.details.push(['Removal', o.removal]);
+        entries.push({ ...base, account: o.owner, summary, rules: [...new Set([...base.rules, ...rules])], offer: o });
         break;
       }
       case 'NFTokenOffer': {
-        const sell = (Number(tx.Flags) & 1) === 1 || (Number(f.Flags) & 1) === 1;
-        base.details.push(['Token', String(f.NFTokenID ?? '')], ['Amount', amountText(f.Amount)]);
-        if (f.Expiration) base.details.push(['Expires', rippleTimeToIso(f.Expiration)]);
-        if (f.Destination) base.details.push(['Only for', shortAddress(f.Destination)]);
-        entries.push({ ...base, account: f.Owner, summary: `NFT ${sell ? 'sell' : 'buy'} offer by ${shortAddress(f.Owner)} ${n.kind}: ${amountText(f.Amount)}` });
+        const sell = (Number(tx.Flags) & 1) === 1 || (Number(fin.Flags) & 1) === 1;
+        base.details.push(['Token', String(fin.NFTokenID ?? '')], ['Amount', amountText(fin.Amount)]);
+        if (fin.Expiration) base.details.push(['Expires', rippleTimeToIso(fin.Expiration)]);
+        if (fin.Destination) base.details.push(['Only for', shortAddress(fin.Destination)]);
+        entries.push({ ...base, account: fin.Owner, summary: `NFT ${sell ? 'sell' : 'buy'} offer by ${shortAddress(fin.Owner)} ${kind}: ${amountText(fin.Amount)}` });
         break;
       }
       case 'NFTokenPage': {
-        const count = Array.isArray(f.NFTokens) ? f.NFTokens.length : null;
-        const prevCount = Array.isArray(n.prev.NFTokens) ? n.prev.NFTokens.length : null;
-        entries.push({ ...base, summary: `NFT page ${n.kind}${count != null ? ` (${prevCount != null ? `${prevCount} → ` : ''}${count} tokens)` : ''}` });
+        const count = Array.isArray(fin.NFTokens) ? fin.NFTokens.length : null;
+        const prevCount = Array.isArray(prev.NFTokens) ? prev.NFTokens.length : null;
+        entries.push({ ...base, summary: `NFT page ${kind}${count != null ? ` (${prevCount != null ? `${prevCount} → ` : ''}${count} tokens)` : ''}` });
         break;
       }
       case 'Escrow':
-        base.details.push(['Amount', amountText(f.Amount)], ['To', shortAddress(f.Destination)]);
-        if (f.FinishAfter) base.details.push(['Finish after', rippleTimeToIso(f.FinishAfter)]);
-        if (f.CancelAfter) base.details.push(['Cancel after', rippleTimeToIso(f.CancelAfter)]);
-        entries.push({ ...base, account: f.Account, summary: `Escrow ${n.kind}: ${amountText(f.Amount)} from ${shortAddress(f.Account)} to ${shortAddress(f.Destination)}` });
+        base.details.push(['Amount', amountText(fin.Amount)], ['To', shortAddress(fin.Destination)]);
+        if (fin.FinishAfter) base.details.push(['Finish after', rippleTimeToIso(fin.FinishAfter)]);
+        if (fin.CancelAfter) base.details.push(['Cancel after', rippleTimeToIso(fin.CancelAfter)]);
+        entries.push({ ...base, account: fin.Account, summary: `Escrow ${kind}: ${amountText(fin.Amount)} from ${shortAddress(fin.Account)} to ${shortAddress(fin.Destination)}` });
         break;
       case 'PayChannel':
-        base.details.push(['Capacity', amountText(f.Amount)], ['Paid out', amountText(f.Balance)], ['To', shortAddress(f.Destination)]);
-        entries.push({ ...base, account: f.Account, summary: `Payment channel ${n.kind}: ${amountText(f.Balance)} of ${amountText(f.Amount)} paid to ${shortAddress(f.Destination)}` });
+        base.details.push(['Capacity', amountText(fin.Amount)], ['Paid out', amountText(fin.Balance)], ['To', shortAddress(fin.Destination)]);
+        entries.push({ ...base, account: fin.Account, summary: `Payment channel ${kind}: ${amountText(fin.Balance)} of ${amountText(fin.Amount)} paid to ${shortAddress(fin.Destination)}` });
         break;
       case 'Check':
-        base.details.push(['Up to', amountText(f.SendMax)], ['To', shortAddress(f.Destination)]);
-        entries.push({ ...base, account: f.Account, summary: `Check ${n.kind}: up to ${amountText(f.SendMax)} for ${shortAddress(f.Destination)}` });
+        base.details.push(['Up to', amountText(fin.SendMax)], ['To', shortAddress(fin.Destination)]);
+        entries.push({ ...base, account: fin.Account, summary: `Check ${kind}: up to ${amountText(fin.SendMax)} for ${shortAddress(fin.Destination)}` });
         break;
       case 'AMM':
-        entries.push({ ...base, account: f.Account, summary: `AMM pool ${n.kind}${f.TradingFee != null ? ` (fee ${(Number(f.TradingFee) / 1000).toFixed(3)}%)` : ''}` });
+        entries.push({ ...base, account: fin.Account, summary: `AMM pool ${kind}${fin.TradingFee != null ? ` (fee ${(Number(fin.TradingFee) / 1000).toFixed(3)}%)` : ''}` });
         break;
       case 'Ticket':
-        entries.push({ ...base, account: f.Account, summary: `Ticket #${f.TicketSequence ?? '?'} ${n.kind}` });
+        entries.push({ ...base, account: fin.Account, summary: `Ticket #${fin.TicketSequence ?? '?'} ${kind}` });
         break;
       case 'SignerList':
-        entries.push({ ...base, summary: `Signer list ${n.kind}${f.SignerQuorum != null ? ` (quorum ${f.SignerQuorum}, ${(f.SignerEntries ?? []).length} signers)` : ''}` });
+        entries.push({ ...base, summary: `Signer list ${kind}${fin.SignerQuorum != null ? ` (quorum ${fin.SignerQuorum}, ${(fin.SignerEntries ?? []).length} signers)` : ''}` });
         break;
       case 'DepositPreauth':
-        entries.push({ ...base, account: f.Account, summary: `Deposit pre-authorisation ${n.kind}${f.Authorize ? ` for ${shortAddress(f.Authorize)}` : ''}` });
+        entries.push({ ...base, account: fin.Account, summary: `Deposit pre-authorisation ${kind}${fin.Authorize ? ` for ${shortAddress(fin.Authorize)}` : ''}` });
         break;
       default:
-        entries.push({ ...base, summary: `${n.type} ${n.kind}` });
+        entries.push({ ...base, summary: `${type} ${kind}` });
     }
   }
-  return { entries, directories };
+  return { entries, directories, facts: f };
 }
 
 // ---------------------------------------------------------------------------
 // The headline
 // ---------------------------------------------------------------------------
 
-const fmtXrp = (v) => `${Number(v).toLocaleString('en-US', { maximumFractionDigits: 6 })} XRP`;
-
 /**
- * One or two sentences that say what the transaction did, from the record.
- * @param {object} tx   the transaction fields (with hash, date…)
- * @param {object} meta its metadata
+ * The headline as sentences rendered from the findings. Each sentence keeps
+ * the rule ids it rests on and the ids of the findings it used, so "show why"
+ * is a lookup into `facts.findings`.
+ * @returns {{ text: string, sentences: { text: string, rules: string[], findings: string[] }[], facts: object }}
  */
-export function summarize(tx, meta) {
-  if (!tx || typeof tx !== 'object') return '';
-  const result = meta?.TransactionResult ?? tx.meta?.TransactionResult ?? null;
-  const fee = Number(tx.Fee) || 0;
-  const feeText = fee ? `Fee ${fee.toLocaleString('en-US')} drops.` : '';
+export function explain(tx, meta, { facts: given = null } = {}) {
+  if (!tx || typeof tx !== 'object') return { text: '', sentences: [], facts: null };
+  const f = given ?? facts(tx, meta, { closeTime: tx.date ?? null });
+  const byRule = (...rules) => f.findings.filter((x) => rules.includes(x.rule)).map((x) => x.id);
+  const sentences = [];
+  const say = (text, rules, findings = byRule(...rules)) => sentences.push({ text, rules, findings });
+  const result = f.transaction.result;
+  const fee = f.transaction.fee ?? '0';
+  const feeNum = Number(fee) || 0;
+  const feeText = feeNum ? `Fee ${feeNum.toLocaleString('en-US')} drops.` : '';
   const who = shortAddress(tx.Account);
-  if (result && result !== 'tesSUCCESS') return `${tx.TransactionType} by ${who} failed: ${result} — ${resultMeaning(result)} ${fee ? `Only the fee of ${fee.toLocaleString('en-US')} drops was charged.` : ''}`.trim();
-  const changes = balanceChanges(meta);
+  if (result && result !== 'tesSUCCESS') {
+    say(`${tx.TransactionType} by ${who} failed: ${result} — ${resultMeaning(result)}`, ['result']);
+    if (feeNum) say(`Only the fee of ${feeNum.toLocaleString('en-US')} drops was charged.`, ['result', 'balance.xrp']);
+    return { text: sentences.map((s) => s.text).join(' '), sentences, facts: f };
+  }
   switch (tx.TransactionType) {
     case 'Payment': {
-      const delivered = parseAmount(meta?.delivered_amount ?? meta?.DeliveredAmount ?? tx.DeliverMax ?? tx.Amount);
-      const created = changes.find((c) => c.created && c.account === tx.Destination);
+      const ex = f.exchange;
+      const delivered = ex?.request.delivered && ex.request.delivered !== 'unresolved' ? ex.request.delivered : ex?.request.amount ?? null;
+      const created = f.balances.find((c) => c.created && c.account === tx.Destination);
       const self = tx.Account === tx.Destination;
-      const head = self ? `${who} paid itself ${delivered ? formatAmount(delivered) : '?'}${delivered?.isXrp === false ? ' (a path payment, likely a currency conversion)' : ''}` : `${who} sent ${delivered ? formatAmount(delivered) : '?'}${delivered?.issuer ? ` (${shortAddress(delivered.issuer)})` : ''} to ${shortAddress(tx.Destination)}`;
-      const tail = created ? ` This funded a new account.` : '';
-      const partial = (Number(tx.Flags) & 0x00020000) !== 0 ? ' Partial payment allowed.' : '';
-      return `${head}.${tail}${partial} ${feeText}`.trim();
+      const crossed = ex?.crossed ?? [];
+      const spent = ex?.spent && delivered && (ex.spent.currency !== delivered.currency || ex.spent.issuer !== delivered.issuer) ? ex.spent : null;
+      const head = self ? `${who} paid itself ${delivered ? exactText(delivered) : '?'}${issuerOf(delivered)}${spent ? ` for ${exactText(spent)}${issuerOf(spent)}` : ''}` : `${who} sent ${delivered ? exactText(delivered) : '?'}${issuerOf(delivered)} to ${shortAddress(tx.Destination)}${spent ? `, paying ${exactText(spent)}${issuerOf(spent)}` : ''}`;
+      say(`${head}${crossed.length ? `, crossing ${crossed.length} offer${crossed.length === 1 ? '' : 's'} on the way` : ''}.`, ['payment.delivered', ...(spent ? ['payment.spent'] : []), ...(crossed.length ? ['payment.crossed'] : [])]);
+      if (created) say('This funded a new account.', ['balance.xrp'], [byRule('balance.xrp').find(Boolean)].filter(Boolean));
+      if (ex?.request.partialPayment) say('Partial payment allowed.', ['transaction.flags']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     }
     case 'OfferCreate': {
-      const gets = parseAmount(tx.TakerGets);
-      const pays = parseAmount(tx.TakerPays);
-      const { entries } = describeAffected(meta, tx);
-      const replaced = entries.find((e) => e.type === 'Offer' && e.action === 'deleted' && e.summary.includes('replaced'));
-      const consumed = entries.filter((e) => e.type === 'Offer' && (e.summary.includes('consumed') || e.summary.includes('partly'))).length;
-      const placed = entries.some((e) => e.type === 'Offer' && e.action === 'created' && e.account === tx.Account);
-      const parts = [`${who} offered ${gets ? formatAmount(gets) : '?'}${issuerOf(tx.TakerGets)} for ${pays ? formatAmount(pays) : '?'}${issuerOf(tx.TakerPays)}`];
-      if (consumed) parts.push(`crossing ${consumed} existing offer${consumed === 1 ? '' : 's'}`);
-      parts.push(placed ? 'the rest was placed on the book' : consumed ? 'filled entirely' : 'nothing was placed');
-      if (replaced) parts.push(`replacing its earlier offer #${tx.OfferSequence}`);
-      return `${parts.join('; ')}. ${feeText}`.trim();
+      const ex = f.exchange;
+      const { request: req, fill } = ex;
+      const gets = req.takerGets;
+      const pays = req.takerPays;
+      const parts = [];
+      const part = (text, rules) => parts.push({ text, rules });
+      part(`${who} offered ${gets ? exactText(gets) : '?'}${issuerOf(gets)} for ${pays ? exactText(pays) : '?'}${issuerOf(pays)}`, ['exchange.request']);
+      const crossed = ex.book.crossed.length;
+      const pool = ex.amm?.tier === 'rule';
+      if (crossed) part(`crossing ${crossed} existing offer${crossed === 1 ? '' : 's'}${pool ? ' and an AMM pool' : ''}${ex.book.bridged === 'yes' ? ', bridged through XRP' : ''}`, ['exchange.book', ...(pool ? ['exchange.amm'] : []), ...(ex.book.bridged === 'yes' ? ['exchange.bridged'] : [])]);
+      else if (pool) part('filled by an AMM pool', ['exchange.amm']);
+      else part('nothing crossed', ['exchange.book']);
+      const sell = req.sell;
+      const received = ex.received ? exactText(ex.received) : '?';
+      const spent = ex.spent ? exactText(ex.spent) : '?';
+      const getsText = gets ? exactText(gets) : '?';
+      const paysText = pays ? exactText(pays) : '?';
+      let iocSaid = false;
+      switch (fill?.status) {
+        case 'filled': {
+          const fillRules = ['exchange.fill', ...(f.findings.some((x) => x.rule === 'exchange.fill.rounding') ? ['exchange.fill.rounding'] : [])];
+          if (sell) part(`filled entirely: sold all ${getsText} for ${received}${fill.betterThanAsked === 'yes' ? `, above the ${paysText} asked` : ''}`, fillRules);
+          else part(`filled entirely: received ${received} for ${fill.betterThanAsked === 'yes' ? `${spent} of the ${getsText} offered` : `all ${getsText}`}`, fillRules);
+          break;
+        }
+        case 'partial': {
+          const head = sell ? `partly filled: sold ${spent} of ${getsText} for ${received}` : `partly filled: received ${received} of ${paysText} for ${spent}`;
+          if (req.immediateOrCancel) {
+            part(`${head}; immediate-or-cancel, so the rest was not placed`, ['exchange.fill', 'exchange.fill.ioc']);
+            iocSaid = true;
+          } else if (fill.placed) part(`${head}; the rest was placed on the book`, ['exchange.fill', 'offer.placed']);
+          else part(`${head}; the rest was not placed`, ['exchange.fill']);
+          break;
+        }
+        case 'none':
+          if (fill.placed) part('placed on the book', ['offer.placed']);
+          else if (req.immediateOrCancel) {
+            part('immediate-or-cancel, so nothing was placed', ['exchange.fill.ioc']);
+            iocSaid = true;
+          } else part('nothing was placed', ['exchange.fill']);
+          break;
+        default: {
+          const x = f.findings.find((y) => y.subject === 'exchange' && y.property === 'fill');
+          part(`fill status unresolved${x?.note ? `: ${x.note.replace(/\.$/, '')}` : ''}`, ['exchange.fill']);
+        }
+      }
+      if (req.immediateOrCancel && !iocSaid) part('immediate-or-cancel', ['exchange.fill.ioc']);
+      if (req.fillOrKill) part('fill-or-kill', ['exchange.fill.fok']);
+      if (req.passive) part('passive', ['exchange.request']);
+      for (const o of f.offers) if (o.removal === 'replaced') part(`replacing its earlier offer #${o.sequence}`, ['offer.removal.replaced']);
+      for (const o of f.offers) if (o.removal === 'self-cross') part(`its own offer #${o.sequence} on the other side was removed without trading`, ['offer.removal.self-cross']);
+      const cleaned = f.offers.filter((o) => o.removal === 'cleanup-without-trade');
+      if (cleaned.length) {
+        const expired = cleaned.filter((o) => o.expired === 'yes').length;
+        const tail = expired === cleaned.length ? ' (expired)' : expired ? ` (${expired} expired)` : '';
+        part(`${cleaned.length} stale offer${cleaned.length === 1 ? '' : 's'} removed from the book without trading${tail}`, ['offer.removal.cleanup', 'offer.expired']);
+      }
+      const drained = f.offers.filter((o) => o.removal === 'traded-then-removed-unfunded');
+      if (drained.length) part(`${drained.length} offer${drained.length === 1 ? '' : 's'} traded what they held and left the book`, ['offer.removal.traded-unfunded']);
+      const unresolved = f.offers.filter((o) => o.action === 'deleted' && o.removal === 'unresolved');
+      if (unresolved.length) part(`${unresolved.length} offer${unresolved.length === 1 ? '' : 's'} removed for a reason the record does not give`, ['offer.removal.unresolved']);
+      say(`${parts.map((p) => p.text).join('; ')}.`, [...new Set(parts.flatMap((p) => p.rules))]);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     }
-    case 'OfferCancel':
-      return `${who} cancelled its offer #${tx.OfferSequence}. ${feeText}`.trim();
+    case 'OfferCancel': {
+      const gone = f.offers.find((o) => o.removal === 'cancelled');
+      say(`${who} cancelled its offer #${tx.OfferSequence}.`, gone ? ['offer.removal.cancelled'] : ['exchange.request'], gone ? byRule('offer.removal.cancelled') : []);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
+    }
     case 'TrustSet': {
       const lim = parseAmount(tx.LimitAmount);
-      return `${who} set a trust line for ${lim ? formatAmount(lim) : '?'}${issuerOf(tx.LimitAmount)}${lim && lim.value === 0 ? ' (removing it, if nothing is owed)' : ''}. ${feeText}`.trim();
+      say(`${who} set a trust line for ${lim ? formatAmount(lim) : '?'}${issuerOf(tx.LimitAmount)}${lim && lim.value === 0 ? ' (removing it, if nothing is owed)' : ''}.`, ['transaction.flags', 'balance.issued'], byRule('balance.issued'));
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     }
     case 'NFTokenCreateOffer': {
       const sell = (Number(tx.Flags) & 1) === 1;
-      return `${who} ${sell ? 'offered to sell' : 'offered to buy'} NFT ${String(tx.NFTokenID ?? '').slice(0, 10)}… for ${amountText(tx.Amount)}${tx.Expiration ? `, until ${rippleTimeToIso(tx.Expiration)}` : ''}. ${feeText}`.trim();
+      say(`${who} ${sell ? 'offered to sell' : 'offered to buy'} NFT ${String(tx.NFTokenID ?? '').slice(0, 10)}… for ${amountText(tx.Amount)}${tx.Expiration ? `, until ${rippleTimeToIso(tx.Expiration)}` : ''}.`, ['transaction.flags', 'node.action']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     }
     case 'NFTokenMint':
-      return `${who} minted an NFT (taxon ${tx.NFTokenTaxon ?? '?'}). ${feeText}`.trim();
+      say(`${who} minted an NFT (taxon ${tx.NFTokenTaxon ?? '?'}).`, ['node.action']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     case 'NFTokenAcceptOffer':
-      return `${who} accepted an NFT offer. ${feeText}`.trim();
+      say(`${who} accepted an NFT offer.`, ['node.action']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     case 'NFTokenBurn':
-      return `${who} burned NFT ${String(tx.NFTokenID ?? '').slice(0, 10)}…. ${feeText}`.trim();
+      say(`${who} burned NFT ${String(tx.NFTokenID ?? '').slice(0, 10)}….`, ['node.action']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     case 'EscrowCreate':
-      return `${who} locked ${amountText(tx.Amount)} in escrow for ${shortAddress(tx.Destination)}. ${feeText}`.trim();
+      say(`${who} locked ${amountText(tx.Amount)} in escrow for ${shortAddress(tx.Destination)}.`, ['node.action', 'balance.xrp']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     case 'EscrowFinish':
-      return `${who} released the escrow #${tx.OfferSequence} of ${shortAddress(tx.Owner)}. ${feeText}`.trim();
+      say(`${who} released the escrow #${tx.OfferSequence} of ${shortAddress(tx.Owner)}.`, ['node.action', 'balance.xrp']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     case 'EscrowCancel':
-      return `${who} cancelled the escrow #${tx.OfferSequence} of ${shortAddress(tx.Owner)}. ${feeText}`.trim();
+      say(`${who} cancelled the escrow #${tx.OfferSequence} of ${shortAddress(tx.Owner)}.`, ['node.action', 'balance.xrp']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     case 'AccountSet':
-      return `${who} changed its account settings${tx.Domain ? ` (domain ${decodeDomain(tx.Domain)})` : ''}. ${feeText}`.trim();
+      say(`${who} changed its account settings${tx.Domain ? ` (domain ${decodeDomain(tx.Domain)})` : ''}.`, ['node.action']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     case 'TicketCreate':
-      return `${who} created ${tx.TicketCount ?? 1} ticket${Number(tx.TicketCount) === 1 ? '' : 's'}. ${feeText}`.trim();
+      say(`${who} created ${tx.TicketCount ?? 1} ticket${Number(tx.TicketCount) === 1 ? '' : 's'}.`, ['node.action']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     case 'AMMDeposit':
     case 'AMMWithdraw':
     case 'AMMCreate':
     case 'AMMBid':
     case 'AMMVote':
-      return `${who} ${tx.TransactionType.replace('AMM', 'AMM ').toLowerCase()}. ${feeText}`.trim();
+      say(`${who} ${tx.TransactionType.replace('AMM', 'AMM ').toLowerCase()}.`, ['node.action']);
+      if (feeText) say(feeText, ['balance.xrp']);
+      break;
     default:
-      return `${who} submitted a ${tx.TransactionType}. ${feeText}`.trim();
+      say(`${who} submitted a ${tx.TransactionType}.`, ['node.action']);
+      if (feeText) say(feeText, ['balance.xrp']);
   }
+  return { text: sentences.map((s) => s.text).join(' '), sentences, facts: f };
+}
+
+/**
+ * One or two sentences that say what the transaction did, from the record.
+ * The text of `explain()`; the rule ids are there when they are wanted.
+ * @param {object} tx   the transaction fields (with hash, date…)
+ * @param {object} meta its metadata
+ */
+export function summarize(tx, meta) {
+  return explain(tx, meta).text;
 }
 
 // ---------------------------------------------------------------------------

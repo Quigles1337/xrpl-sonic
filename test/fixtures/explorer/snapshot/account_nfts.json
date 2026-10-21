@@ -1,0 +1,19 @@
+{
+  "result": {
+    "ledger_hash": "049FB307D0BE393C4D165349C92168F0EE413FED64B520397A8A47DB2FD6EBDF",
+    "ledger_index": 107811689,
+    "validated": true,
+    "account": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+    "account_nfts": [],
+    "limit": 100
+  },
+  "id": "xrpl-sonic-req-6",
+  "status": "success",
+  "type": "response",
+  "warnings": [
+    {
+      "id": 2001,
+      "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+    }
+  ]
+}

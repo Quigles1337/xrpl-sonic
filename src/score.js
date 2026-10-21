@@ -15,7 +15,7 @@
 //
 // Pure: no DOM, no audio.
 
-import { txToEvent, ledgerToEvent, formatAmount, shortAddress, MAPPING_VERSION } from './mapping.js';
+import { txToEventOrReason, ledgerToEvent, formatAmount, shortAddress, MAPPING_VERSION, EXCLUSION_REASONS } from './mapping.js';
 import { scheduleReplay, replayIntervalMs, replayLedgerMessage, DEFAULT_CLOSE_INTERVAL_MS } from './replay.js';
 import { castFor, castGate, decorateEvent } from './cast.js';
 
@@ -23,6 +23,9 @@ export const SCORE_VERSION = 1;
 
 /** Silence between clips, so an omitted interval is heard as well as seen. */
 export const GAP_MS = 1500;
+
+/** Why a transaction is not in the score: the mapping's reasons, plus the cast gate. */
+export const SCORE_EXCLUSION_REASONS = Object.freeze({ ...EXCLUSION_REASONS, castHidden: 'outside the cast' });
 
 function txIndexOf(tx) {
   const meta = tx?.meta ?? tx?.metaData;
@@ -58,7 +61,11 @@ export function buildScore(theCase, ledgers) {
     annotations: [],
     warnings: [],
     totalMs: 0,
-    counts: { events: 0, played: 0, dim: 0, missingLedgers: 0, byCategory: {} },
+    counts: { events: 0, played: 0, dim: 0, missingLedgers: 0, byCategory: {}, excluded: { total: 0, byReason: {} } },
+  };
+  const exclude = (reason) => {
+    score.counts.excluded.total += 1;
+    score.counts.excluded.byReason[reason] = (score.counts.excluded.byReason[reason] ?? 0) + 1;
   };
   let cursor = 0;
   const byHash = new Map();
@@ -92,12 +99,18 @@ export function buildScore(theCase, ledgers) {
       });
       byLedger.set(n, cursor);
       for (const { tx, offsetMs } of scheduleReplay(ledger, nextCloseTime)) {
-        const ev = txToEvent(tx, options);
-        if (!ev) continue;
+        const { event: ev, reason } = txToEventOrReason(tx, options);
+        if (!ev) {
+          exclude(reason);
+          continue;
+        }
         if (ev.ledgerIndex == null) ev.ledgerIndex = Number(ledger.ledger_index);
         const involvement = castFor(tx, cast);
         const gate = castGate(involvement, cast, mode);
-        if (gate === 'skip') continue;
+        if (gate === 'skip') {
+          exclude('castHidden');
+          continue;
+        }
         decorateEvent(ev, involvement);
         const item = {
           n: score.events.length,
@@ -165,6 +178,27 @@ export function clipRanges(score) {
   return out.filter(Boolean);
 }
 
+/** The ledger playing at a position on the timeline: the last one that started at or before it (the first, before the start). */
+export function ledgerAtPosition(score, ms) {
+  const ledgers = score?.ledgers;
+  if (!Array.isArray(ledgers) || !ledgers.length) return null;
+  let found = ledgers[0];
+  for (const l of ledgers) {
+    if (l.timeMs <= ms) found = l;
+    else break;
+  }
+  return found.ledgerIndex;
+}
+
+/** "failed 3, category disabled 2" for a score's excluded counts; empty when nothing was excluded. */
+export function excludedText(counts) {
+  const by = counts?.excluded?.byReason ?? {};
+  return Object.entries(by)
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => `${SCORE_EXCLUSION_REASONS[k] ?? k} ${n}`)
+    .join(', ');
+}
+
 /** mm:ss.mmm for a score position. */
 export function formatClock(ms) {
   const t = Math.max(0, Math.round(Number(ms) || 0));
@@ -202,7 +236,8 @@ export function transcript(score, theCase) {
   lines.push(`xrpl-sonic transcript · ${title}`);
   lines.push(`network ${score.network} · mapping ${score.mappingVersion} · scale ${theCase?.mapping?.scale ?? ''} ${theCase?.mapping?.key ?? ''} · speed ${score.speed}×`);
   if (cast.length) lines.push(`cast: ${cast.map((m) => `${m.label} = ${m.address} (${m.voice}, pan ${m.pan})`).join('; ')}`);
-  lines.push(`${score.ledgers.length} ledgers · ${score.counts.events} events (${score.counts.played} sounded, ${score.counts.dim} silent) · ${formatClock(score.totalMs)} at 1×`);
+  const excluded = score.counts.excluded?.total ? ` · ${score.counts.excluded.total} excluded (${excludedText(score.counts)})` : '';
+  lines.push(`${score.ledgers.length} ledgers · ${score.counts.events} events (${score.counts.played} selected to sound, ${score.counts.dim} silent)${excluded} · ${formatClock(score.totalMs)} at 1×`);
   for (const w of score.warnings) lines.push(`warning: ${w}`);
   lines.push('');
   const rows = [];

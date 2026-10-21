@@ -1,0 +1,150 @@
+{
+  "result": {
+    "account": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+    "ledger_hash": "049FB307D0BE393C4D165349C92168F0EE413FED64B520397A8A47DB2FD6EBDF",
+    "ledger_index": 107811689,
+    "validated": true,
+    "limit": 200,
+    "lines": [
+      {
+        "account": "rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL",
+        "balance": "0.2080052853762918",
+        "currency": "BTC",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rcEGREd8NmkKRE8GE424sksyt1tJVFZwu",
+        "balance": "14913.40523825471",
+        "currency": "5553444300000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+        "balance": "599665.5303727388",
+        "currency": "USD",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE",
+        "balance": "0",
+        "currency": "5553444300000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
+        "balance": "8146.656091961245",
+        "currency": "USD",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "balance": "16764.13084259252",
+        "currency": "USD",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "balance": "67485.27807460995",
+        "currency": "524C555344000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq",
+        "balance": "25670.97764682137",
+        "currency": "5553445400000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "balance": "0.2929665877472948",
+        "currency": "BTC",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+        "balance": "30428.91193685434",
+        "currency": "EUR",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK",
+        "balance": "15209.5451801974",
+        "currency": "4555524F50000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "balance": "0.0001028839736107885",
+        "currency": "ETH",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      },
+      {
+        "account": "rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h",
+        "balance": "2.970889507441495",
+        "currency": "ETH",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "quality_in": 0,
+        "quality_out": 0,
+        "no_ripple": true
+      }
+    ]
+  },
+  "id": "xrpl-sonic-req-4",
+  "status": "success",
+  "type": "response",
+  "warnings": [
+    {
+      "id": 2001,
+      "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+    }
+  ]
+}

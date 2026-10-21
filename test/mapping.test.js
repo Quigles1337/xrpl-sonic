@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import {
+  txToEventOrReason,
+  EXCLUSION_REASONS,
   CATEGORIES,
   CATEGORY_NAMES,
   SCALES,
@@ -531,5 +533,24 @@ describe('account mode', () => {
       const ev = txToEvent(fixture(name), { includeFailed: true });
       for (const p of ev.parties) assert.ok(isValidAddress(p.address), `${name}: ${p.address}`);
     }
+  });
+});
+
+describe('txToEventOrReason', () => {
+  test('says why a transaction produced no event, and agrees with txToEvent', () => {
+    const ok = fixture('payment-xrp-drops');
+    const failed = fixture('payment-failed');
+    assert.deepEqual(Object.keys(EXCLUSION_REASONS), ['notATransaction', 'failed', 'categoryDisabled', 'quietThreshold']);
+    const r1 = txToEventOrReason(ok);
+    assert.equal(r1.reason, null);
+    assert.deepEqual(r1.event, txToEvent(ok));
+    assert.equal(txToEventOrReason(failed).reason, 'failed');
+    assert.equal(txToEventOrReason(failed).event, null);
+    assert.equal(txToEventOrReason(failed, { includeFailed: true }).reason, null);
+    assert.equal(txToEventOrReason(ok, { enabled: { payment: false } }).reason, 'categoryDisabled');
+    assert.equal(txToEventOrReason(ok, { quietThreshold: 1e9 }).reason, 'quietThreshold');
+    assert.equal(txToEventOrReason({ type: 'ledgerClosed' }).reason, 'notATransaction');
+    assert.equal(txToEventOrReason(null).reason, 'notATransaction');
+    assert.equal(txToEvent(failed), null, 'txToEvent is unchanged for existing callers');
   });
 });

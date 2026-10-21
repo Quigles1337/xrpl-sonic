@@ -6,11 +6,11 @@
 import { el, svg } from '../dom.js';
 import { CATEGORIES, categorize, parseAmount, formatAmount, shortAddress, txToEvent } from '../mapping.js';
 import { eventIcon, categoryIcon, fieldGuide } from '../glyphs.js';
-import { explorerUrl, EXPLORERS } from '../explorers.js';
+import { explorerUrl, EXPLORERS, listenerUrl } from '../explorers.js';
 import { sigilSvg } from './sigil.js';
 import { project, referenceScale, ringPoints } from '../projection.js';
 import { formatRoute } from './route.js';
-import { balanceChanges, describeAffected, summarize, resultMeaning, rippleTimeToIso, decodeDomain, decodeFlags, reserveFor, asStreamMessage, typeMix } from './anatomy.js';
+import { balanceChanges, describeAffected, explain, resultMeaning, rippleTimeToIso, decodeDomain, decodeFlags, reserveFor, asStreamMessage, typeMix } from './anatomy.js';
 
 export const ALL_TYPES = Object.freeze({ includeFailed: true, quietThreshold: 0 });
 
@@ -190,7 +190,7 @@ export function renderAccount({ address, tag = null, info, network, reserve, onH
     ]),
     el('div', { class: 'identity-actions' }, [
       el('button', { type: 'button', class: 'btn small', text: 'Play history (P)', title: 'Hear the recent transactions as a phrase', onclick: () => onPlay?.() }),
-      el('a', { class: 'btn small', href: `./#cast=${address}~${encodeURIComponent(shortAddress(address))}`, text: 'Listen live', title: 'Open the listening page with this account in the cast', onclick: (e) => onListen?.(e) }),
+      el('a', { class: 'btn small', href: listenerUrl(network, `#cast=${address}~${encodeURIComponent(shortAddress(address))}`), text: 'Listen live', title: 'Open the listening page with this account in the cast', onclick: (e) => onListen?.(e) }),
       ...externalLinks('account', address, network),
     ]),
   ]);
@@ -209,7 +209,8 @@ export function renderAccount({ address, tag = null, info, network, reserve, onH
       el('span', { style: '--c: #e8eefb', text: 'counterparties: nearer = more often' }),
     ]),
   ]);
-  const constellationCard = el('section', { class: 'card' }, [el('h2', { text: 'Constellation' }), constellationBox, el('p', { class: 'hint', text: 'Stars are the accounts in the recent transactions, placed on a sphere around the account, nearest the most frequent, coloured by what they mostly did together; a star’s ring is its sigil’s hue. Each held currency orbits on its own tilted plane with a bead travelling along it. Point at a star to name it, click to go there; drag to orbit the view, scroll to move closer, double-click to reset. Orbits are on a log scale.' })]);
+  const coverage = el('p', { class: 'hint coverage', text: 'Reading the recent transactions…' });
+  const constellationCard = el('section', { class: 'card' }, [el('h2', { text: 'Constellation' }), constellationBox, coverage, el('p', { class: 'hint', text: 'Stars are the accounts in the loaded transactions, placed on a sphere around the account, nearest the most frequent, coloured by what they mostly did together; a star’s ring is its sigil’s hue. Each held currency orbits on its own tilted plane with a bead travelling along it. Point at a star to name it, click to go there; drag to orbit the view, scroll to move closer, double-click to reset. Orbits are on a log scale.' })]);
   const tape = el('ol', { class: 'tape', id: 'account-tape' }, [el('li', { class: 'skeleton', text: 'loading transactions…' })]);
   const foot = el('div', { class: 'tape-foot' });
   const tapeCard = el('section', { class: 'card' }, [el('h2', {}, [document.createTextNode('Recent transactions'), el('span', { class: 'count', id: 'tape-count' })]), tape, foot]);
@@ -217,42 +218,74 @@ export function renderAccount({ address, tag = null, info, network, reserve, onH
   const objectsCard = el('section', { class: 'card', id: 'objects-card' }, [el('h2', { text: 'Ledger objects' }), el('p', { class: 'skeleton', text: 'loading…' })]);
   const nodes = [hero, el('div', { class: 'columns' }, [el('div', { class: 'stack' }, [constellationCard, linesCard, objectsCard]), el('div', { class: 'stack' }, [tapeCard])])];
 
-  function fill({ lines: lns, objects: objs, nfts: nf }) {
-    if (lns) {
-      const rows = (lns.lines ?? []).filter((l) => Number(l.balance) !== 0 || Number(l.limit) !== 0).sort((a, b) => Math.abs(Number(b.balance)) - Math.abs(Number(a.balance)));
-      linesCard.replaceChildren(
-        el('h2', {}, [document.createTextNode('Trust lines'), el('span', { class: 'count', text: String(rows.length) })]),
-        rows.length
-          ? el('table', { class: 'table' }, [
-              el('thead', {}, [el('tr', {}, [el('th', { text: 'Currency' }), el('th', { text: 'Counterparty' }), el('th', { class: 'num', text: 'Balance' }), el('th', { class: 'num', text: 'Limit' })])]),
-              el(
-                'tbody',
-                {},
-                rows.slice(0, 60).map((l) =>
-                  el('tr', {}, [
-                    el('td', { class: 'mono', text: decodeCurrencySafe(l.currency) }),
-                    el('td', {}, [addrLink(l.account, { size: 12 })]),
-                    el('td', { class: 'num', text: fmt(Number(l.balance), 6) }),
-                    el('td', { class: 'num', text: fmt(Number(l.limit), 2), title: `the other side allows ${fmt(Number(l.limit_peer), 2)}` }),
-                  ]),
-                ),
+  const known = { lines: null, objects: null, nfts: null };
+  const failure = (what, part) => el('p', { class: 'hint err', text: `Could not read ${what}: ${part.error?.message ?? part.error?.code ?? 'error'}.` });
+
+  function renderLines(part) {
+    if (part.state === 'unavailable') {
+      linesCard.replaceChildren(el('h2', { text: 'Trust lines' }), failure('the trust lines', part));
+      return;
+    }
+    const rows = part.items.filter((l) => Number(l.balance) !== 0 || Number(l.limit) !== 0).sort((a, b) => Math.abs(Number(b.balance)) - Math.abs(Number(a.balance)));
+    linesCard.replaceChildren(
+      el('h2', {}, [document.createTextNode('Trust lines'), el('span', { class: 'count', text: String(rows.length) })]),
+      rows.length
+        ? el('table', { class: 'table' }, [
+            el('thead', {}, [el('tr', {}, [el('th', { text: 'Currency' }), el('th', { text: 'Counterparty' }), el('th', { class: 'num', text: 'Balance' }), el('th', { class: 'num', text: 'Limit' })])]),
+            el(
+              'tbody',
+              {},
+              rows.slice(0, 60).map((l) =>
+                el('tr', {}, [
+                  el('td', { class: 'mono', text: decodeCurrencySafe(l.currency) }),
+                  el('td', {}, [addrLink(l.account, { size: 12 })]),
+                  el('td', { class: 'num', text: fmt(Number(l.balance), 6), title: `${l.balance} exactly` }),
+                  el('td', { class: 'num', text: fmt(Number(l.limit), 2), title: `the other side allows ${fmt(Number(l.limit_peer), 2)}` }),
+                ]),
               ),
-            ])
-          : el('p', { class: 'hint', text: 'No trust lines.' }),
-        rows.length > 60 ? el('p', { class: 'hint', text: `Showing the 60 largest of ${rows.length}.` }) : '',
-      );
-    }
-    if (objs) {
-      const counts = {};
-      for (const o of objs.account_objects ?? []) counts[o.LedgerEntryType] = (counts[o.LedgerEntryType] ?? 0) + 1;
-      const chips = Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .map(([type, n]) => el('span', { class: 'chip' }, [el('b', { text: String(n) }), el('span', { text: type })]));
-      if (nf?.account_nfts?.length) chips.push(el('span', { class: 'chip' }, [el('b', { text: String(nf.account_nfts.length) }), el('span', { text: `NFT${nf.account_nfts.length === 1 ? '' : 's'}` })]));
-      objectsCard.replaceChildren(el('h2', { text: 'Ledger objects' }), chips.length ? el('div', { class: 'objects' }, chips) : el('p', { class: 'hint', text: 'Nothing owned beyond the account itself.' }), objs.marker ? el('p', { class: 'hint', text: 'More than shown; counts are of the first page.' }) : '');
-    }
+            ),
+          ])
+        : el('p', { class: 'hint', text: 'No trust lines.' }),
+      rows.length > 60 ? el('p', { class: 'hint', text: `Showing the 60 largest of ${rows.length}.` }) : '',
+      part.state === 'partial' ? el('p', { class: 'hint', text: 'More than shown: this is the first page the node returned.' }) : '',
+    );
   }
-  return { nodes, tape, foot, constellationBox, fill, xrp, reserve: res };
+
+  function renderObjects(objects, nfts) {
+    const chips = [];
+    const notes = [];
+    if (objects?.state === 'unavailable') notes.push(failure('the ledger objects', objects));
+    else if (objects) {
+      const counts = {};
+      for (const o of objects.items) counts[o.LedgerEntryType] = (counts[o.LedgerEntryType] ?? 0) + 1;
+      chips.push(
+        ...Object.entries(counts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([type, n]) => el('span', { class: 'chip' }, [el('b', { text: String(n) }), el('span', { text: type })])),
+      );
+      if (objects.state === 'partial') notes.push(el('p', { class: 'hint', text: 'More than shown; counts are of the first page.' }));
+    }
+    if (nfts?.state === 'unavailable') notes.push(failure('the NFTs', nfts));
+    else if (nfts?.items?.length) chips.push(el('span', { class: 'chip' }, [el('b', { text: String(nfts.items.length) }), el('span', { text: `NFT${nfts.items.length === 1 ? '' : 's'}` })]));
+    objectsCard.replaceChildren(
+      el('h2', { text: 'Ledger objects' }),
+      chips.length ? el('div', { class: 'objects' }, chips) : objects && objects.state !== 'unavailable' && nfts ? el('p', { class: 'hint', text: 'Nothing owned beyond the account itself.' }) : '',
+      ...notes,
+      !objects || !nfts ? el('p', { class: 'skeleton', text: 'loading…' }) : '',
+    );
+  }
+
+  /** Each part is { state: 'unavailable' | 'empty' | 'partial' | 'loaded', items, marker, error } from src/explorer/account.js. */
+  function fill(parts) {
+    Object.assign(known, parts);
+    if (parts.lines) renderLines(known.lines);
+    if (parts.objects || parts.nfts) renderObjects(known.objects, known.nfts);
+  }
+
+  function setCoverage(text) {
+    coverage.textContent = text;
+  }
+  return { nodes, tape, foot, constellationBox, fill, setCoverage, xrp, reserve: res };
 }
 
 function readout(label, value, cls = '', note = '') {
@@ -276,7 +309,7 @@ export function renderAccountMissing(address, error) {
 // Transaction
 // ---------------------------------------------------------------------------
 
-export function renderTx(result, { network, onHover }) {
+export function renderTx(result, { network, onHover, onFacts }) {
   const tx = result;
   const meta = result.meta ?? result.metaData ?? {};
   const code = meta.TransactionResult ?? null;
@@ -284,7 +317,9 @@ export function renderTx(result, { network, onHover }) {
   const msg = { type: 'transaction', transaction: tx, meta, hash: tx.hash, ledger_index: tx.ledger_index, engine_result: code, validated: result.validated !== false, date: tx.date };
   const event = txToEvent(msg, ALL_TYPES);
   const changes = balanceChanges(meta);
-  const { entries, directories } = describeAffected(meta, tx);
+  const explained = explain(tx, meta);
+  const { entries, directories } = describeAffected(meta, tx, { facts: explained.facts });
+  onFacts?.(explained.facts);
   const identity = el('div', { class: 'identity' }, [
     event ? el('span', { class: 'glyph-big', style: `--glyph: ${event.colour}` }, [svg(eventIcon(event, 56))]) : el('span'),
     el('div', { class: 'identity-main' }, [
@@ -298,11 +333,12 @@ export function renderTx(result, { network, onHover }) {
     ]),
     el('div', { class: 'identity-actions' }, [
       event && onHover ? el('button', { type: 'button', class: 'btn small', text: 'Hear it', onclick: () => onHover(event) }) : '',
-      el('a', { class: 'btn small', href: `./#replay=${tx.ledger_index}`, text: 'Replay its ledger', title: 'Open the listening page on this ledger' }),
+      el('a', { class: 'btn small', href: listenerUrl(network, `#replay=${tx.ledger_index}`), text: 'Replay its ledger', title: 'Open the listening page on this ledger' }),
       ...externalLinks('tx', tx.hash, network),
     ]),
   ]);
-  const lede = el('p', { class: `lede${ok ? '' : ' err'}`, text: summarize(tx, meta) });
+  // Every sentence keeps the ids of the rules it rests on, so "why does it say that?" is a lookup into the findings.
+  const lede = el('p', { class: `lede${ok ? '' : ' err'}` }, explained.sentences.flatMap((sentence, i) => [i ? ' ' : '', el('span', { 'data-rules': sentence.rules.join(' '), 'data-findings': (sentence.findings ?? []).join(' '), title: `Rules: ${sentence.rules.join(', ')}`, text: sentence.text })]));
   const facts = el('dl', { class: 'facts' });
   const fact = (k, v) => {
     if (v == null || v === '') return;
@@ -337,7 +373,7 @@ export function renderTx(result, { network, onHover }) {
           changes.map((c) =>
             el('li', { class: 'change' }, [
               el('span', {}, [addrLink(c.account, { size: 14 }), c.created ? badge('created', 'ok') : '', c.deleted ? badge('deleted', 'err') : '', c.issuer ? el('span', { class: 'hint', text: ` ${c.currency} issued by ${shortAddress(c.issuer)}` }) : '']),
-              el('span', { class: `delta ${c.delta > 0 ? 'plus' : c.delta < 0 ? 'minus' : ''}` }, [document.createTextNode(`${c.delta > 0 ? '+' : ''}${fmt(c.delta)} ${c.currency}`), el('span', { class: 'range', text: `${fmt(c.before)} → ${fmt(c.after)}` })]),
+              el('span', { class: `delta ${c.delta > 0 ? 'plus' : c.delta < 0 ? 'minus' : ''}`, title: `exactly ${c.exact.delta} ${c.currency === 'XRP' ? 'drops' : c.currency} (${c.exact.before} → ${c.exact.after})` }, [document.createTextNode(`${c.delta > 0 ? '+' : ''}${fmt(c.delta)} ${c.currency}`), el('span', { class: 'range', text: `${fmt(c.before)} → ${fmt(c.after)}` })]),
             ]),
           ),
         )
@@ -350,17 +386,24 @@ export function renderTx(result, { network, onHover }) {
           'ul',
           { class: 'affected' },
           entries.map((e) =>
-            el('li', {}, [
-              el('div', { class: 'summary' }, [el('span', { class: `action ${e.action}`, text: e.action }), el('span', { text: e.summary })]),
-              e.details.length ? el('dl', { class: 'details' }, e.details.flatMap(([k, v]) => [el('dt', { text: k }), el('dd', { text: String(v) })])) : '',
+            el('li', { 'data-rules': e.rules.join(' '), 'data-findings': e.findings.join(' ') }, [
+              el('div', { class: 'summary' }, [el('span', { class: `action ${e.action}`, text: e.action }), el('span', { text: e.summary, title: `Rules: ${e.rules.join(', ')}` })]),
+              e.details.length ? el('dl', { class: 'details' }, e.details.flatMap(([k, v]) => [el('dt', { text: k }), el('dd', { text: String(v), title: e.exact?.[k] ? `exactly ${e.exact[k]}` : null })])) : '',
             ]),
           ),
         )
       : el('p', { class: 'hint', text: 'No ledger entries touched.' }),
     directories ? el('p', { class: 'hint', text: `${directories} directory node${directories === 1 ? '' : 's'} (bookkeeping) not listed.` }) : '',
   ]);
+  const why = el('section', { class: 'card' }, [
+    el('details', { class: 'raw' }, [
+      el('summary', { text: `Why it says that: ${explained.facts.findings.length} findings` }),
+      el('p', { class: 'hint', text: 'Every sentence above rests on these. Each finding has a tier (observed, calculated, rule, hypothesis), a rule id and the fields it was read from; amounts are exact strings. The rules are documented in docs/facts.md.' }),
+      el('pre', { text: JSON.stringify(explained.facts.findings, null, 2) }),
+    ]),
+  ]);
   const raw = el('section', { class: 'card' }, [el('details', { class: 'raw' }, [el('summary', { text: 'Raw transaction and metadata' }), el('pre', { text: JSON.stringify(result, null, 2) })])]);
-  return [hero, el('div', { class: 'columns' }, [el('div', { class: 'stack' }, [changesCard, affectedCard]), el('div', { class: 'stack' }, [raw])])];
+  return [hero, el('div', { class: 'columns' }, [el('div', { class: 'stack' }, [changesCard, affectedCard]), el('div', { class: 'stack' }, [why, raw])])];
 }
 
 // ---------------------------------------------------------------------------
@@ -386,7 +429,7 @@ export function renderLedger(ledger, { network, onHover, latestIndex = null }) {
     el('div', { class: 'identity-actions' }, [
       el('a', { class: 'btn small', href: formatRoute({ name: 'ledger', index: index - 1 }), text: '◀ Previous' }),
       latestIndex == null || index < latestIndex ? el('a', { class: 'btn small', href: formatRoute({ name: 'ledger', index: index + 1 }), text: 'Next ▶' }) : '',
-      el('a', { class: 'btn small primary', href: `./#replay=${index}`, text: 'Replay with sound', title: 'Open the listening page on this ledger' }),
+      el('a', { class: 'btn small primary', href: listenerUrl(network, `#replay=${index}`), text: 'Replay with sound', title: 'Open the listening page on this ledger' }),
       ...externalLinks('ledger', index, network),
     ]),
   ]);

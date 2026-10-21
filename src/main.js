@@ -14,7 +14,7 @@ import { loadSettings, saveSettings, mappingOptions } from './settings.js';
 import { parseHash, buildHash, parseQuery } from './params.js';
 import { parseReplayRange, formatReplayRange } from './replay.js';
 import { validateCase, caseFromState, serializeCase, encodeCase, decodeCase, caseFilename, caseLedgerCount, addAnnotation, updateAnnotation, removeAnnotation } from './case.js';
-import { buildScore, scoreCaption, transcript, formatClock, clipRanges } from './score.js';
+import { buildScore, scoreCaption, transcript, formatClock, clipRanges, ledgerAtPosition } from './score.js';
 import { Transport } from './transport.js';
 import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
@@ -1190,7 +1190,7 @@ function saveTranscript() {
 async function shareUrl() {
   const c = session.active?.case ?? session.pending;
   if (c && c.source !== 'replay') return caseLink(currentCase());
-  const index = session.active ? session.active.score.ledgers.find((l) => l.timeMs <= session.active.transport.positionNow())?.ledgerIndex ?? session.active.case.clips[0].from : ledgerState.index;
+  const index = session.active ? ledgerAtPosition(session.active.score, session.active.transport.positionNow()) ?? session.active.case.clips[0].from : ledgerState.index;
   if (index == null) return null;
   const q = settings.network !== 'mainnet' ? `?network=${settings.network}` : '';
   return `${SITE_URL}${q}${buildHash({ cast: settings.cast.length ? formatCastSpec(settings.cast) : '', replay: String(index) })}`;

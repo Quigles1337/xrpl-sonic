@@ -412,29 +412,45 @@ export function involvesAccount(msg, address) {
   return false;
 }
 
+/** Why a transaction produced no event, with the words a report uses for each. */
+export const EXCLUSION_REASONS = Object.freeze({
+  notATransaction: 'not a transaction',
+  failed: 'failed',
+  categoryDisabled: 'category disabled',
+  quietThreshold: 'below the quiet threshold',
+});
+
 /**
  * Map a `transactions` stream message to a sound event, or null if it should be
  * skipped (not a tx, failed, category disabled, below the quiet threshold).
  */
 export function txToEvent(msg, options) {
+  return txToEventOrReason(msg, options).event;
+}
+
+/**
+ * Like txToEvent, but says why there is no event: `{ event, reason }` where
+ * `reason` is a key of EXCLUSION_REASONS, or null when there is an event.
+ */
+export function txToEventOrReason(msg, options) {
   const opts = mergeOptions(options);
   const unwrapped = unwrapTransactionMessage(msg);
-  if (!unwrapped) return null;
+  if (!unwrapped) return { event: null, reason: 'notATransaction' };
   const { tx, meta, result, ledgerIndex, hash } = unwrapped;
 
   const success = result === 'tesSUCCESS';
-  if (!success && !opts.includeFailed) return null;
+  if (!success && !opts.includeFailed) return { event: null, reason: 'failed' };
 
   const txType = tx.TransactionType;
   const category = categorize(txType);
-  if (opts.enabled[category] === false) return null;
+  if (opts.enabled[category] === false) return { event: null, reason: 'categoryDisabled' };
 
   const amount = extractAmount(tx, meta);
   const amountXrp = amount?.isXrp ? amount.value : null;
   const amountValue = amount ? amount.value : null;
 
   const threshold = Number(opts.quietThreshold) || 0;
-  if (threshold > 0 && !(amountXrp >= threshold)) return null;
+  if (threshold > 0 && !(amountXrp >= threshold)) return { event: null, reason: 'quietThreshold' };
 
   const scale = opts.scale;
   const key = opts.key;
@@ -516,7 +532,7 @@ export function txToEvent(msg, options) {
   const sub = category === 'payment' && amountXrp != null && amountXrp >= WHALE_THRESHOLD_XRP;
   const described = describe(tx, category, amount);
 
-  return {
+  const event = {
     kind: 'tx',
     category,
     txType,
@@ -544,6 +560,7 @@ export function txToEvent(msg, options) {
     parties: described.parties,
     text: described.text,
   };
+  return { event, reason: null };
 }
 
 // ---------------------------------------------------------------------------

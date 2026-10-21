@@ -1,0 +1,44 @@
+{
+  "result": {
+    "account_data": {
+      "Account": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+      "Balance": "12946802057",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 38,
+      "PreviousTxnID": "1ACA137F5BE2B3D73EB7DED2935056344EA87163FF05F2A22F8B97AD2E353BF1",
+      "PreviousTxnLgrSeq": 107811689,
+      "Sequence": 287809188,
+      "index": "1ED8DDFD80F275CB1CE7F18BB9D906655DE8029805D8B95FB9020B30425821EB"
+    },
+    "ledger_hash": "049FB307D0BE393C4D165349C92168F0EE413FED64B520397A8A47DB2FD6EBDF",
+    "ledger_index": 107811689,
+    "validated": true,
+    "account_flags": {
+      "defaultRipple": false,
+      "depositAuth": false,
+      "disableMasterKey": false,
+      "disallowIncomingXRP": false,
+      "globalFreeze": false,
+      "noFreeze": false,
+      "passwordSpent": false,
+      "requireAuthorization": false,
+      "requireDestinationTag": false,
+      "disallowIncomingNFTokenOffer": false,
+      "disallowIncomingCheck": false,
+      "disallowIncomingPayChan": false,
+      "disallowIncomingTrustline": false,
+      "allowTrustLineClawback": false,
+      "allowTrustLineLocking": false
+    }
+  },
+  "id": "xrpl-sonic-req-3",
+  "status": "success",
+  "type": "response",
+  "warnings": [
+    {
+      "id": 2001,
+      "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { validateCase } from '../src/case.js';
-import { buildScore, GAP_MS, SCORE_VERSION, formatClock, scoreCaption, transcript, clipRanges } from '../src/score.js';
+import { buildScore, GAP_MS, SCORE_VERSION, formatClock, scoreCaption, transcript, clipRanges, ledgerAtPosition } from '../src/score.js';
 import { replayIntervalMs, DEFAULT_CLOSE_INTERVAL_MS } from '../src/replay.js';
 import { MAPPING_VERSION } from '../src/mapping.js';
 
@@ -45,6 +45,8 @@ describe('buildScore', () => {
     assert.equal(score.events.length, score.counts.events);
     assert.equal(score.counts.played, score.counts.events);
     assert.equal(score.counts.dim, 0);
+    assert.equal(score.counts.excluded.total, ledger.transactions.length - score.events.length, 'every transaction is either an event or excluded for a reason');
+    assert.equal(Object.values(score.counts.excluded.byReason).reduce((a, b) => a + b, 0), score.counts.excluded.total);
     for (let i = 1; i < score.events.length; i++) {
       assert.ok(score.events[i].timeMs > score.events[i - 1].timeMs, 'strictly increasing');
       assert.ok(score.events[i].txIndex >= score.events[i - 1].txIndex, 'applied order');
@@ -102,6 +104,15 @@ describe('buildScore', () => {
     const noOffers = buildScore(makeCase({ filters: { enabled: { offer: false } } }), ledgersFor([INDEX]));
     assert.ok(noOffers.events.length < all.events.length);
     assert.ok(noOffers.events.every((e) => e.event.category !== 'offer'));
+    assert.equal(noOffers.counts.excluded.byReason.categoryDisabled, all.events.length - noOffers.events.length, 'excluded events say why');
+    assert.equal(noOffers.counts.excluded.total - (all.counts.excluded.byReason.failed ?? 0), all.events.length - noOffers.events.length);
+    const quiet = buildScore(makeCase({ filters: { quietThreshold: 1e9 } }), ledgersFor([INDEX]));
+    assert.equal(quiet.events.length, 0);
+    assert.equal(quiet.counts.excluded.byReason.quietThreshold, all.events.length);
+    const withFailed = buildScore(makeCase({ filters: { includeFailed: true } }), ledgersFor([INDEX]));
+    const failedCount = ledger.transactions.filter((t) => (t.metaData ?? t.meta)?.TransactionResult !== 'tesSUCCESS').length;
+    assert.equal(all.counts.excluded.byReason.failed ?? 0, failedCount);
+    assert.equal(withFailed.counts.excluded.byReason.failed ?? 0, 0);
     const keyed = buildScore(makeCase({ mapping: { key: 'G' } }), ledgersFor([INDEX]));
     assert.notDeepEqual(
       keyed.events.map((e) => e.event.pitch),
@@ -121,6 +132,7 @@ describe('buildScore', () => {
     const hidden = buildScore(makeCase({ cast: [SENDER], filters: { castMode: 'hide' } }), ledgersFor([INDEX]));
     assert.ok(hidden.events.every((e) => e.cast.length > 0));
     assert.ok(hidden.events.length < score.events.length);
+    assert.equal(hidden.counts.excluded.byReason.castHidden, score.events.length - hidden.events.length, 'hidden events are counted as excluded with their reason');
   });
 
   test('annotations resolve by hash, ledger or time, in time order; unresolved ones warn', () => {
@@ -182,12 +194,30 @@ describe('captions and transcript', () => {
     assert.equal(lines[0], 'xrpl-sonic transcript · Two clips');
     assert.match(lines[1], /network mainnet · mapping/);
     assert.match(lines[2], /^cast: Bob = r/);
-    assert.match(lines[3], /2 ledgers · \d+ events/);
+    assert.match(lines[3], /2 ledgers · \d+ events \(\d+ selected to sound, \d+ silent\)/);
+    assert.ok(!text.includes('sounded'), 'a score selects events to sound; whether they sounded is the synthesiser\'s business');
+    const filtered = transcript(buildScore(validateCase({ clips: [String(INDEX)], filters: { enabled: { offer: false } } }).case, ledgersFor([INDEX])), c);
+    assert.match(filtered.split('\n')[3], /· \d+ excluded \(category disabled \d+/);
     assert.ok(text.includes(`0:00.000 ledger #${INDEX} ·`));
     assert.ok(text.includes(`— gap: 2 ledgers omitted between #${INDEX} and #${INDEX + 3} —`));
     assert.ok(text.includes('>> Second clip begins [notes] (draft)'));
     const times = lines.slice(5).map((l) => l.slice(0, 8)).filter((t) => /^\d:\d\d\.\d{3}$/.test(t));
     assert.deepEqual(times, [...times].sort());
+  });
+});
+
+describe('ledgerAtPosition', () => {
+  test('the ledger playing at a position is the last one that started at or before it, not the first', () => {
+    const c = validateCase({ clips: [{ from: INDEX, to: INDEX + 2 }] }).case;
+    const score = buildScore(c, ledgersFor([INDEX, INDEX + 1, INDEX + 2]));
+    assert.equal(ledgerAtPosition(score, 0), INDEX);
+    assert.equal(ledgerAtPosition(score, interval - 1), INDEX);
+    assert.equal(ledgerAtPosition(score, interval), INDEX + 1);
+    assert.equal(ledgerAtPosition(score, 2 * interval + 5), INDEX + 2);
+    assert.equal(ledgerAtPosition(score, 10 ** 9), INDEX + 2);
+    assert.equal(ledgerAtPosition(score, -1), INDEX, 'before the start, the first ledger');
+    assert.equal(ledgerAtPosition({ ledgers: [] }, 0), null);
+    assert.equal(ledgerAtPosition(null, 0), null);
   });
 });
 
