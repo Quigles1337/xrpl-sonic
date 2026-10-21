@@ -7,12 +7,12 @@
 // when captions are on.
 
 import { REPLAY_SPEEDS } from './replay.js';
-import { formatClock } from './score.js';
+import { formatClock, clipRanges } from './score.js';
 import { el, option } from './dom.js';
 
 const CAPTION_MS = { cast: 2600, ledger: 1800, gap: 4000, info: 4000, annotation: 14000 };
 
-export function createTransportUI({ onToggle, onStep, onBack, onLoopToggle, onLoopIn, onLoopOut, onSeek, onSpeed, onCancel }) {
+export function createTransportUI({ onToggle, onStep, onBack, onLoopToggle, onLoopIn, onLoopOut, onSeek, onSpeed, onCancel, onClip, onClipAll }) {
   const $ = (sel) => document.querySelector(sel);
   const bar = $('#transport');
   const back = $('#t-back');
@@ -27,6 +27,7 @@ export function createTransportUI({ onToggle, onStep, onBack, onLoopToggle, onLo
   const loopSpan = $('#t-loopspan');
   const marks = $('#t-marks');
   const label = $('#t-label');
+  const clips = $('#t-clips');
   const speed = $('#replay-speed');
   const cancel = $('#replay-cancel');
   const captions = $('#captions');
@@ -75,6 +76,8 @@ export function createTransportUI({ onToggle, onStep, onBack, onLoopToggle, onLo
         fill.style.transform = 'scaleX(0)';
         loopSpan.classList.add('hidden');
         marks.replaceChildren();
+        clips.replaceChildren();
+        clips.classList.add('hidden');
         totalMs = 0;
         this.caption(null);
       }
@@ -99,6 +102,26 @@ export function createTransportUI({ onToggle, onStep, onBack, onLoopToggle, onLo
         label.title = text;
       }
       const pct = (ms) => `${((ms / Math.max(1, totalMs)) * 100).toFixed(2)}%`;
+      const ranges = clipRanges(score);
+      clips.replaceChildren(
+        ...(ranges.length > 1
+          ? [
+              ...ranges.map((r, i) =>
+                el('button', {
+                  type: 'button',
+                  class: 'btn tiny t-clip',
+                  'data-clip': String(i),
+                  text: String.fromCharCode(65 + i),
+                  title: `Play clip ${String.fromCharCode(65 + i)} on a loop (${r.ledgers} ledger${r.ledgers === 1 ? '' : 's'})`,
+                  'aria-pressed': 'false',
+                  onclick: () => onClip?.(i),
+                }),
+              ),
+              el('button', { type: 'button', class: 'btn tiny t-clip', 'data-clip': 'all', text: 'All', title: 'Play the whole case', 'aria-pressed': 'true', onclick: () => onClipAll?.() }),
+            ]
+          : []),
+      );
+      clips.classList.toggle('hidden', ranges.length < 2);
       marks.replaceChildren(
         ...score.ledgers.map((l) => el('span', { class: `mark ledger${l.missing ? ' missing' : ''}`, style: `left: ${pct(l.timeMs)}`, title: l.missing ? `Ledger #${l.ledgerIndex} unavailable` : `Ledger #${l.ledgerIndex.toLocaleString('en-US')}` })),
         ...score.gaps.map((g) => el('span', { class: 'mark gap', style: `left: ${pct(g.timeMs)}; width: ${pct(g.durationMs)}`, title: `${g.omitted} ledgers omitted` })),
@@ -122,6 +145,11 @@ export function createTransportUI({ onToggle, onStep, onBack, onLoopToggle, onLo
       track.setAttribute('aria-valuenow', String(Math.round(ms)));
       track.setAttribute('aria-valuetext', formatClock(ms));
       setClock(ms);
+    },
+
+    /** Highlight the clip being compared (null = the whole case). */
+    setClip(index) {
+      for (const b of clips.querySelectorAll('.t-clip')) b.setAttribute('aria-pressed', String(index == null ? b.dataset.clip === 'all' : b.dataset.clip === String(index)));
     },
 
     setLoop(range) {

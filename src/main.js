@@ -13,8 +13,8 @@ import { Visualizer } from './visual.js';
 import { loadSettings, saveSettings, mappingOptions } from './settings.js';
 import { parseHash, buildHash, parseQuery } from './params.js';
 import { parseReplayRange, formatReplayRange } from './replay.js';
-import { validateCase, caseFromState, serializeCase, encodeCase, decodeCase, caseFilename, caseLedgerCount } from './case.js';
-import { buildScore, scoreCaption, transcript, formatClock } from './score.js';
+import { validateCase, caseFromState, serializeCase, encodeCase, decodeCase, caseFilename, caseLedgerCount, addAnnotation, updateAnnotation, removeAnnotation } from './case.js';
+import { buildScore, scoreCaption, transcript, formatClock, clipRanges } from './score.js';
 import { Transport } from './transport.js';
 import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
@@ -76,6 +76,8 @@ const session = {
   speed: 1,
   loop: null,
   abort: null,
+  clip: null, // index of the clip being compared, null = whole case
+  blind: false,
 };
 
 const canvas = document.getElementById('scene');
@@ -121,6 +123,8 @@ const ui = createUI({
     onSeek: (ms) => activeTransport()?.seek(ms),
     onSpeed: (speed) => setSpeed(speed),
     onCancel: () => goLive(),
+    onClip: (i) => playClip(i),
+    onClipAll: () => playClip(null),
   },
   caseActions: {
     onLoadFile: (file) => loadCaseFile(file),
@@ -136,10 +140,16 @@ const ui = createUI({
       }
       if (key === 'speak' && !value) hush();
     },
+    onAddNote: () => addNoteHere(),
+    onEditNote: (id, patch) => editNote(id, patch),
+    onRemoveNote: (id) => removeNote(id),
+    onJumpNote: (id) => jumpToNote(id),
+    onBlind: (on) => setBlind(on),
   },
   inspector: {
     onPrev: (item) => inspectNeighbour(item, -1),
     onNext: (item) => inspectNeighbour(item, +1),
+    onAnnotate: (event, item) => annotateEvent(event, item),
   },
   onChange: (patch) => {
     saveSettings(settings);
@@ -181,7 +191,9 @@ function syncHash() {
 }
 
 function replaceHash(hash) {
-  const url = `${location.pathname}${location.search}${hash}`;
+  // Once the hash carries the case, the ?case= query that loaded it is redundant.
+  const search = hash.startsWith('#case=') && query.caseUrl ? location.search.replace(/[?&]case=[^&]*/, '').replace(/^&/, '?') : location.search;
+  const url = `${location.pathname}${search}${hash}`;
   if (`${location.pathname}${location.search}${location.hash}` !== url) history.replaceState(null, '', url);
 }
 
@@ -597,7 +609,7 @@ function onScoreEvent(item, offsetSec) {
       lastMinute.push(now);
       viz.spawn(ev, { dim: dropped });
       ui.log(ev, { dim: dropped });
-      if (settings.captions && item.cast.length) ui.transport.caption({ kind: 'cast', text: scoreCaption(item, session.active?.case.cast ?? []) });
+      if (settings.captions && !session.blind && item.cast.length) ui.transport.caption({ kind: 'cast', text: scoreCaption(item, session.active?.case.cast ?? []) });
     },
     dropped || !audible ? offsetSec : delay,
   );
@@ -625,6 +637,7 @@ function onScoreGap(gap, offsetSec) {
 
 function onScoreAnnotation(a, offsetSec) {
   schedule(() => {
+    if (session.blind) return; // blind comparison: notes stay silent and unseen
     ui.logMessage(`» ${a.text}${a.source ? ` [${a.source}]` : ''}`, 'note');
     if (settings.captions || a.pause) ui.transport.caption({ kind: 'annotation', text: a.text, source: a.source, status: a.status, sticky: a.pause });
     if (settings.speak) speak(a.text);
@@ -638,7 +651,7 @@ function onTransportState(state, detail) {
     if (state === 'ended') hush();
   }
   ui.setStatus('connected', caseStatusText(), undefined);
-  if (state === 'paused' && detail?.annotation && settings.speak) speak(detail.annotation.text);
+  if (state === 'paused' && detail?.annotation && settings.speak && !session.blind) speak(detail.annotation.text);
 }
 
 function onScoreEnd() {
@@ -691,11 +704,137 @@ function goLive() {
   ui.logMessage('Back to live.');
 }
 
+// ---------------------------------------------------------------------------
+// Comparison: play one clip on a loop, and blind mode
+// ---------------------------------------------------------------------------
+
+/** Loop and play clip `i` (A, B, …); null plays the whole case again. */
+function playClip(i) {
+  const t = activeTransport();
+  const s = session.active;
+  if (!t || !s) return;
+  const ranges = clipRanges(s.score);
+  if (i == null || !ranges[i]) {
+    session.clip = null;
+    t.setLoop(null);
+    ui.transport.setLoop(null);
+    ui.transport.setClip(null);
+    t.seek(0);
+    if (!t.playing) t.play();
+    ui.logMessage('Playing the whole case.');
+    return;
+  }
+  const r = ranges[i];
+  session.clip = i;
+  session.loop = { fromMs: r.fromMs, toMs: r.toMs };
+  t.setLoop(session.loop);
+  ui.transport.setLoop(t.loop);
+  ui.transport.setClip(i);
+  t.seek(r.fromMs);
+  if (!t.playing) t.play();
+  const letter = String.fromCharCode(65 + i);
+  ui.logMessage(session.blind ? `Window ${letter}.` : `Looping clip ${letter}: ${r.ledgers} ledger${r.ledgers === 1 ? '' : 's'}, ${formatClock(r.fromMs)}–${formatClock(r.toMs)}.`);
+}
+
+/** Blind comparison: the plate and the sound stay; ledger numbers, the tape, notes and captions go. */
+function setBlind(on) {
+  session.blind = Boolean(on);
+  document.body.classList.toggle('blind', session.blind);
+  viz.setBlind(session.blind);
+  ui.casePanel.setBlind(session.blind);
+  ui.inspector.hide();
+  if (session.blind) {
+    ui.transport.caption(null);
+    hush();
+    ui.logMessage('Blind comparison on: ledger numbers, notes and captions are hidden until you turn it off.');
+  } else {
+    ui.logMessage('Blind comparison off.');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Notes (annotations) on the loaded case
+// ---------------------------------------------------------------------------
+
+function noteBase() {
+  return session.active?.case ?? session.pending;
+}
+
+function commitCase(next) {
+  if (!next) return;
+  next.source = noteBase()?.source ?? 'case';
+  if (session.active) {
+    session.active.case = next;
+    session.pending = next;
+    rebuildScore();
+  } else {
+    session.pending = next;
+    ui.casePanel.setCase(next, null);
+    syncHash();
+  }
+}
+
+/** A new note anchored at the current position; opens its editor. */
+function addNoteHere() {
+  const base = noteBase();
+  if (!base) return;
+  const t = activeTransport();
+  const anchor = { timeMs: t ? Math.round(t.positionNow()) : 0 };
+  const r = addAnnotation(base, { anchor, text: 'New note', status: 'draft' });
+  if (!r.case) {
+    for (const e of r.errors) ui.logMessage(e, 'error');
+    return;
+  }
+  commitCase(r.case);
+  ui.casePanel.edit(r.annotation.id, { isNew: true });
+}
+
+/** A new note anchored to a transaction, from the inspector. */
+function annotateEvent(event, item) {
+  const base = noteBase();
+  if (!base || !event?.hash) return;
+  const r = addAnnotation(base, { anchor: { hash: event.hash }, text: `${event.txType}${event.amount ? ` · ${event.head.split(' · ').slice(1).join(' · ')}` : ''}`, status: 'draft' });
+  if (!r.case) {
+    for (const e of r.errors) ui.logMessage(e, 'error');
+    return;
+  }
+  commitCase(r.case);
+  ui.inspector.hide();
+  ui.casePanel.edit(r.annotation.id, { isNew: true });
+}
+
+function editNote(id, patch) {
+  const base = noteBase();
+  if (!base) return;
+  commitCase(updateAnnotation(base, id, patch));
+}
+
+function removeNote(id) {
+  const base = noteBase();
+  if (!base) return;
+  commitCase(removeAnnotation(base, id));
+}
+
+function jumpToNote(id) {
+  const s = session.active;
+  const t = activeTransport();
+  if (!s || !t) return;
+  const a = s.score.annotations.find((x) => x.id === id);
+  if (!a) {
+    ui.logMessage('That note does not resolve to a position in this case.', 'error');
+    return;
+  }
+  t.seek(a.timeMs);
+  if (!session.blind) ui.transport.caption({ kind: 'annotation', text: a.text, source: a.source, status: a.status });
+}
+
 function endSession({ quiet = false } = {}) {
   if (session.abort) session.abort.aborted = true;
   const s = session.active;
   session.active = null;
   session.loading = false;
+  session.clip = null;
+  session.loop = null;
   s?.transport.stop();
   clearPending();
   hush();
@@ -714,7 +853,7 @@ function endSession({ quiet = false } = {}) {
 // ---------------------------------------------------------------------------
 
 function inspect(event, item = event?.scoreItem ?? null) {
-  if (!event || event.kind !== 'tx') return;
+  if (!event || event.kind !== 'tx' || session.blind) return;
   const s = session.active;
   const ctx = {};
   if (s && item) {
@@ -962,6 +1101,12 @@ if (urlState.case) {
   decodeCase(urlState.case)
     .then((raw) => openCase(raw, 'case', 'the link'))
     .catch((err) => ui.logMessage(`Could not read the case in the link: ${err?.message ?? err}`, 'error'));
+} else if (query.caseUrl) {
+  // ?case=docs/cases/x.sonic-case.json — a same-origin file; the case then travels in the hash like any other.
+  fetch(query.caseUrl, { cache: 'no-cache' })
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status} ${r.statusText}`))))
+    .then((raw) => openCase(raw, 'file', query.caseUrl))
+    .catch((err) => ui.logMessage(`Could not load ${query.caseUrl}: ${err?.message ?? err}`, 'error'));
 } else if (urlState.replay) {
   armReplayFromUrl(urlState.replay);
 }
@@ -984,6 +1129,8 @@ window.xrplSonic = {
   stats,
   shareUrl,
   openCase: (raw) => openCase(raw, 'case', 'the console'),
+  playClip,
+  setBlind,
   transport: () => activeTransport(),
   capture: { support: capture, snapshot, record, stop: () => recording?.stop() },
   get stream() {

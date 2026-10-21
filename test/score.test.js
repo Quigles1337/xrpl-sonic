@@ -5,7 +5,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { validateCase } from '../src/case.js';
-import { buildScore, GAP_MS, SCORE_VERSION, formatClock, scoreCaption, transcript } from '../src/score.js';
+import { buildScore, GAP_MS, SCORE_VERSION, formatClock, scoreCaption, transcript, clipRanges } from '../src/score.js';
 import { replayIntervalMs, DEFAULT_CLOSE_INTERVAL_MS } from '../src/replay.js';
 import { MAPPING_VERSION } from '../src/mapping.js';
 
@@ -188,5 +188,18 @@ describe('captions and transcript', () => {
     assert.ok(text.includes('>> Second clip begins [notes] (draft)'));
     const times = lines.slice(5).map((l) => l.slice(0, 8)).filter((t) => /^\d:\d\d\.\d{3}$/.test(t));
     assert.deepEqual(times, [...times].sort());
+  });
+});
+
+describe('clipRanges', () => {
+  test('one range per clip, spanning its ledgers, with the gap between them', () => {
+    const c = validateCase({ clips: [{ from: INDEX, to: INDEX + 1 }, { from: INDEX + 5, to: INDEX + 5 }] }).case;
+    const score = buildScore(c, ledgersFor([INDEX, INDEX + 1, INDEX + 5]));
+    assert.deepEqual(clipRanges(score), [
+      { clip: 0, fromMs: 0, toMs: 2 * interval, ledgers: 2 },
+      { clip: 1, fromMs: 2 * interval + GAP_MS, toMs: 3 * interval + GAP_MS, ledgers: 1 },
+    ]);
+    assert.deepEqual(clipRanges({ ledgers: [] }), []);
+    assert.deepEqual(clipRanges(null), []);
   });
 });

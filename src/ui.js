@@ -77,6 +77,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
     castFor: () => settings.cast ?? [],
     onPrev: inspector?.onPrev,
     onNext: inspector?.onNext,
+    onAnnotate: inspector?.onAnnotate,
   });
 
   // --- Panel toggle (mobile) -------------------------------------------------
