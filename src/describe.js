@@ -30,13 +30,14 @@ import { SITE_URL } from './explorers.js';
 export const LEVELS = Object.freeze(['gist', 'evidence']);
 
 /**
- * Characters. Chosen after measuring representative cases (see
- * docs/copy-for-ai.md): a one-ledger moment of ~60 events renders in about
- * 14,000 characters at the gist level, so this keeps such a moment whole
- * and makes a busy window say "N of M events shown". A visible number, not a
- * promise: the size is shown before copying.
+ * Characters. Chosen after measuring representative cases over the network
+ * (docs/copy-for-ai.md): a one-ledger moment of 59 events renders in about
+ * 24,700 characters at the gist level, a three-ledger case of 204 events in
+ * 58,000, a five-ledger window of 712 events in 117,000. This keeps a typical
+ * single ledger whole and makes busier windows say "N of M events shown". A
+ * visible number, not a promise: the size is shown before copying.
  */
-export const DEFAULT_BUDGET = 24000;
+export const DEFAULT_BUDGET = 32000;
 
 export const SELECTION_RULE = 'the anchor event, then cast-involved events, then the rest in application order';
 

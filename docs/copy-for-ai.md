@@ -45,4 +45,33 @@ Gist and evidence renderings of a recorded fixture case are checked in as expect
 
 ## As built
 
-_Filled in with the implementation: the annotation field additions (`kind`, `evidence`), the chosen default budget and the measurements behind it, the module and entry points, and what the outside-the-repo check showed._
+### Field additions
+
+Two optional annotation fields, serialised only when present; existing cases are unchanged and the case format stays at version 1:
+
+- `annotations[].kind`: `observation`, `hypothesis` or `question`. A moment's question is `kind: "question"` and also carries `question: true`; the two are kept in step on read, so cases written by Save this moment before this field existed read the same.
+- `annotations[].evidence`: the transaction hashes the note rests on, uppercased, deduplicated, at most 50.
+
+### The text
+
+`src/describe.js` renders the sections in the order above. Hashes, addresses and amounts are verbatim: XRP as integer drops, issued amounts as the decimal with the decoded currency, the exact 160-bit code where there is one, and the issuer. The findings come from the facts layer unchanged, one line each: `[tier] rule subject.property = value · evidence: node N field, …`, with `unresolved` printed as such and a finding's note appended. Amounts inside values are rendered the same way as in event lines. The trailer is a constant; its example is the annotation shape of `src/case.js` with the anchor's hash (or the first event's), so it imports against the same case.
+
+### Levels and the budget
+
+| Case | Events | Gist | Evidence |
+| --- | --- | --- | --- |
+| A one-ledger moment (#107811677, 60 transactions, two cast members) | 59 | 24,678 chars (~6,200 tokens) | 120,740 chars (~30,200 tokens) |
+| The sample case, three ledgers | 204 | 58,042 chars (~14,500 tokens) | 296,761 chars (~74,200 tokens) |
+| Five consecutive ledgers (two fetched before the cluster's quota) | 712 | 116,697 chars (~29,200 tokens) | 224,938 chars (~56,200 tokens) |
+
+The default budget is **32,000 characters** (about 8,000 tokens): a typical single ledger stays whole; the sample case shows about a hundred of its events; a busy window shows the anchor, the cast's events and as many others as fit, and says so. The budget selects events only; at the evidence level the findings of the cast-involved events are added in full, so narrowing with the loop is how an evidence rendering is made smaller. `describeReport()` returns the size, a token estimate (characters ÷ 4) and the shown/total ratio, which the page shows before copying and the script prints to stderr.
+
+### Entrances
+
+- **Copy for AI** beside Moment opens a box with both levels' sizes and ratios; **Copy gist** / **Copy evidence** copy the text and the log line repeats the numbers and the rule. The same button sits in Settings → Case for a loaded case. Both need a playing case (the ledgers are fetched by the case path).
+- **Import notes** in Settings → Case: paste the JSON (an array, or a whole case), name the source, import; the line under the box says what was accepted as drafts and what was rejected and why; nothing existing is overwritten. The existing Load file importer is untouched.
+- `scripts/describe.mjs` (`npm run describe -- case.json [--level evidence] [--budget N] [--measure]`): the same function over the same ledger fetch the page uses, text to stdout and the size line to stderr. A script rather than a `bin`, as `scripts/smoke.mjs` is: the package is private and nothing is published.
+
+### Outside the repo
+
+_The result of giving one gist to an assistant with no other context is recorded in the pull request that introduced this feature._

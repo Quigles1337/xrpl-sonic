@@ -44,7 +44,7 @@ function stamp() {
  * @param {object} [args.midiActions]   callbacks for the MIDI group (see ui-midi.js)
  * @param {{ recording: boolean, mimeType: string|null }} [args.capture]  what the browser supports
  */
-export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, capture }) {
+export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, onAi, onCopyAi, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, capture }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -67,6 +67,12 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
   const momentPrompt = $('#moment-prompt');
   const momentText = $('#moment-text');
   const momentCancel = $('#moment-cancel');
+  const aiBtn = $('#ai');
+  const aiBox = $('#ai-box');
+  const aiSizes = $('#ai-sizes');
+  const aiCopyGist = $('#ai-copy-gist');
+  const aiCopyEvidence = $('#ai-copy-evidence');
+  const aiCancel = $('#ai-cancel');
   const overlayLede = $('#overlay .lede');
   const defaultLede = overlayLede?.textContent ?? '';
 
@@ -109,6 +115,14 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
       closeMomentPrompt();
     }
   });
+
+  // --- Copy for AI: the sizes and the events-shown ratio are shown before copying ---
+  let aiTimer = 0;
+  const closeAiBox = () => aiBox?.classList.add('hidden');
+  aiBtn?.addEventListener('click', () => (aiBox?.classList.contains('hidden') ? onAi?.() : closeAiBox()));
+  aiCancel?.addEventListener('click', closeAiBox);
+  aiCopyGist?.addEventListener('click', () => onCopyAi?.('gist'));
+  aiCopyEvidence?.addEventListener('click', () => onCopyAi?.('evidence'));
   const transportUI = createTransportUI(transport ?? {});
   const inspectorUI = createInspector({
     linkFor: (kind, id) => explorerUrl(settings.explorer, settings.network, kind, id),
@@ -406,6 +420,26 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
       momentBtn.textContent = ok ? 'Saved' : 'Moment';
       momentBtn.classList.toggle('copied', ok);
       if (ok) momentTimer = setTimeout(() => this.setMomentSaved(false), 1600);
+    },
+
+    /** Show what Copy for AI would copy: one line per level with size, token estimate and events shown. `reports` is { gist, evidence } from describeReport. */
+    openAiBox(reports) {
+      if (!aiBox) return;
+      const fmt = (n) => Number(n).toLocaleString('en-US');
+      const line = (r) => `${r.level}: ${fmt(r.chars)} characters (~${fmt(r.tokensApprox)} tokens) · ${r.shown} of ${r.total} events${r.shown < r.total ? ' (selected under the stated rule)' : ''}`;
+      aiSizes.textContent = `${line(reports.gist)}\n${line(reports.evidence)}`;
+      aiBox.classList.remove('hidden');
+      aiCopyGist.focus();
+    },
+
+    closeAiBox,
+
+    setAiCopied(ok, level = 'gist') {
+      if (!aiBtn) return;
+      clearTimeout(aiTimer);
+      aiBtn.textContent = ok ? `Copied ${level}` : 'Copy for AI';
+      aiBtn.classList.toggle('copied', ok);
+      if (ok) aiTimer = setTimeout(() => this.setAiCopied(false), 1600);
     },
 
     /** Render the cast in the command strip: one chip per member, linked to the explorer. */

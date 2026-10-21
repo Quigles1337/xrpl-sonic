@@ -25,7 +25,7 @@ concentration (submitting accounts among the 60 available transactions):
   cast: "Maker" rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah submitted 22, involved 22
   cast: "Taker" rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy submitted 1, involved 1
 
-events (1 of 59 shown; rule: the anchor event, then cast-involved events, then the rest in application order, up to the budget of 24000 characters):
+events (1 of 59 shown; rule: the anchor event, then cast-involved events, then the rest in application order, up to the budget of 32000 characters):
   #107811677 tx 18 BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0 OfferCreate tesSUCCESS from rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy "Taker" · gives 7085108443 drops for 9801.315909 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De [anchor] [cast: Taker]
 
 findings for BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0 (OfferCreate, the anchor, cast: Taker):

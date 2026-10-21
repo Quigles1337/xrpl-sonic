@@ -10,7 +10,7 @@ import { formatClock } from './score.js';
 import { speechSupported } from './speech.js';
 import { el, option } from './dom.js';
 
-export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTranscript, onToggle, onAddNote, onEditNote, onRemoveNote, onJumpNote, onBlind }) {
+export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTranscript, onAi, onImport, onToggle, onAddNote, onEditNote, onRemoveNote, onJumpNote, onBlind }) {
   const status = el('p', { class: 'case-status', id: 'case-status', text: 'No case loaded. Open #replay=… or load a file.' });
   const warnings = el('ul', { class: 'case-warnings hidden', id: 'case-warnings' });
   const file = el('input', { type: 'file', accept: '.json,application/json', class: 'visually-hidden', id: 'case-file', 'aria-label': 'Load a case file' });
@@ -23,6 +23,22 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
   const saveBtn = el('button', { type: 'button', class: 'btn small', id: 'case-save', text: 'Save file', disabled: true, onclick: () => onSave?.() });
   const linkBtn = el('button', { type: 'button', class: 'btn small', id: 'case-link', text: 'Copy link', disabled: true, onclick: () => onCopyLink?.() });
   const transcriptBtn = el('button', { type: 'button', class: 'btn small', id: 'case-transcript', text: 'Transcript', disabled: true, title: 'Save the whole score as text', onclick: () => onTranscript?.() });
+  const aiBtn = el('button', { type: 'button', class: 'btn small', id: 'case-ai', text: 'Copy for AI', disabled: true, title: 'Copy the case as text an assistant can work from', onclick: () => onAi?.() });
+
+  // --- Import notes: an assistant's answer, pasted back as drafts --------------
+  const importText = el('textarea', { class: 'import-text', id: 'import-text', rows: 3, placeholder: 'Paste the JSON an assistant returned: an array of annotations, or a whole case', 'aria-label': 'Annotations to import' });
+  const importSource = el('input', { type: 'text', id: 'import-source', maxlength: 120, placeholder: 'Source (who wrote them)', 'aria-label': 'Source of the imported notes' });
+  importSource.value = 'assistant';
+  const importBtn = el('button', { type: 'button', class: 'btn small', id: 'import-notes', text: 'Import notes', disabled: true, title: 'Add the pasted annotations to the case as drafts', onclick: () => {
+    const text = importText.value.trim();
+    if (!text) {
+      importText.focus();
+      return;
+    }
+    onImport?.(text, importSource.value.trim() || 'assistant');
+  } });
+  const importResult = el('p', { class: 'hint import-result hidden', id: 'import-result' });
+  const importBox = el('div', { class: 'import-box' }, [importText, el('div', { class: 'import-row' }, [importSource, importBtn]), importResult]);
 
   const toggle = (key, labelText, hint, disabled = false) => {
     const box = el('input', { type: 'checkbox', id: `opt-${key}`, checked: Boolean(settings[key]), disabled, onchange: (e) => onToggle?.(key, e.target.checked) });
@@ -122,9 +138,10 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
     el('h2', { text: 'Case' }),
     status,
     warnings,
-    el('div', { class: 'buttons' }, [loadBtn, saveBtn, linkBtn, transcriptBtn, file]),
+    el('div', { class: 'buttons' }, [loadBtn, saveBtn, linkBtn, transcriptBtn, aiBtn, file]),
     notesHead,
     notesList,
+    importBox,
     captions.row,
     speak.row,
     pause.row,
@@ -141,6 +158,8 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
       saveBtn.disabled = !has;
       linkBtn.disabled = !has;
       transcriptBtn.disabled = !score;
+      aiBtn.disabled = !score;
+      importBtn.disabled = !has;
       if (!has) {
         status.textContent = 'No case loaded. Open #replay=… or load a file.';
         warnings.classList.add('hidden');
@@ -160,6 +179,19 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
       warnings.replaceChildren(...all.map((w) => el('li', { text: w })));
       warnings.classList.toggle('hidden', all.length === 0);
       render();
+    },
+
+    /** What an import did: accepted and rejected, in a line under the box; the pasted text is cleared when something was accepted. */
+    setImportResult(result) {
+      if (!result) {
+        importResult.classList.add('hidden');
+        return;
+      }
+      const parts = [`${result.accepted.length} accepted as draft${result.accepted.length === 1 ? '' : 's'}`];
+      if (result.rejected.length) parts.push(`${result.rejected.length} rejected: ${result.rejected.map((r) => `#${r.index + 1} ${r.reason}`).join('; ')}`);
+      importResult.textContent = parts.join(' · ');
+      importResult.classList.remove('hidden');
+      if (result.accepted.length) importText.value = '';
     },
 
     /** Start editing a note; `isNew` marks one that was just added, so Cancel discards it. */
