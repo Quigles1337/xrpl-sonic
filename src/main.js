@@ -34,8 +34,7 @@ import {
   startRecording,
 } from './capture.js';
 import { createUI } from './ui.js';
-
-const SITE_URL = 'https://quigles1337.github.io/xrpl-sonic/';
+import { SITE_URL } from './explorers.js';
 
 const settings = loadSettings();
 

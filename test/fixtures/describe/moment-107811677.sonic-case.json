@@ -1,23 +1,30 @@
 {
   "format": "xrpl-sonic/case",
   "version": 1,
-  "id": "moment-107777809-20261021t120000",
-  "title": "Moment at ledger #107,777,809",
-  "description": "A recorded fixture for Copy for AI: the ledger in test/fixtures/ledger-expanded.json, one cast member, a question at the OfferCreate, a loop.",
+  "id": "moment-107811677-20261021t200000",
+  "title": "Moment at ledger #107,811,677",
+  "description": "A recorded fixture for Copy for AI: the full ledger in test/fixtures/describe/ledger-107811677.json, two cast members, a question at the immediate-or-cancel offer, a loop.",
   "network": "mainnet",
   "clips": [
     {
-      "from": 107777809,
-      "to": 107777809
+      "from": 107811677,
+      "to": 107811677
     }
   ],
   "cast": [
     {
       "address": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
-      "label": "Sender A",
+      "label": "Maker",
       "voice": "brass",
       "pan": -0.6,
       "colour": "#ffffff"
+    },
+    {
+      "address": "rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy",
+      "label": "Taker",
+      "voice": "glass",
+      "pan": 0.6,
+      "colour": "#ffb3c6"
     }
   ],
   "filters": {
@@ -47,9 +54,9 @@
     {
       "id": "a1",
       "anchor": {
-        "hash": "0176B15458AF71EDF66D5C679FDBDCD360EB1602ECB7925352858D081287FE63"
+        "hash": "BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0"
       },
-      "text": "Why did this offer replace the earlier one instead of crossing anything?",
+      "text": "Why did this immediate-or-cancel order fill so little?",
       "source": "human",
       "status": "draft",
       "pause": false,
@@ -58,9 +65,9 @@
     {
       "id": "a2",
       "anchor": {
-        "ledger": 107777809
+        "ledger": 107811677
       },
-      "text": "Seven transactions of this ledger are in the fixture.",
+      "text": "One market maker submitted 22 of the 60 transactions in this ledger.",
       "source": "fixture",
       "status": "reviewed",
       "pause": false
@@ -68,20 +75,20 @@
   ],
   "moment": {
     "version": 1,
-    "savedAt": "2026-10-21T12:00:00.000Z",
+    "savedAt": "2026-10-21T20:00:00.000Z",
     "mode": "replay",
-    "host": "s2.ripple.com",
+    "host": "s1.ripple.com",
     "anchor": {
-      "hash": "0176B15458AF71EDF66D5C679FDBDCD360EB1602ECB7925352858D081287FE63"
+      "hash": "BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0"
     },
     "loop": {
       "fromMs": 1000,
-      "toMs": 7000
+      "toMs": 5000
     },
     "ledgers": [
       {
-        "index": 107777809,
-        "hash": "C134131572A060B3AB9A82938FE3169B3B38E3B25961015607A709562BF4FDB6"
+        "index": 107811677,
+        "hash": "670B93178D441AA798895ADD2F28958C0239BE809C2F79AA24516F1AA7D3DD77"
       }
     ]
   }

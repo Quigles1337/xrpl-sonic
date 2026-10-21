@@ -1,0 +1,124 @@
+xrpl-sonic case · Copy for AI · level gist
+versions: case 1 · moment 1 · facts 1 · mapping 1.1.0 · score 1
+network: mainnet · host: s1.ripple.com · saved: 2026-10-21T20:00:00.000Z while listening replay
+case: moment-107811677-20261021t200000 · "Moment at ledger #107,811,677"
+question: "Why did this immediate-or-cancel order fill so little?" · anchor: tx BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0
+scope: clip 1: ledgers 107811677–107811677 · #107811677 hash 670B93178D441AA798895ADD2F28958C0239BE809C2F79AA24516F1AA7D3DD77
+loop: 0:01.000–0:05.000 on the case timeline
+coverage (fetched for this text): #107811677 fetched, 60 transactions
+
+counts:
+  available in scope (sum of txn_count over the fetched ledgers): 60
+  selected by the listening settings (events in the score): 59
+  excluded by reason: failed 1
+listening settings (context for the selection, not facts about the ledger): cast: rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker", rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy "Taker"; categories: all on; failed transactions: excluded; quiet threshold: off; scale: pentatonicMajor; key: C; mapping: 1.1.0; cast mode: all; speed: 1x
+
+concentration (submitting accounts among the 60 available transactions):
+  rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker": 22 (36.7%)
+  rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq: 6 (10.0%)
+  rEqYHwNakMkL5FVVewd1cBUNs6EphiNLNF: 3 (5.0%)
+  rUL5tdABBjVGm38zeh7tEBwGsUk6N9oE3H: 3 (5.0%)
+  r3wKiNh21bQ4rw4LNHLm85WFNsK5kfnVrj: 2 (3.3%)
+  rUMBUV11gQBUadbW9LF58oWeBBPaSGGF2V: 2 (3.3%)
+  rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns: 2 (3.3%)
+  r3zyqf6efQgSDBR1XfKhd92Z2xrGHvkuCF: 1 (1.7%)
+  cast: "Maker" rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah submitted 22, involved 22
+  cast: "Taker" rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy submitted 1, involved 1
+
+events (59 of 59 shown; order: as applied in each ledger):
+  #107811677 tx 0 9FFC9A7BBB3639483D69FF134439EBE00464C96DD1545BC1A28634F60C75ABB0 OfferCreate tesSUCCESS from rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7 · gives 891252.0000000001 CNY issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y for 100000000000 drops · replaces offer 42608136
+  #107811677 tx 1 01D1A259E7D9CC65F9D33F1CC09B96A15DED8E69777DF4E6BABC9D3333CF04C6 Payment tesSUCCESS from rEiq1iAcpzP8WLjezP9MzAQEJ7jqKMLFSA to rQQbVSQsvKUgE3omhWokGajp5fa4cbN7C · delivered 39520886 drops
+  #107811677 tx 2 02BB6740E1E9273B2D65B3F073BB4E07537E4BD2A259486E434625E25CDF4EB6 Batch tesSUCCESS from rEqYHwNakMkL5FVVewd1cBUNs6EphiNLNF
+  #107811677 tx 3 1898CFA3ACC68FA0FB86B9F400DD20878B44B056D752321DCED5663FF290775F Batch tesSUCCESS from rEqYHwNakMkL5FVVewd1cBUNs6EphiNLNF
+  #107811677 tx 4 5125EE2944B782D875258630C5E3D442FBF2DBCF2FF65919CBD592C709CB8816 Batch tesSUCCESS from rEqYHwNakMkL5FVVewd1cBUNs6EphiNLNF
+  #107811677 tx 5 7CF68D15E5996F9E361B6F2ADD12F0134BC71B67674E1D0540D8C3E3668470F5 OfferCancel tesSUCCESS from rGdsBv1mrGXws4Rv1VU59vR9LX7cYs1pUW · cancels offer 103091648
+  #107811677 tx 6 C1B7FAB857524D8F6AC3F56A5A2E809D17B182E9243BE5208A283477C0560D00 OfferCreate tesSUCCESS from rLVuJYb8rXuXQM6aYXJrRA8CZxzygrBCsC · gives 6.160829 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De for 4460000 drops
+  #107811677 tx 7 1F6793252339784D66DFEF31F22E48DB216A3D24D42EED2DC12DCFD6EB128FB8 OfferCreate tesSUCCESS from rLLmZWfeJuFSU7NVHnzmX33ji11kDYuev9 · gives 9.950032 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De for 7200000 drops
+  #107811677 tx 8 E9AE5866400D8DF0C1A9FB90DD5675B2C44E4B4E4DDB3FBA836A57174843AFEC NFTokenCreateOffer tesSUCCESS from rL54Fz2L8g45Db8kj1nLUatmuMrnXJjHmd to rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC · amount 20890000 drops
+  #107811677 tx 9 F7D9E66D5BE449041B20276D0BBACB1D4A5105B8DCBF8EB21402BEEF699A2CF3 OfferCreate tesSUCCESS from rKrVTQChbm1761udZt18u9Aq9onJwEyvZw · gives 7.043136 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De for 5100000 drops
+  #107811677 tx 10 27253529D5BA00518814DB3FE8E81A3C8D278C1B69249EF94B71693879A58CA2 NFTokenCancelOffer tesSUCCESS from rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq
+  #107811677 tx 11 CD1170CB5AA4F57D258B9215B6D8639D1523B84F09CE4AB4C1F07222F6D071A6 NFTokenCreateOffer tesSUCCESS from rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq to rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC · amount 2700000 drops
+  #107811677 tx 12 133409A3B030DC5B809D9B4D433C5372A80566738823EF7A33A5C1BA0C2DE6EC NFTokenCreateOffer tesSUCCESS from rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq to rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC · amount 4800000 drops
+  #107811677 tx 13 AA52E6A661CB8B30A61FD5092451DB489C5BC240A2C08143A77E3BC2692AABA6 NFTokenCreateOffer tesSUCCESS from rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq to rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC · amount 4800000 drops
+  #107811677 tx 14 7BAE8D89C9573EE38D3FFDC79D8327C4FB5AE18E487875B3428AC75057173258 NFTokenCreateOffer tesSUCCESS from rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq to rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC · amount 4800000 drops
+  #107811677 tx 15 F73EF3416F42B2FB8A00158788B5F89C0953606F13BD1754DB9801997029FC85 NFTokenCreateOffer tesSUCCESS from rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq to rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC · amount 4800000 drops
+  #107811677 tx 16 1B429B99ABD6DCDB1A6A40768154F0418B79EFA1B5202202E9177EF2A3C7DFF6 OfferCreate tesSUCCESS from r44LyQ3UoTd1NzGKUin6QB5Hx6k38kog95 · gives 23076581 drops for 382874.62 FUZZY (46555A5A59000000000000000000000000000000) issuer rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62 · replaces offer 107376105
+  #107811677 tx 17 28FF56EEBA83FAB6F734FDFAEED269CACDA307C9DD9C8AEFB3C5BBDF218F7D3A Payment tesSUCCESS from r4dyAjUEJhZ9SSekkjNJ24Pq2Pb4PsQsVk to r4btV86aemQXdwXoos2DdFosYQWeywMm4n · delivered 200000000 drops
+  #107811677 tx 18 BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0 OfferCreate tesSUCCESS from rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy "Taker" · gives 7085108443 drops for 9801.315909 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De [anchor] [cast: Taker]
+  #107811677 tx 19 5287221CD9085549C4CB33BB2A699896AFDDCBED5C0D963547998D1B7123839F Payment tesSUCCESS from rBWpYJhuJWBPAkzJ4kYQqHShSkkF3rgeD to rw9isBiVw3M2dt2KKHePVuUUmHxix9VY35 · delivered 2579669980 drops
+  #107811677 tx 20 7F01778474F52709A255506DCF0F5E86E440C43C6ABA2ADB599F091618E80B16 Payment tesSUCCESS from rrhhvcX5JsvKf9K43oAuBv8quGGVDfuRod to rfKYWZ84fm9eVEdoTcsQCo1WdqMPyaUF5z · delivered 0.0001043747728 SIGMA (5349474D41000000000000000000000000000000) issuer rfKYWZ84fm9eVEdoTcsQCo1WdqMPyaUF5z
+  #107811677 tx 21 EC7C10AD4919498FB87B8A6C5F66939AE40599BDE6FF35334E19707217DFD501 AccountSet tesSUCCESS from rdGzD9oHEUJkiWxiuVA4UnB9f4kF7giQn
+  #107811677 tx 22 ED38D4CB6CB7B170950403A2B994FBA460ADE8A3808271B9BCBB1A1F79C31705 AccountSet tesSUCCESS from rtLMG8Qc4wDjqrdBz3vVhbXwu7PG4N3RQ
+  #107811677 tx 23 8AC22CEFDC9D814B7BF9745001A725FDC3A23E0995C3CA1A79263B4947EFB6AE OfferCreate tesSUCCESS from rhhh49pFH96roGyuC4E5P4CHaNjS1k8gzM · gives 4932789673 drops for 46714.70207283153 CNY issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · replaces offer 35537562
+  #107811677 tx 24 49D22A5072DB5236000DDD17B5B7C03E8FB10244A237ED6DBD254FEC9917760D Payment tesSUCCESS from rhWj9gaovwu2hZxYW7p388P8GRbuXFLQkK to rfnKEXJ1NogZtYok6ukJMbxnkogp3kezp3 · delivered 786833851 drops
+  #107811677 tx 25 C93EC9D31EDDC65C553F81DFBC3306C532B8963EAE4BC77F66E3F96BBC71E9FC NFTokenCreateOffer tesSUCCESS from rhjmLkJcQkLf7aooDibaXPX5dJ5UFRsY8Z to rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC · amount 360000000 drops
+  #107811677 tx 26 1EAB02FE8F0C2AA9BADFFBEAF1C2155A82D9A0CDE747E01F182E480AAC8EBBF6 NFTokenCreateOffer tesSUCCESS from r3zyqf6efQgSDBR1XfKhd92Z2xrGHvkuCF to rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC · amount 8310000 drops
+  #107811677 tx 27 F0A0157B2DFFA017946FA40BE6315AD5E8A4F8BB8EF24B16EB80E9399E565531 OfferCreate tesSUCCESS from r3wKiNh21bQ4rw4LNHLm85WFNsK5kfnVrj · gives 15.862889 SOL issuer rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw for 1250000000 drops · replaces offer 107872912
+  #107811677 tx 28 00739EE09CD1545D31F1B8866E7533F2E859BEBAFBD101B259A76D5E2541290E OfferCreate tesSUCCESS from r3wKiNh21bQ4rw4LNHLm85WFNsK5kfnVrj · gives 1250000000 drops for 16.183351 SOL issuer rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw · replaces offer 107872913
+  #107811677 tx 29 1581703054AAE66EE4C304B207DD5196FDA0E4A75E24404B593EDE9C1D07DEC9 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 1317860 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De for 1000000000000 drops · replaces offer 287809027 [cast: Maker]
+  #107811677 tx 30 85B6634CEE7C82A4B61B2A636AE3A99AC7AB90D04B357BCE60F9ADCBD0CB37F8 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 18664.5957 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · replaces offer 287809028 [cast: Maker]
+  #107811677 tx 31 282D493DA8AE4312095ED0DC26F1C94E16C48BFCEE1CE06BAF2B69F88FE45A9B OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 18309.01842 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE · replaces offer 287809029 [cast: Maker]
+  #107811677 tx 32 A4803147C1A007CBA3DFF23D82DDB7971EE958783382450EF5CE727005032EBB OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 1317860 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B for 1000000000000 drops · replaces offer 287809030 [cast: Maker]
+  #107811677 tx 33 E8D0FFA3CDCB7E34AEA26AA2AA7A91E25C6F3EB7697AD9DBBED77701466B8275 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 18664.5957 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · replaces offer 287809031 [cast: Maker]
+  #107811677 tx 34 A98B545AD200670F30D6B8D8437365FA1748F4CAE06D34CC664A315FC4FCCC04 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 1371661.7594 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq for 1000000000000 drops · replaces offer 287809032 [cast: Maker]
+  #107811677 tx 35 F0B3BFEB03CCA60131CAA515B27C9DD392EF646DD8B4D686693AB49463962CDF OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 19055.9397368274 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · replaces offer 287809033 [cast: Maker]
+  #107811677 tx 36 AB74BFF7429E1334606953B1F28C15AB68CB6836E59719BA0CE8E69117541B9A OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 1356620 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y for 1000000000000 drops · replaces offer 287809034 [cast: Maker]
+  #107811677 tx 37 6C9FAA8DF4F239ACCBBC1EB12A8323254B13BE58B04BE832308FA7745EB03163 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 18309.01842 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · replaces offer 287809035 [cast: Maker]
+  #107811677 tx 38 4AAF16B743F04003ECFD799FB1E4F721E0E0819917C4D5CC0787B5CDFD206A21 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 1354468.4855 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu for 1000000000000 drops · replaces offer 287809036 [cast: Maker]
+  #107811677 tx 39 0A9611EBF327BAF3CAA32A900D93338C9314C4ED9767FC4E32926285F7965C41 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 18159.29495004 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · replaces offer 287809037 [cast: Maker]
+  #107811677 tx 40 62B8B3329437FC2C79596CAB618C8445DA1F828DA0A31C774F08D8F354EEA619 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 1364864.5215 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq for 1000000000000 drops · replaces offer 287809038 [cast: Maker]
+  #107811677 tx 41 A2A49516BAF6D37C679D062755C6081BB7F04F2F03D1641C0059B4B7B224A45B OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 18664.5957 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · replaces offer 287809039 [cast: Maker]
+  #107811677 tx 42 C41A470E0E3D1B8E3A45A67AA0FE5737D74C8C762FC7371921A6A95396392925 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 1152270 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq for 1000000000000 drops · replaces offer 287809040 [cast: Maker]
+  #107811677 tx 43 6AF8A91EF55FA02D4CC6A728BD63CEAA4BC546E10746BD5053C97131C754F943 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 16626.70626 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · replaces offer 287809041 [cast: Maker]
+  #107811677 tx 44 3BE132B6E913165F3AC56F2E1EC20CC21F0105C447C24F34003F152BE730DE31 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 1145630 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK for 1000000000000 drops · replaces offer 287809042 [cast: Maker]
+  #107811677 tx 45 2BD8DB651FEC7A427214B7EC0C39D871718A63BBF4377C172938C5C59B2B4CD5 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 19002.06012 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · replaces offer 287809043 [cast: Maker]
+  #107811677 tx 46 C8ECDBFDC9DB8517CBBF2D55EDE4673E24F3719938B61639DDF98D58BD4695CD OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 15.9181 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL for 1000000000000 drops · replaces offer 287809044 [cast: Maker]
+  #107811677 tx 47 A0FBACF3023B05AA05D3F17CCB5B7A786D4A30800954D70444F6A153487B19CA OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 0.23135646 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · replaces offer 287809045 [cast: Maker]
+  #107811677 tx 48 E3723AAFEEC1126C4C8ADCF46F6C1A3C445BD6086BD832D4554D93FE887B1726 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 14.8059 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B for 1000000000000 drops · replaces offer 287809046 [cast: Maker]
+  #107811677 tx 49 D47F1AF9D17FA5FCF68A22C00E67185D87A438A3404A6FB6DB19ABA271335A2B OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 12846000000 drops for 0.23135646 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · replaces offer 287809047 [cast: Maker]
+  #107811677 tx 50 2693745BE75EEE9199A0333A3AF58A85C6E73F9E0F90343CFB68B61115494B75 OfferCreate tesSUCCESS from rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker" · gives 545.7656999999999 ETH issuer rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h for 1000000000000 drops · replaces offer 287809048 [cast: Maker]
+  #107811677 tx 51 B641DD4D44FBDDA5EADB94A34CD58AC173F1EB9024A2C1F42D43CA94C43BCBB8 OfferCreate tesSUCCESS from rBERMc8i2DoMkMDHGF38acFMfudsBffdwA · gives 149.9805434 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De for 152.2644960085523 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · replaces offer 68501621
+  #107811677 tx 52 B522197001B32667A12E42781C7518C3EB75AC063B42A0F148A1BB8260FB7CF2 OfferCreate tesSUCCESS from rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns · gives 7227767410 drops for 10008.1449772788 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · replaces offer 109263855
+  #107811677 tx 53 EEBF27F7F397768ED4482CFEA47F7B42F4B8DDF7441BF8AE726E20DF73E4F159 OfferCreate tesSUCCESS from rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns · gives 9989.873862864 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De for 7228039840 drops · replaces offer 109263856
+  #107811677 tx 54 802D8402C39E5E70EB0B66A7DA29266568E65DEEA8EEDA1F9DBD96679A2869F9 Payment tesSUCCESS from rUL5tdABBjVGm38zeh7tEBwGsUk6N9oE3H to rUL5tdABBjVGm38zeh7tEBwGsUk6N9oE3H · delivered 19305.787346767 DASH (4441534800000000000000000000000000000000) issuer rDy7eGzyP43BmmWXk7EiVNubhDd7P3Pwqq
+  #107811677 tx 55 738343ACCC02DEDBD55ECF75FEC54A0DA236544902EE70D85CF0785071B05C1D Payment tesSUCCESS from rUL5tdABBjVGm38zeh7tEBwGsUk6N9oE3H to rUL5tdABBjVGm38zeh7tEBwGsUk6N9oE3H · delivered 7.705055848 DASH (4441534800000000000000000000000000000000) issuer rDy7eGzyP43BmmWXk7EiVNubhDd7P3Pwqq
+  #107811677 tx 56 91D8F08E433788C8065D2766CE74274DD666A35B4ADE63F7A82D55D656C79EB5 Payment tesSUCCESS from rUL5tdABBjVGm38zeh7tEBwGsUk6N9oE3H to rUL5tdABBjVGm38zeh7tEBwGsUk6N9oE3H · delivered 249651 drops
+  #107811677 tx 57 4A9E261BC0472E480334769A27B366DF4F424B5A55EDCC691D47E90D4E52B940 OfferCreate tesSUCCESS from rUMBUV11gQBUadbW9LF58oWeBBPaSGGF2V · gives 276.91 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De for 200388911 drops · replaces offer 107880088
+  #107811677 tx 58 050C239A09E33E36AC6EF89BBD940219ED9449F4FEB2C9AF8FA48BC73ECEE396 OfferCreate tesSUCCESS from rUMBUV11gQBUadbW9LF58oWeBBPaSGGF2V · gives 200000000 drops for 277.036173 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · replaces offer 107880089
+
+findings for BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0 (OfferCreate, the anchor, cast: Taker):
+  [observed] transaction.flags transaction.flags = [tfImmediateOrCancel] · evidence: tx.Flags
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.issued balance:rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53/RLUSD/rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De.delta = before 16.2249884128331, after 15.1249878728331, delta -1.10000054 · evidence: node 0 Balance.value
+  [calculated] balance.issued balance:rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De/RLUSD/rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53.delta = before -16.2249884128331, after -15.1249878728331, delta 1.10000054 · evidence: node 0 Balance.value
+  [calculated] balance.issued balance:rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy/RLUSD/rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De.delta = before 823.9475696291931, after 825.0475701691931, delta 1.10000054 · evidence: node 1 Balance.value
+  [calculated] balance.issued balance:rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De/RLUSD/rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy.delta = before -823.9475696291931, after -825.0475701691931, delta -1.10000054 · evidence: node 1 Balance.value
+  [calculated] balance.xrp balance:rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy/XRP.delta = before 7088108443, after 7087313304, delta -795139 · evidence: node 2 Balance
+  [calculated] balance.xrp balance:rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53/XRP.delta = before 17960062, after 18755191, delta 795129 · evidence: node 5 Balance
+  [observed] node.action offer:3.action = deleted · evidence: node 3 DeletedNode
+  [observed] offer.identity offer:3.identity = owner rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53, sequence 105279319, expiration null, sell no · evidence: node 3 FinalFields.Account, node 3 FinalFields.Sequence, node 3 FinalFields.Flags
+  [observed] offer.amounts.after offer:3.amounts.after = takerGets 0 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 0 drops · evidence: node 3 FinalFields.TakerGets, node 3 FinalFields.TakerPays
+  [observed] offer.amounts.before offer:3.amounts.before = takerGets 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 795129 drops · evidence: node 3 PreviousFields.TakerGets, node 3 PreviousFields.TakerPays
+  [calculated] offer.trade.previous-fields offer:3.traded = yes · evidence: node 3 PreviousFields
+  [calculated] offer.trade.delta offer:3.tradedAmounts = gave 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, got 795129 drops · evidence: node 3 PreviousFields.TakerGets, node 3 FinalFields.TakerGets, node 3 PreviousFields.TakerPays, node 3 FinalFields.TakerPays
+  [rule] offer.role offer:3.role = book · evidence: node 3 FinalFields.Account, tx.Account
+  [rule] offer.removal.consumed offer:3.removal = consumed · evidence: node 3 FinalFields.TakerGets, node 3 FinalFields.TakerPays, node 3 PreviousFields.TakerGets, node 3 PreviousFields.TakerPays
+  [observed] exchange.request exchange.request = takerGets 7085108443 drops, takerPays 9801.315909 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, sell no, immediateOrCancel yes, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [3], received {524C555344000000000000000000000000000000/rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De}, spent {XRP 795129 drops} · evidence: node 3 PreviousFields.TakerGets
+  [calculated] exchange.received exchange.received = 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 795129 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status partial, judgedBy takerPays-received, requested 9801.315909 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, achieved 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, shortfall 9800.21590846 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, placed no, betterThanAsked no · evidence: tx.TakerPays, exchange.received
+  [rule] exchange.fill.ioc exchange.fill.immediateOrCancel = not placed by design · evidence: tx.Flags
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+
+links:
+  case: https://quigles1337.github.io/xrpl-sonic/#case=z:example
+  explorer: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/<hash> for any hash in this text
+  BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0
+
+how to reply:
+Answer the question above (or, if there is none, say what happened in these records and what to look at). Keep observations, what these records show, apart from hypotheses, what might explain them. For each one, cite the hash of every transaction you rely on, taken from this text. Say plainly what you could not establish from this text. Do not infer common ownership or intent from accounts appearing together. Then return your notes as a JSON array of annotations in this shape, which xrpl-sonic imports as drafts:
+[{"text": "...", "anchor": {"hash": "<64-hex transaction hash from this text>"} or {"ledger": <ledger index>} or {"timeMs": <milliseconds on the case timeline>}, "kind": "observation" or "hypothesis" or "question", "evidence": ["<hash>", ...], "source": "<who you are>", "status": "draft"}]
+example:
+[{"text":"One sentence of what the cited record shows.","anchor":{"hash":"BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0"},"kind":"observation","evidence":["BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0"],"source":"assistant","status":"draft"}]

@@ -20,6 +20,9 @@ export const MAX_CASE_LEDGERS = MAX_REPLAY_LEDGERS;
 export const MAX_ANNOTATIONS = 200;
 export const MAX_ANNOTATION_CHARS = 500;
 export const ANNOTATION_STATUSES = Object.freeze(['draft', 'reviewed']);
+/** What a note is: an observation (what the records show), a hypothesis (what might explain them), or the question a moment was saved with. */
+export const ANNOTATION_KINDS = Object.freeze(['observation', 'hypothesis', 'question']);
+export const MAX_EVIDENCE_HASHES = 50;
 
 /**
  * A saved moment (docs/save-this-moment.md) is a case with an optional `moment`
@@ -154,7 +157,7 @@ function normalizeGeiger(input, errors) {
 }
 
 /** An anchor as { hash } / { ledger } / { timeMs } (any combination that parses), or null when nothing usable is there. */
-function normalizeAnchor(raw) {
+export function normalizeAnchor(raw) {
   const a = raw && typeof raw === 'object' ? raw : {};
   const anchor = {};
   if (typeof a.hash === 'string' && /^[0-9A-F]{64}$/i.test(a.hash)) anchor.hash = a.hash.toUpperCase();
@@ -231,6 +234,9 @@ function normalizeAnnotations(input, errors) {
     let id = slug(raw.id, '');
     if (!id || ids.has(id)) id = `a${out.length + 1}`;
     ids.add(id);
+    // `kind` says what a note is; a moment's question is kind "question" and also carries question: true, kept in step either way
+    const kind = ANNOTATION_KINDS.includes(raw.kind) ? raw.kind : raw.question === true ? 'question' : null;
+    const evidence = Array.isArray(raw.evidence) ? [...new Set(raw.evidence.filter((h) => typeof h === 'string' && /^[0-9A-F]{64}$/i.test(h)).map((h) => h.toUpperCase()))].slice(0, MAX_EVIDENCE_HASHES) : [];
     out.push({
       id,
       anchor,
@@ -238,7 +244,9 @@ function normalizeAnnotations(input, errors) {
       source: cleanText(raw.source, 120),
       status: ANNOTATION_STATUSES.includes(raw.status) ? raw.status : 'draft',
       pause: raw.pause === true,
-      ...(raw.question === true ? { question: true } : {}), // the saved observation of a moment; absent on ordinary notes
+      ...(kind ? { kind } : {}),
+      ...(kind === 'question' ? { question: true } : {}), // the saved observation of a moment; absent on ordinary notes
+      ...(evidence.length ? { evidence } : {}), // transaction hashes the note rests on
     });
   }
   return out;
