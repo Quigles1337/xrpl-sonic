@@ -82,6 +82,8 @@ export class Visualizer {
     this.ctx = canvas.getContext('2d', { alpha: transparent });
     this.particles = [];
     this.rings = [];
+    this.bonds = []; // lines between cast members who met in one transaction
+    this.lastByMember = new Map(); // cast member id → its most recent track
     this.flash = 0; // ledger pulse 0..1
     this.stamp = ''; // ledger number stamped behind the plate
     this.stampGlow = 0;
@@ -327,9 +329,23 @@ export class Visualizer {
       alpha: dim ? 0.4 : 1,
       seed: Math.random() * Math.PI * 2,
       spin: (Math.random() - 0.5) * 2,
+      castColour: event.castColour ?? null,
+      castLabel: event.castLabel ?? null,
+      castId: event.primary ?? null,
+      cues: Array.isArray(event.cues) ? event.cues : [],
+      dead: false,
     };
-    if (this.particles.length >= MAX_PARTICLES) this.particles.shift();
+    if (this.particles.length >= MAX_PARTICLES) this.particles.shift().dead = true;
     this.particles.push(p);
+    if (p.castId) {
+      // A bond to the latest track of every other member this transaction involved.
+      for (const cue of p.cues) {
+        const other = this.lastByMember.get(cue.id);
+        if (other && !other.dead) this.bonds.push({ a: p, b: other, rgb: this.rgb(cue.colour ?? p.castColour), born: p.born, life: 1600 });
+      }
+      this.lastByMember.set(p.castId, p);
+      while (this.bonds.length > 24) this.bonds.shift();
+    }
     if (!dim) {
       if (p.whale) this.ring({ colour: event.colour, x, y, life: 1700, width: 2.5, maxR: 160 + r * 6 });
       if (p.shape === 'vault-open') this.ring({ colour: event.colour, x, y, life: 900, width: 1.5, maxR: 48 + r * 2 });
@@ -457,6 +473,7 @@ export class Visualizer {
       const t = Math.max(0, ts - p.born);
       const age = t / p.life;
       if (age >= 1) {
+        p.dead = true;
         this.particles.splice(i, 1);
         continue;
       }
@@ -475,6 +492,28 @@ export class Visualizer {
       };
       const drawShape = this[`draw_${p.shape.replace('-', '_')}`] ?? this.draw_mote;
       drawShape.call(this, ctx, p, k);
+      if (p.castColour) this.drawIdentity(ctx, p, k);
+    }
+
+    // --- bonds: two cast members met in one transaction ---------------------
+    if (this.bonds.length) {
+      ctx.setLineDash([3, 5]);
+      ctx.lineWidth = 1;
+      for (let i = this.bonds.length - 1; i >= 0; i--) {
+        const bond = this.bonds[i];
+        const age = (ts - bond.born) / bond.life;
+        if (age >= 1 || bond.a.dead || bond.b.dead) {
+          this.bonds.splice(i, 1);
+          continue;
+        }
+        const reach = easeOutCubic(Math.min(1, age * 2.5));
+        ctx.strokeStyle = rgba(bond.rgb, (1 - age) * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(bond.a.x, bond.a.y);
+        ctx.lineTo(bond.a.x + (bond.b.x - bond.a.x) * reach, bond.a.y + (bond.b.y - bond.a.y) * reach);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
     }
 
     // --- ruler and vignette on top ------------------------------------------
@@ -519,6 +558,32 @@ export class Visualizer {
       ctx.letterSpacing = '0px';
     } catch {
       /* older engines */
+    }
+  }
+
+  /** Cast identity: a ring in the member's colour, the label, and a dot on the ring per other involved member. */
+  drawIdentity(ctx, p, k) {
+    const { x, y, r, a, s } = k;
+    const rgb = this.rgb(p.castColour);
+    const R = (r * 1.4 + 7) * s;
+    ctx.strokeStyle = rgba(rgb, a * 0.85);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(x, y, R, 0, Math.PI * 2);
+    ctx.stroke();
+    p.cues.forEach((cue, i) => {
+      const ang = -Math.PI / 4 + i * 0.55;
+      ctx.fillStyle = rgba(this.rgb(cue.colour ?? p.castColour), a);
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(ang) * R, y + Math.sin(ang) * R, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    if (p.castLabel && a > 0.15) {
+      ctx.font = `600 9px ${MONO}`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = rgba(rgb, Math.min(1, a * 1.1));
+      ctx.fillText(p.castLabel.toUpperCase(), x + R + 4, y - R * 0.3);
     }
   }
 

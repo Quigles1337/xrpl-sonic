@@ -71,14 +71,22 @@ describe('settings', () => {
     }
   });
 
-  test('account mode and explorer are validated; the watched account is never persisted', () => {
-    const s = sanitizeSettings({ accountMode: 'hide', explorer: 'bithomp', account: 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah' });
-    assert.equal(s.accountMode, 'hide');
+  test('cast mode and explorer are validated; the cast is normalised and its live controls are not persisted', () => {
+    const addr = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
+    const s = sanitizeSettings({ castMode: 'hide', explorer: 'bithomp', account: addr, cast: [{ address: addr, label: 'Alice', voice: 'glass', solo: true, muted: true }, 'rNope'] });
+    assert.equal(s.castMode, 'hide');
     assert.equal(s.explorer, 'bithomp');
-    assert.equal('account' in s, false);
-    const bad = sanitizeSettings({ accountMode: 'loud', explorer: 'etherscan' });
-    assert.equal(bad.accountMode, 'mute');
+    assert.equal('account' in s, false, 'the old single watched account is never persisted');
+    assert.equal(s.cast.length, 1);
+    assert.equal(s.cast[0].label, 'Alice');
+    assert.equal(s.cast[0].voice, 'glass');
+    assert.equal(s.cast[0].solo, false);
+    assert.equal(s.cast[0].muted, false);
+    const bad = sanitizeSettings({ castMode: 'loud', explorer: 'etherscan', cast: 'nope' });
+    assert.equal(bad.castMode, 'all');
     assert.equal(bad.explorer, 'xrpscan');
+    assert.deepEqual(bad.cast, []);
+    assert.equal(sanitizeSettings({ accountMode: 'mute' }).castMode, 'mute', 'the key from before the cast existed is still read');
   });
 
   test('mappingOptions applies the quiet threshold only in quiet mode', () => {
