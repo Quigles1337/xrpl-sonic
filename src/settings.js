@@ -2,6 +2,8 @@
 
 import { CATEGORY_NAMES, SCALES, KEYS } from './mapping.js';
 import { EXPLORERS, DEFAULT_EXPLORER } from './explorers.js';
+import { normalizeCast, CAST_MODES } from './cast.js';
+import { normalizeGeigerConfig, GEIGER_DEFAULTS } from './geiger.js';
 
 export const STORAGE_KEY = 'xrpl-sonic:settings:v1';
 
@@ -16,11 +18,20 @@ export const DEFAULT_SETTINGS = Object.freeze({
   includeFailed: false,
   enabled: Object.freeze(Object.fromEntries(CATEGORY_NAMES.map((c) => [c, true]))),
   showLog: true,
-  accountMode: 'mute', // transactions that do not involve the watched account: 'mute' (dim, silent) | 'hide'
+  captions: true, // text equivalent of annotations, gaps and cast events during a case
+  speak: false, // read annotations aloud (Web Speech), independent of the sound
+  pauseAtNotes: true, // honour annotations that ask the transport to pause
+  exposure: false, // long-exposure plate: a fading trace of where tracks landed
+  geiger: Object.freeze({ enabled: false, ...GEIGER_DEFAULTS }), // the detector (src/geiger.js)
+  health: Object.freeze({ poll: false, sound: false }), // observed fee pressure (src/health.js)
+  midiOutput: '', // name of the preferred live MIDI output, re-selected after Connect
+  cast: Object.freeze([]), // followed accounts (src/cast.js); solo and mute are live controls and are not persisted
+  castMode: 'all', // transactions that involve nobody in the cast: 'all' (play) | 'mute' (dim, silent) | 'hide'
   explorer: DEFAULT_EXPLORER,
 });
 
-export const ACCOUNT_MODES = Object.freeze({ mute: 'Mute others', hide: 'Hide others' });
+/** @deprecated The cast replaced the single watched account; CAST_MODES in src/cast.js is the source. */
+export const ACCOUNT_MODES = CAST_MODES;
 
 function storage() {
   try {
@@ -32,7 +43,7 @@ function storage() {
 
 /** Validate and coerce a partial settings object onto the defaults. */
 export function sanitizeSettings(input) {
-  const s = { ...DEFAULT_SETTINGS, enabled: { ...DEFAULT_SETTINGS.enabled } };
+  const s = { ...DEFAULT_SETTINGS, enabled: { ...DEFAULT_SETTINGS.enabled }, cast: [], geiger: { ...DEFAULT_SETTINGS.geiger }, health: { ...DEFAULT_SETTINGS.health } };
   if (!input || typeof input !== 'object') return s;
   if (input.network === 'mainnet' || input.network === 'testnet') s.network = input.network;
   const vol = Number(input.volume);
@@ -50,9 +61,15 @@ export function sanitizeSettings(input) {
     }
   }
   if (typeof input.showLog === 'boolean') s.showLog = input.showLog;
-  if (typeof input.accountMode === 'string' && ACCOUNT_MODES[input.accountMode]) s.accountMode = input.accountMode;
+  for (const k of ['captions', 'speak', 'pauseAtNotes', 'exposure']) if (typeof input[k] === 'boolean') s[k] = input[k];
+  s.geiger = { enabled: input.geiger?.enabled === true, ...normalizeGeigerConfig(input.geiger) };
+  s.health = { poll: input.health?.poll === true, sound: input.health?.sound === true };
+  if (typeof input.midiOutput === 'string') s.midiOutput = input.midiOutput.slice(0, 120);
+  const mode = input.castMode ?? input.accountMode; // accountMode: the key from before the cast existed
+  if (typeof mode === 'string' && CAST_MODES[mode]) s.castMode = mode;
+  s.cast = normalizeCast(input.cast).map((m) => ({ ...m, solo: false, muted: false }));
   if (typeof input.explorer === 'string' && EXPLORERS[input.explorer]) s.explorer = input.explorer;
-  // `account` is deliberately not persisted: the watched account lives in the URL hash only.
+  // `account` (the single watched address of older builds) is not persisted; the cast lives here and in the URL hash.
   return s;
 }
 

@@ -35,13 +35,7 @@
       <div class="status" role="status">
         <span id="status-dot" class="status-dot" data-state="idle"></span>
         <span id="status-text" class="status-text">Ready</span>
-        <span id="watch" class="watch hidden">
-          <a id="account-badge" class="account-badge" target="_blank" rel="noopener noreferrer" title="Open this account on the explorer">
-            <span class="watch-label">Watching</span>
-            <span id="account-short" class="account-short"></span>
-          </a>
-          <button id="account-clear" class="account-clear" type="button" aria-label="Stop watching this account" title="Stop watching">&times;</button>
-        </span>
+        <span id="cast-strip" class="cast-strip hidden" aria-label="Cast"></span>
       </div>
       <div class="ledger" aria-live="off">
         <div class="readout">
@@ -66,15 +60,33 @@
       </div>
     </header>
 
-    <div id="replaybar" class="replaybar hidden" role="status" aria-live="polite">
-      <span id="replay-label" class="replay-label">Replay</span>
-      <div class="replay-track" aria-hidden="true"><div id="replay-fill" class="replay-fill"></div></div>
+    <div id="transport" class="transport hidden" role="region" aria-label="Transport" data-state="idle">
+      <span id="t-label" class="t-label">Replay</span>
+      <span class="t-buttons">
+        <button id="t-back" class="btn tiny" type="button" title="Step back (,)" aria-label="Step back">&#9198;</button>
+        <button id="t-play" class="btn tiny t-play" type="button" title="Play (K)" aria-label="Play or pause" aria-pressed="false">&#9654;</button>
+        <button id="t-step" class="btn tiny" type="button" title="Step to the next event (.)" aria-label="Step forward">&#9197;</button>
+      </span>
+      <span id="t-clock" class="t-clock">0:00.000 / 0:00.000</span>
+      <div id="t-track" class="t-track" role="slider" aria-label="Position in the case" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" tabindex="0">
+        <div id="t-loopspan" class="t-loopspan hidden"></div>
+        <div id="t-fill" class="t-fill"></div>
+        <div id="t-marks" class="t-marks" aria-hidden="true"></div>
+      </div>
+      <span id="t-clips" class="t-buttons t-clips hidden" aria-label="Clips"></span>
+      <span class="t-buttons">
+        <button id="t-loop-in" class="btn tiny" type="button" title="Loop in point here ([)" aria-label="Set loop start">[</button>
+        <button id="t-loop" class="btn tiny" type="button" title="Loop (L)" aria-label="Loop" aria-pressed="false">&#10227;</button>
+        <button id="t-loop-out" class="btn tiny" type="button" title="Loop out point here (])" aria-label="Set loop end">]</button>
+      </span>
       <label class="replay-speed">
         <span>Speed</span>
         <select id="replay-speed" aria-label="Replay speed"></select>
       </label>
       <button id="replay-cancel" class="btn small" type="button">Go live</button>
     </div>
+    <div id="captions" class="captions hidden" aria-live="polite"></div>
+    <div id="inspector" class="inspector hidden" role="dialog" aria-label="Transaction details"></div>
 
     <aside id="panel" class="panel" aria-label="Settings">
       <div class="panel-head">
@@ -112,6 +124,7 @@
       <a href="https://github.com/Quigles1337/xrpl-sonic" rel="noopener">Source on GitHub</a>
       <span class="footer-sep" aria-hidden="true"></span>
       <span class="footer-keys"><kbd>Space</kbd>start / stop <kbd>M</kbd>mute</span>
+      <span class="footer-keys footer-case"><kbd>K</kbd>pause <kbd>,</kbd><kbd>.</kbd>step <kbd>L</kbd>loop <kbd>[</kbd><kbd>]</kbd>in / out</span>
     </footer>
 
     <script type="module" src="src/main.js"></script>

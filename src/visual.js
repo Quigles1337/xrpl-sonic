@@ -73,15 +73,21 @@ export class Visualizer {
   /**
    * @param {HTMLCanvasElement} canvas
    * @param {{ transparent?: boolean, hud?: boolean }} [opts]
-   *   transparent: no background fill (overlay mode); hud: nebula, grid, ruler, stamp and vignette (off in overlay mode)
+   *   transparent: no background fill (overlay mode); hud: nebula, grid, ruler, stamp and vignette (off in overlay mode);
+   *   reduced: honour prefers-reduced-motion (tracks still appear, but without drift, overshoot or flashes)
    */
-  constructor(canvas, { transparent = false, hud = !transparent } = {}) {
+  constructor(canvas, { transparent = false, hud = !transparent, reduced = false } = {}) {
     this.canvas = canvas;
     this.transparent = transparent;
     this.hud = hud;
+    this.reduced = reduced; // prefers-reduced-motion: no drift, no ignition flash, no overshoot
+    this.exposure = false; // long-exposure plate: where tracks landed, fading over about a minute
+    this.plateLayer = null; // accumulation canvas for the exposure
     this.ctx = canvas.getContext('2d', { alpha: transparent });
     this.particles = [];
     this.rings = [];
+    this.bonds = []; // lines between cast members who met in one transaction
+    this.lastByMember = new Map(); // cast member id → its most recent track
     this.flash = 0; // ledger pulse 0..1
     this.stamp = ''; // ledger number stamped behind the plate
     this.stampGlow = 0;
@@ -113,6 +119,7 @@ export class Visualizer {
     this.canvas.height = Math.round(this.height * this.dpr);
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     this.layers = this.hud ? this.buildLayers() : null;
+    this.plateLayer = null;
     if (this.transparent) {
       this.ctx.clearRect(0, 0, this.width, this.height);
     } else {
@@ -136,6 +143,33 @@ export class Visualizer {
   destroy() {
     this.stop();
     globalThis.removeEventListener?.('resize', this._resize);
+  }
+
+  setReduced(on) {
+    this.reduced = Boolean(on);
+  }
+
+  /** Long exposure: keep a fading trace of every track's landing point, so a busy issuer or maker becomes a column. */
+  setExposure(on) {
+    this.exposure = Boolean(on);
+    if (!this.exposure) this.plateLayer = null;
+  }
+
+  _exposureLayer() {
+    if (!this.plateLayer) {
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(this.width * this.dpr));
+      c.height = Math.max(1, Math.round(this.height * this.dpr));
+      const g = c.getContext('2d');
+      g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      this.plateLayer = { canvas: c, ctx: g, lastFade: 0 };
+    }
+    return this.plateLayer;
+  }
+
+  /** Blind comparison: keep the plate but hide the ledger number stamped behind it. */
+  setBlind(on) {
+    this.blind = Boolean(on);
   }
 
   rgb(hex) {
@@ -327,9 +361,33 @@ export class Visualizer {
       alpha: dim ? 0.4 : 1,
       seed: Math.random() * Math.PI * 2,
       spin: (Math.random() - 0.5) * 2,
+      event,
+      castColour: event.castColour ?? null,
+      castLabel: event.castLabel ?? null,
+      castId: event.primary ?? null,
+      cues: Array.isArray(event.cues) ? event.cues : [],
+      dead: false,
     };
-    if (this.particles.length >= MAX_PARTICLES) this.particles.shift();
+    if (this.particles.length >= MAX_PARTICLES) this.particles.shift().dead = true;
     this.particles.push(p);
+    if (this.exposure) {
+      const L = this._exposureLayer();
+      L.ctx.globalCompositeOperation = 'lighter';
+      L.ctx.fillStyle = rgba(p.rgb, dim ? 0.12 : 0.3);
+      L.ctx.beginPath();
+      L.ctx.arc(x, y, Math.max(1.5, r * 0.35), 0, Math.PI * 2);
+      L.ctx.fill();
+      L.ctx.globalCompositeOperation = 'source-over';
+    }
+    if (p.castId) {
+      // A bond to the latest track of every other member this transaction involved.
+      for (const cue of p.cues) {
+        const other = this.lastByMember.get(cue.id);
+        if (other && !other.dead) this.bonds.push({ a: p, b: other, rgb: this.rgb(cue.colour ?? p.castColour), born: p.born, life: 1600 });
+      }
+      this.lastByMember.set(p.castId, p);
+      while (this.bonds.length > 24) this.bonds.shift();
+    }
     if (!dim) {
       if (p.whale) this.ring({ colour: event.colour, x, y, life: 1700, width: 2.5, maxR: 160 + r * 6 });
       if (p.shape === 'vault-open') this.ring({ colour: event.colour, x, y, life: 900, width: 1.5, maxR: 48 + r * 2 });
@@ -337,8 +395,28 @@ export class Visualizer {
     return p;
   }
 
+  /** The track nearest a point (CSS px, canvas coordinates), within a small tolerance; the youngest wins a tie. */
+  hitTest(x, y) {
+    let best = null;
+    let bestD = Infinity;
+    for (const p of this.particles) {
+      const tol = Math.max(14, p.r * 2.2);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d <= tol && (d < bestD - 2 || (Math.abs(d - bestD) <= 2 && p.born > best.born))) {
+        best = p;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+
+  /** A gap between clips: a dashed ring that contracts to the centre — time folding. */
+  gap() {
+    this.ring({ colour: PULSE_COLOUR, life: 1500, width: 1.5, inward: true });
+  }
+
   /** Expanding ring. The ledger pulse calls this with defaults: centre, pale, to the edge of the plate. */
-  ring({ colour = PULSE_COLOUR, x, y, life = 2600, width = 2, maxR, pulse = false } = {}) {
+  ring({ colour = PULSE_COLOUR, x, y, life = 2600, width = 2, maxR, pulse = false, inward = false } = {}) {
     if (this.rings.length >= MAX_RINGS) this.rings.shift();
     this.rings.push({
       x: x ?? this.width / 2,
@@ -348,6 +426,7 @@ export class Visualizer {
       life,
       width,
       pulse,
+      inward,
       maxR: maxR ?? Math.hypot(this.width, this.height) / 2,
     });
   }
@@ -402,8 +481,8 @@ export class Visualizer {
     }
     const L = this.layers;
     if (L) {
-      const dx = Math.sin(ts / 13000) * w * 0.05;
-      const dy = Math.cos(ts / 17000) * h * 0.04;
+      const dx = this.reduced ? 0 : Math.sin(ts / 13000) * w * 0.05;
+      const dy = this.reduced ? 0 : Math.cos(ts / 17000) * h * 0.04;
       ctx.drawImage(L.nebula, -w * 0.15 + dx, -h * 0.15 + dy, w * 1.3, h * 1.3);
       ctx.drawImage(L.grid, 0, 0, w, h);
       if (f > 0) {
@@ -413,7 +492,22 @@ export class Visualizer {
         ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = 'source-over';
       }
-      if (this.stamp) this.drawStamp(w, h);
+      if (this.stamp && !this.blind) this.drawStamp(w, h);
+    }
+
+    // --- long exposure: the accumulated plate, fading slowly ------------------
+    if (this.exposure && this.plateLayer) {
+      const L = this.plateLayer;
+      if (ts - L.lastFade > 250) {
+        L.lastFade = ts;
+        L.ctx.globalCompositeOperation = 'destination-out';
+        L.ctx.fillStyle = 'rgba(0, 0, 0, 0.012)';
+        L.ctx.fillRect(0, 0, w, h);
+        L.ctx.globalCompositeOperation = 'source-over';
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.drawImage(L.canvas, 0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over';
     }
 
     // --- rings (ledger pulse, Cherenkov rings, escrow releases) ------------
@@ -426,8 +520,9 @@ export class Visualizer {
         this.rings.splice(i, 1);
         continue;
       }
-      const radius = easeOutCubic(age) * ring.maxR;
+      const radius = ring.inward ? (1 - easeOutCubic(age)) * ring.maxR : easeOutCubic(age) * ring.maxR;
       const fade = 1 - age;
+      if (ring.inward) ctx.setLineDash([6, 8]);
       // wide, faint band
       ctx.strokeStyle = rgba(ring.rgb, fade * 0.07);
       ctx.lineWidth = ring.width * 7;
@@ -440,6 +535,7 @@ export class Visualizer {
       ctx.beginPath();
       ctx.arc(ring.x, ring.y, radius, 0, Math.PI * 2);
       ctx.stroke();
+      if (ring.inward) ctx.setLineDash([]);
       // the ledger pulse carries an echo just behind its edge
       if (ring.pulse && radius > 12) {
         ctx.strokeStyle = rgba(ring.rgb, fade * 0.22);
@@ -457,6 +553,7 @@ export class Visualizer {
       const t = Math.max(0, ts - p.born);
       const age = t / p.life;
       if (age >= 1) {
+        p.dead = true;
         this.particles.splice(i, 1);
         continue;
       }
@@ -469,12 +566,34 @@ export class Visualizer {
         r: p.r,
         t,
         age,
-        s: easeOutBack(Math.min(1, t / SPAWN_MS)),
+        s: this.reduced ? 1 : easeOutBack(Math.min(1, t / SPAWN_MS)),
         a: (age < 0.12 ? 1 : 1 - ((age - 0.12) / 0.88) ** 1.5) * p.alpha,
-        flash: Math.max(0, 1 - t / FLASH_MS) * p.alpha,
+        flash: this.reduced ? 0 : Math.max(0, 1 - t / FLASH_MS) * p.alpha,
       };
       const drawShape = this[`draw_${p.shape.replace('-', '_')}`] ?? this.draw_mote;
       drawShape.call(this, ctx, p, k);
+      if (p.castColour) this.drawIdentity(ctx, p, k);
+    }
+
+    // --- bonds: two cast members met in one transaction ---------------------
+    if (this.bonds.length) {
+      ctx.setLineDash([3, 5]);
+      ctx.lineWidth = 1;
+      for (let i = this.bonds.length - 1; i >= 0; i--) {
+        const bond = this.bonds[i];
+        const age = (ts - bond.born) / bond.life;
+        if (age >= 1 || bond.a.dead || bond.b.dead) {
+          this.bonds.splice(i, 1);
+          continue;
+        }
+        const reach = easeOutCubic(Math.min(1, age * 2.5));
+        ctx.strokeStyle = rgba(bond.rgb, (1 - age) * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(bond.a.x, bond.a.y);
+        ctx.lineTo(bond.a.x + (bond.b.x - bond.a.x) * reach, bond.a.y + (bond.b.y - bond.a.y) * reach);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
     }
 
     // --- ruler and vignette on top ------------------------------------------
@@ -519,6 +638,32 @@ export class Visualizer {
       ctx.letterSpacing = '0px';
     } catch {
       /* older engines */
+    }
+  }
+
+  /** Cast identity: a ring in the member's colour, the label, and a dot on the ring per other involved member. */
+  drawIdentity(ctx, p, k) {
+    const { x, y, r, a, s } = k;
+    const rgb = this.rgb(p.castColour);
+    const R = (r * 1.4 + 7) * s;
+    ctx.strokeStyle = rgba(rgb, a * 0.85);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(x, y, R, 0, Math.PI * 2);
+    ctx.stroke();
+    p.cues.forEach((cue, i) => {
+      const ang = -Math.PI / 4 + i * 0.55;
+      ctx.fillStyle = rgba(this.rgb(cue.colour ?? p.castColour), a);
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(ang) * R, y + Math.sin(ang) * R, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    if (p.castLabel && a > 0.15) {
+      ctx.font = `600 9px ${MONO}`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = rgba(rgb, Math.min(1, a * 1.1));
+      ctx.fillText(p.castLabel.toUpperCase(), x + R + 4, y - R * 0.3);
     }
   }
 

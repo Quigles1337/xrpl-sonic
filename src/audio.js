@@ -59,6 +59,7 @@ export class AudioEngine {
     this.ledgerInterval = 4;
     this.expectedPerLedger = 40;
     this.stats = { played: 0, dropped: 0 };
+    this._pan = null; // stereo position of the voice being rendered (cast members), null = centre bus
   }
 
   get state() {
@@ -207,13 +208,7 @@ export class AudioEngine {
     this.voices.push({ start: t, end: t + event.duration + tail });
     this.stats.played++;
 
-    const synth = SYNTHS[event.sound] ?? click;
-    try {
-      synth(this, event, t);
-      if (event.sub) subBass(this, event, t);
-    } catch (err) {
-      console.warn('[xrpl-sonic] synth error', err);
-    }
+    this._render(event, t);
     return t - now;
   }
 
@@ -246,14 +241,105 @@ export class AudioEngine {
     const tail = event.sound === 'pad' || event.sound === 'swell' ? 0.8 : 0.3;
     this.voices.push({ start: t, end: t + event.duration + tail });
     this.stats.played++;
-    const synth = SYNTHS[event.sound] ?? click;
+    this._render(event, t);
+    return t - now;
+  }
+
+  /**
+   * Render an event at time t: the cast voice when a member is primary (else the
+   * category voice), the whale sub, then a short cue for each other involved
+   * member in its own voice and position. One event, one polyphony slot.
+   */
+  _render(event, t) {
+    const synth = SYNTHS[event.voice] ?? SYNTHS[event.sound] ?? click;
+    this._pan = Number.isFinite(event.pan) ? event.pan : null;
     try {
       synth(this, event, t);
       if (event.sub) subBass(this, event, t);
+      if (Array.isArray(event.cues)) {
+        event.cues.forEach((cue, i) => {
+          this._pan = Number.isFinite(cue.pan) ? cue.pan : null;
+          cueBlip(this, cue, event, t + 0.09 + i * 0.06);
+        });
+      }
     } catch (err) {
       console.warn('[xrpl-sonic] synth error', err);
+    } finally {
+      this._pan = null;
     }
-    return t - now;
+  }
+
+  /** Play a cast member's motif in its voice and stereo position, so a listener can learn the voice. Bypasses the rate limiter. */
+  preview(member, notes) {
+    if (!this.ctx || this.ctx.state !== 'running' || !member || !Array.isArray(notes)) return false;
+    const synth = SYNTHS[member.voice] ?? marimba;
+    const t0 = this.ctx.currentTime + 0.02;
+    this._pan = Number.isFinite(member.pan) ? member.pan : null;
+    try {
+      notes.forEach((midi, i) => {
+        const freq = 440 * 2 ** ((midi - 69) / 12);
+        synth(this, { freq, notes: [midi], velocity: 0.5, duration: 0.45, timbre: 'xrp', variant: null }, t0 + i * 0.2);
+      });
+    } finally {
+      this._pan = null;
+    }
+    return true;
+  }
+
+  /**
+   * Geiger crackle: a burst of dry clicks whose rate grows with how far a
+   * measurement crossed its threshold. A cue, not a voice: it bypasses the
+   * polyphony cap and the cooldowns.
+   */
+  crackle(z, { threshold = 3, seconds = 1.6 } = {}) {
+    if (!this.ctx || this.ctx.state !== 'running') return false;
+    const excess = Math.max(0, Number(z) - threshold);
+    const rate = Math.min(40, 6 + excess * 5); // clicks per second
+    const count = Math.round(rate * seconds);
+    const t0 = this.ctx.currentTime + 0.01;
+    for (let i = 0; i < count; i++) {
+      // Poisson-ish spacing: jitter each click around its slot.
+      const t = t0 + (i / rate) * (0.6 + Math.random() * 0.8);
+      geigerClick(this, t, 0.5 + Math.random() * 0.5);
+    }
+    return true;
+  }
+
+  /**
+   * The pressure drone: a low, filtered hum that is silent at minimum load and
+   * rises with the observed fee pressure. One persistent voice, outside the
+   * polyphony count; `tone` is { gain, cutoff, detune } from src/health.js.
+   */
+  setDrone(tone) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    if (!this.drone) {
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      const filt = ctx.createBiquadFilter();
+      filt.type = 'lowpass';
+      filt.Q.value = 1.2;
+      filt.frequency.value = 120;
+      const low = ctx.createOscillator();
+      low.type = 'sine';
+      low.frequency.value = 55;
+      const high = ctx.createOscillator();
+      high.type = 'sawtooth';
+      high.frequency.value = 110;
+      const hg = ctx.createGain();
+      hg.gain.value = 0.35;
+      low.connect(filt);
+      high.connect(hg).connect(filt);
+      filt.connect(gain).connect(this.bus);
+      low.start();
+      high.start();
+      this.drone = { gain, filt, low, high };
+    }
+    const now = ctx.currentTime;
+    const t = tone ?? { gain: 0, cutoff: 120, detune: 0 };
+    this.drone.gain.gain.setTargetAtTime(Math.max(0, Math.min(0.2, t.gain)), now, 0.4);
+    this.drone.filt.frequency.setTargetAtTime(Math.max(60, t.cutoff), now, 0.4);
+    this.drone.high.detune.setTargetAtTime(t.detune || 0, now, 0.4);
   }
 
   /** Ledger close: a low tick, played immediately. */
@@ -265,10 +351,19 @@ export class AudioEngine {
 
   // -- node helpers ---------------------------------------------------------
 
+  /** Where a voice's output lands: the dry bus, through a stereo panner when the current event carries a pan. */
+  _out() {
+    if (this._pan == null || typeof this.ctx.createStereoPanner !== 'function') return this.bus;
+    const p = this.ctx.createStereoPanner();
+    p.pan.value = this._pan;
+    p.connect(this.bus);
+    return p;
+  }
+
   _gain(t, value = 0) {
     const g = this.ctx.createGain();
     g.gain.setValueAtTime(value, t);
-    g.connect(this.bus);
+    g.connect(this._out());
     return g;
   }
 
@@ -350,7 +445,7 @@ function subBass(e, ev, t) {
   const ng = ctx.createGain();
   ng.gain.setValueAtTime(0.25, t);
   ng.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-  n.connect(nf).connect(ng).connect(e.bus);
+  n.connect(nf).connect(ng).connect(e._out());
   n.start(t);
   n.stop(t + 0.08);
   o.onended = () => out.disconnect();
@@ -383,7 +478,7 @@ function hat(e, ev, t) {
     const og = ctx.createGain();
     og.gain.setValueAtTime(ev.velocity * 0.5, t);
     og.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
-    o.connect(og).connect(e.bus);
+    o.connect(og).connect(e._out());
     o.start(t);
     o.stop(t + 0.03);
   }
@@ -451,7 +546,7 @@ function bell(e, ev, t) {
   const pg = ctx.createGain();
   pg.gain.setValueAtTime(vel * 0.18, t);
   pg.gain.exponentialRampToValueAtTime(0.0005, t + dur * 0.4);
-  partial.connect(pg).connect(e.bus);
+  partial.connect(pg).connect(e._out());
 
   for (const o of [carrier, mod, partial]) {
     o.start(t);
@@ -570,6 +665,24 @@ function click(e, ev, t) {
   n.onended = () => g.disconnect();
 }
 
+/** One Geiger click: a 6 ms noise burst through a sharp band-pass, dry. */
+function geigerClick(e, t, level) {
+  const ctx = e.ctx;
+  const n = e._noise(t);
+  const f = ctx.createBiquadFilter();
+  f.type = 'bandpass';
+  f.frequency.value = 3400 + Math.random() * 800;
+  f.Q.value = 6;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.5 * level, t + 0.001);
+  g.gain.exponentialRampToValueAtTime(0.0005, t + 0.012);
+  n.connect(f).connect(g).connect(e.compressor);
+  n.start(t);
+  n.stop(t + 0.02);
+  n.onended = () => g.disconnect();
+}
+
 /** Ledger close: a low, short tick with a pitch drop. */
 function ledgerTick(e, ev, t) {
   const ctx = e.ctx;
@@ -589,12 +702,203 @@ function ledgerTick(e, ev, t) {
   const ng = ctx.createGain();
   ng.gain.setValueAtTime(0.12, t);
   ng.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
-  n.connect(nf).connect(ng).connect(e.bus);
+  n.connect(nf).connect(ng).connect(e._out());
   n.start(t);
   n.stop(t + 0.03);
   o.onended = () => g.disconnect();
 }
 
-const SYNTHS = { pluck, hat, pad, bell, swell, arp, chord, click };
+// ---------------------------------------------------------------------------
+// Cast voices: one per followed account. Each plays ev.notes (strummed when
+// there are several) at ev.velocity and ev.duration, and lands wherever the
+// engine's current pan says.
+// ---------------------------------------------------------------------------
 
-export const VOICE_NAMES = Object.freeze(Object.keys(SYNTHS));
+function noteFreqs(ev) {
+  const notes = Array.isArray(ev.notes) && ev.notes.length ? ev.notes : [69];
+  return notes.map((m) => 440 * 2 ** ((m - 69) / 12));
+}
+
+/** Marimba: warm and woody — a sine fundamental with a quickly fading upper click. */
+function marimba(e, ev, t) {
+  const ctx = e.ctx;
+  noteFreqs(ev).forEach((f, i) => {
+    const ts = t + i * 0.04;
+    const dur = clamp(ev.duration, 0.25, 0.9);
+    const out = e._gain(ts, 0);
+    out.gain.linearRampToValueAtTime(ev.velocity * 0.7, ts + 0.003);
+    out.gain.exponentialRampToValueAtTime(0.0008, ts + dur);
+    const o = e._osc('sine', f, ts);
+    const o2 = e._osc('sine', f * 4, ts);
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.35, ts);
+    g2.gain.exponentialRampToValueAtTime(0.001, ts + 0.08);
+    const o3 = e._osc('triangle', f * 2.01, ts);
+    const g3 = ctx.createGain();
+    g3.gain.value = 0.15;
+    o.connect(out);
+    o2.connect(g2).connect(out);
+    o3.connect(g3).connect(out);
+    for (const x of [o, o2, o3]) {
+      x.start(ts);
+      x.stop(ts + dur + 0.05);
+    }
+    o.onended = () => out.disconnect();
+  });
+}
+
+/** Glass: bright and ringing — high sine partials with a slow shimmer. */
+function glass(e, ev, t) {
+  const ctx = e.ctx;
+  noteFreqs(ev).forEach((f, i) => {
+    const ts = t + i * 0.05;
+    const dur = clamp(ev.duration * 1.4, 0.6, 2.2);
+    const out = e._gain(ts, 0);
+    out.gain.linearRampToValueAtTime(ev.velocity * 0.45, ts + 0.006);
+    out.gain.exponentialRampToValueAtTime(0.0006, ts + dur);
+    const oscs = [];
+    for (const [ratio, amp] of [
+      [2, 0.5],
+      [3.01, 0.3],
+      [5.2, 0.18],
+      [7.4, 0.08],
+    ]) {
+      const o = e._osc('sine', f * ratio, ts);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(amp, ts);
+      g.gain.exponentialRampToValueAtTime(amp * 0.05, ts + dur * (0.5 + amp));
+      o.connect(g).connect(out);
+      oscs.push(o);
+    }
+    const lfo = e._osc('sine', 5.5, ts);
+    const lg = ctx.createGain();
+    lg.gain.value = 0.08;
+    lfo.connect(lg).connect(out.gain);
+    oscs.push(lfo);
+    for (const x of oscs) {
+      x.start(ts);
+      x.stop(ts + dur + 0.05);
+    }
+    oscs[0].onended = () => out.disconnect();
+  });
+}
+
+/** Brass: bold and sustained — detuned saws through a filter that opens on the attack. */
+function brass(e, ev, t) {
+  const ctx = e.ctx;
+  const dur = clamp(ev.duration, 0.35, 1.6);
+  const out = e._gain(t, 0);
+  out.gain.linearRampToValueAtTime(ev.velocity * 0.35, t + 0.06);
+  out.gain.setValueAtTime(ev.velocity * 0.35, t + dur * 0.6);
+  out.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.Q.value = 2;
+  filt.frequency.setValueAtTime(300, t);
+  filt.frequency.exponentialRampToValueAtTime(3200, t + 0.12);
+  filt.frequency.exponentialRampToValueAtTime(900, t + dur);
+  filt.connect(out);
+  const oscs = [];
+  for (const f of noteFreqs(ev)) {
+    for (const detune of [-6, 6]) {
+      const o = e._osc('sawtooth', f, t);
+      o.detune.value = detune;
+      o.connect(filt);
+      oscs.push(o);
+    }
+  }
+  for (const x of oscs) {
+    x.start(t);
+    x.stop(t + dur + 0.05);
+  }
+  oscs[0].onended = () => {
+    out.disconnect();
+    filt.disconnect();
+  };
+}
+
+/** Reed: a nasal square wave whose vibrato sets in after the attack. */
+function reed(e, ev, t) {
+  const ctx = e.ctx;
+  const dur = clamp(ev.duration, 0.3, 1.4);
+  const out = e._gain(t, 0);
+  out.gain.linearRampToValueAtTime(ev.velocity * 0.28, t + 0.03);
+  out.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'bandpass';
+  filt.Q.value = 1.5;
+  filt.frequency.value = Math.min((ev.freq || 440) * 3, 4000);
+  filt.connect(out);
+  const oscs = [];
+  for (const f of noteFreqs(ev)) {
+    const o = e._osc('square', f, t);
+    const vib = e._osc('sine', 6, t);
+    const vg = ctx.createGain();
+    vg.gain.setValueAtTime(0, t);
+    vg.gain.linearRampToValueAtTime(f * 0.012, t + 0.25);
+    vib.connect(vg).connect(o.frequency);
+    o.connect(filt);
+    oscs.push(o, vib);
+  }
+  for (const x of oscs) {
+    x.start(t);
+    x.stop(t + dur + 0.05);
+  }
+  oscs[0].onended = () => {
+    out.disconnect();
+    filt.disconnect();
+  };
+}
+
+/** Pulse: gated electronic — two detuned squares chopped by a fast tremolo. */
+function pulse(e, ev, t) {
+  const ctx = e.ctx;
+  const dur = clamp(ev.duration, 0.25, 1);
+  const out = e._gain(t, 0);
+  out.gain.linearRampToValueAtTime(ev.velocity * 0.3, t + 0.004);
+  out.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  const gate = ctx.createGain();
+  gate.gain.value = 1;
+  gate.connect(out);
+  const lfo = e._osc('square', 12, t);
+  const lg = ctx.createGain();
+  lg.gain.value = 0.5;
+  lfo.connect(lg).connect(gate.gain);
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.setValueAtTime(2400, t);
+  filt.frequency.exponentialRampToValueAtTime(600, t + dur);
+  filt.connect(gate);
+  const oscs = [lfo];
+  for (const f of noteFreqs(ev)) {
+    for (const detune of [-9, 9]) {
+      const o = e._osc('square', f, t);
+      o.detune.value = detune;
+      o.connect(filt);
+      oscs.push(o);
+    }
+  }
+  for (const x of oscs) {
+    x.start(t);
+    x.stop(t + dur + 0.05);
+  }
+  oscs[1].onended = () => {
+    out.disconnect();
+    filt.disconnect();
+  };
+}
+
+/** A short blip in another involved member's voice, an octave up, just after the primary note. */
+function cueBlip(e, cue, ev, t) {
+  const synth = SYNTHS[cue.voice] ?? marimba;
+  const midi = (Array.isArray(ev.notes) && ev.notes.length ? ev.notes[0] : 69) + 12;
+  synth(e, { freq: 440 * 2 ** ((midi - 69) / 12), notes: [midi], velocity: Math.min(0.3, (ev.velocity || 0.3) * 0.6), duration: 0.14, timbre: 'xrp', variant: null }, t);
+}
+
+const SYNTHS = { pluck, hat, pad, bell, swell, arp, chord, click, marimba, glass, brass, reed, pulse };
+
+/** Category voices (src/mapping.js CATEGORIES[*].sound). */
+export const VOICE_NAMES = Object.freeze(['pluck', 'hat', 'pad', 'bell', 'swell', 'arp', 'chord', 'click']);
+
+/** Cast voices (src/cast.js CAST_VOICES). */
+export const CAST_VOICE_SYNTHS = Object.freeze(['marimba', 'glass', 'brass', 'reed', 'pulse']);

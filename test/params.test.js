@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseHash, buildHash, parseQuery } from '../src/params.js';
+import { parseHash, buildHash, parseQuery, safeCasePath } from '../src/params.js';
 
 const ADDR = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
 
@@ -47,9 +47,9 @@ describe('hash parsing', () => {
   });
 
   test('parseQuery reads the network, autostart and the page mode', () => {
-    assert.deepEqual(parseQuery(''), { network: null, autostart: false, mode: 'full' });
-    assert.deepEqual(parseQuery(undefined), { network: null, autostart: false, mode: 'full' });
-    assert.deepEqual(parseQuery('?network=testnet'), { network: 'testnet', autostart: false, mode: 'full' });
+    assert.deepEqual(parseQuery(''), { network: null, autostart: false, mode: 'full', caseUrl: null });
+    assert.deepEqual(parseQuery(undefined), { network: null, autostart: false, mode: 'full', caseUrl: null });
+    assert.deepEqual(parseQuery('?network=testnet'), { network: 'testnet', autostart: false, mode: 'full', caseUrl: null });
     assert.equal(parseQuery('?network=devnet').network, null);
     assert.equal(parseQuery('?autostart=1').autostart, true);
     assert.equal(parseQuery('?autostart=0').autostart, false);
@@ -59,7 +59,7 @@ describe('hash parsing', () => {
     assert.equal(parseQuery('?embed=1').mode, 'embed');
     assert.equal(parseQuery('?embed=1&overlay=1').mode, 'overlay', 'overlay wins');
     assert.equal(parseQuery('?embed=0').mode, 'full');
-    assert.deepEqual(parseQuery('?embed=1&network=testnet&autostart=1'), { network: 'testnet', autostart: true, mode: 'embed' });
+    assert.deepEqual(parseQuery('?embed=1&network=testnet&autostart=1'), { network: 'testnet', autostart: true, mode: 'embed', caseUrl: null });
   });
 
   test('buildHash round-trips through parseHash and omits empty values', () => {
@@ -71,5 +71,18 @@ describe('hash parsing', () => {
     const parsed = parseHash(h);
     assert.equal(parsed.account, ADDR);
     assert.equal(parsed.replay, '10-12');
+  });
+});
+
+describe('?case= path safety', () => {
+  test('accepts relative .json paths under the site', () => {
+    assert.equal(safeCasePath('docs/cases/x.sonic-case.json'), 'docs/cases/x.sonic-case.json');
+    assert.equal(parseQuery('?case=docs%2Fcases%2Fx.json').caseUrl, 'docs/cases/x.json');
+  });
+
+  test('rejects schemes, hosts, absolute paths, traversal and non-json', () => {
+    for (const bad of ['https://evil.example/x.json', '//evil.example/x.json', '/x.json', '../x.json', 'docs/../x.json', 'docs//x.json', 'x.txt', 'javascript:alert(1).json', 'docs\\x.json', '']) {
+      assert.equal(safeCasePath(bad), null, bad);
+    }
   });
 });

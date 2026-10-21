@@ -12,6 +12,7 @@
 import { CATEGORY_NAMES, SCALES, KEYS, MAPPING_VERSION } from './mapping.js';
 import { MAX_REPLAY_LEDGERS, REPLAY_SPEEDS, parseReplayRange, formatReplayRange } from './replay.js';
 import { normalizeCast, CAST_MODES } from './cast.js';
+import { normalizeGeigerConfig } from './geiger.js';
 
 export const CASE_FORMAT = 'xrpl-sonic/case';
 export const CASE_VERSION = 1;
@@ -54,6 +55,7 @@ export function defaultCase() {
     mapping: { version: MAPPING_VERSION, scale: 'pentatonicMajor', key: 'C' },
     timing: { speed: 1 },
     annotations: [],
+    geiger: null, // optional: { enabled, window, threshold, minCount, adapt, baseline? }
   };
 }
 
@@ -115,6 +117,29 @@ function normalizeFilters(input, base) {
   if (Number.isFinite(qt) && qt >= 0) f.quietThreshold = qt;
   if (typeof input.castMode === 'string' && CAST_MODES[input.castMode]) f.castMode = input.castMode;
   return f;
+}
+
+/** The detector settings a case carries, with an optional pinned baseline ({ window, pinnedAt, series }). */
+function normalizeGeiger(input, errors) {
+  if (input == null) return null;
+  if (typeof input !== 'object') {
+    errors.push('geiger must be an object');
+    return null;
+  }
+  const g = { enabled: input.enabled === true, ...normalizeGeigerConfig(input) };
+  const b = input.baseline;
+  if (b && typeof b === 'object' && b.series && typeof b.series === 'object') {
+    const series = {};
+    for (const [id, s] of Object.entries(b.series)) {
+      const mean = Number(s?.mean);
+      const sd = Number(s?.sd);
+      if (/^[a-z0-9:]{1,64}$/i.test(id) && Number.isFinite(mean) && Number.isFinite(sd) && sd >= 0) series[id] = { mean, sd, n: Number.isFinite(Number(s?.n)) ? Number(s.n) : 0 };
+    }
+    g.baseline = { window: normalizeGeigerConfig({ window: b.window }).window, pinnedAt: Number.isInteger(Number(b.pinnedAt)) ? Number(b.pinnedAt) : null, series };
+  } else if (b != null) {
+    errors.push('geiger.baseline must be { window, pinnedAt, series }');
+  }
+  return g;
 }
 
 function normalizeAnnotations(input, errors) {
@@ -186,6 +211,7 @@ export function validateCase(input) {
     mapping: { ...base.mapping },
     timing: { ...base.timing },
     annotations: normalizeAnnotations(input.annotations, errors),
+    geiger: normalizeGeiger(input.geiger, errors),
   };
   if (input.network != null && input.network !== 'mainnet' && input.network !== 'testnet') errors.push(`unknown network "${String(input.network).slice(0, 16)}"; using mainnet`);
   if (Array.isArray(input.cast) && input.cast.length > c.cast.length) warnings.push(`${input.cast.length - c.cast.length} cast entries were invalid, duplicates or beyond the limit and were dropped`);
@@ -243,6 +269,7 @@ export function serializeCase(c, { pretty = true } = {}) {
     timing: c.timing,
     annotations: c.annotations,
   };
+  if (c.geiger) ordered.geiger = c.geiger;
   return JSON.stringify(ordered, null, pretty ? 2 : 0);
 }
 
@@ -295,6 +322,35 @@ export async function decodeCase(str) {
     throw new Error('unknown case encoding');
   }
   return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+// ---------------------------------------------------------------------------
+// Annotation editing: each returns a new, validated case (never mutates).
+// ---------------------------------------------------------------------------
+
+function fresh(c) {
+  return validateCase(JSON.parse(serializeCase(c))).case;
+}
+
+/** Add an annotation; a missing id is generated. Returns { case, annotation } or { case: null, errors } when it was dropped. */
+export function addAnnotation(c, annotation) {
+  const before = new Set((c.annotations ?? []).map((a) => a.id));
+  const next = fresh({ ...c, annotations: [...(c.annotations ?? []), annotation] });
+  const added = next?.annotations.find((a) => !before.has(a.id)) ?? null;
+  if (!next || !added) return { case: null, annotation: null, errors: ['the note was dropped: it needs text and an anchor (hash, ledger or timeMs)'] };
+  return { case: next, annotation: added, errors: [] };
+}
+
+/** Patch an annotation's text, source, status, pause or anchor. */
+export function updateAnnotation(c, id, patch) {
+  const annotations = (c.annotations ?? []).map((a) => (a.id === id ? { ...a, ...patch, id } : a));
+  const next = fresh({ ...c, annotations });
+  return next ?? c;
+}
+
+export function removeAnnotation(c, id) {
+  const next = fresh({ ...c, annotations: (c.annotations ?? []).filter((a) => a.id !== id) });
+  return next ?? c;
 }
 
 /** File name for a case download. */

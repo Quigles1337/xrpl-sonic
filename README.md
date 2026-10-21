@@ -36,15 +36,19 @@ The canvas is laid out like a cloud chamber for a ledger. The horizontal axis is
 
 Transactions do not trickle in: each validated ledger arrives as a burst of anything from 50 to 600 transactions every few seconds. The audio engine spreads each burst across the expected inter-ledger interval, caps polyphony, and applies a short per-type cooldown. Events that do not fit are rate-limited rather than queued, so the sound never drifts behind the ledger; they still appear as dimmer tracks. The **Session** panel shows how many were played versus rate-limited. **Quiet mode** keeps only transactions at or above a chosen XRP amount.
 
-## Hear one account
+## Follow a cast
 
-Add `#account=<r-address>` to the URL, or paste an address into **Settings → Account**, to listen to a single account:
+**Settings → Cast** follows up to five accounts. Each member gets a voice of its own (marimba, glass, brass, reed or pulse), a place in the stereo field, a colour and a label, so the same participant sounds and looks the same every time it acts: the market maker is the brass on the left, the issuer the glass in the centre. **S** solos a member (only soloed members sound), **M** mutes one, and **▶** plays the member's three-note motif, so you can learn a voice before you listen for it. Transactions that involve nobody in the cast are played in their category voice (**Play everything**), drawn dimmed and silent (**Mute others**) or not drawn at all (**Hide others**).
+
+A transaction involves a member when the member is the sender, the destination, or appears in the transaction's metadata (`AffectedNodes`), which covers trust lines, consumed offers, issued-currency flows and anything else that touched one of its ledger entries. Involvement is a filter: it says the account appears in the record, not how much value it gained or lost, whether an order filled, or whether two addresses share a controller. A transaction involving several members is one event, counted once: the sender's voice (or the first involved member's) plays the note and each other involved member is heard as a short cue in its own voice just after it. On the plate a member's track carries a ring in its colour and its label; when two members meet in one transaction a bond is drawn between their tracks, and the tape shows who else was involved.
+
+The cast travels in the URL as `#cast=`, so a link carries it:
 
 ```
-https://quigles1337.github.io/xrpl-sonic/#account=rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah
+https://quigles1337.github.io/xrpl-sonic/#cast=rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah~Maker~brass~-0.6,rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z~Issuer
 ```
 
-Only transactions that involve that account play: it is the sender, the destination, or it appears in the transaction's metadata (`AffectedNodes`), which covers trust lines, consumed offers, issued-currency flows and anything else that touched one of its ledger entries. Everything else is drawn dimmed and silent (**Mute others**) or not drawn at all (**Hide others**). The address is validated as a base58 r-address, shown in short form in the top bar, and kept in the URL hash rather than in your settings, so the link is the state. The hash is updated as you change the account, so the address bar is always shareable.
+`#account=<r-address>` still works as the one-member shortcut: it follows that account and mutes everything else, as it always has. Addresses are validated as base58 r-addresses and the cast is shown in the command strip, each chip linking to the explorer.
 
 Every line in the log is a link: the transaction opens on an explorer, each account opens its account page, and ledger lines open the ledger. The default explorer is XRPScan; Bithomp and xrpl.org are selectable, and the testnet equivalents are used when the page is on testnet. Links open in a new tab with `rel="noopener noreferrer"`.
 
@@ -56,9 +60,64 @@ Every line in the log is a link: the transaction opens on an explorer, each acco
 https://quigles1337.github.io/xrpl-sonic/#replay=107777809
 ```
 
-Press **Start** and the page fetches each ledger over the same WebSocket (`{"command":"ledger","ledger_index":N,"transactions":true,"expand":true}`), sorts its transactions by `TransactionIndex` (the order the ledger applied them; the node returns them in hash order) and spreads them evenly across the interval the ledger actually stayed open, taken from the next ledger's `close_time` (4 s when that is not available). The ledger tick and ring play at each close as they do live, a bar under the top bar shows progress, and a speed control offers 0.5×, 1×, 2× and 4× (applied from the next ledger). The live stream is paused for the duration and resumes when the replay ends or you press **Go live**.
+Press **Start** and the page fetches each ledger over the same WebSocket (`{"command":"ledger","ledger_index":N,"transactions":true,"expand":true}`), sorts its transactions by `TransactionIndex` (the order the ledger applied them; the node returns them in hash order) and spreads them evenly across the interval the ledger actually stayed open, taken from the next ledger's `close_time` (4 s when that is not available). That reconstructs a listening sequence; it does not recover when each transaction was submitted or executed, so a repeated phrase shows repeated ordering under the chosen mapping, not reaction latency or causation.
 
-**Share** in the top bar copies a permalink to the ledger currently playing (live or replayed), so a moment you heard can be sent to someone else. Replay honours `#account=` too, so a link can carry both: `#account=r...&replay=<from>-<to>`.
+The ledgers become a **score** (every ledger close, every event with its voice, notes and timing, every annotation at its time) and a **transport** plays it:
+
+| Control | Key | What it does |
+| --- | --- | --- |
+| ▶ / ❚❚ | `K` | Play or pause. |
+| ⏭ | `.` | Step: play exactly the next event and stay there. |
+| ⏮ | `,` | Step back to the previous event (without playing it). |
+| ⟲ | `L` | Loop the whole case, or the in/out range. |
+| `[` `]` | `[` `]` | Set the loop's in and out points at the current position. |
+| Track | `←` `→` `Home` `End` | Seek. Marks on the track: ledger closes, gaps between clips (hatched), annotations (diamonds; the magenta ones pause). |
+| Speed | | 0.5×, 1×, 2×, 4×. |
+| Go live | `Esc` closes the inspector | Return to the live stream. |
+
+Click any line on the tape, or any track on the plate, to open the **inspector**: type and result, amount, parties (with cast labels), ledger and hash as explorer links, the voice and note that played it, whether it sounded or was drawn silent, its position in the case, and the annotations anchored to it, with Previous / Next to walk the score one event at a time.
+
+**Share** copies a permalink to the ledger currently playing (live or replayed) together with the network and the cast, so a moment you heard can be sent to someone else.
+
+## Cases
+
+A **case** is a small JSON file that describes a listening: the network, one or more ledger windows (clips), the cast, the filters and mapping, the speed, and annotations anchored to a transaction, a ledger or a position on the timeline. **Settings → Case** loads one, saves the current one, copies a link that carries it (`#case=`), and saves the **transcript**, a text version of the whole score with every ledger, gap, event and annotation at its time. Changing the scale, key, filters or cast while a case plays rebuilds the score in place, so the file and the link always describe what you are hearing. The silence between clips is explicit: a gap is announced on the tape, in the captions and as a contracting dashed ring on the plate. The format is documented in [docs/case-format.md](docs/case-format.md); the same case and ledgers always give the same score, and a recording (**Capture**) preserves a particular performance.
+
+**Notes.** A case's annotations are edited in place: **Note here** adds one at the current position, **Annotate** in the inspector anchors one to that transaction, and each note in the list can be edited (text, source, draft or reviewed, pause) or deleted; clicking its time jumps to it. Every change rebuilds the score and the link.
+
+A sample case built from real mainnet ledgers ships with the page: [docs/cases/busiest-senders-107777809.sonic-case.json](docs/cases/busiest-senders-107777809.sonic-case.json), the two accounts that submitted the most transactions across ledgers 107777809–107777811, each with its own voice, and annotations that state only counts taken from the ledgers. Load it with **Settings → Case → Load file**, or open it directly:
+
+```
+https://quigles1337.github.io/xrpl-sonic/?case=docs/cases/busiest-senders-107777809.sonic-case.json
+```
+
+`?case=` accepts a relative `.json` path under the site only; once loaded, the case travels in `#case=` like any other.
+
+## Compare two windows
+
+A case with two or more clips gets **A**, **B**, … buttons in the transport: each plays that clip on a loop, so a listener can go back and forth between, say, a quiet window and a busy one, or the same account before and after something changed. **All** returns to the whole case. **Blind comparison** (Settings → Case) keeps the plate and the sound but hides ledger numbers, the tape, the notes and the captions, so the comparison is made by ear and the labels are revealed only afterwards. Two windows with very different transaction counts will always sound different; the useful comparisons hold the mapping, the speed, the filters and the cast fixed and ask whether a particular pattern can be found.
+
+**Captions** show annotations, gaps and cast events as text; **Speak annotations** reads each note aloud through the browser's speech synthesis, independent of the instrument's sound; **Pause at annotations** honours notes that ask for it. The page respects `prefers-reduced-motion` (tracks still appear, without drift, overshoot or flashes), and every control is reachable from the keyboard.
+
+## Geiger mode
+
+**Settings → Geiger** turns on a detector. For every validated ledger it measures a few plain things, before any filter and before the synthesiser's rate limiting, so a dropped note never shrinks a count: transactions in all, transactions per category, and for each cast member the transactions it submitted, the transactions it was involved in, and its share of the ledger's `OfferCreate` submissions. Each measurement is compared with a baseline formed from the previous ledgers (30 by default). A crossing, by default three standard deviations above the baseline with a count of at least ten, is reported with the numbers that produced it, for example:
+
+> Sender A submitted 80 of the 100 OfferCreate transactions in ledger #107,777,809 (80%). Over the previous 30 ledgers its share averaged 12% ± 6%, so this is 11.3σ above the baseline (threshold 3σ).
+
+and sounded as a crackle whose rate grows with the excess. The detector's state is always explicit: **baseline forming** (with the count of ledgers seen), **nominal**, **crossing**, or **stale** when no ledger has arrived for 20 seconds. Silence means no configured deviation was reported while the feed and the detector were running; it does not mean nothing happened. A sparkline shows transactions per ledger for the last 60 ledgers with the baseline band behind it, which is the other half of the experiment: whether a person notices a change in the pattern before the detector does.
+
+The baseline can **roll** (keep updating, so a sustained change is absorbed within a window), **freeze** once formed, or be **pinned** at a moment of your choosing; a pinned baseline is saved with the case, so a shared case judges its ledgers against the same numbers for everyone. Counts of transactions *submitted by* an account and transactions *involving* it are different measurements and are reported as such. **Long exposure** (Settings → Stream) keeps a fading trace of where every track landed on the plate, so a column forms under an account that keeps acting at one pitch.
+
+## Observed fee pressure
+
+**Settings → Node → Observed fee pressure** asks the connected node, after each ledger close, for its `fee` report: the fee a reference transaction needs to enter the current open ledger, the reference fee under minimum load, and the size of its transaction queue. Their ratio is shown as the pressure (1.0× at minimum load) with the fees in drops, the queue, the host it came from and the age of the sample; a sample older than 15 seconds is marked stale. Where the node offers the `server` stream, its load factor is shown as well; a node that does not (Clio does not) is reported as such, and nothing else stops working. **Sound the pressure** adds a low drone that is silent at minimum load and rises with the pressure. Every XRPL server keeps its own queue, so this describes the node you are connected to, not one network-wide state, and it is read from the live node only, never from a case.
+
+## MIDI
+
+**Settings → MIDI → Save MIDI file** writes the score of the loaded case as a Standard MIDI File (format 1, 480 ticks per quarter at 120 BPM, so one millisecond of the case is 0.96 ticks): one track per category voice with a General MIDI program (kalimba for payments, warm pad for trust lines, tubular bells for NFTs, reverse cymbal for escrows, harp for payment channels, electric piano for AMMs), one track per cast member in its own voice, a percussion track with hi-hats and rim ticks for offers, claves for the quiet clicks, a bass drum at every ledger close and a crash at every gap, and the annotations as marker events at their times. Silent (dimmed) events are not written. A MIDI file carries the notes; the instrument that plays it decides how they sound, so it will not reproduce the page's synthesiser, and it is the same for everyone who opens the same case.
+
+**Live output** sends the same notes as they play, from a case or from the live stream, to a hardware or software instrument through the Web MIDI API. It needs a secure context, a browser that offers Web MIDI, and your permission, so it starts from **Connect**; the chosen output's name is remembered and re-selected after the next Connect. Notes are scheduled with the same offsets the synthesiser uses; pausing, seeking or stopping sends all-notes-off.
 
 ## Overlay and embed
 

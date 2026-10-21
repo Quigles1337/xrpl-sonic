@@ -1,42 +1,28 @@
-// xrpl-sonic — DOM controls, status, metronome and the scrolling log.
+// xrpl-sonic — DOM controls, status, metronome and the scrolling tape.
+//
+// The transport bar, the inspector, the cast group and the case group live
+// in their own modules (ui-transport.js, ui-inspector.js, ui-cast.js,
+// ui-case.js); this file builds the panel, the command strip readouts and the
+// tape, and exposes those parts on the object it returns.
 
-import { CATEGORIES, CATEGORY_NAMES, SCALES, KEYS, isValidAddress, shortAddress } from './mapping.js';
+import { CATEGORIES, CATEGORY_NAMES, SCALES, KEYS } from './mapping.js';
 import { NETWORKS } from './ws.js';
 import { EXPLORERS, explorerUrl } from './explorers.js';
-import { ACCOUNT_MODES } from './settings.js';
-import { REPLAY_SPEEDS } from './replay.js';
 import { GLYPHS, PULSE, categoryIcon, eventIcon, fieldGuide } from './glyphs.js';
+import { el, option, svg } from './dom.js';
+import { createCastPanel } from './ui-cast.js';
+import { createCasePanel } from './ui-case.js';
+import { createTransportUI } from './ui-transport.js';
+import { createInspector } from './ui-inspector.js';
+import { createGeigerPanel } from './ui-geiger.js';
+import { createHealthPanel } from './ui-health.js';
+import { createMidiPanel } from './ui-midi.js';
 
 const MAX_LOG_LINES = 80;
-
-/** Build an element from trusted SVG markup (the icons in src/glyphs.js contain no caller input). */
-function svg(markup) {
-  const t = document.createElement('template');
-  t.innerHTML = markup;
-  return t.content.firstElementChild;
-}
 
 /** Wall-clock stamp for the tape, HH:MM:SS. */
 function stamp() {
   return el('span', { class: 'ts', text: new Date().toLocaleTimeString('en-GB', { hour12: false }) });
-}
-
-function el(tag, attrs = {}, children = []) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === 'class') node.className = v;
-    else if (k === 'text') node.textContent = v;
-    else if (k === 'html') node.innerHTML = v;
-    else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
-    else if (v === true) node.setAttribute(k, '');
-    else if (v !== false && v != null) node.setAttribute(k, String(v));
-  }
-  for (const c of children) node.append(c);
-  return node;
-}
-
-function option(value, label, selected) {
-  return el('option', { value, text: label, selected: selected ? true : false });
 }
 
 /**
@@ -45,14 +31,20 @@ function option(value, label, selected) {
  * @param {object} args.settings  current settings (mutated on change)
  * @param {(patch: object, settings: object) => void} args.onChange
  * @param {() => void} args.onToggleRun
- * @param {(speed: number) => void} [args.onReplaySpeed]
- * @param {() => void} [args.onReplayCancel]
  * @param {() => void} [args.onShare]
  * @param {() => void} [args.onSnapshot]
  * @param {() => void} [args.onRecord]
+ * @param {(member: object) => void} [args.onPreview]  play a cast member's motif
+ * @param {(event: object) => void} [args.onInspect]   open the inspector for a tape line
+ * @param {object} [args.transport]   callbacks for the transport bar (see ui-transport.js)
+ * @param {object} [args.caseActions] callbacks for the case group (see ui-case.js)
+ * @param {object} [args.inspector]   callbacks for the inspector (see ui-inspector.js)
+ * @param {object} [args.geigerActions] callbacks for the Geiger group (see ui-geiger.js)
+ * @param {object} [args.healthActions] callbacks for the Node group (see ui-health.js)
+ * @param {object} [args.midiActions]   callbacks for the MIDI group (see ui-midi.js)
  * @param {{ recording: boolean, mimeType: string|null }} [args.capture]  what the browser supports
  */
-export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onReplayCancel, onShare, onSnapshot, onRecord, capture }) {
+export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, capture }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -69,15 +61,7 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
   const logList = $('#log');
   const logWrap = $('#log-wrap');
   const controls = $('#controls');
-  const watch = $('#watch');
-  const accountBadge = $('#account-badge');
-  const accountShort = $('#account-short');
-  const accountClear = $('#account-clear');
-  const replayBar = $('#replaybar');
-  const replayLabel = $('#replay-label');
-  const replayFill = $('#replay-fill');
-  const replaySpeed = $('#replay-speed');
-  const replayCancel = $('#replay-cancel');
+  const castStrip = $('#cast-strip');
   const shareBtn = $('#share');
   const overlayLede = $('#overlay .lede');
   const defaultLede = overlayLede?.textContent ?? '';
@@ -90,14 +74,17 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
   // --- Start / stop ----------------------------------------------------------
   for (const b of startButtons) b.addEventListener('click', () => onToggleRun());
 
-  // --- Replay bar + share ----------------------------------------------------
-  for (const s of REPLAY_SPEEDS) replaySpeed.append(option(String(s), `${s}×`, s === 1));
-  replaySpeed.addEventListener('change', (e) => onReplaySpeed?.(Number(e.target.value)));
-  replayCancel.addEventListener('click', () => onReplayCancel?.());
+  // --- Share, transport, inspector --------------------------------------------
   shareBtn?.addEventListener('click', () => onShare?.());
   let shareTimer = 0;
-  const fmt = (n) => `#${Number(n).toLocaleString('en-US')}`;
-  const rangeLabel = (range) => (range.from === range.to ? `ledger ${fmt(range.from)}` : `ledgers ${fmt(range.from)}–${fmt(range.to)}`);
+  const transportUI = createTransportUI(transport ?? {});
+  const inspectorUI = createInspector({
+    linkFor: (kind, id) => explorerUrl(settings.explorer, settings.network, kind, id),
+    castFor: () => settings.cast ?? [],
+    onPrev: inspector?.onPrev,
+    onNext: inspector?.onNext,
+    onAnnotate: inspector?.onAnnotate,
+  });
 
   // --- Panel toggle (mobile) -------------------------------------------------
   const setPanelOpen = (open) => {
@@ -181,48 +168,27 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
     checked: settings.showLog,
     onchange: (e) => update({ showLog: e.target.checked }),
   });
-  const accountHint = el('span', { class: 'hint', id: 'account-hint' });
-  const accountInput = el('input', {
-    type: 'text',
-    id: 'account',
-    placeholder: 'r… (one account)',
-    spellcheck: 'false',
-    autocomplete: 'off',
-    autocapitalize: 'off',
-    value: settings.account ?? '',
-    'aria-label': 'Account to watch',
-    'aria-describedby': 'account-hint',
-    onchange: (e) => {
-      const value = e.target.value.trim();
-      if (value && !isValidAddress(value)) {
-        e.target.setAttribute('aria-invalid', 'true');
-        accountHint.textContent = 'Not a valid r-address.';
-        accountHint.classList.add('error');
-        return;
-      }
-      e.target.removeAttribute('aria-invalid');
-      accountHint.classList.remove('error');
-      accountHint.textContent = '';
-      e.target.value = value;
-      update({ account: value });
-    },
+  const exposure = el('input', {
+    type: 'checkbox',
+    id: 'exposure',
+    checked: settings.exposure,
+    onchange: (e) => update({ exposure: e.target.checked }),
   });
-  const accountMode = el(
-    'select',
-    { id: 'account-mode', 'aria-label': 'What to do with other transactions', onchange: (e) => update({ accountMode: e.target.value }) },
-    Object.entries(ACCOUNT_MODES).map(([k, label]) => option(k, label, settings.accountMode === k)),
-  );
   const explorer = el(
     'select',
     { id: 'explorer', 'aria-label': 'Explorer for links', onchange: (e) => update({ explorer: e.target.value }) },
     Object.entries(EXPLORERS).map(([k, v]) => option(k, v.label, settings.explorer === k)),
   );
-  accountClear.addEventListener('click', () => {
-    accountInput.value = '';
-    accountInput.removeAttribute('aria-invalid');
-    accountHint.textContent = '';
-    update({ account: '' });
+  const castPanel = createCastPanel({
+    settings,
+    onChange: (patch) => update(patch),
+    onPreview: (member) => onPreview?.(member),
+    linkFor: (address) => explorerUrl(settings.explorer, settings.network, 'account', address),
   });
+  const casePanel = createCasePanel({ settings, ...(caseActions ?? {}) });
+  const geigerPanel = createGeigerPanel({ settings, ...(geigerActions ?? {}) });
+  const healthPanel = createHealthPanel({ settings, ...(healthActions ?? {}) });
+  const midiPanel = createMidiPanel({ settings, ...(midiActions ?? {}) });
 
   const snapshotBtn = el('button', { type: 'button', class: 'btn', id: 'snapshot', text: 'Snapshot', title: 'Save the scene as a PNG with a stats overlay', onclick: () => onSnapshot?.() });
   const recordBtn = el('button', {
@@ -270,14 +236,15 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
       row('Threshold (XRP)', quietThreshold),
       check('Include failed transactions', includeFailed),
       check('Show log', showLog),
-    ]),
-    el('section', { class: 'group' }, [el('h2', { text: 'Transaction types' }), el('div', { class: 'chips' }, categoryToggles)]),
-    el('section', { class: 'group' }, [
-      el('h2', { text: 'Account' }),
-      el('label', { class: 'row stack' }, [el('span', { class: 'row-label', text: 'Watch one account' }), accountInput, accountHint]),
-      row('Other transactions', accountMode),
+      check('Long exposure', exposure, 'keep a fading trace of where tracks land'),
       row('Explorer links', explorer),
     ]),
+    el('section', { class: 'group' }, [el('h2', { text: 'Transaction types' }), el('div', { class: 'chips' }, categoryToggles)]),
+    castPanel.root,
+    casePanel.root,
+    geigerPanel.root,
+    healthPanel.root,
+    midiPanel.root,
     el('section', { class: 'group' }, [
       el('h2', { text: 'Capture' }),
       el('div', { class: 'buttons' }, [snapshotBtn, recordBtn]),
@@ -306,8 +273,20 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
   const applyLogVisibility = () => logWrap.classList.toggle('hidden', !settings.showLog);
   applyLogVisibility();
 
+  function pushLine(line) {
+    logList.prepend(line);
+    while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
+  }
+
   // --- Public API ------------------------------------------------------------
   return {
+    transport: transportUI,
+    inspector: inspectorUI,
+    casePanel,
+    geigerPanel,
+    healthPanel,
+    midiPanel,
+
     setRunning(running) {
       document.body.classList.toggle('running', running);
       overlay.classList.toggle('hidden', running);
@@ -351,34 +330,21 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
         svg(eventIcon(event, 14)),
         el('span', { class: 'line' }, event.kind === 'tx' ? txLine(event) : ledgerLine(event)),
       ]);
-      logList.prepend(line);
-      while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
-    },
-
-    /** Show or hide the replay bar. */
-    setReplay({ active = false, range = null } = {}) {
-      replayBar.classList.toggle('hidden', !active);
-      document.body.classList.toggle('replaying', active);
-      if (active && range) replayLabel.textContent = `Replay · ${rangeLabel(range)}`;
-      if (!active) replayFill.style.transform = 'scaleX(0)';
-    },
-
-    setReplayProgress(fraction, ledgerIndex, done, total) {
-      replayFill.style.transform = `scaleX(${Math.min(1, Math.max(0, fraction)).toFixed(3)})`;
-      if (ledgerIndex != null) {
-        const text = total > 1 ? `Replay ${fmt(ledgerIndex)} · ${Math.min(done + 1, total)}/${total}` : `Replay ${fmt(ledgerIndex)}`;
-        if (replayLabel.textContent !== text) replayLabel.textContent = text;
+      if (event.kind === 'tx') {
+        line.classList.add('inspectable');
+        line.title = `${line.title ? `${line.title} · ` : ''}Click to inspect`;
+        line.addEventListener('click', (e) => {
+          if (e.target.closest('a')) return;
+          onInspect?.(event);
+        });
       }
+      pushLine(line);
     },
 
-    setReplaySpeed(speed) {
-      replaySpeed.value = String(speed);
-    },
-
-    /** Tell the start overlay that pressing Start will replay rather than go live. */
-    setReplayPending(range) {
+    /** Tell the start overlay that pressing Start will play a case rather than go live. */
+    setReplayPending(theCase, title) {
       if (!overlayLede) return;
-      overlayLede.textContent = range ? `Replay of ${rangeLabel(range)}, played back at the pace the network closed it.` : defaultLede;
+      overlayLede.textContent = theCase ? `${title ?? 'A case'} will play back at the pace the network closed it; Go live returns to the stream.` : defaultLede;
     },
 
     /** Countdown on the record button; null restores it. */
@@ -398,21 +364,34 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
       if (ok) shareTimer = setTimeout(() => this.setShared(false), 1600);
     },
 
-    /** Show (or clear) the watched account in the top bar. */
-    setAccount(address) {
-      const active = Boolean(address);
-      watch.classList.toggle('hidden', !active);
-      document.body.classList.toggle('watching', active);
-      accountShort.textContent = active ? shortAddress(address) : '';
-      accountBadge.href = (active && explorerUrl(settings.explorer, settings.network, 'account', address)) || '#';
-      accountBadge.title = active ? `${address} — open on ${EXPLORERS[settings.explorer]?.label ?? 'explorer'}` : '';
-      if (accountInput.value.trim() !== (address ?? '')) accountInput.value = address ?? '';
+    /** Render the cast in the command strip: one chip per member, linked to the explorer. */
+    setCast(cast) {
+      const members = Array.isArray(cast) ? cast : [];
+      castStrip.classList.toggle('hidden', members.length === 0);
+      document.body.classList.toggle('watching', members.length > 0);
+      castStrip.replaceChildren(
+        ...members.map((m) => {
+          const href = explorerUrl(settings.explorer, settings.network, 'account', m.address);
+          const chip = el(href ? 'a' : 'span', {
+            class: `cast-chip${m.muted ? ' muted' : ''}${m.solo ? ' solo' : ''}`,
+            style: `--cast: ${m.colour}`,
+            text: m.label,
+            title: `${m.address} · ${m.voice}${m.solo ? ' · solo' : ''}${m.muted ? ' · muted' : ''}`,
+          });
+          if (href) {
+            chip.href = href;
+            chip.target = '_blank';
+            chip.rel = 'noopener noreferrer';
+          }
+          return chip;
+        }),
+      );
+      castPanel.render();
     },
 
+    /** A line that is not a transaction: 'info', 'error' or 'note' (an annotation). */
     logMessage(text, cls = 'info') {
-      const line = el('li', { class: `log-${cls}` }, [stamp(), el('span', { class: 'glyph' }), el('span', { class: 'line', text })]);
-      logList.prepend(line);
-      while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
+      pushLine(el('li', { class: `log-${cls}` }, [stamp(), el('span', { class: 'glyph' }), el('span', { class: 'line', text })]));
     },
 
     applySettings() {
@@ -426,15 +405,18 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
       quietThreshold.value = settings.quietThreshold;
       includeFailed.checked = settings.includeFailed;
       showLog.checked = settings.showLog;
-      accountInput.value = settings.account ?? '';
-      accountMode.value = settings.accountMode;
+      exposure.checked = settings.exposure;
       explorer.value = settings.explorer;
       for (const box of controls.querySelectorAll('input[data-category]')) box.checked = settings.enabled[box.dataset.category];
+      castPanel.render();
+      casePanel.applySettings();
+      geigerPanel.applySettings();
+      healthPanel.applySettings();
       applyLogVisibility();
     },
   };
 
-  // --- Log line builders -----------------------------------------------------
+  // --- Tape line builders -----------------------------------------------------
   function link(kind, id, text, cls) {
     const href = explorerUrl(settings.explorer, settings.network, kind, id);
     if (!href) return el('span', { class: cls, text });
@@ -444,10 +426,18 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
   function txLine(event) {
     const nodes = [link('tx', event.hash, event.head, 'tx-link')];
     for (const p of event.parties) {
-      const watched = settings.account && p.address === settings.account;
-      nodes.push(p.separator, link('account', p.address, p.short, `acct-link${watched ? ' watched' : ''}`));
+      const member = settings.cast?.find((m) => m.address === p.address);
+      const a = link('account', p.address, member ? member.label : p.short, `acct-link${member ? ' cast-link' : ''}`);
+      if (member) {
+        a.style.setProperty('--cast', member.colour);
+        a.title = p.address;
+      }
+      nodes.push(p.separator, a);
     }
     nodes.push(` · ${event.note}`);
+    if (event.cues?.length) {
+      nodes.push(el('span', { class: 'tape-cast' }, event.cues.map((c) => el('span', { class: 'tape-chip', style: `--cast: ${c.colour}`, text: c.label, title: 'Also involved' }))));
+    }
     return nodes;
   }
 

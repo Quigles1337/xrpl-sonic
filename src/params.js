@@ -37,7 +37,9 @@ export function parseHash(hash) {
  * Parse the query string: page modes and the network.
  * `mode` is 'overlay' (transparent, no controls, for OBS browser sources),
  * 'embed' (compact chrome for an iframe) or 'full'. Overlay wins if both are set.
- * @returns {{ network: 'mainnet'|'testnet'|null, autostart: boolean, mode: 'overlay'|'embed'|'full' }}
+ * `caseUrl` is a same-origin, relative `.json` path to load as a case (`?case=docs/cases/x.sonic-case.json`);
+ * anything absolute, with a scheme, or walking up a directory is ignored.
+ * @returns {{ network: 'mainnet'|'testnet'|null, autostart: boolean, mode: 'overlay'|'embed'|'full', caseUrl: string|null }}
  */
 export function parseQuery(search) {
   const raw = typeof search === 'string' ? search.replace(/^\?/, '') : '';
@@ -51,7 +53,18 @@ export function parseQuery(search) {
     network: network === 'mainnet' || network === 'testnet' ? network : null,
     autostart: flag('autostart'),
     mode: flag('overlay') ? 'overlay' : flag('embed') ? 'embed' : 'full',
+    caseUrl: safeCasePath(params.get('case')),
   };
+}
+
+/** A relative path under the site, ending in .json, with no scheme, host, backslash or `..` segment. */
+export function safeCasePath(value) {
+  if (typeof value !== 'string') return null;
+  const v = value.trim();
+  if (!v || v.length > 300 || !/\.json$/i.test(v)) return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(v) || v.startsWith('/') || v.startsWith('\\\\') || v.includes('\\') || v.includes('//')) return null;
+  if (v.split('/').some((seg) => seg === '..' || seg === '')) return null;
+  return v;
 }
 
 /** Build a hash string (with the leading `#`, or '' when there is nothing to carry). Key order: account, replay, cast, case. */
