@@ -503,18 +503,18 @@ a.cast-chip:hover {
   gap: 8px;
 }
 
-/* ------------------------------------------------------------- replay bar */
+/* -------------------------------------------------------------- transport */
 
-.replaybar {
+.transport {
   position: fixed;
   top: calc(var(--topbar-h) + 10px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
-  display: grid;
-  grid-template-columns: auto 160px auto auto;
+  display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
   padding: 6px 8px 6px 14px;
   background: var(--panel);
   border: 1px solid var(--line-strong);
@@ -527,27 +527,125 @@ a.cast-chip:hover {
   white-space: nowrap;
 }
 
-.replaybar.hidden {
+.transport.hidden {
   display: none;
 }
 
-.replay-label {
+.t-label {
   color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
-.replay-track {
-  height: 3px;
-  background: rgba(140, 170, 220, 0.14);
+  max-width: 220px;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.replay-fill {
-  height: 100%;
+.t-buttons {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.btn.tiny.t-play {
+  width: 32px;
+}
+
+.transport[data-state="playing"] .t-play {
+  color: var(--accent);
+  border-color: var(--accent-line);
+}
+
+.t-clock {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  min-width: 15ch;
+  text-align: center;
+}
+
+.t-track {
+  position: relative;
+  width: 260px;
+  height: 14px;
+  cursor: pointer;
+  outline-offset: 3px;
+}
+
+.t-track::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 5px;
+  height: 4px;
+  background: rgba(140, 170, 220, 0.14);
+}
+
+.t-track:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.t-fill {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  height: 4px;
   width: 100%;
-  background: var(--warn);
+  background: var(--accent);
   transform-origin: left;
   transform: scaleX(0);
+}
+
+.t-fill.loading {
+  background: var(--warn);
+}
+
+.t-loopspan {
+  position: absolute;
+  top: 2px;
+  height: 10px;
+  background: rgba(249, 199, 79, 0.18);
+  border-left: 1px solid var(--warn);
+  border-right: 1px solid var(--warn);
+}
+
+.t-loopspan.hidden {
+  display: none;
+}
+
+.t-marks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.t-marks .mark {
+  position: absolute;
+  top: 3px;
+  width: 1px;
+  height: 8px;
+  background: rgba(200, 220, 255, 0.35);
+}
+
+.t-marks .mark.missing {
+  background: var(--err);
+}
+
+.t-marks .mark.gap {
+  top: 5px;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--muted) 0 2px, transparent 2px 4px);
+  min-width: 3px;
+}
+
+.t-marks .mark.note {
+  top: 0;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  background: var(--warn);
+  transform: rotate(45deg);
+  pointer-events: auto;
+}
+
+.t-marks .mark.note.pause {
+  background: var(--accent-2, #f72585);
 }
 
 .replay-speed {
@@ -567,6 +665,226 @@ a.cast-chip:hover {
   padding: 3px 6px;
   font-family: var(--mono);
   font-size: 11px;
+}
+
+/* Captions: the text equivalent of what is playing. */
+.captions {
+  position: fixed;
+  top: calc(var(--topbar-h) + 58px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  max-width: min(760px, calc(100vw - 32px));
+  padding: 7px 14px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.captions.hidden {
+  display: none;
+}
+
+.captions[data-kind="annotation"] {
+  border-left-color: var(--warn);
+}
+
+.captions[data-kind="gap"] {
+  border-left-color: var(--muted);
+}
+
+.caption-kind {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex: none;
+}
+
+.caption-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caption-source,
+.caption-hint {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  flex: none;
+}
+
+.caption-hint {
+  color: var(--accent);
+}
+
+/* Inspector: the record behind a sound. */
+.inspector {
+  position: fixed;
+  z-index: 3;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  padding: 12px 14px 12px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  font-size: 12.5px;
+}
+
+.inspector.hidden {
+  display: none;
+}
+
+.insp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.insp-type {
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--glyph);
+}
+
+.insp-result {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  padding: 1px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+}
+
+.insp-result.ok {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 40%, transparent);
+}
+
+.insp-result.err {
+  color: var(--err);
+  border-color: color-mix(in srgb, var(--err) 40%, transparent);
+}
+
+.insp-head .icon-btn {
+  margin-left: auto;
+}
+
+.insp-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+}
+
+.insp-grid dt {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 2px;
+}
+
+.insp-grid dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.insp-grid a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.insp-grid a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.insp-grid a.insp-party[style] {
+  color: var(--cast);
+}
+
+.insp-grid .mono {
+  font-family: var(--mono);
+}
+
+.insp-notes {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.insp-note {
+  padding: 2px 0 2px 10px;
+  border-left: 2px solid var(--warn);
+  margin-bottom: 4px;
+}
+
+.insp-note.reviewed {
+  border-left-color: var(--ok);
+}
+
+.insp-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.insp-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.case-status {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+.case-warnings {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  font-size: 12px;
+  color: var(--warn);
+}
+
+.case-warnings.hidden {
+  display: none;
+}
+
+.case-group .buttons {
+  margin-bottom: 8px;
 }
 
 /* ------------------------------------------------------------------ panel */
@@ -1174,6 +1492,30 @@ a.cast-address:hover {
   color: var(--muted);
 }
 
+.log li.log-note {
+  color: var(--warn);
+}
+
+.log li.log-note .glyph {
+  width: 7px;
+  height: 7px;
+  margin: 0 4px;
+  border-radius: 1px;
+  background: currentColor;
+  transform: rotate(45deg);
+  filter: none;
+}
+
+.log li.inspectable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.log li.inspectable:hover .line {
+  color: var(--text);
+  text-shadow: 0 0 10px rgba(76, 201, 240, 0.35);
+}
+
 .log li.log-error {
   color: var(--err);
 }
@@ -1371,6 +1713,18 @@ a.cast-address:hover {
   margin-left: 10px;
 }
 
+.footer kbd + kbd {
+  margin-left: 2px;
+}
+
+.footer-case {
+  display: none;
+}
+
+body.replaying .footer-case {
+  display: inline;
+}
+
 /* ------------------------------------------------------------ page modes */
 
 /* ?overlay=1 — transparent canvas only, for OBS browser sources and screens. */
@@ -1380,7 +1734,9 @@ body.mode-overlay {
 }
 
 body.mode-overlay .topbar,
-body.mode-overlay .replaybar,
+body.mode-overlay .transport,
+body.mode-overlay .captions,
+body.mode-overlay .inspector,
 body.mode-overlay .panel,
 body.mode-overlay .log-wrap,
 body.mode-overlay .overlay,
@@ -1494,9 +1850,21 @@ body.mode-embed .log-wrap {
   width: min(420px, calc(100vw - 20px));
 }
 
-body.mode-embed .replaybar {
+body.mode-embed .transport {
   top: 54px;
   padding: 4px 6px 4px 10px;
+}
+
+body.mode-embed .t-track {
+  width: 140px;
+}
+
+body.mode-embed .captions {
+  top: 100px;
+}
+
+body.mode-embed .inspector {
+  bottom: 16px;
 }
 
 @media (max-width: 479px) {
@@ -1554,31 +1922,30 @@ body.mode-embed .replaybar {
   .brand {
     grid-column: 1;
     grid-row: 1;
+  }
+
+  body:not(.mode-embed) .brand {
     padding-top: 8px;
   }
 
-  .actions {
+  /* The embed keeps its single-row strip; only the full page re-flows the buttons. */
+  body:not(.mode-embed) .actions {
     display: contents;
   }
 
-  .actions .open-full,
-  .actions #start {
+  body:not(.mode-embed) .actions #start {
     grid-row: 1;
     grid-column: 3;
     align-self: center;
     margin-top: 8px;
   }
 
-  .actions .open-full {
-    grid-column: 2;
-  }
-
-  .actions #share {
+  body:not(.mode-embed) .actions #share {
     grid-row: 2;
     grid-column: 2;
   }
 
-  .actions #toggle-panel {
+  body:not(.mode-embed) .actions #toggle-panel {
     grid-row: 2;
     grid-column: 3;
   }
@@ -1586,6 +1953,10 @@ body.mode-embed .replaybar {
   .actions .btn {
     padding: 5px 10px;
     font-size: 10px;
+  }
+
+  body.mode-embed .cast-strip {
+    display: none;
   }
 
   .status {
@@ -1633,13 +2004,47 @@ body.mode-embed .replaybar {
     gap: 6px 12px;
   }
 
-  .replaybar {
+  .transport {
     top: 122px; /* below the three-row mobile top bar (the --topbar-h override above is scoped to .topbar) */
     left: 8px;
     right: 8px;
     transform: none;
-    grid-template-columns: auto 1fr auto auto;
-    gap: 8px;
+    max-width: none;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+  }
+
+  .t-track {
+    width: 100%;
+    order: 10;
+  }
+
+  .t-label {
+    max-width: 140px;
+  }
+
+  .captions {
+    top: 196px;
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .caption-text {
+    white-space: normal;
+  }
+
+  .inspector {
+    bottom: 84px;
+  }
+
+  .footer {
+    gap: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  body.replaying .footer-case {
+    display: none;
   }
 }
 

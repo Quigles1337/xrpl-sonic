@@ -73,12 +73,14 @@ export class Visualizer {
   /**
    * @param {HTMLCanvasElement} canvas
    * @param {{ transparent?: boolean, hud?: boolean }} [opts]
-   *   transparent: no background fill (overlay mode); hud: nebula, grid, ruler, stamp and vignette (off in overlay mode)
+   *   transparent: no background fill (overlay mode); hud: nebula, grid, ruler, stamp and vignette (off in overlay mode);
+   *   reduced: honour prefers-reduced-motion (tracks still appear, but without drift, overshoot or flashes)
    */
-  constructor(canvas, { transparent = false, hud = !transparent } = {}) {
+  constructor(canvas, { transparent = false, hud = !transparent, reduced = false } = {}) {
     this.canvas = canvas;
     this.transparent = transparent;
     this.hud = hud;
+    this.reduced = reduced; // prefers-reduced-motion: no drift, no ignition flash, no overshoot
     this.ctx = canvas.getContext('2d', { alpha: transparent });
     this.particles = [];
     this.rings = [];
@@ -138,6 +140,10 @@ export class Visualizer {
   destroy() {
     this.stop();
     globalThis.removeEventListener?.('resize', this._resize);
+  }
+
+  setReduced(on) {
+    this.reduced = Boolean(on);
   }
 
   rgb(hex) {
@@ -329,6 +335,7 @@ export class Visualizer {
       alpha: dim ? 0.4 : 1,
       seed: Math.random() * Math.PI * 2,
       spin: (Math.random() - 0.5) * 2,
+      event,
       castColour: event.castColour ?? null,
       castLabel: event.castLabel ?? null,
       castId: event.primary ?? null,
@@ -353,8 +360,28 @@ export class Visualizer {
     return p;
   }
 
+  /** The track nearest a point (CSS px, canvas coordinates), within a small tolerance; the youngest wins a tie. */
+  hitTest(x, y) {
+    let best = null;
+    let bestD = Infinity;
+    for (const p of this.particles) {
+      const tol = Math.max(14, p.r * 2.2);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d <= tol && (d < bestD - 2 || (Math.abs(d - bestD) <= 2 && p.born > best.born))) {
+        best = p;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+
+  /** A gap between clips: a dashed ring that contracts to the centre — time folding. */
+  gap() {
+    this.ring({ colour: PULSE_COLOUR, life: 1500, width: 1.5, inward: true });
+  }
+
   /** Expanding ring. The ledger pulse calls this with defaults: centre, pale, to the edge of the plate. */
-  ring({ colour = PULSE_COLOUR, x, y, life = 2600, width = 2, maxR, pulse = false } = {}) {
+  ring({ colour = PULSE_COLOUR, x, y, life = 2600, width = 2, maxR, pulse = false, inward = false } = {}) {
     if (this.rings.length >= MAX_RINGS) this.rings.shift();
     this.rings.push({
       x: x ?? this.width / 2,
@@ -364,6 +391,7 @@ export class Visualizer {
       life,
       width,
       pulse,
+      inward,
       maxR: maxR ?? Math.hypot(this.width, this.height) / 2,
     });
   }
@@ -418,8 +446,8 @@ export class Visualizer {
     }
     const L = this.layers;
     if (L) {
-      const dx = Math.sin(ts / 13000) * w * 0.05;
-      const dy = Math.cos(ts / 17000) * h * 0.04;
+      const dx = this.reduced ? 0 : Math.sin(ts / 13000) * w * 0.05;
+      const dy = this.reduced ? 0 : Math.cos(ts / 17000) * h * 0.04;
       ctx.drawImage(L.nebula, -w * 0.15 + dx, -h * 0.15 + dy, w * 1.3, h * 1.3);
       ctx.drawImage(L.grid, 0, 0, w, h);
       if (f > 0) {
@@ -442,8 +470,9 @@ export class Visualizer {
         this.rings.splice(i, 1);
         continue;
       }
-      const radius = easeOutCubic(age) * ring.maxR;
+      const radius = ring.inward ? (1 - easeOutCubic(age)) * ring.maxR : easeOutCubic(age) * ring.maxR;
       const fade = 1 - age;
+      if (ring.inward) ctx.setLineDash([6, 8]);
       // wide, faint band
       ctx.strokeStyle = rgba(ring.rgb, fade * 0.07);
       ctx.lineWidth = ring.width * 7;
@@ -456,6 +485,7 @@ export class Visualizer {
       ctx.beginPath();
       ctx.arc(ring.x, ring.y, radius, 0, Math.PI * 2);
       ctx.stroke();
+      if (ring.inward) ctx.setLineDash([]);
       // the ledger pulse carries an echo just behind its edge
       if (ring.pulse && radius > 12) {
         ctx.strokeStyle = rgba(ring.rgb, fade * 0.22);
@@ -486,9 +516,9 @@ export class Visualizer {
         r: p.r,
         t,
         age,
-        s: easeOutBack(Math.min(1, t / SPAWN_MS)),
+        s: this.reduced ? 1 : easeOutBack(Math.min(1, t / SPAWN_MS)),
         a: (age < 0.12 ? 1 : 1 - ((age - 0.12) / 0.88) ** 1.5) * p.alpha,
-        flash: Math.max(0, 1 - t / FLASH_MS) * p.alpha,
+        flash: this.reduced ? 0 : Math.max(0, 1 - t / FLASH_MS) * p.alpha,
       };
       const drawShape = this[`draw_${p.shape.replace('-', '_')}`] ?? this.draw_mote;
       drawShape.call(this, ctx, p, k);

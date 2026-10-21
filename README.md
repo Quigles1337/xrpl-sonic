@@ -60,9 +60,30 @@ Every line in the log is a link: the transaction opens on an explorer, each acco
 https://quigles1337.github.io/xrpl-sonic/#replay=107777809
 ```
 
-Press **Start** and the page fetches each ledger over the same WebSocket (`{"command":"ledger","ledger_index":N,"transactions":true,"expand":true}`), sorts its transactions by `TransactionIndex` (the order the ledger applied them; the node returns them in hash order) and spreads them evenly across the interval the ledger actually stayed open, taken from the next ledger's `close_time` (4 s when that is not available). The ledger tick and ring play at each close as they do live, a bar under the top bar shows progress, and a speed control offers 0.5×, 1×, 2× and 4× (applied from the next ledger). The live stream is paused for the duration and resumes when the replay ends or you press **Go live**.
+Press **Start** and the page fetches each ledger over the same WebSocket (`{"command":"ledger","ledger_index":N,"transactions":true,"expand":true}`), sorts its transactions by `TransactionIndex` (the order the ledger applied them; the node returns them in hash order) and spreads them evenly across the interval the ledger actually stayed open, taken from the next ledger's `close_time` (4 s when that is not available). That reconstructs a listening sequence; it does not recover when each transaction was submitted or executed, so a repeated phrase shows repeated ordering under the chosen mapping, not reaction latency or causation.
 
-**Share** in the top bar copies a permalink to the ledger currently playing (live or replayed), so a moment you heard can be sent to someone else. Replay honours `#account=` too, so a link can carry both: `#account=r...&replay=<from>-<to>`.
+The ledgers become a **score** (every ledger close, every event with its voice, notes and timing, every annotation at its time) and a **transport** plays it:
+
+| Control | Key | What it does |
+| --- | --- | --- |
+| ▶ / ❚❚ | `K` | Play or pause. |
+| ⏭ | `.` | Step: play exactly the next event and stay there. |
+| ⏮ | `,` | Step back to the previous event (without playing it). |
+| ⟲ | `L` | Loop the whole case, or the in/out range. |
+| `[` `]` | `[` `]` | Set the loop's in and out points at the current position. |
+| Track | `←` `→` `Home` `End` | Seek. Marks on the track: ledger closes, gaps between clips (hatched), annotations (diamonds; the magenta ones pause). |
+| Speed | | 0.5×, 1×, 2×, 4×. |
+| Go live | `Esc` closes the inspector | Return to the live stream. |
+
+Click any line on the tape, or any track on the plate, to open the **inspector**: type and result, amount, parties (with cast labels), ledger and hash as explorer links, the voice and note that played it, whether it sounded or was drawn silent, its position in the case, and the annotations anchored to it, with Previous / Next to walk the score one event at a time.
+
+**Share** copies a permalink to the ledger currently playing (live or replayed) together with the network and the cast, so a moment you heard can be sent to someone else.
+
+## Cases
+
+A **case** is a small JSON file that describes a listening: the network, one or more ledger windows (clips), the cast, the filters and mapping, the speed, and annotations anchored to a transaction, a ledger or a position on the timeline. **Settings → Case** loads one, saves the current one, copies a link that carries it (`#case=`), and saves the **transcript**, a text version of the whole score with every ledger, gap, event and annotation at its time. Changing the scale, key, filters or cast while a case plays rebuilds the score in place, so the file and the link always describe what you are hearing. The silence between clips is explicit: a gap is announced on the tape, in the captions and as a contracting dashed ring on the plate. The format is documented in [docs/case-format.md](docs/case-format.md); the same case and ledgers always give the same score, and a recording (**Capture**) preserves a particular performance.
+
+**Captions** show annotations, gaps and cast events as text; **Speak annotations** reads each note aloud through the browser's speech synthesis, independent of the instrument's sound; **Pause at annotations** honours notes that ask for it. The page respects `prefers-reduced-motion` (tracks still appear, without drift, overshoot or flashes), and every control is reachable from the keyboard.
 
 ## Overlay and embed
 
