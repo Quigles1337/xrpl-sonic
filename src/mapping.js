@@ -17,11 +17,11 @@ export const WHALE_THRESHOLD_XRP = 100_000;
 export const CATEGORIES = Object.freeze({
   payment: Object.freeze({ label: 'Payment', colour: '#4cc9f0', sound: 'pluck' }),
   offer: Object.freeze({ label: 'DEX offer', colour: '#f9c74f', sound: 'hat' }),
-  trust: Object.freeze({ label: 'Trust line', colour: '#90be6d', sound: 'pad' }),
+  trust: Object.freeze({ label: 'Trust line', colour: '#9ee37d', sound: 'pad' }),
   nft: Object.freeze({ label: 'NFT', colour: '#f72585', sound: 'bell' }),
-  escrow: Object.freeze({ label: 'Escrow', colour: '#b5179e', sound: 'swell' }),
-  paychan: Object.freeze({ label: 'Payment channel', colour: '#f3722c', sound: 'arp' }),
-  amm: Object.freeze({ label: 'AMM', colour: '#43aa8b', sound: 'chord' }),
+  escrow: Object.freeze({ label: 'Escrow', colour: '#a78bfa', sound: 'swell' }),
+  paychan: Object.freeze({ label: 'Payment channel', colour: '#ff8c42', sound: 'arp' }),
+  amm: Object.freeze({ label: 'AMM', colour: '#2ee6c5', sound: 'chord' }),
   other: Object.freeze({ label: 'Other', colour: '#8d99ae', sound: 'click' }),
 });
 

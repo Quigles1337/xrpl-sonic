@@ -5,8 +5,21 @@ import { NETWORKS } from './ws.js';
 import { EXPLORERS, explorerUrl } from './explorers.js';
 import { ACCOUNT_MODES } from './settings.js';
 import { REPLAY_SPEEDS } from './replay.js';
+import { GLYPHS, PULSE, categoryIcon, eventIcon, fieldGuide } from './glyphs.js';
 
 const MAX_LOG_LINES = 80;
+
+/** Build an element from trusted SVG markup (the icons in src/glyphs.js contain no caller input). */
+function svg(markup) {
+  const t = document.createElement('template');
+  t.innerHTML = markup;
+  return t.content.firstElementChild;
+}
+
+/** Wall-clock stamp for the tape, HH:MM:SS. */
+function stamp() {
+  return el('span', { class: 'ts', text: new Date().toLocaleTimeString('en-GB', { hour12: false }) });
+}
 
 function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
@@ -45,6 +58,8 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
   const overlay = $('#overlay');
   const panel = $('#panel');
   const panelToggle = $('#toggle-panel');
+  const panelClose = $('#panel-close');
+  const overlayGuide = $('#overlay-guide');
   const statusDot = $('#status-dot');
   const statusText = $('#status-text');
   const ledgerIndexEl = $('#ledger-index');
@@ -90,9 +105,19 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
     panelToggle.setAttribute('aria-expanded', String(open));
   };
   panelToggle.addEventListener('click', () => setPanelOpen(!panel.classList.contains('open')));
+  panelClose?.addEventListener('click', () => setPanelOpen(false));
   if (window.matchMedia('(min-width: 900px)').matches) setPanelOpen(true);
 
+  // --- Field guide on the start screen ----------------------------------------
+  if (overlayGuide) {
+    for (const g of fieldGuide()) {
+      overlayGuide.append(el('span', { class: 'guide-item', style: `--glyph: ${g.colour}`, title: `${g.label} — ${g.sound}. ${g.track}` }, [svg(categoryIcon(g.category, 14)), el('span', { text: g.label })]));
+    }
+    overlayGuide.append(el('span', { class: 'guide-item', style: `--glyph: ${PULSE.colour}`, title: `${PULSE.label}. ${PULSE.track}` }, [svg(eventIcon({ kind: 'ledger' }, 14)), el('span', { text: PULSE.label })]));
+  }
+
   // --- Controls --------------------------------------------------------------
+  const sliderFill = (input) => input.style.setProperty('--pct', `${Math.round(Number(input.value) * 100)}%`);
   const volume = el('input', {
     type: 'range',
     id: 'volume',
@@ -101,8 +126,12 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
     step: 0.01,
     value: settings.volume,
     'aria-label': 'Volume',
-    oninput: (e) => update({ volume: Number(e.target.value) }),
+    oninput: (e) => {
+      sliderFill(e.target);
+      update({ volume: Number(e.target.value) });
+    },
   });
+  sliderFill(volume);
   const mute = el('input', {
     type: 'checkbox',
     id: 'mute',
@@ -219,7 +248,11 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
       'data-category': name,
       onchange: (e) => update({ enabled: { ...settings.enabled, [name]: e.target.checked } }),
     });
-    return el('label', { class: 'chip', style: `--chip: ${c.colour}` }, [box, el('span', { class: 'swatch' }), el('span', { text: c.label })]);
+    return el('label', { class: 'chip', style: `--chip: ${c.colour}`, title: GLYPHS[name].track }, [
+      box,
+      el('span', { class: 'swatch' }, [svg(categoryIcon(name, 20))]),
+      el('span', { class: 'chip-text' }, [el('span', { class: 'chip-label', text: c.label }), el('span', { class: 'chip-sound', text: c.sound })]),
+    ]);
   });
 
   controls.append(
@@ -279,7 +312,7 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
       document.body.classList.toggle('running', running);
       overlay.classList.toggle('hidden', running);
       for (const b of startButtons) {
-        b.textContent = running ? 'Stop' : 'Start';
+        b.textContent = running ? (b.dataset.running ?? 'Stop') : (b.dataset.idle ?? 'Start');
         b.setAttribute('aria-pressed', String(running));
       }
       if (running && !window.matchMedia('(min-width: 900px)').matches) setPanelOpen(false);
@@ -312,8 +345,9 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
 
     log(event) {
       if (!settings.showLog) return;
-      const line = el('li', { class: `log-${event.kind}` }, [
-        el('span', { class: 'dot', style: `background: ${event.kind === 'tx' ? event.colour : '#c8dcff'}` }),
+      const line = el('li', { class: `log-${event.kind}`, style: `--glyph: ${event.kind === 'tx' ? event.colour : PULSE.colour}` }, [
+        stamp(),
+        svg(eventIcon(event, 14)),
         el('span', { class: 'line' }, event.kind === 'tx' ? txLine(event) : ledgerLine(event)),
       ]);
       logList.prepend(line);
@@ -375,13 +409,14 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
     },
 
     logMessage(text, cls = 'info') {
-      const line = el('li', { class: `log-${cls}` }, [el('span', { class: 'dot' }), el('span', { class: 'line', text })]);
+      const line = el('li', { class: `log-${cls}` }, [stamp(), el('span', { class: 'glyph' }), el('span', { class: 'line', text })]);
       logList.prepend(line);
       while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
     },
 
     applySettings() {
       volume.value = settings.volume;
+      sliderFill(volume);
       mute.checked = settings.muted;
       network.value = settings.network;
       scale.value = settings.scale;
