@@ -2415,3 +2415,54 @@ body.mode-embed .inspector {
     animation: none;
   }
 }
+
+/* Save this moment: the inline question under the command strip; playback continues behind it */
+.moment-prompt {
+  position: fixed;
+  top: calc(var(--topbar-h) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: min(760px, calc(100vw - 32px));
+  width: max-content;
+  padding: 8px 14px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.moment-prompt .moment-label {
+  font-size: 12px;
+  color: var(--muted, #8d99ae);
+}
+
+.moment-prompt input {
+  flex: 1 1 260px;
+  min-width: 160px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.moment-prompt input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+body.mode-embed #moment,
+body.mode-embed .moment-prompt {
+  display: none;
+}
+
+.note.question .note-text {
+  font-style: italic;
+}

@@ -55,6 +55,7 @@
       <div class="actions">
         <a id="open-full" class="btn small open-full" href="https://quigles1337.github.io/xrpl-sonic/" target="_top" rel="noopener">Open full page</a>
         <a class="btn explorer-link" href="explorer.html" title="Read the ledger: accounts, transactions, ledgers">Explorer</a>
+        <button id="moment" class="btn" type="button" title="Save this moment: the selection and what caught your attention, as a case file and a link (S)">Moment</button>
         <button id="share" class="btn" type="button" title="Copy a link that replays the current ledger">Share</button>
         <button id="toggle-panel" class="btn" aria-expanded="false" aria-controls="panel">Settings</button>
         <button id="start" class="btn primary" aria-pressed="false">Start</button>
@@ -87,6 +88,12 @@
       <button id="replay-cancel" class="btn small" type="button">Go live</button>
     </div>
     <div id="captions" class="captions hidden" aria-live="polite"></div>
+    <form id="moment-prompt" class="moment-prompt hidden" aria-label="Save this moment">
+      <label for="moment-text" class="moment-label">What caught your attention?</label>
+      <input id="moment-text" type="text" maxlength="500" autocomplete="off" placeholder="One line; leave it empty to save only the selection">
+      <button type="submit" class="btn small primary">Save</button>
+      <button type="button" id="moment-cancel" class="btn small">Cancel</button>
+    </form>
     <div id="inspector" class="inspector hidden" role="dialog" aria-label="Transaction details"></div>
 
     <aside id="panel" class="panel" aria-label="Settings">

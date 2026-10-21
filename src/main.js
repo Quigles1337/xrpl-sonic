@@ -16,6 +16,7 @@ import { parseReplayRange, formatReplayRange } from './replay.js';
 import { validateCase, caseFromState, serializeCase, encodeCase, decodeCase, caseFilename, caseLedgerCount, addAnnotation, updateAnnotation, removeAnnotation } from './case.js';
 import { buildScore, scoreCaption, transcript, formatClock, clipRanges, ledgerAtPosition } from './score.js';
 import { Transport } from './transport.js';
+import { LiveWindow, momentFromLive, momentFromReplay, momentPosition, isMoment } from './moment.js';
 import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
 import { Geiger } from './geiger.js';
@@ -104,6 +105,7 @@ const ledgerState = {
   count: 0,
 };
 const stats = { played: 0, dropped: 0 };
+const live = new LiveWindow(); // the last validated ledgers heard live, for "Save this moment" (src/moment.js)
 const recentTx = []; // timestamps for the tx/s readout
 const lastMinute = []; // timestamps for the snapshot overlay (60 s window)
 const capture = captureSupport(globalThis);
@@ -114,6 +116,7 @@ const ui = createUI({
   settings,
   onToggleRun: () => (running ? stop() : start()),
   onShare: () => share(),
+  onMoment: (question) => saveMoment(question),
   onSnapshot: () => snapshot().catch((err) => ui.logMessage(`Snapshot failed: ${err?.message ?? err}`, 'error')),
   onRecord: () => record().catch((err) => ui.logMessage(`Recording failed: ${err?.message ?? err}`, 'error')),
   onPreview: (member) => preview(member),
@@ -209,6 +212,7 @@ const ui = createUI({
     if ('muted' in patch) engine.setMuted(settings.muted);
     if ('network' in patch && stream) {
       resetLedgerState();
+      live.reset();
       ui.logMessage(`Switching to ${NETWORKS[settings.network].label}…`);
       if (session.active) endSession();
       stream.setEndpoints(NETWORKS[settings.network].endpoints);
@@ -562,12 +566,14 @@ function onMessage(msg) {
   switch (classifyMessage(msg)) {
     case 'ledger':
       if (session.active || session.loading) break; // the live stream is paused while a case plays
+      live.noteLedger(msg);
       geigerLiveLedger(Number(msg.ledger_index));
       onLedger(ledgerToEvent(msg));
       pollFee();
       break;
     case 'transaction':
       if (session.active || session.loading) break;
+      live.noteTransaction(msg);
       geigerLiveTransaction(msg);
       onTransaction(msg);
       break;
@@ -821,6 +827,18 @@ async function runCase(theCase) {
   for (const f of result.failures) ui.logMessage(`Ledger ${fmt(f.index)} could not be fetched: ${f.error}`, 'error');
   for (const w of score.warnings) ui.logMessage(w, 'error');
   ui.logMessage(`${caseTitle(theCase)}: ${score.counts.events} events over ${formatClock(score.totalMs)} at ${session.speed}× — K pauses, . steps, L loops, click a line or a track to inspect it.`);
+  // A saved moment: the loop restored, the transport at the anchor, the question shown there.
+  const placed = isMoment(theCase) ? momentPosition(theCase, score) : null;
+  if (placed) {
+    if (placed.loop) {
+      session.loop = placed.loop;
+      transport.setLoop(placed.loop);
+      ui.transport.setLoop(placed.loop);
+    }
+    transport.seek(placed.timeMs);
+    ui.logMessage(momentSummary(theCase, placed));
+    if (placed.annotation && !session.blind) ui.transport.caption({ kind: 'annotation', text: placed.annotation.text, source: placed.annotation.source, status: placed.annotation.status, sticky: true });
+  }
   transport.play();
   ui.setStatus('connected', caseStatusText(), undefined);
   applyDrone();
@@ -1213,6 +1231,65 @@ async function share() {
 }
 
 // ---------------------------------------------------------------------------
+// Save this moment (src/moment.js, docs/save-this-moment.md)
+// ---------------------------------------------------------------------------
+
+/** The moment as a raw case: the loop or the ledger playing now, the inspector's event as the anchor, the question at it. Null when nothing has been heard. */
+function buildMoment(question) {
+  const host = stream?.endpoint ? stream.endpoint.replace(/^wss:\/\//, '') : '';
+  const selectedHash = ui.inspector.current()?.hash ?? null;
+  const savedAt = new Date().toISOString();
+  if (session.active) {
+    const t = session.active.transport;
+    return momentFromReplay({ base: currentCase(), score: session.active.score, positionMs: t.positionNow(), loop: t.loop, selectedHash, question, host, savedAt });
+  }
+  const base = caseFromState({ network: settings.network, cast: settings.cast, settings });
+  return momentFromLive({ base, window: live, selectedHash, question, host, savedAt });
+}
+
+/** The validated moment, or null with the reasons logged. */
+function momentNow(question = '') {
+  const raw = buildMoment(question);
+  if (!raw) {
+    ui.logMessage('Nothing to save yet — press Start and wait for a ledger to close.', 'error');
+    return null;
+  }
+  const { case: c, errors } = validateCase(raw);
+  for (const e of errors) ui.logMessage(`Moment: ${e}`, 'error');
+  if (!c) ui.logMessage('The moment could not be saved.', 'error');
+  return c;
+}
+
+/** One action: the file downloads and the link is copied; playback is not touched. */
+async function saveMoment(question) {
+  const c = momentNow(question);
+  if (!c) return false;
+  const name = caseFilename(c);
+  downloadBlob(new Blob([serializeCase(c)], { type: 'application/json' }), name);
+  const url = await caseLink(c);
+  try {
+    await navigator.clipboard.writeText(url);
+    ui.logMessage(`Saved ${name} and copied its link (${url.length} characters).`);
+  } catch {
+    ui.logMessage(`Saved ${name} — link: ${url}`);
+  }
+  ui.setMomentSaved(true);
+  return true;
+}
+
+/** What a reopened moment says about itself: where and when it was saved, where the transport went, what was heard when it was saved. */
+function momentSummary(c, placed) {
+  const m = c.moment;
+  const heard = m.ledgers.filter((l) => l.expected != null);
+  const received = heard.reduce((n, l) => n + (l.received ?? 0), 0);
+  const expected = heard.reduce((n, l) => n + l.expected, 0);
+  const coverage = m.mode === 'live' && heard.length ? ` It heard ${received} of ${expected} transactions across ${heard.length} ledger${heard.length === 1 ? '' : 's'} when it was saved; this replay has them all.` : '';
+  const when = m.savedAt ? ` on ${m.savedAt.replace('T', ' ').replace(/\.\d+Z$/, 'Z')}` : '';
+  const where = m.mode === 'explorer' ? 'from the explorer' : `while listening ${m.mode}`;
+  return `A moment saved ${where}${when}${m.host ? ` via ${m.host}` : ''}: positioned at ${formatClock(placed.timeMs)}${placed.loop ? `, looping ${formatClock(placed.loop.fromMs)}–${formatClock(placed.loop.toMs)}` : ''}.${coverage}`;
+}
+
+// ---------------------------------------------------------------------------
 // Snapshot and recording
 // ---------------------------------------------------------------------------
 
@@ -1325,9 +1402,9 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) hiddenTicker = setInterval(() => activeTransport()?.tick(), 100);
 });
 
-// Keyboard: Space toggles, M mutes; with a case loaded K play/pause, , and . step, L loops,
-// [ and ] set loop points, Home seeks to the start, Esc closes the inspector. Not in overlay
-// mode, where any key is only the gesture that unlocks audio, and not inside a control.
+// Keyboard: Space toggles, M mutes, S saves this moment; with a case loaded K play/pause, , and
+// . step, L loops, [ and ] set loop points, Home seeks to the start, Esc closes the inspector.
+// Not in overlay mode, where any key is only the gesture that unlocks audio, and not inside a control.
 window.addEventListener('keydown', (e) => {
   if (query.mode === 'overlay') return;
   const tag = e.target?.tagName;
@@ -1347,6 +1424,11 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.key === 'Escape') {
     ui.inspector.hide();
+    return;
+  }
+  if ((e.key === 's' || e.key === 'S') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault();
+    ui.openMomentPrompt();
     return;
   }
   const t = activeTransport();
@@ -1404,6 +1486,9 @@ window.xrplSonic = {
   stop,
   stats,
   shareUrl,
+  live,
+  momentNow,
+  saveMoment,
   openCase: (raw) => openCase(raw, 'case', 'the console'),
   playClip,
   setBlind,

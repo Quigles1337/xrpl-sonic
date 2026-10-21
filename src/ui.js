@@ -44,7 +44,7 @@ function stamp() {
  * @param {object} [args.midiActions]   callbacks for the MIDI group (see ui-midi.js)
  * @param {{ recording: boolean, mimeType: string|null }} [args.capture]  what the browser supports
  */
-export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, capture }) {
+export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, capture }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -63,6 +63,10 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
   const controls = $('#controls');
   const castStrip = $('#cast-strip');
   const shareBtn = $('#share');
+  const momentBtn = $('#moment');
+  const momentPrompt = $('#moment-prompt');
+  const momentText = $('#moment-text');
+  const momentCancel = $('#moment-cancel');
   const overlayLede = $('#overlay .lede');
   const defaultLede = overlayLede?.textContent ?? '';
 
@@ -77,6 +81,34 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
   // --- Share, transport, inspector --------------------------------------------
   shareBtn?.addEventListener('click', () => onShare?.());
   let shareTimer = 0;
+
+  // --- Save this moment: an inline question; playback continues behind it ------
+  let momentTimer = 0;
+  const openMomentPrompt = () => {
+    if (!momentPrompt) return;
+    momentPrompt.classList.remove('hidden');
+    momentText.value = '';
+    momentText.focus();
+  };
+  const closeMomentPrompt = () => {
+    if (!momentPrompt) return;
+    momentPrompt.classList.add('hidden');
+    momentText.blur();
+  };
+  momentBtn?.addEventListener('click', () => (momentPrompt?.classList.contains('hidden') ? openMomentPrompt() : closeMomentPrompt()));
+  momentCancel?.addEventListener('click', closeMomentPrompt);
+  momentPrompt?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const question = momentText.value.trim();
+    closeMomentPrompt();
+    onMoment?.(question);
+  });
+  momentText?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      closeMomentPrompt();
+    }
+  });
   const transportUI = createTransportUI(transport ?? {});
   const inspectorUI = createInspector({
     linkFor: (kind, id) => explorerUrl(settings.explorer, settings.network, kind, id),
@@ -362,6 +394,18 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
       shareBtn.textContent = ok ? 'Copied' : 'Share';
       shareBtn.classList.toggle('copied', ok);
       if (ok) shareTimer = setTimeout(() => this.setShared(false), 1600);
+    },
+
+    /** Ask "What caught your attention?" (the Moment button, or S); Enter saves, Esc cancels. */
+    openMomentPrompt,
+    closeMomentPrompt,
+
+    setMomentSaved(ok) {
+      if (!momentBtn) return;
+      clearTimeout(momentTimer);
+      momentBtn.textContent = ok ? 'Saved' : 'Moment';
+      momentBtn.classList.toggle('copied', ok);
+      if (ok) momentTimer = setTimeout(() => this.setMomentSaved(false), 1600);
     },
 
     /** Render the cast in the command strip: one chip per member, linked to the explorer. */

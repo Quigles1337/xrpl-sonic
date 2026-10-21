@@ -21,6 +21,16 @@ export const MAX_ANNOTATIONS = 200;
 export const MAX_ANNOTATION_CHARS = 500;
 export const ANNOTATION_STATUSES = Object.freeze(['draft', 'reviewed']);
 
+/**
+ * A saved moment (docs/save-this-moment.md) is a case with an optional `moment`
+ * block: where the selection was made, the anchor, the loop, and per ledger the
+ * hash and (live) how many transactions were heard of how many there were. The
+ * block carries its own version so the case format can stay at version 1 and
+ * older builds still open the file, ignoring the block.
+ */
+export const MOMENT_VERSION = 1;
+export const MOMENT_MODES = Object.freeze(['live', 'replay', 'explorer']);
+
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 function cleanText(value, max) {
@@ -56,6 +66,7 @@ export function defaultCase() {
     timing: { speed: 1 },
     annotations: [],
     geiger: null, // optional: { enabled, window, threshold, minCount, adapt, baseline? }
+    moment: null, // optional: { version, savedAt, mode, host, anchor, loop, ledgers } (docs/save-this-moment.md)
   };
 }
 
@@ -142,6 +153,58 @@ function normalizeGeiger(input, errors) {
   return g;
 }
 
+/** An anchor as { hash } / { ledger } / { timeMs } (any combination that parses), or null when nothing usable is there. */
+function normalizeAnchor(raw) {
+  const a = raw && typeof raw === 'object' ? raw : {};
+  const anchor = {};
+  if (typeof a.hash === 'string' && /^[0-9A-F]{64}$/i.test(a.hash)) anchor.hash = a.hash.toUpperCase();
+  if (Number.isInteger(Number(a.ledger)) && Number(a.ledger) > 0) anchor.ledger = Number(a.ledger);
+  if (Number.isFinite(Number(a.timeMs)) && Number(a.timeMs) >= 0) anchor.timeMs = Math.round(Number(a.timeMs));
+  return Object.keys(anchor).length ? anchor : null;
+}
+
+/** The moment block: dropped with an error when malformed; its entries are kept only where they parse. */
+function normalizeMoment(input, errors) {
+  if (input == null) return null;
+  if (typeof input !== 'object') {
+    errors.push('moment must be an object; the moment block was dropped');
+    return null;
+  }
+  const version = Number(input.version ?? MOMENT_VERSION);
+  if (version !== MOMENT_VERSION) {
+    errors.push(`moment version ${String(input.version)} is not one this build reads (${MOMENT_VERSION}); the moment block was dropped`);
+    return null;
+  }
+  const m = {
+    version: MOMENT_VERSION,
+    savedAt: cleanText(input.savedAt, 40),
+    mode: MOMENT_MODES.includes(input.mode) ? input.mode : 'replay',
+    host: cleanText(input.host, 120),
+    anchor: normalizeAnchor(input.anchor),
+    loop: null,
+    ledgers: [],
+  };
+  const l = input.loop;
+  if (l && typeof l === 'object') {
+    const from = Number(l.fromMs);
+    const to = Number(l.toMs);
+    if (Number.isFinite(from) && Number.isFinite(to) && from >= 0 && to > from) m.loop = { fromMs: Math.round(from), toMs: Math.round(to) };
+  }
+  if (Array.isArray(input.ledgers)) {
+    for (const e of input.ledgers) {
+      const index = Number(e?.index);
+      if (!Number.isInteger(index) || index <= 0) continue;
+      const entry = { index, hash: typeof e.hash === 'string' && /^[0-9A-F]{64}$/i.test(e.hash) ? e.hash.toUpperCase() : null };
+      const received = e.received == null ? null : Number(e.received);
+      const expected = e.expected == null ? null : Number(e.expected);
+      if (Number.isInteger(received) && received >= 0) entry.received = received;
+      if (Number.isInteger(expected) && expected >= 0) entry.expected = expected;
+      m.ledgers.push(entry);
+    }
+  }
+  return m;
+}
+
 function normalizeAnnotations(input, errors) {
   const out = [];
   if (!Array.isArray(input)) {
@@ -160,12 +223,8 @@ function normalizeAnnotations(input, errors) {
       errors.push('an annotation without text was dropped');
       continue;
     }
-    const a = raw.anchor && typeof raw.anchor === 'object' ? raw.anchor : {};
-    const anchor = {};
-    if (typeof a.hash === 'string' && /^[0-9A-F]{64}$/i.test(a.hash)) anchor.hash = a.hash.toUpperCase();
-    if (Number.isInteger(Number(a.ledger)) && Number(a.ledger) > 0) anchor.ledger = Number(a.ledger);
-    if (Number.isFinite(Number(a.timeMs)) && Number(a.timeMs) >= 0) anchor.timeMs = Math.round(Number(a.timeMs));
-    if (!('hash' in anchor) && !('ledger' in anchor) && !('timeMs' in anchor)) {
+    const anchor = normalizeAnchor(raw.anchor);
+    if (!anchor) {
       errors.push(`annotation "${text.slice(0, 24)}…" has no usable anchor (hash, ledger or timeMs)`);
       continue;
     }
@@ -179,6 +238,7 @@ function normalizeAnnotations(input, errors) {
       source: cleanText(raw.source, 120),
       status: ANNOTATION_STATUSES.includes(raw.status) ? raw.status : 'draft',
       pause: raw.pause === true,
+      ...(raw.question === true ? { question: true } : {}), // the saved observation of a moment; absent on ordinary notes
     });
   }
   return out;
@@ -212,6 +272,7 @@ export function validateCase(input) {
     timing: { ...base.timing },
     annotations: normalizeAnnotations(input.annotations, errors),
     geiger: normalizeGeiger(input.geiger, errors),
+    moment: normalizeMoment(input.moment, errors),
   };
   if (input.network != null && input.network !== 'mainnet' && input.network !== 'testnet') errors.push(`unknown network "${String(input.network).slice(0, 16)}"; using mainnet`);
   if (Array.isArray(input.cast) && input.cast.length > c.cast.length) warnings.push(`${input.cast.length - c.cast.length} cast entries were invalid, duplicates or beyond the limit and were dropped`);
@@ -270,6 +331,7 @@ export function serializeCase(c, { pretty = true } = {}) {
     annotations: c.annotations,
   };
   if (c.geiger) ordered.geiger = c.geiger;
+  if (c.moment) ordered.moment = { version: c.moment.version, savedAt: c.moment.savedAt, mode: c.moment.mode, host: c.moment.host, anchor: c.moment.anchor, loop: c.moment.loop, ledgers: c.moment.ledgers };
   return JSON.stringify(ordered, null, pretty ? 2 : 0);
 }
 
