@@ -42,3 +42,13 @@ export function explorerUrl(explorer, network, kind, id) {
   if (kind === 'ledger' && !(Number.isInteger(Number(id)) && Number(id) > 0)) return null;
   return `${base}${path}${id}`;
 }
+
+/**
+ * A link from the explorer to the listening page: the network goes in front
+ * of the hash (`?network=testnet#replay=…`), so a testnet record replays on
+ * testnet. Mainnet needs no query.
+ */
+export function listenerUrl(network, fragment = '') {
+  const q = network && network !== 'mainnet' ? `?network=${network}` : '';
+  return `./${q}${fragment ?? ''}`;
+}
