@@ -1001,6 +1001,14 @@ body.running .btn.primary {
   color: var(--accent);
 }
 
+.log li.dim {
+  opacity: 0.55;
+}
+
+.log li.dim .glyph {
+  filter: none;
+}
+
 .log li.log-ledger {
   color: var(--pulse);
 }

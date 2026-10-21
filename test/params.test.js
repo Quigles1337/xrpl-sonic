@@ -6,10 +6,22 @@ import { parseHash, buildHash, parseQuery } from '../src/params.js';
 const ADDR = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
 
 describe('hash parsing', () => {
+  const EMPTY = { account: null, replay: null, cast: null, case: null, errors: [] };
+
   test('empty or missing hash yields nothing', () => {
-    assert.deepEqual(parseHash(''), { account: null, replay: null, errors: [] });
-    assert.deepEqual(parseHash('#'), { account: null, replay: null, errors: [] });
-    assert.deepEqual(parseHash(undefined), { account: null, replay: null, errors: [] });
+    assert.deepEqual(parseHash(''), EMPTY);
+    assert.deepEqual(parseHash('#'), EMPTY);
+    assert.deepEqual(parseHash(undefined), EMPTY);
+  });
+
+  test('#cast= and #case= are passed through verbatim for their modules to interpret', () => {
+    assert.equal(parseHash(`#cast=${ADDR}~Alice~glass`).cast, `${ADDR}~Alice~glass`);
+    assert.equal(parseHash('#case=z:abc_-').case, 'z:abc_-');
+    assert.equal(parseHash(buildHash({ cast: 'r1~x', case: 'j:eyJ' })).case, 'j:eyJ');
+    assert.equal(parseHash('#cast=&case=%20').cast, null);
+    assert.equal(parseHash('#cast=&case=%20').case, null);
+    assert.equal(buildHash({ account: ADDR, replay: '5', cast: 'r1~x', case: 'j:eyJ' }), `#account=${ADDR}&replay=5&cast=r1~x&case=j:eyJ`);
+    assert.equal(buildHash({}), '');
   });
 
   test('#account= accepts a valid r-address, with or without the leading #', () => {
