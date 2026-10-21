@@ -343,9 +343,10 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
       statLedgers.textContent = String(ledgers);
     },
 
-    log(event) {
+    /** Append an event to the tape. `dim` marks events that were drawn but not sounded (rate-limited). */
+    log(event, { dim = false } = {}) {
       if (!settings.showLog) return;
-      const line = el('li', { class: `log-${event.kind}`, style: `--glyph: ${event.kind === 'tx' ? event.colour : PULSE.colour}` }, [
+      const line = el('li', { class: `log-${event.kind}${dim ? ' dim' : ''}`, style: `--glyph: ${event.kind === 'tx' ? event.colour : PULSE.colour}`, title: dim ? 'Drawn but not sounded: the synth was at its rate limit' : null }, [
         stamp(),
         svg(eventIcon(event, 14)),
         el('span', { class: 'line' }, event.kind === 'tx' ? txLine(event) : ledgerLine(event)),

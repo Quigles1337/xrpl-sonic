@@ -192,9 +192,12 @@ function onTransaction(msg) {
   const audible = engine.state === 'running' && !settings.muted;
   const delay = audible ? engine.play(ev) : 0;
   if (delay < 0) {
-    // Rate-limited: still visible, just quieter, and spread across the ledger interval like the rest.
+    // Rate-limited: still visible and still on the tape, just quieter, spread across the ledger interval like the rest.
     stats.dropped += 1;
-    schedule(() => viz.spawn(ev, { dim: true }), Math.random() * engine.ledgerInterval * 0.85);
+    schedule(() => {
+      viz.spawn(ev, { dim: true });
+      ui.log(ev, { dim: true });
+    }, Math.random() * engine.ledgerInterval * 0.85);
     return;
   }
   if (audible) stats.played += 1;
@@ -366,6 +369,7 @@ async function runReplay(range) {
           if (delay < 0) {
             stats.dropped += 1;
             viz.spawn(ev, { dim: true });
+            ui.log(ev, { dim: true });
             return;
           }
           if (audible) stats.played += 1;
@@ -411,7 +415,10 @@ function cancelReplay() {
 function shareUrl() {
   // Live index first; after a replay ends there is no live ledger until the next close, so fall back to the last replayed one.
   const index = replay.active ? replay.ledgerIndex : (ledgerState.index ?? replay.ledgerIndex);
-  return index == null ? null : `${SITE_URL}#replay=${index}`;
+  if (index == null) return null;
+  // The link carries everything needed to hear the same thing: network, watched account and the ledger.
+  const query = settings.network !== 'mainnet' ? `?network=${settings.network}` : '';
+  return `${SITE_URL}${query}${buildHash({ account: settings.account, replay: String(index) })}`;
 }
 
 async function share() {

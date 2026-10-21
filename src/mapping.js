@@ -5,6 +5,13 @@
 // Web Audio imports so it can be unit-tested with plain `node --test`.
 
 export const RIPPLE_EPOCH_OFFSET = 946684800; // seconds between 1970-01-01 and 2000-01-01
+
+/**
+ * Version of the sound mapping (categories, pitch rules, voices, colours).
+ * Bump the middle number when a change alters which notes or voices a given
+ * transaction produces, so a saved case can say which mapping it was written for.
+ */
+export const MAPPING_VERSION = '1.1.0';
 export const DROPS_PER_XRP = 1_000_000;
 
 /** Amount (in XRP) at or above which a payment also triggers the sub-bass thump. */
