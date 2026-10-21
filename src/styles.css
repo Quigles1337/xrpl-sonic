@@ -1049,6 +1049,113 @@ a.cast-chip:hover {
   color: var(--accent);
 }
 
+/* Geiger */
+.geiger-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 6px;
+}
+
+.geiger-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.geiger-led[data-state="forming"] {
+  background: var(--warn);
+  animation: blink 1.4s infinite;
+}
+
+.geiger-led[data-state="nominal"] {
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+}
+
+.geiger-led[data-state="crossing"] {
+  background: var(--err);
+  box-shadow: 0 0 10px var(--err);
+}
+
+.geiger-led[data-state="stale"] {
+  background: var(--muted);
+  outline: 1px solid var(--err);
+  outline-offset: 2px;
+}
+
+.geiger-state {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.geiger-detail {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.geiger-spark {
+  display: block;
+  width: 100%;
+  height: 48px;
+  margin: 0 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(140, 170, 220, 0.04);
+}
+
+.geiger-spark.hidden,
+.geiger-crossings.hidden,
+.btn.hidden {
+  display: none;
+}
+
+.geiger-crossings {
+  margin: 0 0 8px;
+  padding-left: 0;
+  list-style: none;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.geiger-crossings li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--line);
+}
+
+.geiger-z {
+  font-family: var(--mono);
+  color: var(--err);
+  font-variant-numeric: tabular-nums;
+}
+
+.log li.log-geiger {
+  color: var(--err);
+}
+
+.log li.log-geiger .glyph {
+  width: 7px;
+  height: 7px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  filter: none;
+}
+
+.captions[data-kind="geiger"] {
+  border-left-color: var(--err);
+}
+
 /* Blind comparison: hear the windows, see nothing that names them. */
 body.blind .ledger-index,
 body.blind .log-wrap,

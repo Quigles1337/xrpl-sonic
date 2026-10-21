@@ -14,6 +14,7 @@ import { createCastPanel } from './ui-cast.js';
 import { createCasePanel } from './ui-case.js';
 import { createTransportUI } from './ui-transport.js';
 import { createInspector } from './ui-inspector.js';
+import { createGeigerPanel } from './ui-geiger.js';
 
 const MAX_LOG_LINES = 80;
 
@@ -36,9 +37,10 @@ function stamp() {
  * @param {object} [args.transport]   callbacks for the transport bar (see ui-transport.js)
  * @param {object} [args.caseActions] callbacks for the case group (see ui-case.js)
  * @param {object} [args.inspector]   callbacks for the inspector (see ui-inspector.js)
+ * @param {object} [args.geigerActions] callbacks for the Geiger group (see ui-geiger.js)
  * @param {{ recording: boolean, mimeType: string|null }} [args.capture]  what the browser supports
  */
-export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, capture }) {
+export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, capture }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -162,6 +164,12 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
     checked: settings.showLog,
     onchange: (e) => update({ showLog: e.target.checked }),
   });
+  const exposure = el('input', {
+    type: 'checkbox',
+    id: 'exposure',
+    checked: settings.exposure,
+    onchange: (e) => update({ exposure: e.target.checked }),
+  });
   const explorer = el(
     'select',
     { id: 'explorer', 'aria-label': 'Explorer for links', onchange: (e) => update({ explorer: e.target.value }) },
@@ -174,6 +182,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
     linkFor: (address) => explorerUrl(settings.explorer, settings.network, 'account', address),
   });
   const casePanel = createCasePanel({ settings, ...(caseActions ?? {}) });
+  const geigerPanel = createGeigerPanel({ settings, ...(geigerActions ?? {}) });
 
   const snapshotBtn = el('button', { type: 'button', class: 'btn', id: 'snapshot', text: 'Snapshot', title: 'Save the scene as a PNG with a stats overlay', onclick: () => onSnapshot?.() });
   const recordBtn = el('button', {
@@ -221,11 +230,13 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
       row('Threshold (XRP)', quietThreshold),
       check('Include failed transactions', includeFailed),
       check('Show log', showLog),
+      check('Long exposure', exposure, 'keep a fading trace of where tracks land'),
       row('Explorer links', explorer),
     ]),
     el('section', { class: 'group' }, [el('h2', { text: 'Transaction types' }), el('div', { class: 'chips' }, categoryToggles)]),
     castPanel.root,
     casePanel.root,
+    geigerPanel.root,
     el('section', { class: 'group' }, [
       el('h2', { text: 'Capture' }),
       el('div', { class: 'buttons' }, [snapshotBtn, recordBtn]),
@@ -264,6 +275,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
     transport: transportUI,
     inspector: inspectorUI,
     casePanel,
+    geigerPanel,
 
     setRunning(running) {
       document.body.classList.toggle('running', running);
@@ -383,10 +395,12 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
       quietThreshold.value = settings.quietThreshold;
       includeFailed.checked = settings.includeFailed;
       showLog.checked = settings.showLog;
+      exposure.checked = settings.exposure;
       explorer.value = settings.explorer;
       for (const box of controls.querySelectorAll('input[data-category]')) box.checked = settings.enabled[box.dataset.category];
       castPanel.render();
       casePanel.applySettings();
+      geigerPanel.applySettings();
       applyLogVisibility();
     },
   };

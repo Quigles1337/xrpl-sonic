@@ -99,6 +99,16 @@ A case with two or more clips gets **A**, **B**, … buttons in the transport: e
 
 **Captions** show annotations, gaps and cast events as text; **Speak annotations** reads each note aloud through the browser's speech synthesis, independent of the instrument's sound; **Pause at annotations** honours notes that ask for it. The page respects `prefers-reduced-motion` (tracks still appear, without drift, overshoot or flashes), and every control is reachable from the keyboard.
 
+## Geiger mode
+
+**Settings → Geiger** turns on a detector. For every validated ledger it measures a few plain things, before any filter and before the synthesiser's rate limiting, so a dropped note never shrinks a count: transactions in all, transactions per category, and for each cast member the transactions it submitted, the transactions it was involved in, and its share of the ledger's `OfferCreate` submissions. Each measurement is compared with a baseline formed from the previous ledgers (30 by default). A crossing, by default three standard deviations above the baseline with a count of at least ten, is reported with the numbers that produced it, for example:
+
+> Sender A submitted 80 of the 100 OfferCreate transactions in ledger #107,777,809 (80%). Over the previous 30 ledgers its share averaged 12% ± 6%, so this is 11.3σ above the baseline (threshold 3σ).
+
+and sounded as a crackle whose rate grows with the excess. The detector's state is always explicit: **baseline forming** (with the count of ledgers seen), **nominal**, **crossing**, or **stale** when no ledger has arrived for 20 seconds. Silence means no configured deviation was reported while the feed and the detector were running; it does not mean nothing happened. A sparkline shows transactions per ledger for the last 60 ledgers with the baseline band behind it, which is the other half of the experiment: whether a person notices a change in the pattern before the detector does.
+
+The baseline can **roll** (keep updating, so a sustained change is absorbed within a window), **freeze** once formed, or be **pinned** at a moment of your choosing; a pinned baseline is saved with the case, so a shared case judges its ledgers against the same numbers for everyone. Counts of transactions *submitted by* an account and transactions *involving* it are different measurements and are reported as such. **Long exposure** (Settings → Stream) keeps a fading trace of where every track landed on the plate, so a column forms under an account that keeps acting at one pitch.
+
 ## Overlay and embed
 
 **`?overlay=1`** strips the page down to the transparent canvas — tracks and rings only, with no controls, grid, ruler or ledger stamp — for OBS, streaming layouts and wall screens. The stream starts on load; sound starts as soon as the page receives any click or key press, because browsers block audio until a gesture. Two ways to satisfy that in OBS:

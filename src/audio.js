@@ -286,6 +286,25 @@ export class AudioEngine {
     return true;
   }
 
+  /**
+   * Geiger crackle: a burst of dry clicks whose rate grows with how far a
+   * measurement crossed its threshold. A cue, not a voice: it bypasses the
+   * polyphony cap and the cooldowns.
+   */
+  crackle(z, { threshold = 3, seconds = 1.6 } = {}) {
+    if (!this.ctx || this.ctx.state !== 'running') return false;
+    const excess = Math.max(0, Number(z) - threshold);
+    const rate = Math.min(40, 6 + excess * 5); // clicks per second
+    const count = Math.round(rate * seconds);
+    const t0 = this.ctx.currentTime + 0.01;
+    for (let i = 0; i < count; i++) {
+      // Poisson-ish spacing: jitter each click around its slot.
+      const t = t0 + (i / rate) * (0.6 + Math.random() * 0.8);
+      geigerClick(this, t, 0.5 + Math.random() * 0.5);
+    }
+    return true;
+  }
+
   /** Ledger close: a low tick, played immediately. */
   tick(ledgerEvent) {
     if (!this.ctx || this.ctx.state !== 'running') return;
@@ -606,6 +625,24 @@ function click(e, ev, t) {
   n.connect(f).connect(g);
   n.start(t);
   n.stop(t + 0.04);
+  n.onended = () => g.disconnect();
+}
+
+/** One Geiger click: a 6 ms noise burst through a sharp band-pass, dry. */
+function geigerClick(e, t, level) {
+  const ctx = e.ctx;
+  const n = e._noise(t);
+  const f = ctx.createBiquadFilter();
+  f.type = 'bandpass';
+  f.frequency.value = 3400 + Math.random() * 800;
+  f.Q.value = 6;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.5 * level, t + 0.001);
+  g.gain.exponentialRampToValueAtTime(0.0005, t + 0.012);
+  n.connect(f).connect(g).connect(e.compressor);
+  n.start(t);
+  n.stop(t + 0.02);
   n.onended = () => g.disconnect();
 }
 
