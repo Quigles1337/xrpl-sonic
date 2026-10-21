@@ -1,6 +1,7 @@
 // xrpl-sonic — application wiring.
 
-import { txToEvent, ledgerToEvent, classifyMessage, involvesAccount, shortAddress } from './mapping.js';
+import { txToEvent, ledgerToEvent, classifyMessage } from './mapping.js';
+import { castFor, castGate, decorateEvent, normalizeCast, parseCastSpec, formatCastSpec, motifFor } from './cast.js';
 import { XrplStream, NETWORKS } from './ws.js';
 import { AudioEngine } from './audio.js';
 import { Visualizer } from './visual.js';
@@ -39,9 +40,21 @@ document.body.classList.add(`mode-${query.mode}`);
   }
 }
 
-// Shareable state lives in the URL hash: #account=r... and #replay=<ledger>|<from>-<to>.
+// Shareable state lives in the URL hash: #cast=..., #account=r... (the one-member shortcut) and #replay=<ledger>|<from>-<to>.
 const urlState = parseHash(location.hash);
-settings.account = urlState.account ?? '';
+applyUrlCast(urlState);
+
+/** A cast in the hash wins over the stored one; #account= is a cast of one that mutes everything else, as it always did. */
+function applyUrlCast(state) {
+  if (state.cast) {
+    const { cast, errors } = parseCastSpec(state.cast);
+    state.errors.push(...errors);
+    if (cast.length) settings.cast = cast;
+  } else if (state.account) {
+    settings.cast = normalizeCast([{ address: state.account, label: 'Watched' }]);
+    if (settings.castMode === 'all') settings.castMode = 'mute';
+  }
+}
 
 // Replay: fetch validated ledgers over the same socket and play them back at the real pace.
 const replay = {
@@ -89,6 +102,7 @@ const ui = createUI({
   onShare: () => share(),
   onSnapshot: () => snapshot().catch((err) => ui.logMessage(`Snapshot failed: ${err?.message ?? err}`, 'error')),
   onRecord: () => record().catch((err) => ui.logMessage(`Recording failed: ${err?.message ?? err}`, 'error')),
+  onPreview: (member) => preview(member),
   capture,
   onChange: (patch) => {
     saveSettings(settings);
@@ -100,35 +114,60 @@ const ui = createUI({
       ui.logMessage(`Switching to ${NETWORKS[settings.network].label}…`);
       stream.setEndpoints(NETWORKS[settings.network].endpoints);
     }
-    if ('account' in patch) {
+    if ('cast' in patch || 'castMode' in patch) {
       syncHash();
-      applyAccount();
+      applyCast();
     }
-    if ('network' in patch || 'explorer' in patch) ui.setAccount(settings.account);
+    if ('network' in patch || 'explorer' in patch) ui.setCast(settings.cast);
   },
 });
 
 function syncHash() {
-  const hash = buildHash({ account: settings.account, replay: urlState.replay });
+  const hash = buildHash({ cast: settings.cast.length ? formatCastSpec(settings.cast) : '', replay: urlState.replay });
   const url = `${location.pathname}${location.search}${hash}`;
   if (`${location.pathname}${location.search}${location.hash}` !== url) history.replaceState(null, '', url);
 }
 
-function applyAccount() {
-  ui.setAccount(settings.account);
-  if (settings.account) ui.logMessage(`Watching ${shortAddress(settings.account)} — other transactions are ${settings.accountMode === 'hide' ? 'hidden' : 'dimmed and silent'}.`);
-  else ui.logMessage('Watching all accounts.');
+const CAST_MODE_TEXT = { all: 'everything else plays in its category voice', mute: 'everything else is dimmed and silent', hide: 'everything else is hidden' };
+
+function castSummary() {
+  if (!settings.cast.length) return 'No cast — playing everything.';
+  const names = settings.cast.map((m) => `${m.label} (${m.voice}${m.solo ? ', solo' : ''}${m.muted ? ', muted' : ''})`).join(', ');
+  return `Cast: ${names}; ${CAST_MODE_TEXT[settings.castMode] ?? CAST_MODE_TEXT.all}.`;
+}
+
+function applyCast() {
+  ui.setCast(settings.cast);
+  ui.logMessage(castSummary());
+}
+
+/** Play a cast member's motif in its voice and position. Runs from a click, so the audio context can start here. */
+async function preview(member) {
+  try {
+    const state = await engine.start();
+    if (state !== 'running') {
+      ui.logMessage('Audio is suspended by the browser — tap anywhere, then try the preview again.', 'error');
+      return;
+    }
+    engine.preview(member, motifFor(member.address, settings.scale, settings.key));
+  } catch (err) {
+    ui.logMessage(`Preview failed: ${err?.message ?? err}`, 'error');
+  }
 }
 
 // The hash can change under us (back/forward, a pasted link): follow it.
 window.addEventListener('hashchange', () => {
   const next = parseHash(location.hash);
-  for (const err of next.errors) ui.logMessage(err, 'error');
   urlState.replay = next.replay;
-  const account = next.account ?? '';
-  if (account !== settings.account) {
-    settings.account = account;
-    applyAccount();
+  const before = formatCastSpec(settings.cast);
+  if (next.cast || next.account) {
+    settings.cast = [];
+    applyUrlCast(next);
+  }
+  for (const err of next.errors) ui.logMessage(err, 'error');
+  if (formatCastSpec(settings.cast) !== before) {
+    saveSettings(settings);
+    applyCast();
   }
 });
 
@@ -172,10 +211,10 @@ function onLedger(ev, intervalSeconds) {
   ui.setStats({ played: stats.played, dropped: stats.dropped, ledgers: ledgerState.count });
 }
 
-/** Account mode: 'play' when no account is watched or the tx involves it; otherwise 'dim' (silent) or 'skip'. */
-function accountGate(msg) {
-  if (!settings.account || involvesAccount(msg, settings.account)) return 'play';
-  return settings.accountMode === 'hide' ? 'skip' : 'dim';
+/** Who in the cast a transaction involves, and whether it plays, dims or is skipped (src/cast.js). */
+function gateFor(msg) {
+  const involvement = castFor(msg, settings.cast);
+  return { gate: castGate(involvement, settings.cast, settings.castMode), involvement };
 }
 
 function onTransaction(msg) {
@@ -183,9 +222,10 @@ function onTransaction(msg) {
   if (!ev) return;
   recentTx.push(performance.now());
   lastMinute.push(performance.now());
-  const gate = accountGate(msg);
+  const { gate, involvement } = gateFor(msg);
+  decorateEvent(ev, involvement);
   if (gate !== 'play') {
-    // Everything that does not touch the watched account is silent — dimmed or gone.
+    // Everything outside the cast (or muted within it) is silent — dimmed or gone.
     if (gate === 'dim') schedule(() => viz.spawn(ev, { dim: true }), Math.random() * engine.ledgerInterval * 0.85);
     return;
   }
@@ -355,8 +395,9 @@ async function runReplay(range) {
         const ev = txToEvent(tx, options);
         if (!ev) continue;
         if (ev.ledgerIndex == null) ev.ledgerIndex = ledger.ledger_index;
-        const gate = accountGate(tx);
+        const { gate, involvement } = gateFor(tx);
         if (gate === 'skip') continue;
+        decorateEvent(ev, involvement);
         schedule(() => {
           recentTx.push(performance.now());
           lastMinute.push(performance.now());
@@ -416,9 +457,9 @@ function shareUrl() {
   // Live index first; after a replay ends there is no live ledger until the next close, so fall back to the last replayed one.
   const index = replay.active ? replay.ledgerIndex : (ledgerState.index ?? replay.ledgerIndex);
   if (index == null) return null;
-  // The link carries everything needed to hear the same thing: network, watched account and the ledger.
+  // The link carries everything needed to hear the same thing: network, cast and the ledger.
   const query = settings.network !== 'mainnet' ? `?network=${settings.network}` : '';
-  return `${SITE_URL}${query}${buildHash({ account: settings.account, replay: String(index) })}`;
+  return `${SITE_URL}${query}${buildHash({ cast: settings.cast.length ? formatCastSpec(settings.cast) : '', replay: String(index) })}`;
 }
 
 async function share() {
@@ -547,11 +588,11 @@ window.addEventListener('keydown', (e) => {
 
 ui.setStatus('idle', 'Ready', null);
 ui.setLedger(null, null);
-ui.setAccount(settings.account);
+ui.setCast(settings.cast);
 for (const err of urlState.errors) ui.logMessage(err, 'error');
 if (urlState.replay && !replay.range) ui.logMessage(`Ignoring invalid replay range in URL: ${urlState.replay.slice(0, 24)}`, 'error');
 ui.setReplayPending(replay.range);
-if (settings.account) ui.logMessage(`Watching ${shortAddress(settings.account)} — other transactions are ${settings.accountMode === 'hide' ? 'hidden' : 'dimmed and silent'}.`);
+if (settings.cast.length) ui.logMessage(castSummary());
 viz.start();
 
 // Overlay mode starts on load: visuals at once, sound as soon as the page receives a click or key.
@@ -562,6 +603,7 @@ window.xrplSonic = {
   engine,
   viz,
   settings,
+  preview,
   query,
   start,
   stop,

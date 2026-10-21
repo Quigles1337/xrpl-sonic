@@ -78,7 +78,6 @@ a {
 .overlay-sub,
 .guide-item,
 .chip-sound,
-.watch-label,
 .footer {
   font-family: var(--mono);
   font-size: 10px;
@@ -384,60 +383,55 @@ body.running .btn.primary {
   }
 }
 
-/* Watched account badge */
-.watch {
+/* Cast chips in the command strip */
+.cast-strip {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  margin-left: 4px;
+  gap: 6px;
+  margin-left: 8px;
   flex: none;
 }
 
-.watch.hidden {
+.cast-strip.hidden {
   display: none;
 }
 
-.account-badge {
+.cast-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 3px 8px 3px 7px;
-  border: 1px solid var(--accent-line);
+  gap: 6px;
+  padding: 2px 8px 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--cast) 45%, transparent);
   border-radius: var(--radius);
+  background: color-mix(in srgb, var(--cast) 12%, transparent);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
   color: var(--text);
   text-decoration: none;
-  font-family: var(--mono);
-  font-size: 11px;
-  background: var(--accent-soft);
+  white-space: nowrap;
 }
 
-.account-badge:hover {
-  background: rgba(76, 201, 240, 0.24);
+.cast-chip::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cast);
+  box-shadow: 0 0 6px var(--cast);
 }
 
-.account-badge .watch-label {
-  color: var(--accent);
+.cast-chip.muted {
+  opacity: 0.45;
 }
 
-.account-clear {
-  appearance: none;
-  background: none;
-  border: 0;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  padding: 2px 6px;
-  border-radius: var(--radius);
+.cast-chip.solo {
+  outline: 1px solid var(--cast);
+  outline-offset: 1px;
 }
 
-.account-clear:hover {
-  color: var(--text);
-  background: rgba(140, 170, 220, 0.1);
-}
-
-.account-clear:focus-visible {
-  outline: 2px solid var(--accent);
+a.cast-chip:hover {
+  background: color-mix(in srgb, var(--cast) 24%, transparent);
 }
 
 /* Readouts */
@@ -800,6 +794,151 @@ body.running .btn.primary {
   font-variant-numeric: tabular-nums;
 }
 
+/* Cast panel */
+.cast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cast-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  gap: 3px 8px;
+  padding: 8px 8px 8px 10px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--cast);
+  border-radius: var(--radius);
+  background: rgba(140, 170, 220, 0.04);
+}
+
+.cast-row.muted {
+  opacity: 0.6;
+}
+
+.cast-row.solo {
+  border-color: color-mix(in srgb, var(--cast) 50%, transparent);
+}
+
+.cast-swatch {
+  grid-row: 1;
+  align-self: center;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cast);
+  box-shadow: 0 0 8px var(--cast);
+}
+
+.cast-row input.cast-label {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 2px 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.cast-row input.cast-label:focus-visible {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+
+.cast-tools {
+  grid-column: 3;
+  grid-row: 1 / span 3;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px;
+  align-content: start;
+}
+
+.cast-address {
+  grid-column: 2;
+  grid-row: 2;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+a.cast-address:hover {
+  color: var(--accent);
+}
+
+.cast-voice {
+  grid-column: 1 / span 2;
+  grid-row: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cast-row select.cast-voice-select {
+  min-width: 0;
+  flex: 1;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
+.cast-row input[type="range"].cast-pan {
+  width: 84px;
+  margin: 0;
+  flex: none;
+}
+
+.btn.tiny {
+  padding: 2px 0;
+  width: 26px;
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+.btn.tiny[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.cast-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cast-add input {
+  min-width: 0;
+  background: rgba(140, 170, 220, 0.06);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.cast-add input[aria-invalid="true"] {
+  border-color: var(--err);
+}
+
+.cast-hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cast-hint.error {
+  color: var(--err);
+}
+
 /* Legend tiles: shape + colour + sound for each transaction species. */
 .chips {
   display: grid;
@@ -997,8 +1136,26 @@ body.running .btn.primary {
   outline: none;
 }
 
-.log li a.watched {
-  color: var(--accent);
+.log li a.cast-link {
+  color: var(--cast);
+}
+
+.tape-cast {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 6px;
+}
+
+.tape-chip {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: var(--cast);
+  background: color-mix(in srgb, var(--cast) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cast) 40%, transparent);
 }
 
 .log li.dim {

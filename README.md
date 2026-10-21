@@ -36,15 +36,19 @@ The canvas is laid out like a cloud chamber for a ledger. The horizontal axis is
 
 Transactions do not trickle in: each validated ledger arrives as a burst of anything from 50 to 600 transactions every few seconds. The audio engine spreads each burst across the expected inter-ledger interval, caps polyphony, and applies a short per-type cooldown. Events that do not fit are rate-limited rather than queued, so the sound never drifts behind the ledger; they still appear as dimmer tracks. The **Session** panel shows how many were played versus rate-limited. **Quiet mode** keeps only transactions at or above a chosen XRP amount.
 
-## Hear one account
+## Follow a cast
 
-Add `#account=<r-address>` to the URL, or paste an address into **Settings → Account**, to listen to a single account:
+**Settings → Cast** follows up to five accounts. Each member gets a voice of its own (marimba, glass, brass, reed or pulse), a place in the stereo field, a colour and a label, so the same participant sounds and looks the same every time it acts: the market maker is the brass on the left, the issuer the glass in the centre. **S** solos a member (only soloed members sound), **M** mutes one, and **▶** plays the member's three-note motif, so you can learn a voice before you listen for it. Transactions that involve nobody in the cast are played in their category voice (**Play everything**), drawn dimmed and silent (**Mute others**) or not drawn at all (**Hide others**).
+
+A transaction involves a member when the member is the sender, the destination, or appears in the transaction's metadata (`AffectedNodes`), which covers trust lines, consumed offers, issued-currency flows and anything else that touched one of its ledger entries. Involvement is a filter: it says the account appears in the record, not how much value it gained or lost, whether an order filled, or whether two addresses share a controller. A transaction involving several members is one event, counted once: the sender's voice (or the first involved member's) plays the note and each other involved member is heard as a short cue in its own voice just after it. On the plate a member's track carries a ring in its colour and its label; when two members meet in one transaction a bond is drawn between their tracks, and the tape shows who else was involved.
+
+The cast travels in the URL as `#cast=`, so a link carries it:
 
 ```
-https://quigles1337.github.io/xrpl-sonic/#account=rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah
+https://quigles1337.github.io/xrpl-sonic/#cast=rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah~Maker~brass~-0.6,rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z~Issuer
 ```
 
-Only transactions that involve that account play: it is the sender, the destination, or it appears in the transaction's metadata (`AffectedNodes`), which covers trust lines, consumed offers, issued-currency flows and anything else that touched one of its ledger entries. Everything else is drawn dimmed and silent (**Mute others**) or not drawn at all (**Hide others**). The address is validated as a base58 r-address, shown in short form in the top bar, and kept in the URL hash rather than in your settings, so the link is the state. The hash is updated as you change the account, so the address bar is always shareable.
+`#account=<r-address>` still works as the one-member shortcut: it follows that account and mutes everything else, as it always has. Addresses are validated as base58 r-addresses and the cast is shown in the command strip, each chip linking to the explorer.
 
 Every line in the log is a link: the transaction opens on an explorer, each account opens its account page, and ledger lines open the ledger. The default explorer is XRPScan; Bithomp and xrpl.org are selectable, and the testnet equivalents are used when the page is on testnet. Links open in a new tab with `rel="noopener noreferrer"`.
 
