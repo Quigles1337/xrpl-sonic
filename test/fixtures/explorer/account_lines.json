@@ -1,0 +1,146 @@
+{
+  "id": "xrpl-sonic-req-9",
+  "result": {
+    "account": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+    "ledger_current_index": 107798580,
+    "ledger_hash": "CBFB35C1BEA431621416D6DC72EECD1A9F710C404A5BAF88EBE64059AE76276A",
+    "ledger_index": 107798579,
+    "limit": 20,
+    "lines": [
+      {
+        "account": "rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL",
+        "balance": "0.2080052853762918",
+        "currency": "BTC",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rcEGREd8NmkKRE8GE424sksyt1tJVFZwu",
+        "balance": "14913.40523825471",
+        "currency": "5553444300000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+        "balance": "599665.5303727388",
+        "currency": "USD",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE",
+        "balance": "0",
+        "currency": "5553444300000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
+        "balance": "8146.656091961245",
+        "currency": "USD",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "balance": "16764.13084259252",
+        "currency": "USD",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "balance": "67485.27807460995",
+        "currency": "524C555344000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq",
+        "balance": "25670.97764682137",
+        "currency": "5553445400000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "balance": "0.2929665877472948",
+        "currency": "BTC",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+        "balance": "30428.91193685434",
+        "currency": "EUR",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK",
+        "balance": "15209.5451801974",
+        "currency": "4555524F50000000000000000000000000000000",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+        "balance": "0.0001028839736107885",
+        "currency": "ETH",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      },
+      {
+        "account": "rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h",
+        "balance": "2.970889507441495",
+        "currency": "ETH",
+        "limit": "1000000000",
+        "limit_peer": "0",
+        "no_ripple": true,
+        "quality_in": 0,
+        "quality_out": 0
+      }
+    ],
+    "marker": "2B2F9EA43C114600088E1718DCF997DB1719E9730F77CCFDEC3284294C46467D,3",
+    "validated": true
+  },
+  "status": "success",
+  "type": "response"
+}

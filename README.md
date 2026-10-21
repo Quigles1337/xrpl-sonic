@@ -36,6 +36,19 @@ The canvas is laid out like a cloud chamber for a ledger. The horizontal axis is
 
 Transactions do not trickle in: each validated ledger arrives as a burst of anything from 50 to 600 transactions every few seconds. The audio engine spreads each burst across the expected inter-ledger interval, caps polyphony, and applies a short per-type cooldown. Events that do not fit are rate-limited rather than queued, so the sound never drifts behind the ledger; they still appear as dimmer tracks. The **Session** panel shows how many were played versus rate-limited. **Quiet mode** keeps only transactions at or above a chosen XRP amount.
 
+## The explorer
+
+[explorer.html](https://quigles1337.github.io/xrpl-sonic/explorer.html) is the reading room: one box that takes anything you paste (an account, a transaction hash, a ledger index, a currency code, or the word `latest`) and says what it recognised as you type.
+
+- **An account is a place.** Its XRP is a ring whose radius grows with the balance; the reserve is the disc inside it (a disc that reaches the ring means the account is at its reserve); each currency it holds is a further orbit; the accounts it dealt with in its recent transactions are stars, the most frequent nearest, each coloured by what they mostly did together and ringed in the hue of its sigil. Point at a star to name it, click to go there. Beside it: the recent transactions as a tape, trust lines, owned objects, flags in plain words, and the reserve in XRP.
+- **A transaction is explained from its own metadata.** One sentence says what happened (who sent what to whom, which offer was placed and which earlier one it replaced, what a failure code means); then the balance change of every account it touched, before and after; then every ledger entry it created, modified or deleted, in words, with the bookkeeping directory nodes counted rather than listed.
+- **A ledger is a plate.** Its transactions drawn at their pitch, the mix of types as a bar, the tape, and one click to replay it with sound on the listening page.
+- **Sigils.** Every account carries a small mark derived from its address, the same everywhere it appears, so you recognise it without reading it.
+- **Sound.** Turn Sound on and point at any record to hear it; press `P` on an account to play its recent history as a phrase; **Listen live** opens the listening page with the account in the cast.
+- Keys: `/` search, `[` `]` back and forward along the trail, `L` latest ledger, `R` a random account from the latest ledger, `?` help. `?network=testnet` reads the test network.
+
+Everything is read by your browser from a public node, cached for the session, with links to XRPScan, Bithomp and xrpl.org for anything beyond.
+
 ## Follow a cast
 
 **Settings → Cast** follows up to five accounts. Each member gets a voice of its own (marimba, glass, brass, reed or pulse), a place in the stereo field, a colour and a label, so the same participant sounds and looks the same every time it acts: the market maker is the brass on the left, the issuer the glass in the centre. **S** solos a member (only soloed members sound), **M** mutes one, and **▶** plays the member's three-note motif, so you can learn a voice before you listen for it. Transactions that involve nobody in the cast are played in their category voice (**Play everything**), drawn dimmed and silent (**Mute others**) or not drawn at all (**Hide others**).

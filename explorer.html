@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>xrpl-sonic explorer — read the XRP Ledger</title>
+    <meta name="description" content="An explorer for the XRP Ledger that explains what a transaction changed, draws an account as orbits and a constellation, and plays every record as sound. No backend: your browser reads a public node directly." />
+    <meta name="theme-color" content="#060a12" />
+    <meta name="color-scheme" content="dark" />
+    <meta property="og:title" content="xrpl-sonic explorer — read the XRP Ledger" />
+    <meta property="og:description" content="Paste anything: an address, a transaction hash, a ledger index. See what changed, who dealt with whom, and hear it." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://quigles1337.github.io/xrpl-sonic/explorer.html" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23060a12'/%3E%3Crect x='2.5' y='2.5' width='59' height='59' rx='8' fill='none' stroke='%234cc9f0' stroke-opacity='.45' stroke-width='1.5'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%234cc9f0'/%3E%3Ccircle cx='32' cy='32' r='15' fill='none' stroke='%234cc9f0' stroke-opacity='.6' stroke-width='2'/%3E%3Ccircle cx='32' cy='32' r='24' fill='none' stroke='%234cc9f0' stroke-opacity='.3' stroke-width='2'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="src/explorer.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./" title="The listening page">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+            <circle cx="12" cy="12" r="6.5" stroke-opacity=".8" />
+            <circle cx="12" cy="12" r="10" stroke-opacity=".4" />
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">xrpl-sonic</span>
+          <span class="brand-tag">Explorer</span>
+        </span>
+      </a>
+      <form id="omni" class="omni" role="search" autocomplete="off">
+        <span id="omni-kind" class="omni-kind" aria-hidden="true"></span>
+        <input id="omni-input" class="omni-input" type="text" placeholder="address · transaction hash · ledger index · currency · latest" spellcheck="false" autocapitalize="off" autocorrect="off" aria-label="Search the ledger: an address, a transaction hash, a ledger index, a currency code, or the word latest" aria-describedby="omni-hint" />
+        <button class="btn primary omni-go" type="submit">Open</button>
+      </form>
+      <div class="live" id="live" role="status">
+        <span id="status-dot" class="status-dot" data-state="idle"></span>
+        <a id="live-ledger" class="live-ledger" href="#ledger/latest" title="The latest validated ledger">—</a>
+        <span id="live-interval" class="live-interval"></span>
+      </div>
+      <div class="actions">
+        <button id="sound" class="btn" type="button" aria-pressed="false" title="Play each transaction as you point at it (S)">Sound</button>
+        <button id="help-btn" class="btn" type="button" title="Keyboard help (?)" aria-haspopup="dialog">?</button>
+      </div>
+    </header>
+    <p id="omni-hint" class="omni-hint" aria-live="polite"></p>
+
+    <nav id="trail" class="trail" aria-label="Trail of places visited"></nav>
+
+    <main id="view" class="view"></main>
+
+    <div id="tip" class="tip hidden" role="tooltip"></div>
+
+    <div id="help" class="help hidden" role="dialog" aria-label="Keyboard help" aria-modal="true">
+      <div class="help-card">
+        <h2>Keys</h2>
+        <dl class="keys">
+          <dt><kbd>/</kbd></dt><dd>Focus the search box</dd>
+          <dt><kbd>Enter</kbd></dt><dd>Open what the box recognised</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Clear the box, close this help</dd>
+          <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Back and forward through the trail</dd>
+          <dt><kbd>S</kbd></dt><dd>Sound on and off: point at a transaction to hear it</dd>
+          <dt><kbd>P</kbd></dt><dd>Play the account's recent transactions as a phrase</dd>
+          <dt><kbd>L</kbd></dt><dd>Open the latest ledger</dd>
+          <dt><kbd>R</kbd></dt><dd>Take me somewhere: a random account from the latest ledger</dd>
+          <dt><kbd>?</kbd></dt><dd>This help</dd>
+        </dl>
+        <p class="hint">Everything the page shows is read from a public XRPL node by your browser; nothing is sent anywhere else. Balance changes and the account and offer descriptions come from each transaction's own metadata.</p>
+        <button id="help-close" class="btn" type="button">Close</button>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <a href="https://github.com/Quigles1337/xrpl-sonic" rel="noopener">Source on GitHub</a>
+      <span class="footer-sep" aria-hidden="true"></span>
+      <span>Read directly from a public XRPL node by your browser</span>
+      <span class="footer-sep" aria-hidden="true"></span>
+      <span class="footer-keys"><kbd>/</kbd>search <kbd>[</kbd><kbd>]</kbd>trail <kbd>S</kbd>sound <kbd>?</kbd>help</span>
+    </footer>
+
+    <script type="module" src="src/explorer/main.js"></script>
+  </body>
+</html>
