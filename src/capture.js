@@ -65,7 +65,7 @@ export function snapshotLines({ ledgerIndex = null, txLastMinute = 0, network = 
  * Compose the scene canvas plus a stats box into a PNG blob via an offscreen
  * canvas. `dpr` scales the overlay so it looks the same on 1x and 2x screens.
  */
-export function composeSnapshot(sourceCanvas, lines, { background = '#0b0f1a', transparent = false, dpr = 1 } = {}) {
+export function composeSnapshot(sourceCanvas, lines, { background = '#060a12', transparent = false, dpr = 1 } = {}) {
   const w = sourceCanvas.width;
   const h = sourceCanvas.height;
   const out = document.createElement('canvas');
@@ -88,15 +88,15 @@ export function composeSnapshot(sourceCanvas, lines, { background = '#0b0f1a', t
   const boxH = lines.length * lineH + pad * 2 - (lineH - 13 * s);
   const x = 16 * s;
   const y = h - boxH - 16 * s;
-  ctx.fillStyle = 'rgba(11, 15, 26, 0.78)';
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.fillStyle = 'rgba(6, 10, 18, 0.8)';
+  ctx.strokeStyle = 'rgba(140, 170, 220, 0.3)';
   ctx.lineWidth = s;
   ctx.beginPath();
-  ctx.roundRect(x, y, boxW, boxH, 10 * s);
+  ctx.roundRect(x, y, boxW, boxH, 4 * s);
   ctx.fill();
   ctx.stroke();
   lines.forEach((line, i) => {
-    ctx.fillStyle = i === 0 ? '#4cc9f0' : i === lines.length - 1 ? '#8d99ae' : '#e6ebf5';
+    ctx.fillStyle = i === 0 ? '#4cc9f0' : i === lines.length - 1 ? '#7f8ca6' : '#e8eefb';
     ctx.fillText(line, x + pad, y + pad + i * lineH);
   });
   return new Promise((resolve, reject) => out.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png'));

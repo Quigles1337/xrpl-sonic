@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>xrpl-sonic — listen to the XRP Ledger</title>
     <meta name="description" content="Listen to the XRP Ledger: every transaction becomes a sound, every ledger close a pulse. Zero dependencies, runs in your browser." />
-    <meta name="theme-color" content="#0b0f1a" />
+    <meta name="theme-color" content="#060a12" />
     <meta name="color-scheme" content="dark" />
     <meta property="og:title" content="xrpl-sonic — listen to the XRP Ledger" />
     <meta property="og:description" content="Every transaction becomes a sound, every ledger close a pulse. Live, in your browser, no dependencies." />
@@ -13,7 +13,7 @@
     <meta property="og:url" content="https://quigles1337.github.io/xrpl-sonic/" />
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0f1a'/%3E%3Cpath d='M8 32h8l5-14 6 28 6-24 5 16 5-8 4 2h9' fill='none' stroke='%234cc9f0' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23060a12'/%3E%3Crect x='2.5' y='2.5' width='59' height='59' rx='8' fill='none' stroke='%234cc9f0' stroke-opacity='.45' stroke-width='1.5'/%3E%3Cpath d='M10 32h8l5-14 6 28 6-24 5 16 5-8 4 2h7' fill='none' stroke='%234cc9f0' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="src/styles.css" />
   </head>
@@ -22,12 +22,19 @@
 
     <header class="topbar">
       <div class="brand">
-        <span class="brand-name">xrpl-sonic</span>
-        <span class="brand-tag">listen to the XRP Ledger</span>
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12h3l2-5 2.5 10 2.5-9 2 6 2-3 1.5 1H22" />
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">xrpl-sonic</span>
+          <span class="brand-tag">Ledger sonification</span>
+        </span>
       </div>
       <div class="status" role="status">
         <span id="status-dot" class="status-dot" data-state="idle"></span>
-        <span id="status-text">Ready</span>
+        <span id="status-text" class="status-text">Ready</span>
         <span id="watch" class="watch hidden">
           <a id="account-badge" class="account-badge" target="_blank" rel="noopener noreferrer" title="Open this account on the explorer">
             <span class="watch-label">Watching</span>
@@ -37,9 +44,18 @@
         </span>
       </div>
       <div class="ledger" aria-live="off">
-        <span id="ledger-index" class="ledger-index">—</span>
-        <span id="ledger-interval" class="ledger-interval">—</span>
-        <span id="tx-rate" class="tx-rate">0.0 tx/s</span>
+        <div class="readout">
+          <span class="readout-label">Ledger</span>
+          <span id="ledger-index" class="readout-value ledger-index">—</span>
+        </div>
+        <div class="readout">
+          <span class="readout-label">Interval</span>
+          <span id="ledger-interval" class="readout-value ledger-interval">—</span>
+        </div>
+        <div class="readout tx-rate-cell">
+          <span class="readout-label">Rate</span>
+          <span id="tx-rate" class="readout-value tx-rate">0.0 tx/s</span>
+        </div>
         <div class="metronome" aria-hidden="true"><div id="metronome-fill" class="metronome-fill"></div></div>
       </div>
       <div class="actions">
@@ -61,18 +77,30 @@
     </div>
 
     <aside id="panel" class="panel" aria-label="Settings">
+      <div class="panel-head">
+        <span class="panel-title">Instrument panel</span>
+        <button id="panel-close" class="icon-btn" type="button" aria-label="Close settings" title="Close">&times;</button>
+      </div>
       <div id="controls" class="controls"></div>
     </aside>
 
     <section id="log-wrap" class="log-wrap" aria-label="Transaction log">
+      <div class="log-head" aria-hidden="true"><span>Transaction tape</span><span class="log-head-rule"></span></div>
       <ol id="log" class="log" role="log"></ol>
     </section>
 
     <div id="overlay" class="overlay">
       <div class="overlay-card">
+        <span class="brand-mark big" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12h3l2-5 2.5 10 2.5-9 2 6 2-3 1.5 1H22" />
+          </svg>
+        </span>
         <h1>xrpl-sonic</h1>
+        <p class="overlay-sub">A listening instrument for the XRP Ledger</p>
         <p class="lede">Every transaction on the XRP Ledger becomes a sound. Every ledger close, a pulse.</p>
-        <button id="overlay-start" class="btn primary big" aria-pressed="false">Start</button>
+        <div id="overlay-guide" class="guide" aria-label="What each transaction type looks like"></div>
+        <button id="overlay-start" class="btn primary big" aria-pressed="false" data-idle="Start listening" data-running="Stop">Start listening</button>
         <p class="fine">
           Your browser connects directly to a public XRPL node over WebSocket. Nothing is sent anywhere else.
           Sound starts after you press Start; turn your volume down first.
@@ -82,8 +110,8 @@
 
     <footer class="footer">
       <a href="https://github.com/Quigles1337/xrpl-sonic" rel="noopener">Source on GitHub</a>
-      <span aria-hidden="true">·</span>
-      <span>Space: start/stop · M: mute</span>
+      <span class="footer-sep" aria-hidden="true"></span>
+      <span class="footer-keys"><kbd>Space</kbd>start / stop <kbd>M</kbd>mute</span>
     </footer>
 
     <script type="module" src="src/main.js"></script>
