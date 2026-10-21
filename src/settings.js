@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   pauseAtNotes: true, // honour annotations that ask the transport to pause
   exposure: false, // long-exposure plate: a fading trace of where tracks landed
   geiger: Object.freeze({ enabled: false, ...GEIGER_DEFAULTS }), // the detector (src/geiger.js)
+  health: Object.freeze({ poll: false, sound: false }), // observed fee pressure (src/health.js)
   cast: Object.freeze([]), // followed accounts (src/cast.js); solo and mute are live controls and are not persisted
   castMode: 'all', // transactions that involve nobody in the cast: 'all' (play) | 'mute' (dim, silent) | 'hide'
   explorer: DEFAULT_EXPLORER,
@@ -41,7 +42,7 @@ function storage() {
 
 /** Validate and coerce a partial settings object onto the defaults. */
 export function sanitizeSettings(input) {
-  const s = { ...DEFAULT_SETTINGS, enabled: { ...DEFAULT_SETTINGS.enabled }, cast: [], geiger: { ...DEFAULT_SETTINGS.geiger } };
+  const s = { ...DEFAULT_SETTINGS, enabled: { ...DEFAULT_SETTINGS.enabled }, cast: [], geiger: { ...DEFAULT_SETTINGS.geiger }, health: { ...DEFAULT_SETTINGS.health } };
   if (!input || typeof input !== 'object') return s;
   if (input.network === 'mainnet' || input.network === 'testnet') s.network = input.network;
   const vol = Number(input.volume);
@@ -61,6 +62,7 @@ export function sanitizeSettings(input) {
   if (typeof input.showLog === 'boolean') s.showLog = input.showLog;
   for (const k of ['captions', 'speak', 'pauseAtNotes', 'exposure']) if (typeof input[k] === 'boolean') s[k] = input[k];
   s.geiger = { enabled: input.geiger?.enabled === true, ...normalizeGeigerConfig(input.geiger) };
+  s.health = { poll: input.health?.poll === true, sound: input.health?.sound === true };
   const mode = input.castMode ?? input.accountMode; // accountMode: the key from before the cast existed
   if (typeof mode === 'string' && CAST_MODES[mode]) s.castMode = mode;
   s.cast = normalizeCast(input.cast).map((m) => ({ ...m, solo: false, muted: false }));

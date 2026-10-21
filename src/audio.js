@@ -305,6 +305,43 @@ export class AudioEngine {
     return true;
   }
 
+  /**
+   * The pressure drone: a low, filtered hum that is silent at minimum load and
+   * rises with the observed fee pressure. One persistent voice, outside the
+   * polyphony count; `tone` is { gain, cutoff, detune } from src/health.js.
+   */
+  setDrone(tone) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    if (!this.drone) {
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      const filt = ctx.createBiquadFilter();
+      filt.type = 'lowpass';
+      filt.Q.value = 1.2;
+      filt.frequency.value = 120;
+      const low = ctx.createOscillator();
+      low.type = 'sine';
+      low.frequency.value = 55;
+      const high = ctx.createOscillator();
+      high.type = 'sawtooth';
+      high.frequency.value = 110;
+      const hg = ctx.createGain();
+      hg.gain.value = 0.35;
+      low.connect(filt);
+      high.connect(hg).connect(filt);
+      filt.connect(gain).connect(this.bus);
+      low.start();
+      high.start();
+      this.drone = { gain, filt, low, high };
+    }
+    const now = ctx.currentTime;
+    const t = tone ?? { gain: 0, cutoff: 120, detune: 0 };
+    this.drone.gain.gain.setTargetAtTime(Math.max(0, Math.min(0.2, t.gain)), now, 0.4);
+    this.drone.filt.frequency.setTargetAtTime(Math.max(60, t.cutoff), now, 0.4);
+    this.drone.high.detune.setTargetAtTime(t.detune || 0, now, 0.4);
+  }
+
   /** Ledger close: a low tick, played immediately. */
   tick(ledgerEvent) {
     if (!this.ctx || this.ctx.state !== 'running') return;

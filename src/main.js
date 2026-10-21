@@ -19,6 +19,7 @@ import { Transport } from './transport.js';
 import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
 import { Geiger } from './geiger.js';
+import { FEE_COMMAND, SERVER_SUBSCRIBE, parseFee, parseServerStatus, pressureTone, isFresh } from './health.js';
 import {
   RECORD_SECONDS,
   captureSupport,
@@ -152,6 +153,19 @@ const ui = createUI({
     onPrev: (item) => inspectNeighbour(item, -1),
     onNext: (item) => inspectNeighbour(item, +1),
     onAnnotate: (event, item) => annotateEvent(event, item),
+  },
+  healthActions: {
+    onChange: (patch) => {
+      settings.health = { ...settings.health, ...patch };
+      saveSettings(settings);
+      if ('poll' in patch) {
+        if (patch.poll) pollFee();
+        else health.fee = null;
+      }
+      if ('sound' in patch && !patch.sound) engine.setDrone(null);
+      applyDrone();
+      renderHealth();
+    },
   },
   geigerActions: {
     onChange: (patch) => {
@@ -325,6 +339,70 @@ function gateFor(msg) {
 }
 
 // ---------------------------------------------------------------------------
+// Observed fee pressure: the connected node's open-ledger fee and queue
+// ---------------------------------------------------------------------------
+
+const health = {
+  fee: null, // parsed `fee` result
+  load: null, // parsed serverStatus
+  at: 0, // performance.now() of the last fee sample
+  host: '',
+  serverStream: 'unknown', // 'unknown' | 'subscribed' | 'unsupported'
+  inFlight: false,
+};
+
+function healthView() {
+  return { ...health, ageMs: health.fee ? performance.now() - health.at : null, live: running && !session.active && !session.loading };
+}
+
+function renderHealth() {
+  ui.healthPanel.render(healthView());
+}
+
+/** One `fee` request to the connected node; the sample carries its host and its age. */
+async function pollFee() {
+  if (!settings.health.poll || !stream || stream.state !== 'connected' || health.inFlight || session.active || session.loading) return;
+  health.inFlight = true;
+  try {
+    const res = await stream.request(FEE_COMMAND, { timeoutMs: 8000 });
+    const fee = parseFee(res);
+    if (fee) {
+      health.fee = fee;
+      health.at = performance.now();
+      health.host = stream.endpoint ? stream.endpoint.replace(/^wss:\/\//, '') : '';
+    }
+  } catch (err) {
+    ui.logMessage(`Fee pressure: the node did not answer (${err?.message ?? err}).`, 'error');
+  } finally {
+    health.inFlight = false;
+  }
+  if (health.serverStream === 'unknown') subscribeServer();
+  applyDrone();
+  renderHealth();
+}
+
+/** Try the `server` stream once per connection; Clio does not offer it, and that is reported, not retried. */
+async function subscribeServer() {
+  if (!stream || health.serverStream !== 'unknown') return;
+  health.serverStream = 'pending';
+  try {
+    await stream.request(SERVER_SUBSCRIBE, { timeoutMs: 8000 });
+    health.serverStream = 'subscribed';
+  } catch {
+    health.serverStream = 'unsupported';
+  }
+  renderHealth();
+}
+
+function applyDrone() {
+  if (!settings.health.sound || !settings.health.poll || !health.fee || !isFresh(performance.now() - health.at) || session.active) {
+    engine.setDrone(null);
+    return;
+  }
+  engine.setDrone(pressureTone(health.fee.pressure));
+}
+
+// ---------------------------------------------------------------------------
 // Geiger: the detector, fed raw ledgers before any filter or rate limit
 // ---------------------------------------------------------------------------
 
@@ -425,11 +503,17 @@ function onTransaction(msg) {
 }
 
 function onMessage(msg) {
+  if (msg?.type === 'serverStatus') {
+    health.load = parseServerStatus(msg);
+    renderHealth();
+    return;
+  }
   switch (classifyMessage(msg)) {
     case 'ledger':
       if (session.active || session.loading) break; // the live stream is paused while a case plays
       geigerLiveLedger(Number(msg.ledger_index));
       onLedger(ledgerToEvent(msg));
+      pollFee();
       break;
     case 'transaction':
       if (session.active || session.loading) break;
@@ -462,6 +546,9 @@ function onStatus(s) {
     case 'connected':
       ui.setStatus('connected', session.active ? caseStatusText() : `Live · ${host}`, s.endpoint);
       ui.logMessage(`Connected to ${host}`);
+      health.serverStream = 'unknown';
+      health.load = null;
+      pollFee();
       if (session.armed && session.pending) {
         session.armed = false;
         runCase(session.pending);
@@ -501,6 +588,10 @@ async function stop() {
   stream?.close();
   stream = null;
   clearPending();
+  engine.setDrone(null);
+  health.fee = null;
+  health.load = null;
+  renderHealth();
   await engine.stop();
   resetLedgerState();
   ui.setRunning(false);
@@ -680,6 +771,8 @@ async function runCase(theCase) {
   ui.logMessage(`${caseTitle(theCase)}: ${score.counts.events} events over ${formatClock(score.totalMs)} at ${session.speed}× — K pauses, . steps, L loops, click a line or a track to inspect it.`);
   transport.play();
   ui.setStatus('connected', caseStatusText(), undefined);
+  applyDrone();
+  renderHealth();
 }
 
 /** Settings changed while a case plays: rebuild the score from the cached ledgers, keeping the position. */
@@ -955,7 +1048,9 @@ function endSession({ quiet = false } = {}) {
     resetLedgerState();
     const host = stream.endpoint ? stream.endpoint.replace(/^wss:\/\//, '') : '';
     if (stream.state === 'connected') ui.setStatus('connected', `Live · ${host}`, stream.endpoint);
+    pollFee();
   }
+  renderHealth();
 }
 
 // ---------------------------------------------------------------------------
@@ -1133,11 +1228,17 @@ async function record({ seconds = RECORD_SECONDS, download = true } = {}) {
 
 let lastReadout = 0;
 let lastGeigerRender = 0;
+let lastHealthRender = 0;
 viz.onFrame = (ts) => {
   activeTransport()?.tick();
   if (geiger.detector && ts - lastGeigerRender > 2000) {
     lastGeigerRender = ts;
     renderGeiger();
+  }
+  if (settings.health.poll && ts - lastHealthRender > 2000) {
+    lastHealthRender = ts;
+    applyDrone();
+    renderHealth();
   }
   if (ledgerState.lastCloseAt) ui.setMetronome((ts - ledgerState.lastCloseAt) / 1000 / ledgerState.interval);
   if (ts - lastReadout > 500) {
@@ -1228,6 +1329,7 @@ if (urlState.case) {
 if (settings.cast.length) ui.logMessage(castSummary());
 if (settings.geiger.enabled) startGeiger();
 renderGeiger();
+renderHealth();
 viz.start();
 
 // Overlay mode starts on load: visuals at once, sound as soon as the page receives a click or key.
@@ -1249,6 +1351,7 @@ window.xrplSonic = {
   playClip,
   setBlind,
   geiger,
+  health,
   transport: () => activeTransport(),
   capture: { support: capture, snapshot, record, stop: () => recording?.stop() },
   get stream() {

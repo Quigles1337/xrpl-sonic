@@ -1156,6 +1156,67 @@ a.cast-chip:hover {
   border-left-color: var(--err);
 }
 
+/* Node: observed fee pressure */
+.health-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 2px 0 6px;
+}
+
+.health-pressure {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.health-headline[data-level="raised"] .health-pressure {
+  color: var(--warn);
+}
+
+.health-headline[data-level="high"] .health-pressure,
+.health-headline[data-level="extreme"] .health-pressure {
+  color: var(--err);
+}
+
+.health-headline.stale .health-pressure {
+  opacity: 0.5;
+}
+
+.health-level {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.health-gauge {
+  position: relative;
+  height: 4px;
+  margin: 0 0 8px;
+  background: rgba(140, 170, 220, 0.12);
+  overflow: hidden;
+}
+
+.health-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--ok), var(--warn) 50%, var(--err));
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.6s ease;
+}
+
+.health-detail {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
 /* Blind comparison: hear the windows, see nothing that names them. */
 body.blind .ledger-index,
 body.blind .log-wrap,

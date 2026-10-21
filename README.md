@@ -109,6 +109,10 @@ and sounded as a crackle whose rate grows with the excess. The detector's state 
 
 The baseline can **roll** (keep updating, so a sustained change is absorbed within a window), **freeze** once formed, or be **pinned** at a moment of your choosing; a pinned baseline is saved with the case, so a shared case judges its ledgers against the same numbers for everyone. Counts of transactions *submitted by* an account and transactions *involving* it are different measurements and are reported as such. **Long exposure** (Settings → Stream) keeps a fading trace of where every track landed on the plate, so a column forms under an account that keeps acting at one pitch.
 
+## Observed fee pressure
+
+**Settings → Node → Observed fee pressure** asks the connected node, after each ledger close, for its `fee` report: the fee a reference transaction needs to enter the current open ledger, the reference fee under minimum load, and the size of its transaction queue. Their ratio is shown as the pressure (1.0× at minimum load) with the fees in drops, the queue, the host it came from and the age of the sample; a sample older than 15 seconds is marked stale. Where the node offers the `server` stream, its load factor is shown as well; a node that does not (Clio does not) is reported as such, and nothing else stops working. **Sound the pressure** adds a low drone that is silent at minimum load and rises with the pressure. Every XRPL server keeps its own queue, so this describes the node you are connected to, not one network-wide state, and it is read from the live node only, never from a case.
+
 ## Overlay and embed
 
 **`?overlay=1`** strips the page down to the transparent canvas — tracks and rings only, with no controls, grid, ruler or ledger stamp — for OBS, streaming layouts and wall screens. The stream starts on load; sound starts as soon as the page receives any click or key press, because browsers block audio until a gesture. Two ways to satisfy that in OBS:
