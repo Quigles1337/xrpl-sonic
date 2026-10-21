@@ -106,6 +106,10 @@ https://quigles1337.github.io/xrpl-sonic/?case=docs/cases/busiest-senders-107777
 
 `?case=` accepts a relative `.json` path under the site only; once loaded, the case travels in `#case=` like any other.
 
+### Save this moment
+
+Something catches your ear, live or in replay: press **Moment** (beside Share) or `S`, answer *What caught your attention?* (or leave it empty), and one action saves the selection and the observation as a case file and copies its link, without stopping playback. The selection is the in/out loop's ledgers when a loop is set, otherwise the ledger playing now (in replay) or the last validated ledgers the page has heard (live, up to 50); the anchor is the transaction open in the inspector, or the position; the observation is a note at that anchor, marked as the question. A live moment also records, per ledger, how many transactions were heard against the ledger's `txn_count`, so a moment saved from a lossy stream says so; reopening it refetches the full ledgers through the normal case path. Reopened from the file or the link, the transport is positioned at the anchor with the loop restored and the question shown there. On a transaction page the explorer offers **Open as moment in the listener**, which hands off one ledger with that transaction as the anchor. The format is a case with an optional `moment` block, documented in [docs/save-this-moment.md](docs/save-this-moment.md).
+
 ## Compare two windows
 
 A case with two or more clips gets **A**, **B**, … buttons in the transport: each plays that clip on a loop, so a listener can go back and forth between, say, a quiet window and a busy one, or the same account before and after something changed. **All** returns to the whole case. **Blind comparison** (Settings → Case) keeps the plate and the sound but hides ledger numbers, the tape, the notes and the captions, so the comparison is made by ear and the labels are revealed only afterwards. Two windows with very different transaction counts will always sound different; the useful comparisons hold the mapping, the speed, the filters and the cast fixed and ask whether a particular pattern can be found.
@@ -173,7 +177,7 @@ Then open http://localhost:4173/. ES modules need an HTTP origin, so opening `in
 
 Useful query parameters: `?network=testnet`; `?autostart=1` for kiosk setups (visuals start immediately, sound on the first tap unless the browser allows audio without a gesture); `?overlay=1` and `?embed=1` (see above). Hash parameters carry shareable state: `#account=<r-address>` and `#replay=<ledger>` or `#replay=<from>-<to>` (see above).
 
-Keyboard: `Space` starts and stops, `M` mutes.
+Keyboard: `Space` starts and stops, `M` mutes, `S` saves this moment.
 
 ## Tests
 

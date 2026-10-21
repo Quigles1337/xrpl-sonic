@@ -10,6 +10,9 @@ import { explorerUrl, EXPLORERS, listenerUrl } from '../explorers.js';
 import { sigilSvg } from './sigil.js';
 import { project, referenceScale, ringPoints } from '../projection.js';
 import { formatRoute } from './route.js';
+import { validateCase, encodeCase } from '../case.js';
+import { buildHash } from '../params.js';
+import { momentFromTransaction } from '../moment.js';
 import { balanceChanges, describeAffected, explain, resultMeaning, rippleTimeToIso, decodeDomain, decodeFlags, reserveFor, asStreamMessage, typeMix } from './anatomy.js';
 
 export const ALL_TYPES = Object.freeze({ includeFailed: true, quietThreshold: 0 });
@@ -309,7 +312,26 @@ export function renderAccountMissing(address, error) {
 // Transaction
 // ---------------------------------------------------------------------------
 
-export function renderTx(result, { network, onHover, onFacts }) {
+/**
+ * "Open as moment in the listener": one ledger as the clip, this transaction
+ * as the anchor, handed off the way the other listener links are (keeping the
+ * network). The link starts as a plain replay of the ledger and becomes the
+ * case link once it is encoded (docs/save-this-moment.md).
+ */
+function momentLink(network, tx, host) {
+  const raw = momentFromTransaction({ network, ledgerIndex: tx.ledger_index, hash: tx.hash, ledgerHash: tx.ledger_hash ?? null, host });
+  const c = raw ? validateCase(raw).case : null;
+  if (!c) return '';
+  const a = el('a', { class: 'btn small', href: listenerUrl(network, `#replay=${tx.ledger_index}`), text: 'Open as moment in the listener', title: 'Open the listening page on this ledger with this transaction as the anchor' });
+  encodeCase(c)
+    .then((encoded) => {
+      a.href = listenerUrl(network, buildHash({ case: encoded }));
+    })
+    .catch(() => {});
+  return a;
+}
+
+export function renderTx(result, { network, onHover, onFacts, host = '' }) {
   const tx = result;
   const meta = result.meta ?? result.metaData ?? {};
   const code = meta.TransactionResult ?? null;
@@ -334,6 +356,7 @@ export function renderTx(result, { network, onHover, onFacts }) {
     el('div', { class: 'identity-actions' }, [
       event && onHover ? el('button', { type: 'button', class: 'btn small', text: 'Hear it', onclick: () => onHover(event) }) : '',
       el('a', { class: 'btn small', href: listenerUrl(network, `#replay=${tx.ledger_index}`), text: 'Replay its ledger', title: 'Open the listening page on this ledger' }),
+      momentLink(network, tx, host),
       ...externalLinks('tx', tx.hash, network),
     ]),
   ]);

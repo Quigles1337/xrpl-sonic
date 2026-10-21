@@ -41,8 +41,13 @@ const titleFor = (index) => `Moment at ledger #${Number(index).toLocaleString('e
 /**
  * The last validated ledgers the live stream delivered, with the hashes of
  * the transactions heard for each (a transaction delivered twice counts
- * once). A ledger index that jumps backwards or by more than the window
- * (another network, a long disconnect) starts the window over.
+ * once). The stream is not ordered: a ledger's transactions arrive before
+ * and after its ledgerClosed message, and older ledgers' transactions
+ * trickle in several ledgers late, so transactions for a ledger whose close
+ * has not arrived are kept provisionally and the window reports a ledger
+ * only once it has closed. A ledger index that jumps backwards or by more
+ * than the window (another network, a long disconnect) starts the window
+ * over.
  */
 export class LiveWindow {
   constructor({ max = LIVE_WINDOW_LEDGERS } = {}) {
@@ -50,25 +55,30 @@ export class LiveWindow {
     this.entries = [];
   }
 
+  _entry(index, { create = false } = {}) {
+    let entry = this.entries.find((e) => e.index === index);
+    if (entry || !create) return entry ?? null;
+    const latest = this.entries.at(-1);
+    if (latest && (index < latest.index - this.max || index - latest.index > this.max)) return null; // too far from what is here to belong to it
+    entry = { index, closed: false, hash: null, closeTime: null, txnCount: null, hashes: new Set(), anonymous: 0 };
+    this.entries.push(entry);
+    this.entries.sort((a, b) => a.index - b.index);
+    while (this.entries.length > this.max) this.entries.shift();
+    return entry;
+  }
+
   /** A `ledgerClosed` stream message. */
   noteLedger(msg) {
     const index = Number(msg?.ledger_index);
     if (!Number.isInteger(index) || index <= 0) return null;
-    const existing = this.entries.find((e) => e.index === index);
-    if (existing) return existing;
-    const latest = this.entries.at(-1);
-    if (latest && (index < latest.index || index - latest.index > this.max)) this.entries = [];
-    const entry = {
-      index,
-      hash: validHash(msg.ledger_hash) ? msg.ledger_hash.toUpperCase() : null,
-      closeTime: Number.isFinite(Number(msg.ledger_time)) ? Number(msg.ledger_time) : null,
-      txnCount: Number.isFinite(Number(msg.txn_count)) ? Number(msg.txn_count) : null,
-      hashes: new Set(),
-      anonymous: 0, // transactions delivered without a hash: counted, since they cannot be deduplicated
-    };
-    this.entries.push(entry);
-    this.entries.sort((a, b) => a.index - b.index);
-    while (this.entries.length > this.max) this.entries.shift();
+    const latest = this.entries.findLast?.((e) => e.closed) ?? [...this.entries].reverse().find((e) => e.closed) ?? null;
+    if (latest && (index < latest.index || index - latest.index > this.max)) this.entries = []; // another network, or a long gap: start over
+    const entry = this._entry(index, { create: true });
+    if (!entry || entry.closed) return entry;
+    entry.closed = true;
+    entry.hash = validHash(msg.ledger_hash) ? msg.ledger_hash.toUpperCase() : null;
+    entry.closeTime = Number.isFinite(Number(msg.ledger_time)) ? Number(msg.ledger_time) : null;
+    entry.txnCount = Number.isFinite(Number(msg.txn_count)) ? Number(msg.txn_count) : null;
     return entry;
   }
 
@@ -78,10 +88,11 @@ export class LiveWindow {
     if (!u) return false;
     const given = Number(u.ledgerIndex);
     const index = Number.isInteger(given) && given > 0 ? given : this.entries.at(-1)?.index ?? null;
-    const entry = this.entries.find((e) => e.index === index);
+    if (index == null) return false;
+    const entry = this._entry(index, { create: true });
     if (!entry) return false;
     if (validHash(u.hash)) entry.hashes.add(u.hash.toUpperCase());
-    else entry.anonymous += 1;
+    else entry.anonymous += 1; // delivered without a hash: counted, since it cannot be deduplicated
     return true;
   }
 
@@ -89,9 +100,15 @@ export class LiveWindow {
     this.entries = [];
   }
 
-  /** Oldest first: { index, hash, closeTime, txnCount, received }. */
+  /** Transactions heard for a ledger, closed or not. */
+  receivedFor(index) {
+    const e = this.entries.find((x) => x.index === index);
+    return e ? e.hashes.size + e.anonymous : 0;
+  }
+
+  /** The closed ledgers, oldest first: { index, hash, closeTime, txnCount, received }. */
   get ledgers() {
-    return this.entries.map((e) => ({ index: e.index, hash: e.hash, closeTime: e.closeTime, txnCount: e.txnCount, received: e.hashes.size + e.anonymous }));
+    return this.entries.filter((e) => e.closed).map((e) => ({ index: e.index, hash: e.hash, closeTime: e.closeTime, txnCount: e.txnCount, received: e.hashes.size + e.anonymous }));
   }
 
   get latest() {
@@ -126,7 +143,8 @@ export function momentFromLive({ base, window, selectedHash = null, question = '
   const ledgers = [];
   for (let n = first.index; n <= last.index; n++) {
     const l = byIndex.get(n);
-    ledgers.push(l ? { index: n, hash: l.hash, received: l.received, expected: l.txnCount } : { index: n, hash: null, received: 0, expected: null });
+    // a ledger whose close was missed is still in the clip; what was heard of it is kept, its txn_count is not known
+    ledgers.push(l ? { index: n, hash: l.hash, received: l.received, expected: l.txnCount } : { index: n, hash: null, received: window?.receivedFor?.(n) ?? 0, expected: null });
   }
   const when = typeof savedAt === 'string' && savedAt ? savedAt : new Date().toISOString();
   const c = {

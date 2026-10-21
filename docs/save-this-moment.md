@@ -68,3 +68,11 @@ Validation drops a malformed `moment` block with an error and keeps the case pla
 ### New
 
 `src/moment.js` (pure): a `LiveWindow` that keeps the last 50 validated ledgers with the hashes of the transactions heard for each; `momentFromLive()`, `momentFromReplay()` and `momentFromTransaction()` build the raw case; `momentPosition()` resolves the saved anchor and loop against a built score so the transport can be placed. Wiring in `src/main.js`; the button, the inline question and the `S` key in `src/ui.js`; the question marked in the notes list; the explorer link in `src/explorer/views.js`.
+
+### What the stream is like
+
+The public cluster does not deliver the stream in order: a ledger's transactions start arriving before its `ledgerClosed` message, and older ledgers' transactions trickle in several ledgers late (observed on `xrplcluster.com`: transactions of #107812863 arrived after the close of #107812867). The window therefore keeps transactions for ledgers whose close has not arrived yet, reports a ledger only once it has closed, and a live moment ends at the last closed ledger. The coverage numbers are what had arrived by the time of the save; a moment saved a few seconds after a close will usually show fewer transactions than the ledger holds, which is exactly what the numbers are for.
+
+### Precedence on reopen
+
+The loop is the selection and the anchor is the event of interest. When both are saved and the anchor lies outside the loop (an event inspected after a loop was set elsewhere), the transport is placed at the anchor and the loop then pulls playback back into its range on the next tick; both are kept in the file as saved.

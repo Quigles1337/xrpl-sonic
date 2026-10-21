@@ -378,7 +378,7 @@ async function renderTxRoute(route, token) {
     const result = await api.tx(route.hash);
     if (token !== state.token) return;
     state.facts = null;
-    view.replaceChildren(...renderTx(result, { network, onHover: (ev) => hearNow(ev), onFacts: (f) => (state.facts = f) }));
+    view.replaceChildren(...renderTx(result, { network, onHover: (ev) => hearNow(ev), onFacts: (f) => (state.facts = f), host: api.host }));
   } catch (err) {
     if (token !== state.token) return;
     view.replaceChildren(renderNotice(err?.code === 'txnNotFound' ? `No transaction ${route.hash.slice(0, 16)}… is known to this node. It may be on another network, not yet validated, or older than the node's history.` : `Could not read the transaction: ${err?.message ?? err}`, 'err'));

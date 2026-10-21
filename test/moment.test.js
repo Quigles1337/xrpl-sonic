@@ -63,6 +63,36 @@ describe('LiveWindow', () => {
     assert.deepEqual(w.ledgers, []);
   });
 
+  test('the stream is not ordered: transactions before their close are kept and counted once it arrives; later ledgers wait for theirs', () => {
+    const w = new LiveWindow();
+    w.noteTransaction(txA); // before any close
+    assert.deepEqual(w.ledgers, [], 'a ledger counts as observed only once its close has arrived');
+    assert.equal(w.receivedFor(LIVE), 1);
+    w.noteLedger(closed);
+    assert.equal(w.ledgers.length, 1);
+    assert.equal(w.ledgers[0].received, 1);
+    assert.equal(w.ledgers[0].txnCount, Number(closed.txn_count));
+    // the next ledger's transactions start arriving before it closes
+    w.noteTransaction({ ...txB, ledger_index: LIVE + 1 });
+    assert.equal(w.ledgers.length, 1, 'not yet closed, not yet in the window');
+    assert.equal(w.latest.index, LIVE);
+    assert.equal(w.receivedFor(LIVE + 1), 1);
+    w.noteLedger(closedAt(LIVE + 1));
+    assert.equal(w.ledgers.length, 2);
+    assert.equal(w.ledgers[1].received, 1);
+    // a late transaction of an older ledger still counts; one far beyond the window does not
+    w.noteTransaction({ ...txA, hash: 'C'.repeat(64) });
+    assert.equal(w.ledgers[0].received, 2);
+    w.noteTransaction({ ...txA, ledger_index: LIVE + LIVE_WINDOW_LEDGERS + 10 });
+    assert.equal(w.receivedFor(LIVE + LIVE_WINDOW_LEDGERS + 10), 0);
+    // a live moment ends at the last closed ledger; a missed close inside the window keeps its count
+    w.noteTransaction({ ...txB, ledger_index: LIVE + 2, hash: 'D'.repeat(64) });
+    w.noteLedger(closedAt(LIVE + 3));
+    const m = validateCase(momentFromLive({ base: liveBase(), window: w, question: '', host: 'h', savedAt: '2026-01-01T00:00:00.000Z' })).case;
+    assert.deepEqual(m.clips, [{ from: LIVE, to: LIVE + 3, label: '' }]);
+    assert.deepEqual(m.moment.ledgers.map((l) => [l.index, l.received, l.expected ?? null]), [[LIVE, 2, 87], [LIVE + 1, 1, 87], [LIVE + 2, 1, null], [LIVE + 3, 0, 87]]);
+  });
+
   test('the window is bounded by the case cap and ordered oldest first', () => {
     const w = new LiveWindow();
     for (let i = 0; i < LIVE_WINDOW_LEDGERS + 5; i++) w.noteLedger(closedAt(LIVE + i));

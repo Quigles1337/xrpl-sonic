@@ -57,8 +57,8 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
     if (editing === a.id) return editorRow(a);
     const time = el('button', { type: 'button', class: 'note-time', text: timeOf(a.id), title: 'Jump to this note', onclick: () => onJumpNote?.(a.id) });
     const text = el('button', { type: 'button', class: 'note-text', text: a.text, title: 'Edit this note', onclick: () => openEditor(a.id) });
-    const meta = el('span', { class: 'note-meta', text: [anchorText(a), a.source, a.status, a.pause ? 'pauses' : ''].filter(Boolean).join(' · ') });
-    return el('li', { class: `note ${a.status}${a.pause ? ' pause' : ''}`, 'data-id': a.id }, [time, el('span', { class: 'note-body' }, [text, meta])]);
+    const meta = el('span', { class: 'note-meta', text: [a.question ? 'the question' : '', anchorText(a), a.source, a.status, a.pause ? 'pauses' : ''].filter(Boolean).join(' · ') });
+    return el('li', { class: `note ${a.status}${a.pause ? ' pause' : ''}${a.question ? ' question' : ''}`, 'data-id': a.id }, [time, el('span', { class: 'note-body' }, [text, meta])]);
   }
 
   function editorRow(a) {

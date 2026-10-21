@@ -195,8 +195,8 @@ function normalizeMoment(input, errors) {
       const index = Number(e?.index);
       if (!Number.isInteger(index) || index <= 0) continue;
       const entry = { index, hash: typeof e.hash === 'string' && /^[0-9A-F]{64}$/i.test(e.hash) ? e.hash.toUpperCase() : null };
-      const received = Number(e.received);
-      const expected = Number(e.expected);
+      const received = e.received == null ? null : Number(e.received);
+      const expected = e.expected == null ? null : Number(e.expected);
       if (Number.isInteger(received) && received >= 0) entry.received = received;
       if (Number.isInteger(expected) && expected >= 0) entry.expected = expected;
       m.ledgers.push(entry);
