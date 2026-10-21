@@ -81,6 +81,8 @@ export class Visualizer {
     this.transparent = transparent;
     this.hud = hud;
     this.reduced = reduced; // prefers-reduced-motion: no drift, no ignition flash, no overshoot
+    this.exposure = false; // long-exposure plate: where tracks landed, fading over about a minute
+    this.plateLayer = null; // accumulation canvas for the exposure
     this.ctx = canvas.getContext('2d', { alpha: transparent });
     this.particles = [];
     this.rings = [];
@@ -117,6 +119,7 @@ export class Visualizer {
     this.canvas.height = Math.round(this.height * this.dpr);
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     this.layers = this.hud ? this.buildLayers() : null;
+    this.plateLayer = null;
     if (this.transparent) {
       this.ctx.clearRect(0, 0, this.width, this.height);
     } else {
@@ -144,6 +147,24 @@ export class Visualizer {
 
   setReduced(on) {
     this.reduced = Boolean(on);
+  }
+
+  /** Long exposure: keep a fading trace of every track's landing point, so a busy issuer or maker becomes a column. */
+  setExposure(on) {
+    this.exposure = Boolean(on);
+    if (!this.exposure) this.plateLayer = null;
+  }
+
+  _exposureLayer() {
+    if (!this.plateLayer) {
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(this.width * this.dpr));
+      c.height = Math.max(1, Math.round(this.height * this.dpr));
+      const g = c.getContext('2d');
+      g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      this.plateLayer = { canvas: c, ctx: g, lastFade: 0 };
+    }
+    return this.plateLayer;
   }
 
   /** Blind comparison: keep the plate but hide the ledger number stamped behind it. */
@@ -349,6 +370,15 @@ export class Visualizer {
     };
     if (this.particles.length >= MAX_PARTICLES) this.particles.shift().dead = true;
     this.particles.push(p);
+    if (this.exposure) {
+      const L = this._exposureLayer();
+      L.ctx.globalCompositeOperation = 'lighter';
+      L.ctx.fillStyle = rgba(p.rgb, dim ? 0.12 : 0.3);
+      L.ctx.beginPath();
+      L.ctx.arc(x, y, Math.max(1.5, r * 0.35), 0, Math.PI * 2);
+      L.ctx.fill();
+      L.ctx.globalCompositeOperation = 'source-over';
+    }
     if (p.castId) {
       // A bond to the latest track of every other member this transaction involved.
       for (const cue of p.cues) {
@@ -463,6 +493,21 @@ export class Visualizer {
         ctx.globalCompositeOperation = 'source-over';
       }
       if (this.stamp && !this.blind) this.drawStamp(w, h);
+    }
+
+    // --- long exposure: the accumulated plate, fading slowly ------------------
+    if (this.exposure && this.plateLayer) {
+      const L = this.plateLayer;
+      if (ts - L.lastFade > 250) {
+        L.lastFade = ts;
+        L.ctx.globalCompositeOperation = 'destination-out';
+        L.ctx.fillStyle = 'rgba(0, 0, 0, 0.012)';
+        L.ctx.fillRect(0, 0, w, h);
+        L.ctx.globalCompositeOperation = 'source-over';
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.drawImage(L.canvas, 0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over';
     }
 
     // --- rings (ledger pulse, Cherenkov rings, escrow releases) ------------

@@ -18,6 +18,7 @@ import { buildScore, scoreCaption, transcript, formatClock, clipRanges } from '.
 import { Transport } from './transport.js';
 import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
+import { Geiger } from './geiger.js';
 import {
   RECORD_SECONDS,
   captureSupport,
@@ -83,6 +84,7 @@ const session = {
 const canvas = document.getElementById('scene');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const viz = new Visualizer(canvas, { transparent: query.mode === 'overlay', reduced: reducedMotion.matches });
+viz.setExposure(settings.exposure);
 reducedMotion.addEventListener?.('change', (e) => viz.setReduced(e.matches));
 const engine = new AudioEngine({ volume: settings.volume, muted: settings.muted });
 
@@ -151,6 +153,33 @@ const ui = createUI({
     onNext: (item) => inspectNeighbour(item, +1),
     onAnnotate: (event, item) => annotateEvent(event, item),
   },
+  geigerActions: {
+    onChange: (patch) => {
+      settings.geiger = { ...settings.geiger, ...patch };
+      saveSettings(settings);
+      if ('enabled' in patch) {
+        if (patch.enabled) startGeiger();
+        else stopGeiger();
+      } else if (geiger.detector) {
+        startGeiger(); // new window/threshold/minCount/adapt: a fresh detector (a pinned baseline is kept)
+      }
+      renderGeiger();
+    },
+    onPin: () => {
+      if (!geiger.detector) return;
+      geiger.baseline = geiger.detector.pin();
+      ui.logMessage(`Geiger baseline pinned at ledger ${fmt(geiger.detector.lastLedger)} over ${geiger.baseline.window} ledgers.`);
+      if (session.active || session.pending) commitCase({ ...(session.active?.case ?? session.pending), geiger: { ...settings.geiger, baseline: geiger.baseline } });
+      renderGeiger();
+    },
+    onUnpin: () => {
+      geiger.baseline = null;
+      geiger.detector?.unpin();
+      ui.logMessage('Geiger baseline unpinned: it rolls again.');
+      if (session.active || session.pending) commitCase({ ...(session.active?.case ?? session.pending), geiger: { ...settings.geiger } });
+      renderGeiger();
+    },
+  },
   onChange: (patch) => {
     saveSettings(settings);
     options = mappingOptions(settings);
@@ -165,7 +194,9 @@ const ui = createUI({
     if ('cast' in patch || 'castMode' in patch) {
       syncHash();
       applyCast();
+      geiger.detector?.setCast(settings.cast);
     }
+    if ('exposure' in patch) viz.setExposure(settings.exposure);
     if ('network' in patch || 'explorer' in patch) ui.setCast(settings.cast);
     if (session.active && ['scale', 'key', 'enabled', 'includeFailed', 'quietMode', 'quietThreshold', 'cast', 'castMode'].some((k) => k in patch)) rebuildScore();
   },
@@ -294,6 +325,72 @@ function gateFor(msg) {
 }
 
 // ---------------------------------------------------------------------------
+// Geiger: the detector, fed raw ledgers before any filter or rate limit
+// ---------------------------------------------------------------------------
+
+const geiger = {
+  detector: null,
+  baseline: null, // a pinned snapshot, kept across detector restarts and saved with the case
+  pending: new Map(), // live: ledger index → raw transaction messages, finalised when the next ledger closes
+  current: null, // live: the ledger index whose transactions are streaming in
+};
+
+function startGeiger() {
+  geiger.detector = new Geiger({ ...settings.geiger, cast: settings.cast, baseline: geiger.baseline });
+  geiger.pending.clear();
+  geiger.current = null;
+  ui.logMessage(geiger.baseline ? `Geiger on with a pinned baseline (${geiger.baseline.window} ledgers).` : `Geiger on: the baseline forms over the next ${settings.geiger.window} ledgers.`);
+}
+
+function stopGeiger() {
+  geiger.detector = null;
+  geiger.pending.clear();
+  geiger.current = null;
+}
+
+function renderGeiger() {
+  ui.geigerPanel.render(geiger.detector, geiger.detector ? geiger.detector.status(Date.now()) : null);
+}
+
+/** One validated ledger's raw transactions go to the detector; a crossing crackles and is logged with its explanation. */
+function observeLedger(ledgerIndex, transactions) {
+  const d = geiger.detector;
+  if (!d) return;
+  const r = d.observeLedger({ ledgerIndex, transactions, nowMs: Date.now() });
+  if (r.state === 'crossing') {
+    const top = r.crossings[0];
+    if (engine.state === 'running' && !settings.muted) engine.crackle(top.z, { threshold: settings.geiger.threshold });
+    ui.logMessage(`Geiger ${top.z.toFixed(1)}σ: ${top.explanation}`, 'geiger');
+    if (settings.captions && !session.blind) ui.transport.caption({ kind: 'geiger', text: top.explanation });
+    if (settings.speak && !session.blind) speak(`Geiger: ${top.explanation}`);
+  }
+  renderGeiger();
+}
+
+/** Live: transactions arrive after their ledger's close; ledger N is finalised when ledger N+1 closes. */
+function geigerLiveLedger(ledgerIndex) {
+  if (!geiger.detector) return;
+  const previous = geiger.current;
+  if (previous != null && previous !== ledgerIndex) {
+    observeLedger(previous, geiger.pending.get(previous) ?? []);
+    geiger.pending.delete(previous);
+  }
+  geiger.current = ledgerIndex;
+  if (!geiger.pending.has(ledgerIndex)) geiger.pending.set(ledgerIndex, []);
+  // Drop anything older than two ledgers, in case a close was missed.
+  for (const k of geiger.pending.keys()) if (k < ledgerIndex - 1) geiger.pending.delete(k);
+}
+
+function geigerLiveTransaction(msg) {
+  if (!geiger.detector) return;
+  const index = Number(msg.ledger_index ?? msg.tx_json?.ledger_index ?? msg.transaction?.ledger_index);
+  const key = Number.isFinite(index) ? index : geiger.current;
+  if (key == null) return;
+  if (!geiger.pending.has(key)) geiger.pending.set(key, []);
+  geiger.pending.get(key).push(msg);
+}
+
+// ---------------------------------------------------------------------------
 // Live stream
 // ---------------------------------------------------------------------------
 
@@ -331,10 +428,12 @@ function onMessage(msg) {
   switch (classifyMessage(msg)) {
     case 'ledger':
       if (session.active || session.loading) break; // the live stream is paused while a case plays
+      geigerLiveLedger(Number(msg.ledger_index));
       onLedger(ledgerToEvent(msg));
       break;
     case 'transaction':
       if (session.active || session.loading) break;
+      geigerLiveTransaction(msg);
       onTransaction(msg);
       break;
     case 'response': {
@@ -487,10 +586,17 @@ function applyCaseToSettings(c) {
   if (c.filters.quietThreshold > 0) settings.quietThreshold = c.filters.quietThreshold;
   settings.scale = c.mapping.scale;
   settings.key = c.mapping.key;
+  if (c.geiger) {
+    settings.geiger = { enabled: c.geiger.enabled, window: c.geiger.window, threshold: c.geiger.threshold, minCount: c.geiger.minCount, adapt: c.geiger.adapt };
+    geiger.baseline = c.geiger.baseline ?? null;
+    if (settings.geiger.enabled) startGeiger();
+    else stopGeiger();
+  }
   saveSettings(settings);
   options = mappingOptions(settings);
   ui.applySettings();
   ui.setCast(settings.cast);
+  renderGeiger();
 }
 
 /** The case as it stands now: the loaded one with the current settings folded in. */
@@ -508,6 +614,7 @@ function currentCase() {
     },
     mapping: { ...base.mapping, scale: settings.scale, key: settings.key },
     timing: { speed: session.speed },
+    geiger: settings.geiger.enabled || base.geiger ? { ...settings.geiger, ...(geiger.baseline ? { baseline: geiger.baseline } : {}) } : null,
   };
 }
 
@@ -562,6 +669,7 @@ async function runCase(theCase) {
     honourPauses: settings.pauseAtNotes,
   });
   transport.setSpeed(session.speed);
+  if (geiger.detector) startGeiger(); // replayed ledgers form (or are judged against) their own baseline
   session.active = { case: theCase, ledgers: result.ledgers, score, transport, failures: result.failures };
   session.loop = null;
   ui.transport.setScore(score, caseTitle(theCase));
@@ -623,6 +731,8 @@ function onScoreLedger(entry, offsetSec) {
       return;
     }
     onLedger(entry.event, entry.intervalMs / 1000 / session.speed);
+    const raw = session.active?.ledgers.get(entry.ledgerIndex)?.ledger;
+    if (raw) observeLedger(entry.ledgerIndex, raw.transactions ?? []);
   }, offsetSec);
 }
 
@@ -1022,8 +1132,13 @@ async function record({ seconds = RECORD_SECONDS, download = true } = {}) {
 // ---------------------------------------------------------------------------
 
 let lastReadout = 0;
+let lastGeigerRender = 0;
 viz.onFrame = (ts) => {
   activeTransport()?.tick();
+  if (geiger.detector && ts - lastGeigerRender > 2000) {
+    lastGeigerRender = ts;
+    renderGeiger();
+  }
   if (ledgerState.lastCloseAt) ui.setMetronome((ts - ledgerState.lastCloseAt) / 1000 / ledgerState.interval);
   if (ts - lastReadout > 500) {
     lastReadout = ts;
@@ -1111,6 +1226,8 @@ if (urlState.case) {
   armReplayFromUrl(urlState.replay);
 }
 if (settings.cast.length) ui.logMessage(castSummary());
+if (settings.geiger.enabled) startGeiger();
+renderGeiger();
 viz.start();
 
 // Overlay mode starts on load: visuals at once, sound as soon as the page receives a click or key.
@@ -1131,6 +1248,7 @@ window.xrplSonic = {
   openCase: (raw) => openCase(raw, 'case', 'the console'),
   playClip,
   setBlind,
+  geiger,
   transport: () => activeTransport(),
   capture: { support: capture, snapshot, record, stop: () => recording?.stop() },
   get stream() {

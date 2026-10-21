@@ -46,6 +46,7 @@ Cases are plain JSON. They can be saved as `<id>.sonic-case.json`, loaded from *
 | `filters` | Which categories play, whether failed transactions are included, the quiet-mode threshold in XRP (0 = off), and `castMode`: `all` plays everything, `mute` draws transactions outside the cast silently, `hide` drops them. |
 | `mapping` | The sound mapping the case was written for. `version` is recorded so a later build can warn when its notes or voices differ; `scale` and `key` are the musical settings. |
 | `timing` | `speed`: 0.5, 1, 2 or 4. |
+| `geiger` | Optional detector settings: `enabled`, `window` (ledgers in the baseline), `threshold` (σ), `minCount`, `adapt` (rolling baseline), and an optional pinned `baseline` (`{ window, pinnedAt, series: { <id>: { mean, sd, n } } }`), so everyone judges the case's ledgers against the same numbers. |
 | `annotations` | Up to 200 notes anchored to a transaction (`hash`), a ledger (`ledger`) or a position on the timeline (`timeMs`). `source` names where the note came from, `status` is `draft` or `reviewed`, and `pause: true` asks the transport to pause when the note is reached. |
 
 Validation drops what it cannot use and reports it; a case with no playable clip, an unknown format or version, or more than 50 ledgers is refused outright.

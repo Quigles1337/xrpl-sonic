@@ -3,6 +3,7 @@
 import { CATEGORY_NAMES, SCALES, KEYS } from './mapping.js';
 import { EXPLORERS, DEFAULT_EXPLORER } from './explorers.js';
 import { normalizeCast, CAST_MODES } from './cast.js';
+import { normalizeGeigerConfig, GEIGER_DEFAULTS } from './geiger.js';
 
 export const STORAGE_KEY = 'xrpl-sonic:settings:v1';
 
@@ -20,6 +21,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   captions: true, // text equivalent of annotations, gaps and cast events during a case
   speak: false, // read annotations aloud (Web Speech), independent of the sound
   pauseAtNotes: true, // honour annotations that ask the transport to pause
+  exposure: false, // long-exposure plate: a fading trace of where tracks landed
+  geiger: Object.freeze({ enabled: false, ...GEIGER_DEFAULTS }), // the detector (src/geiger.js)
   cast: Object.freeze([]), // followed accounts (src/cast.js); solo and mute are live controls and are not persisted
   castMode: 'all', // transactions that involve nobody in the cast: 'all' (play) | 'mute' (dim, silent) | 'hide'
   explorer: DEFAULT_EXPLORER,
@@ -38,7 +41,7 @@ function storage() {
 
 /** Validate and coerce a partial settings object onto the defaults. */
 export function sanitizeSettings(input) {
-  const s = { ...DEFAULT_SETTINGS, enabled: { ...DEFAULT_SETTINGS.enabled }, cast: [] };
+  const s = { ...DEFAULT_SETTINGS, enabled: { ...DEFAULT_SETTINGS.enabled }, cast: [], geiger: { ...DEFAULT_SETTINGS.geiger } };
   if (!input || typeof input !== 'object') return s;
   if (input.network === 'mainnet' || input.network === 'testnet') s.network = input.network;
   const vol = Number(input.volume);
@@ -56,7 +59,8 @@ export function sanitizeSettings(input) {
     }
   }
   if (typeof input.showLog === 'boolean') s.showLog = input.showLog;
-  for (const k of ['captions', 'speak', 'pauseAtNotes']) if (typeof input[k] === 'boolean') s[k] = input[k];
+  for (const k of ['captions', 'speak', 'pauseAtNotes', 'exposure']) if (typeof input[k] === 'boolean') s[k] = input[k];
+  s.geiger = { enabled: input.geiger?.enabled === true, ...normalizeGeigerConfig(input.geiger) };
   const mode = input.castMode ?? input.accountMode; // accountMode: the key from before the cast existed
   if (typeof mode === 'string' && CAST_MODES[mode]) s.castMode = mode;
   s.cast = normalizeCast(input.cast).map((m) => ({ ...m, solo: false, muted: false }));
