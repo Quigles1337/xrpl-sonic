@@ -254,7 +254,8 @@ describe('momentPosition', () => {
     assert.equal(momentPosition(byHash, score).timeMs, score.events[2].timeMs);
     const byTime = makeMomentCase({ anchor: { timeMs: 1234 } });
     assert.equal(momentPosition(byTime, score).timeMs, 1234);
-    assert.equal(momentPosition(makeMomentCase({ anchor: { hash: 'F'.repeat(64) } }), score).timeMs, 0, 'an anchor that does not resolve lands at the start');
+    const lost = makeMomentCase({ anchor: { hash: 'F'.repeat(64) } });
+    assert.equal(momentPosition(lost, buildScore(lost, ledgersFor([INDEX, INDEX + 1, INDEX + 2]))).timeMs, 0, 'an anchor that does not resolve lands at the start');
     assert.equal(momentPosition(validateCase({ clips: [String(INDEX)] }).case, score), null, 'not a moment');
   });
 });
