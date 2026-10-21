@@ -89,6 +89,17 @@ describe('settings', () => {
     assert.equal(sanitizeSettings({ accountMode: 'mute' }).castMode, 'mute', 'the key from before the cast existed is still read');
   });
 
+  test('caption, speech and pause-at-notes toggles are booleans with sensible defaults', () => {
+    const d = sanitizeSettings(null);
+    assert.equal(d.captions, true);
+    assert.equal(d.speak, false);
+    assert.equal(d.pauseAtNotes, true);
+    const s = sanitizeSettings({ captions: false, speak: true, pauseAtNotes: 'yes' });
+    assert.equal(s.captions, false);
+    assert.equal(s.speak, true);
+    assert.equal(s.pauseAtNotes, true);
+  });
+
   test('mappingOptions applies the quiet threshold only in quiet mode', () => {
     const base = sanitizeSettings({ quietThreshold: 250 });
     assert.equal(mappingOptions(base).quietThreshold, 0);

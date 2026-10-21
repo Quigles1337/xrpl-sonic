@@ -1,12 +1,19 @@
-// xrpl-sonic — DOM controls, status, metronome and the scrolling log.
+// xrpl-sonic — DOM controls, status, metronome and the scrolling tape.
+//
+// The transport bar, the inspector, the cast group and the case group live
+// in their own modules (ui-transport.js, ui-inspector.js, ui-cast.js,
+// ui-case.js); this file builds the panel, the command strip readouts and the
+// tape, and exposes those parts on the object it returns.
 
 import { CATEGORIES, CATEGORY_NAMES, SCALES, KEYS } from './mapping.js';
 import { NETWORKS } from './ws.js';
 import { EXPLORERS, explorerUrl } from './explorers.js';
-import { REPLAY_SPEEDS } from './replay.js';
 import { GLYPHS, PULSE, categoryIcon, eventIcon, fieldGuide } from './glyphs.js';
 import { el, option, svg } from './dom.js';
 import { createCastPanel } from './ui-cast.js';
+import { createCasePanel } from './ui-case.js';
+import { createTransportUI } from './ui-transport.js';
+import { createInspector } from './ui-inspector.js';
 
 const MAX_LOG_LINES = 80;
 
@@ -21,15 +28,17 @@ function stamp() {
  * @param {object} args.settings  current settings (mutated on change)
  * @param {(patch: object, settings: object) => void} args.onChange
  * @param {() => void} args.onToggleRun
- * @param {(speed: number) => void} [args.onReplaySpeed]
- * @param {() => void} [args.onReplayCancel]
  * @param {() => void} [args.onShare]
  * @param {() => void} [args.onSnapshot]
  * @param {() => void} [args.onRecord]
  * @param {(member: object) => void} [args.onPreview]  play a cast member's motif
+ * @param {(event: object) => void} [args.onInspect]   open the inspector for a tape line
+ * @param {object} [args.transport]   callbacks for the transport bar (see ui-transport.js)
+ * @param {object} [args.caseActions] callbacks for the case group (see ui-case.js)
+ * @param {object} [args.inspector]   callbacks for the inspector (see ui-inspector.js)
  * @param {{ recording: boolean, mimeType: string|null }} [args.capture]  what the browser supports
  */
-export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onReplayCancel, onShare, onSnapshot, onRecord, onPreview, capture }) {
+export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, capture }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -47,11 +56,6 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
   const logWrap = $('#log-wrap');
   const controls = $('#controls');
   const castStrip = $('#cast-strip');
-  const replayBar = $('#replaybar');
-  const replayLabel = $('#replay-label');
-  const replayFill = $('#replay-fill');
-  const replaySpeed = $('#replay-speed');
-  const replayCancel = $('#replay-cancel');
   const shareBtn = $('#share');
   const overlayLede = $('#overlay .lede');
   const defaultLede = overlayLede?.textContent ?? '';
@@ -64,14 +68,16 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
   // --- Start / stop ----------------------------------------------------------
   for (const b of startButtons) b.addEventListener('click', () => onToggleRun());
 
-  // --- Replay bar + share ----------------------------------------------------
-  for (const s of REPLAY_SPEEDS) replaySpeed.append(option(String(s), `${s}×`, s === 1));
-  replaySpeed.addEventListener('change', (e) => onReplaySpeed?.(Number(e.target.value)));
-  replayCancel.addEventListener('click', () => onReplayCancel?.());
+  // --- Share, transport, inspector --------------------------------------------
   shareBtn?.addEventListener('click', () => onShare?.());
   let shareTimer = 0;
-  const fmt = (n) => `#${Number(n).toLocaleString('en-US')}`;
-  const rangeLabel = (range) => (range.from === range.to ? `ledger ${fmt(range.from)}` : `ledgers ${fmt(range.from)}–${fmt(range.to)}`);
+  const transportUI = createTransportUI(transport ?? {});
+  const inspectorUI = createInspector({
+    linkFor: (kind, id) => explorerUrl(settings.explorer, settings.network, kind, id),
+    castFor: () => settings.cast ?? [],
+    onPrev: inspector?.onPrev,
+    onNext: inspector?.onNext,
+  });
 
   // --- Panel toggle (mobile) -------------------------------------------------
   const setPanelOpen = (open) => {
@@ -166,6 +172,7 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
     onPreview: (member) => onPreview?.(member),
     linkFor: (address) => explorerUrl(settings.explorer, settings.network, 'account', address),
   });
+  const casePanel = createCasePanel({ settings, ...(caseActions ?? {}) });
 
   const snapshotBtn = el('button', { type: 'button', class: 'btn', id: 'snapshot', text: 'Snapshot', title: 'Save the scene as a PNG with a stats overlay', onclick: () => onSnapshot?.() });
   const recordBtn = el('button', {
@@ -217,6 +224,7 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
     ]),
     el('section', { class: 'group' }, [el('h2', { text: 'Transaction types' }), el('div', { class: 'chips' }, categoryToggles)]),
     castPanel.root,
+    casePanel.root,
     el('section', { class: 'group' }, [
       el('h2', { text: 'Capture' }),
       el('div', { class: 'buttons' }, [snapshotBtn, recordBtn]),
@@ -245,8 +253,17 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
   const applyLogVisibility = () => logWrap.classList.toggle('hidden', !settings.showLog);
   applyLogVisibility();
 
+  function pushLine(line) {
+    logList.prepend(line);
+    while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
+  }
+
   // --- Public API ------------------------------------------------------------
   return {
+    transport: transportUI,
+    inspector: inspectorUI,
+    casePanel,
+
     setRunning(running) {
       document.body.classList.toggle('running', running);
       overlay.classList.toggle('hidden', running);
@@ -290,34 +307,21 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
         svg(eventIcon(event, 14)),
         el('span', { class: 'line' }, event.kind === 'tx' ? txLine(event) : ledgerLine(event)),
       ]);
-      logList.prepend(line);
-      while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
-    },
-
-    /** Show or hide the replay bar. */
-    setReplay({ active = false, range = null } = {}) {
-      replayBar.classList.toggle('hidden', !active);
-      document.body.classList.toggle('replaying', active);
-      if (active && range) replayLabel.textContent = `Replay · ${rangeLabel(range)}`;
-      if (!active) replayFill.style.transform = 'scaleX(0)';
-    },
-
-    setReplayProgress(fraction, ledgerIndex, done, total) {
-      replayFill.style.transform = `scaleX(${Math.min(1, Math.max(0, fraction)).toFixed(3)})`;
-      if (ledgerIndex != null) {
-        const text = total > 1 ? `Replay ${fmt(ledgerIndex)} · ${Math.min(done + 1, total)}/${total}` : `Replay ${fmt(ledgerIndex)}`;
-        if (replayLabel.textContent !== text) replayLabel.textContent = text;
+      if (event.kind === 'tx') {
+        line.classList.add('inspectable');
+        line.title = `${line.title ? `${line.title} · ` : ''}Click to inspect`;
+        line.addEventListener('click', (e) => {
+          if (e.target.closest('a')) return;
+          onInspect?.(event);
+        });
       }
+      pushLine(line);
     },
 
-    setReplaySpeed(speed) {
-      replaySpeed.value = String(speed);
-    },
-
-    /** Tell the start overlay that pressing Start will replay rather than go live. */
-    setReplayPending(range) {
+    /** Tell the start overlay that pressing Start will play a case rather than go live. */
+    setReplayPending(theCase, title) {
       if (!overlayLede) return;
-      overlayLede.textContent = range ? `Replay of ${rangeLabel(range)}, played back at the pace the network closed it.` : defaultLede;
+      overlayLede.textContent = theCase ? `${title ?? 'A case'} will play back at the pace the network closed it; Go live returns to the stream.` : defaultLede;
     },
 
     /** Countdown on the record button; null restores it. */
@@ -362,10 +366,9 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
       castPanel.render();
     },
 
+    /** A line that is not a transaction: 'info', 'error' or 'note' (an annotation). */
     logMessage(text, cls = 'info') {
-      const line = el('li', { class: `log-${cls}` }, [stamp(), el('span', { class: 'glyph' }), el('span', { class: 'line', text })]);
-      logList.prepend(line);
-      while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
+      pushLine(el('li', { class: `log-${cls}` }, [stamp(), el('span', { class: 'glyph' }), el('span', { class: 'line', text })]));
     },
 
     applySettings() {
@@ -379,14 +382,15 @@ export function createUI({ settings, onChange, onToggleRun, onReplaySpeed, onRep
       quietThreshold.value = settings.quietThreshold;
       includeFailed.checked = settings.includeFailed;
       showLog.checked = settings.showLog;
-      castPanel.render();
       explorer.value = settings.explorer;
       for (const box of controls.querySelectorAll('input[data-category]')) box.checked = settings.enabled[box.dataset.category];
+      castPanel.render();
+      casePanel.applySettings();
       applyLogVisibility();
     },
   };
 
-  // --- Log line builders -----------------------------------------------------
+  // --- Tape line builders -----------------------------------------------------
   function link(kind, id, text, cls) {
     const href = explorerUrl(settings.explorer, settings.network, kind, id);
     if (!href) return el('span', { class: cls, text });

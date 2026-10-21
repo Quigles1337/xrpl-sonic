@@ -1,4 +1,9 @@
 // xrpl-sonic — application wiring.
+//
+// Two ways to listen: the live stream (XrplStream → mapping → engine + plate)
+// and a case (src/case.js), whose ledgers are fetched over the same socket,
+// laid out as a score (src/score.js) and played by the transport
+// (src/transport.js) with pause, step, loop and seek.
 
 import { txToEvent, ledgerToEvent, classifyMessage } from './mapping.js';
 import { castFor, castGate, decorateEvent, normalizeCast, parseCastSpec, formatCastSpec, motifFor } from './cast.js';
@@ -7,7 +12,12 @@ import { AudioEngine } from './audio.js';
 import { Visualizer } from './visual.js';
 import { loadSettings, saveSettings, mappingOptions } from './settings.js';
 import { parseHash, buildHash, parseQuery } from './params.js';
-import { parseReplayRange, scheduleReplay, replayIntervalMs, replayLedgerMessage } from './replay.js';
+import { parseReplayRange, formatReplayRange } from './replay.js';
+import { validateCase, caseFromState, serializeCase, encodeCase, decodeCase, caseFilename, caseLedgerCount } from './case.js';
+import { buildScore, scoreCaption, transcript, formatClock } from './score.js';
+import { Transport } from './transport.js';
+import { fetchCaseLedgers } from './ledgers.js';
+import { speak, hush } from './speech.js';
 import {
   RECORD_SECONDS,
   captureSupport,
@@ -40,7 +50,8 @@ document.body.classList.add(`mode-${query.mode}`);
   }
 }
 
-// Shareable state lives in the URL hash: #cast=..., #account=r... (the one-member shortcut) and #replay=<ledger>|<from>-<to>.
+// Shareable state lives in the URL hash: #cast=..., #account=r... (the one-member shortcut),
+// #replay=<ledger>|<from>-<to>, or #case=<encoded case>.
 const urlState = parseHash(location.hash);
 applyUrlCast(urlState);
 
@@ -56,21 +67,21 @@ function applyUrlCast(state) {
   }
 }
 
-// Replay: fetch validated ledgers over the same socket and play them back at the real pace.
-const replay = {
-  range: urlState.replay ? parseReplayRange(urlState.replay) : null,
+// The case session: `pending` waits for Start, `active` is playing.
+const session = {
+  pending: null, // validated case; `source` is 'replay' (from #replay=), 'case' (from #case=) or 'file'
+  active: null, // { case, ledgers, score, transport, failures }
+  loading: false,
   armed: false, // start() arms it; the next 'connected' status runs it
-  active: false,
   speed: 1,
-  ledgerIndex: null,
-  done: 0,
-  total: 0,
-  cache: new Map(),
-  wake: null,
+  loop: null,
+  abort: null,
 };
 
 const canvas = document.getElementById('scene');
-const viz = new Visualizer(canvas, { transparent: query.mode === 'overlay' });
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const viz = new Visualizer(canvas, { transparent: query.mode === 'overlay', reduced: reducedMotion.matches });
+reducedMotion.addEventListener?.('change', (e) => viz.setReduced(e.matches));
 const engine = new AudioEngine({ volume: settings.volume, muted: settings.muted });
 
 let stream = null;
@@ -94,16 +105,42 @@ const pendingTimers = new Set();
 const ui = createUI({
   settings,
   onToggleRun: () => (running ? stop() : start()),
-  onReplaySpeed: (speed) => {
-    replay.speed = speed;
-    if (replay.active) ui.logMessage(`Replay speed ${speed}× from the next ledger.`);
-  },
-  onReplayCancel: () => cancelReplay(),
   onShare: () => share(),
   onSnapshot: () => snapshot().catch((err) => ui.logMessage(`Snapshot failed: ${err?.message ?? err}`, 'error')),
   onRecord: () => record().catch((err) => ui.logMessage(`Recording failed: ${err?.message ?? err}`, 'error')),
   onPreview: (member) => preview(member),
+  onInspect: (event) => inspect(event),
   capture,
+  transport: {
+    onToggle: () => transportToggle(),
+    onStep: () => activeTransport()?.step(),
+    onBack: () => activeTransport()?.stepBack(),
+    onLoopToggle: () => loopToggle(),
+    onLoopIn: () => loopPoint('in'),
+    onLoopOut: () => loopPoint('out'),
+    onSeek: (ms) => activeTransport()?.seek(ms),
+    onSpeed: (speed) => setSpeed(speed),
+    onCancel: () => goLive(),
+  },
+  caseActions: {
+    onLoadFile: (file) => loadCaseFile(file),
+    onSave: () => saveCase(),
+    onCopyLink: () => copyCaseLink(),
+    onTranscript: () => saveTranscript(),
+    onToggle: (key, value) => {
+      settings[key] = value;
+      saveSettings(settings);
+      if (key === 'pauseAtNotes') {
+        const t = activeTransport();
+        if (t) t.honourPauses = value;
+      }
+      if (key === 'speak' && !value) hush();
+    },
+  },
+  inspector: {
+    onPrev: (item) => inspectNeighbour(item, -1),
+    onNext: (item) => inspectNeighbour(item, +1),
+  },
   onChange: (patch) => {
     saveSettings(settings);
     options = mappingOptions(settings);
@@ -112,6 +149,7 @@ const ui = createUI({
     if ('network' in patch && stream) {
       resetLedgerState();
       ui.logMessage(`Switching to ${NETWORKS[settings.network].label}…`);
+      if (session.active) endSession();
       stream.setEndpoints(NETWORKS[settings.network].endpoints);
     }
     if ('cast' in patch || 'castMode' in patch) {
@@ -119,11 +157,30 @@ const ui = createUI({
       applyCast();
     }
     if ('network' in patch || 'explorer' in patch) ui.setCast(settings.cast);
+    if (session.active && ['scale', 'key', 'enabled', 'includeFailed', 'quietMode', 'quietThreshold', 'cast', 'castMode'].some((k) => k in patch)) rebuildScore();
   },
 });
 
+// ---------------------------------------------------------------------------
+// URL and cast
+// ---------------------------------------------------------------------------
+
+let hashJob = 0;
 function syncHash() {
-  const hash = buildHash({ cast: settings.cast.length ? formatCastSpec(settings.cast) : '', replay: urlState.replay });
+  const c = session.active?.case ?? session.pending;
+  if (c && c.source !== 'replay') {
+    // A loaded case travels whole: #case=<encoded>, recomputed from the current settings.
+    const job = ++hashJob;
+    encodeCase(currentCase()).then((encoded) => {
+      if (job !== hashJob) return;
+      replaceHash(buildHash({ case: encoded }));
+    });
+    return;
+  }
+  replaceHash(buildHash({ cast: settings.cast.length ? formatCastSpec(settings.cast) : '', replay: urlState.replay }));
+}
+
+function replaceHash(hash) {
   const url = `${location.pathname}${location.search}${hash}`;
   if (`${location.pathname}${location.search}${location.hash}` !== url) history.replaceState(null, '', url);
 }
@@ -169,6 +226,8 @@ window.addEventListener('hashchange', () => {
     saveSettings(settings);
     applyCast();
   }
+  if (next.case) decodeCase(next.case).then((raw) => openCase(raw, 'case', 'the link')).catch((err) => ui.logMessage(`Could not read the case in the link: ${err?.message ?? err}`, 'error'));
+  else if (next.replay && !session.active) armReplayFromUrl(next.replay);
 });
 
 function resetLedgerState() {
@@ -178,11 +237,16 @@ function resetLedgerState() {
   ui.setLedger(null, null);
 }
 
+/** Run `fn` after `delaySeconds`; immediately (synchronously) when the delay is zero. */
 function schedule(fn, delaySeconds) {
+  if (!(delaySeconds > 0)) {
+    fn();
+    return;
+  }
   const id = setTimeout(() => {
     pendingTimers.delete(id);
     fn();
-  }, Math.max(0, delaySeconds * 1000));
+  }, delaySeconds * 1000);
   pendingTimers.add(id);
 }
 
@@ -217,6 +281,10 @@ function gateFor(msg) {
   return { gate: castGate(involvement, settings.cast, settings.castMode), involvement };
 }
 
+// ---------------------------------------------------------------------------
+// Live stream
+// ---------------------------------------------------------------------------
+
 function onTransaction(msg) {
   const ev = txToEvent(msg, options);
   if (!ev) return;
@@ -250,16 +318,16 @@ function onTransaction(msg) {
 function onMessage(msg) {
   switch (classifyMessage(msg)) {
     case 'ledger':
-      if (replay.active) break; // the live stream is paused while a replay plays
+      if (session.active || session.loading) break; // the live stream is paused while a case plays
       onLedger(ledgerToEvent(msg));
       break;
     case 'transaction':
-      if (replay.active) break;
+      if (session.active || session.loading) break;
       onTransaction(msg);
       break;
     case 'response': {
       const seed = ledgerToEvent(msg);
-      if (seed && ledgerState.index == null) {
+      if (seed && ledgerState.index == null && !session.active) {
         ledgerState.index = seed.ledgerIndex;
         ui.setLedger(seed.ledgerIndex, null);
       }
@@ -281,11 +349,11 @@ function onStatus(s) {
       ui.setStatus('connecting', `Connecting to ${host}…`, s.endpoint);
       break;
     case 'connected':
-      ui.setStatus('connected', replay.active ? replayStatusText() : `Live · ${host}`, s.endpoint);
+      ui.setStatus('connected', session.active ? caseStatusText() : `Live · ${host}`, s.endpoint);
       ui.logMessage(`Connected to ${host}`);
-      if (replay.armed && replay.range) {
-        replay.armed = false;
-        runReplay(replay.range);
+      if (session.armed && session.pending) {
+        session.armed = false;
+        runCase(session.pending);
       }
       break;
     case 'reconnecting':
@@ -309,7 +377,7 @@ async function start() {
     ui.logMessage('Web Audio is unavailable in this browser; running visuals only.', 'error');
   }
   viz.start();
-  replay.armed = Boolean(replay.range);
+  session.armed = Boolean(session.pending);
   stream = new XrplStream({ endpoints: NETWORKS[settings.network].endpoints, onMessage, onStatus });
   stream.connect();
 }
@@ -317,9 +385,8 @@ async function start() {
 async function stop() {
   if (!running) return;
   running = false;
-  replay.armed = false;
-  replay.active = false;
-  replay.wake?.();
+  session.armed = false;
+  endSession({ quiet: true });
   stream?.close();
   stream = null;
   clearPending();
@@ -332,113 +399,309 @@ async function stop() {
 }
 
 // ---------------------------------------------------------------------------
-// Replay
+// Cases and the transport
 // ---------------------------------------------------------------------------
 
-function replayStatusText() {
-  const r = replay.range;
-  if (!r) return 'Replay';
-  const f = (n) => `#${n.toLocaleString('en-US')}`;
-  return r.count > 1 ? `Replay · ${f(r.from)}–${f(r.to)}` : `Replay · ${f(r.from)}`;
+const fmt = (n) => `#${Number(n).toLocaleString('en-US')}`;
+
+function caseTitle(c) {
+  if (!c) return 'Replay';
+  if (c.title) return c.title;
+  if (c.clips.length === 1) {
+    const clip = c.clips[0];
+    return clip.from === clip.to ? `Ledger ${fmt(clip.from)}` : `Ledgers ${fmt(clip.from)}–${fmt(clip.to)}`;
+  }
+  return `${c.clips.length} clips, ${caseLedgerCount(c)} ledgers`;
 }
 
-function fetchLedger(index, { full = true } = {}) {
-  const key = `${index}:${full ? 'full' : 'head'}`;
-  if (replay.cache.has(key)) return replay.cache.get(key);
-  if (!stream) return Promise.reject(new Error('not connected'));
-  const command = full ? { command: 'ledger', ledger_index: index, transactions: true, expand: true } : { command: 'ledger', ledger_index: index };
-  const p = stream.request(command).then((res) => res?.result?.ledger ?? Promise.reject(new Error('malformed ledger response')));
-  replay.cache.set(key, p);
-  p.catch(() => replay.cache.delete(key));
-  return p;
+function caseStatusText() {
+  const t = session.active?.transport;
+  const state = t ? (t.state === 'playing' ? 'Playing' : t.state === 'paused' ? 'Paused' : t.state === 'ended' ? 'Ended' : 'Replay') : 'Loading';
+  return `${state} · ${caseTitle(session.active?.case ?? session.pending)}`;
 }
 
-function replayWait(ms) {
-  return new Promise((resolve) => {
-    const id = setTimeout(() => {
-      pendingTimers.delete(id);
-      replay.wake = null;
-      resolve();
-    }, ms);
-    pendingTimers.add(id);
-    replay.wake = () => {
-      clearTimeout(id);
-      pendingTimers.delete(id);
-      replay.wake = null;
-      resolve();
-    };
-  });
+function activeTransport() {
+  return session.active?.transport ?? null;
 }
 
-async function runReplay(range) {
-  const f = (n) => `#${n.toLocaleString('en-US')}`;
-  replay.active = true;
-  replay.done = 0;
-  replay.total = range.count;
-  replay.ledgerIndex = range.from;
-  resetLedgerState();
-  ui.setReplay({ active: true, range });
-  ui.setReplaySpeed(replay.speed);
-  ui.setStatus('connected', replayStatusText(), undefined);
-  ui.logMessage(`Replaying ${range.count > 1 ? `ledgers ${f(range.from)}–${f(range.to)}` : `ledger ${f(range.from)}`} at ${replay.speed}×…`);
+/** A #replay= range becomes a one-clip case from the current settings. */
+function armReplayFromUrl(spec) {
+  const range = parseReplayRange(spec);
+  if (!range) {
+    ui.logMessage(`Ignoring invalid replay range in URL: ${String(spec).slice(0, 24)}`, 'error');
+    return;
+  }
+  const c = caseFromState({ network: settings.network, replay: range, cast: settings.cast, settings });
+  c.source = 'replay';
+  session.pending = c;
+  session.speed = 1;
+  ui.setReplayPending(c, caseTitle(c));
   if (range.clamped) ui.logMessage('Replay ranges are capped at 50 ledgers.', 'error');
+}
+
+/** Validate a raw case object and make it the pending (or playing) case. */
+function openCase(raw, source, sourceText) {
+  const { case: c, errors, warnings } = validateCase(raw);
+  for (const e of errors) ui.logMessage(`Case: ${e}`, 'error');
+  for (const w of warnings) ui.logMessage(`Case: ${w}`, 'error');
+  if (!c) {
+    ui.logMessage(`The case from ${sourceText} cannot be played.`, 'error');
+    return false;
+  }
+  c.source = source;
+  if (session.active || session.loading) endSession({ quiet: true }); // before anything reads session.active
+  applyCaseToSettings(c);
+  session.pending = c;
+  session.speed = c.timing.speed;
+  urlState.replay = null;
+  ui.setReplayPending(c, caseTitle(c));
+  ui.casePanel.setCase(c, null, warnings);
+  syncHash();
+  if (running && stream) {
+    runCase(c);
+  } else {
+    ui.logMessage(`Loaded ${caseTitle(c)} — press Start to play it.`);
+  }
+  return true;
+}
+
+/** The case defines what plays: its cast, filters and mapping become the live settings. */
+function applyCaseToSettings(c) {
+  settings.cast = normalizeCast(c.cast);
+  settings.castMode = c.filters.castMode;
+  settings.enabled = { ...c.filters.enabled };
+  settings.includeFailed = c.filters.includeFailed;
+  settings.quietMode = c.filters.quietThreshold > 0;
+  if (c.filters.quietThreshold > 0) settings.quietThreshold = c.filters.quietThreshold;
+  settings.scale = c.mapping.scale;
+  settings.key = c.mapping.key;
+  saveSettings(settings);
+  options = mappingOptions(settings);
+  ui.applySettings();
+  ui.setCast(settings.cast);
+}
+
+/** The case as it stands now: the loaded one with the current settings folded in. */
+function currentCase() {
+  const base = session.active?.case ?? session.pending;
+  if (!base) return null;
+  return {
+    ...base,
+    cast: normalizeCast(settings.cast),
+    filters: {
+      enabled: { ...settings.enabled },
+      includeFailed: settings.includeFailed,
+      quietThreshold: settings.quietMode ? settings.quietThreshold : 0,
+      castMode: settings.castMode,
+    },
+    mapping: { ...base.mapping, scale: settings.scale, key: settings.key },
+    timing: { speed: session.speed },
+  };
+}
+
+async function runCase(theCase) {
+  if (!stream) return;
+  if (theCase.network !== settings.network) {
+    settings.network = theCase.network;
+    saveSettings(settings);
+    ui.applySettings();
+    resetLedgerState();
+    ui.logMessage(`Switching to ${NETWORKS[settings.network].label} for this case…`);
+    session.pending = theCase;
+    session.armed = true;
+    stream.setEndpoints(NETWORKS[settings.network].endpoints);
+    return;
+  }
+  session.loading = true;
+  session.abort = { aborted: false };
+  const abort = session.abort;
+  resetLedgerState();
+  ui.transport.setActive(true, caseTitle(theCase));
+  ui.transport.setLoading(0, caseLedgerCount(theCase));
+  ui.transport.setSpeed(session.speed);
+  ui.setStatus('connected', `Loading · ${caseTitle(theCase)}`, undefined);
+  ui.casePanel.setCase(theCase, null);
+  ui.casePanel.setBusy(true);
+  ui.logMessage(`Loading ${caseLedgerCount(theCase)} ledgers for ${caseTitle(theCase)}…`);
+  let result;
   try {
-    for (let n = range.from; n <= range.to && replay.active; n++) {
-      replay.ledgerIndex = n;
-      const [ledger, next] = await Promise.all([fetchLedger(n), fetchLedger(n + 1, { full: n + 1 <= range.to }).catch(() => null)]);
-      if (!replay.active) break;
-      if (n + 2 <= range.to) fetchLedger(n + 2).catch(() => {}); // keep one ledger ahead
-      const speed = replay.speed;
-      const intervalMs = replayIntervalMs(ledger, next?.close_time) / speed;
-      onLedger(ledgerToEvent(replayLedgerMessage(ledger)), intervalMs / 1000);
-      for (const { tx, offsetMs } of scheduleReplay(ledger, next?.close_time)) {
-        const ev = txToEvent(tx, options);
-        if (!ev) continue;
-        if (ev.ledgerIndex == null) ev.ledgerIndex = ledger.ledger_index;
-        const { gate, involvement } = gateFor(tx);
-        if (gate === 'skip') continue;
-        decorateEvent(ev, involvement);
-        schedule(() => {
-          recentTx.push(performance.now());
-          lastMinute.push(performance.now());
-          if (gate === 'dim') {
-            viz.spawn(ev, { dim: true });
-            return;
-          }
-          const audible = engine.state === 'running' && !settings.muted;
-          const delay = audible ? engine.playAt(ev, 0.02) : 0;
-          if (delay < 0) {
-            stats.dropped += 1;
-            viz.spawn(ev, { dim: true });
-            ui.log(ev, { dim: true });
-            return;
-          }
-          if (audible) stats.played += 1;
-          viz.spawn(ev);
-          ui.log(ev);
-        }, offsetMs / speed / 1000);
-      }
-      replay.cache.delete(`${n}:full`);
-      await replayWait(intervalMs);
-      replay.done += 1;
-    }
-    if (replay.active) ui.logMessage('Replay finished — back to live.');
+    result = await fetchCaseLedgers((cmd) => stream.request(cmd), theCase, { onProgress: (d, t) => ui.transport.setLoading(d, t), signal: abort });
   } catch (err) {
-    if (replay.active) {
-      console.warn('[xrpl-sonic] replay failed', err);
-      ui.logMessage(`Replay failed: ${err?.message ?? err}`, 'error');
+    ui.casePanel.setBusy(false);
+    session.loading = false;
+    if (!abort.aborted) {
+      ui.logMessage(`Could not load the case: ${err?.message ?? err}`, 'error');
+      endSession();
     }
-  } finally {
-    endReplay();
+    return;
+  }
+  ui.casePanel.setBusy(false);
+  session.loading = false;
+  if (abort.aborted) return;
+  const score = buildScore(theCase, result.ledgers);
+  const transport = new Transport(score, {
+    onEvent: onScoreEvent,
+    onLedger: onScoreLedger,
+    onGap: onScoreGap,
+    onAnnotation: onScoreAnnotation,
+    onState: onTransportState,
+    onProgress: (ms) => ui.transport.setPosition(ms),
+    onEnd: onScoreEnd,
+    honourPauses: settings.pauseAtNotes,
+  });
+  transport.setSpeed(session.speed);
+  session.active = { case: theCase, ledgers: result.ledgers, score, transport, failures: result.failures };
+  session.loop = null;
+  ui.transport.setScore(score, caseTitle(theCase));
+  ui.transport.setLoop(null);
+  ui.casePanel.setCase(theCase, score, result.failures.length ? [`${result.failures.length} ledger${result.failures.length === 1 ? '' : 's'} could not be fetched: ${result.failures.map((f) => `${fmt(f.index)} (${f.error})`).join(', ')}`] : []);
+  for (const f of result.failures) ui.logMessage(`Ledger ${fmt(f.index)} could not be fetched: ${f.error}`, 'error');
+  for (const w of score.warnings) ui.logMessage(w, 'error');
+  ui.logMessage(`${caseTitle(theCase)}: ${score.counts.events} events over ${formatClock(score.totalMs)} at ${session.speed}× — K pauses, . steps, L loops, click a line or a track to inspect it.`);
+  transport.play();
+  ui.setStatus('connected', caseStatusText(), undefined);
+}
+
+/** Settings changed while a case plays: rebuild the score from the cached ledgers, keeping the position. */
+function rebuildScore() {
+  const s = session.active;
+  if (!s) return;
+  s.case = currentCase();
+  s.case.source = s.case.source ?? 'case';
+  s.score = buildScore(s.case, s.ledgers);
+  s.transport.setScore(s.score);
+  ui.transport.setScore(s.score, caseTitle(s.case));
+  ui.casePanel.setCase(s.case, s.score);
+  syncHash();
+}
+
+function onScoreEvent(item, offsetSec) {
+  const ev = item.event;
+  ev.scoreItem = item;
+  if (item.gate === 'dim') {
+    schedule(() => {
+      viz.spawn(ev, { dim: true });
+      ui.log(ev, { dim: true });
+    }, offsetSec);
+    return;
+  }
+  const audible = engine.state === 'running' && !settings.muted;
+  const delay = audible ? engine.playAt(ev, offsetSec) : -1;
+  const dropped = audible && delay < 0;
+  if (dropped) stats.dropped += 1;
+  else if (audible) stats.played += 1;
+  schedule(
+    () => {
+      const now = performance.now();
+      recentTx.push(now);
+      lastMinute.push(now);
+      viz.spawn(ev, { dim: dropped });
+      ui.log(ev, { dim: dropped });
+      if (settings.captions && item.cast.length) ui.transport.caption({ kind: 'cast', text: scoreCaption(item, session.active?.case.cast ?? []) });
+    },
+    dropped || !audible ? offsetSec : delay,
+  );
+}
+
+function onScoreLedger(entry, offsetSec) {
+  schedule(() => {
+    if (entry.missing) {
+      ui.logMessage(`Ledger ${fmt(entry.ledgerIndex)} unavailable — ${entry.intervalMs / 1000} s of silence stands in for it.`, 'error');
+      ui.transport.caption({ kind: 'ledger', text: `Ledger ${fmt(entry.ledgerIndex)} unavailable` });
+      return;
+    }
+    onLedger(entry.event, entry.intervalMs / 1000 / session.speed);
+  }, offsetSec);
+}
+
+function onScoreGap(gap, offsetSec) {
+  schedule(() => {
+    const text = `${gap.omitted} ledger${gap.omitted === 1 ? '' : 's'} omitted between ${fmt(gap.afterLedger)} and ${fmt(gap.beforeLedger)}`;
+    ui.logMessage(`— ${text} —`);
+    if (settings.captions) ui.transport.caption({ kind: 'gap', text });
+    viz.gap();
+  }, offsetSec);
+}
+
+function onScoreAnnotation(a, offsetSec) {
+  schedule(() => {
+    ui.logMessage(`» ${a.text}${a.source ? ` [${a.source}]` : ''}`, 'note');
+    if (settings.captions || a.pause) ui.transport.caption({ kind: 'annotation', text: a.text, source: a.source, status: a.status, sticky: a.pause });
+    if (settings.speak) speak(a.text);
+  }, offsetSec);
+}
+
+function onTransportState(state, detail) {
+  ui.transport.setState(state, detail);
+  if (state !== 'playing') {
+    clearPending();
+    if (state === 'ended') hush();
+  }
+  ui.setStatus('connected', caseStatusText(), undefined);
+  if (state === 'paused' && detail?.annotation && settings.speak) speak(detail.annotation.text);
+}
+
+function onScoreEnd() {
+  ui.logMessage('End of the case. ▶ plays it again; Go live returns to the stream.');
+}
+
+function transportToggle() {
+  const t = activeTransport();
+  if (!t) return;
+  t.toggle();
+}
+
+function setSpeed(speed) {
+  session.speed = speed;
+  activeTransport()?.setSpeed(speed);
+  ui.transport.setSpeed(speed);
+  if (session.active) {
+    ui.logMessage(`Speed ${speed}×.`);
+    syncHash();
   }
 }
 
-function endReplay() {
-  replay.active = false;
-  replay.wake?.();
-  replay.cache.clear();
+function loopToggle() {
+  const t = activeTransport();
+  if (!t) return;
+  if (t.loop) {
+    t.setLoop(null);
+    ui.logMessage('Loop off.');
+  } else {
+    t.setLoop(session.loop ?? { fromMs: 0, toMs: t.totalMs });
+    ui.logMessage(`Looping ${formatClock(t.loop.fromMs)}–${formatClock(t.loop.toMs)}.`);
+  }
+  ui.transport.setLoop(t.loop);
+}
+
+function loopPoint(which) {
+  const t = activeTransport();
+  if (!t) return;
+  const pos = t.positionNow();
+  const cur = session.loop ?? { fromMs: 0, toMs: t.totalMs };
+  session.loop = which === 'in' ? { fromMs: pos, toMs: Math.max(pos + 500, cur.toMs) } : { fromMs: Math.min(cur.fromMs, Math.max(0, pos - 500)), toMs: pos };
+  t.setLoop(session.loop);
+  ui.transport.setLoop(t.loop);
+  ui.logMessage(`Loop ${which === 'in' ? 'in' : 'out'} point at ${formatClock(pos)}: ${formatClock(t.loop.fromMs)}–${formatClock(t.loop.toMs)}.`);
+}
+
+function goLive() {
+  if (!session.active && !session.loading) return;
+  endSession();
+  ui.logMessage('Back to live.');
+}
+
+function endSession({ quiet = false } = {}) {
+  if (session.abort) session.abort.aborted = true;
+  const s = session.active;
+  session.active = null;
+  session.loading = false;
+  s?.transport.stop();
   clearPending();
-  ui.setReplay({ active: false });
+  hush();
+  ui.transport.setActive(false);
+  ui.casePanel.setCase(session.pending && !quiet ? session.pending : null, null);
+  ui.inspector.hide();
   if (running && stream) {
     resetLedgerState();
     const host = stream.endpoint ? stream.endpoint.replace(/^wss:\/\//, '') : '';
@@ -446,24 +709,94 @@ function endReplay() {
   }
 }
 
-function cancelReplay() {
-  if (!replay.active) return;
-  ui.logMessage('Replay cancelled — back to live.');
-  replay.active = false;
-  replay.wake?.();
+// ---------------------------------------------------------------------------
+// Inspector
+// ---------------------------------------------------------------------------
+
+function inspect(event, item = event?.scoreItem ?? null) {
+  if (!event || event.kind !== 'tx') return;
+  const s = session.active;
+  const ctx = {};
+  if (s && item) {
+    ctx.item = item;
+    ctx.index = item.n;
+    ctx.total = s.score.events.length;
+    const hash = event.hash ? event.hash.toUpperCase() : null;
+    ctx.annotations = s.score.annotations.filter((a) => a.eventN === item.n || (hash && a.anchor.hash === hash));
+  }
+  ui.inspector.show(event, ctx);
 }
 
-function shareUrl() {
-  // Live index first; after a replay ends there is no live ledger until the next close, so fall back to the last replayed one.
-  const index = replay.active ? replay.ledgerIndex : (ledgerState.index ?? replay.ledgerIndex);
+function inspectNeighbour(item, delta) {
+  const s = session.active;
+  if (!s) return;
+  const next = s.score.events[item.n + delta];
+  if (next) inspect(next.event, next);
+}
+
+canvas.addEventListener('click', (e) => {
+  if (query.mode === 'overlay') return;
+  const p = viz.hitTest(e.clientX, e.clientY);
+  if (p?.event) inspect(p.event);
+});
+
+// ---------------------------------------------------------------------------
+// Case files, links, transcript, share
+// ---------------------------------------------------------------------------
+
+async function loadCaseFile(file) {
+  try {
+    const raw = JSON.parse(await file.text());
+    openCase(raw, 'file', `file ${file.name}`);
+  } catch (err) {
+    ui.logMessage(`Could not read ${file.name}: ${err?.message ?? err}`, 'error');
+  }
+}
+
+function saveCase() {
+  const c = currentCase();
+  if (!c) return;
+  downloadBlob(new Blob([serializeCase(c)], { type: 'application/json' }), caseFilename(c));
+  ui.logMessage(`Saved ${caseFilename(c)}.`);
+}
+
+async function caseLink(c) {
+  return `${SITE_URL}${c.network !== 'mainnet' ? `?network=${c.network}` : ''}${buildHash({ case: await encodeCase(c) })}`;
+}
+
+async function copyCaseLink() {
+  const c = currentCase();
+  if (!c) return;
+  const url = await caseLink(c);
+  try {
+    await navigator.clipboard.writeText(url);
+    ui.logMessage(`Copied a link to ${caseTitle(c)} (${url.length} characters).`);
+  } catch (err) {
+    console.warn('[xrpl-sonic] clipboard unavailable', err);
+    ui.logMessage(`Could not copy — link: ${url}`, 'error');
+  }
+}
+
+function saveTranscript() {
+  const s = session.active;
+  if (!s) return;
+  const name = `${s.case.id}.transcript.txt`;
+  downloadBlob(new Blob([transcript(s.score, s.case)], { type: 'text/plain' }), name);
+  ui.logMessage(`Saved ${name}.`);
+}
+
+/** What Share copies: a loaded case whole, otherwise network + cast + the ledger playing now. */
+async function shareUrl() {
+  const c = session.active?.case ?? session.pending;
+  if (c && c.source !== 'replay') return caseLink(currentCase());
+  const index = session.active ? session.active.score.ledgers.find((l) => l.timeMs <= session.active.transport.positionNow())?.ledgerIndex ?? session.active.case.clips[0].from : ledgerState.index;
   if (index == null) return null;
-  // The link carries everything needed to hear the same thing: network, cast and the ledger.
-  const query = settings.network !== 'mainnet' ? `?network=${settings.network}` : '';
-  return `${SITE_URL}${query}${buildHash({ cast: settings.cast.length ? formatCastSpec(settings.cast) : '', replay: String(index) })}`;
+  const q = settings.network !== 'mainnet' ? `?network=${settings.network}` : '';
+  return `${SITE_URL}${q}${buildHash({ cast: settings.cast.length ? formatCastSpec(settings.cast) : '', replay: String(index) })}`;
 }
 
 async function share() {
-  const url = shareUrl();
+  const url = await shareUrl();
   if (!url) {
     ui.logMessage('Nothing to share yet — press Start and wait for a ledger to close.', 'error');
     return;
@@ -471,7 +804,7 @@ async function share() {
   try {
     await navigator.clipboard.writeText(url);
     ui.setShared(true);
-    ui.logMessage(`Copied ${url}`);
+    ui.logMessage(`Copied ${url.length > 120 ? `${url.slice(0, 80)}… (${url.length} characters)` : url}`);
   } catch (err) {
     console.warn('[xrpl-sonic] clipboard unavailable', err);
     ui.logMessage(`Could not copy — link: ${url}`, 'error');
@@ -483,7 +816,12 @@ async function share() {
 // ---------------------------------------------------------------------------
 
 function currentLedgerIndex() {
-  return replay.active ? replay.ledgerIndex : ledgerState.index;
+  if (session.active) {
+    const pos = session.active.transport.positionNow();
+    const at = session.active.score.ledgers.filter((l) => l.timeMs <= pos).at(-1);
+    return at?.ledgerIndex ?? session.active.case.clips[0].from;
+  }
+  return ledgerState.index;
 }
 
 function txInLastMinute() {
@@ -540,14 +878,14 @@ async function record({ seconds = RECORD_SECONDS, download = true } = {}) {
   }
 }
 
-// Metronome + tx/s readout, driven from the visualiser's frame loop.
+// ---------------------------------------------------------------------------
+// Frame loop, gestures, keyboard
+// ---------------------------------------------------------------------------
+
 let lastReadout = 0;
 viz.onFrame = (ts) => {
+  activeTransport()?.tick();
   if (ledgerState.lastCloseAt) ui.setMetronome((ts - ledgerState.lastCloseAt) / 1000 / ledgerState.interval);
-  if (replay.active && replay.total) {
-    const within = ledgerState.lastCloseAt ? Math.min(1, (ts - ledgerState.lastCloseAt) / 1000 / ledgerState.interval) : 0;
-    ui.setReplayProgress((replay.done + within) / replay.total, replay.ledgerIndex, replay.done, replay.total);
-  }
   if (ts - lastReadout > 500) {
     lastReadout = ts;
     while (recentTx.length && ts - recentTx[0] > 5000) recentTx.shift();
@@ -563,35 +901,70 @@ const resumeOnGesture = () => {
 window.addEventListener('pointerdown', resumeOnGesture, { passive: true });
 window.addEventListener('keydown', resumeOnGesture);
 
-// Pause rendering when hidden; the socket stays up so the log keeps flowing.
+// Pause rendering when hidden; the socket stays up so the log keeps flowing. The transport keeps
+// its own clock, so a case continues to advance (and sound) while the tab is hidden.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) viz.stop();
   else if (running) viz.start();
 });
+let hiddenTicker = 0;
+document.addEventListener('visibilitychange', () => {
+  clearInterval(hiddenTicker);
+  if (document.hidden) hiddenTicker = setInterval(() => activeTransport()?.tick(), 100);
+});
 
-// Keyboard: Space toggles, M mutes (when focus is not in a control). Not in overlay mode,
-// where any key is only the gesture that unlocks audio.
+// Keyboard: Space toggles, M mutes; with a case loaded K play/pause, , and . step, L loops,
+// [ and ] set loop points, Home seeks to the start, Esc closes the inspector. Not in overlay
+// mode, where any key is only the gesture that unlocks audio, and not inside a control.
 window.addEventListener('keydown', (e) => {
   if (query.mode === 'overlay') return;
   const tag = e.target?.tagName;
-  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
   if (e.code === 'Space') {
+    if (tag === 'BUTTON') return; // Space activates the focused button; leave it alone
     e.preventDefault();
     running ? stop() : start();
-  } else if (e.key === 'm' || e.key === 'M') {
+    return;
+  }
+  if (e.key === 'm' || e.key === 'M') {
     settings.muted = !settings.muted;
     saveSettings(settings);
     engine.setMuted(settings.muted);
     ui.applySettings();
+    return;
   }
+  if (e.key === 'Escape') {
+    ui.inspector.hide();
+    return;
+  }
+  const t = activeTransport();
+  if (!t) return;
+  if (e.key === 'k' || e.key === 'K') t.toggle();
+  else if (e.key === '.') t.step();
+  else if (e.key === ',') t.stepBack();
+  else if (e.key === 'l' || e.key === 'L') loopToggle();
+  else if (e.key === '[') loopPoint('in');
+  else if (e.key === ']') loopPoint('out');
+  else if (e.key === 'Home') t.seek(0);
+  else return;
+  e.preventDefault();
 });
+
+// ---------------------------------------------------------------------------
+// Boot
+// ---------------------------------------------------------------------------
 
 ui.setStatus('idle', 'Ready', null);
 ui.setLedger(null, null);
 ui.setCast(settings.cast);
 for (const err of urlState.errors) ui.logMessage(err, 'error');
-if (urlState.replay && !replay.range) ui.logMessage(`Ignoring invalid replay range in URL: ${urlState.replay.slice(0, 24)}`, 'error');
-ui.setReplayPending(replay.range);
+if (urlState.case) {
+  decodeCase(urlState.case)
+    .then((raw) => openCase(raw, 'case', 'the link'))
+    .catch((err) => ui.logMessage(`Could not read the case in the link: ${err?.message ?? err}`, 'error'));
+} else if (urlState.replay) {
+  armReplayFromUrl(urlState.replay);
+}
 if (settings.cast.length) ui.logMessage(castSummary());
 viz.start();
 
@@ -603,13 +976,15 @@ window.xrplSonic = {
   engine,
   viz,
   settings,
+  session,
   preview,
   query,
   start,
   stop,
   stats,
-  replay,
   shareUrl,
+  openCase: (raw) => openCase(raw, 'case', 'the console'),
+  transport: () => activeTransport(),
   capture: { support: capture, snapshot, record, stop: () => recording?.stop() },
   get stream() {
     return stream;

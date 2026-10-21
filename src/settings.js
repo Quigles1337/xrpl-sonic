@@ -17,6 +17,9 @@ export const DEFAULT_SETTINGS = Object.freeze({
   includeFailed: false,
   enabled: Object.freeze(Object.fromEntries(CATEGORY_NAMES.map((c) => [c, true]))),
   showLog: true,
+  captions: true, // text equivalent of annotations, gaps and cast events during a case
+  speak: false, // read annotations aloud (Web Speech), independent of the sound
+  pauseAtNotes: true, // honour annotations that ask the transport to pause
   cast: Object.freeze([]), // followed accounts (src/cast.js); solo and mute are live controls and are not persisted
   castMode: 'all', // transactions that involve nobody in the cast: 'all' (play) | 'mute' (dim, silent) | 'hide'
   explorer: DEFAULT_EXPLORER,
@@ -53,6 +56,7 @@ export function sanitizeSettings(input) {
     }
   }
   if (typeof input.showLog === 'boolean') s.showLog = input.showLog;
+  for (const k of ['captions', 'speak', 'pauseAtNotes']) if (typeof input[k] === 'boolean') s[k] = input[k];
   const mode = input.castMode ?? input.accountMode; // accountMode: the key from before the cast existed
   if (typeof mode === 'string' && CAST_MODES[mode]) s.castMode = mode;
   s.cast = normalizeCast(input.cast).map((m) => ({ ...m, solo: false, muted: false }));
