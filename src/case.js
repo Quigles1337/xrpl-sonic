@@ -297,6 +297,35 @@ export async function decodeCase(str) {
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 
+// ---------------------------------------------------------------------------
+// Annotation editing: each returns a new, validated case (never mutates).
+// ---------------------------------------------------------------------------
+
+function fresh(c) {
+  return validateCase(JSON.parse(serializeCase(c))).case;
+}
+
+/** Add an annotation; a missing id is generated. Returns { case, annotation } or { case: null, errors } when it was dropped. */
+export function addAnnotation(c, annotation) {
+  const before = new Set((c.annotations ?? []).map((a) => a.id));
+  const next = fresh({ ...c, annotations: [...(c.annotations ?? []), annotation] });
+  const added = next?.annotations.find((a) => !before.has(a.id)) ?? null;
+  if (!next || !added) return { case: null, annotation: null, errors: ['the note was dropped: it needs text and an anchor (hash, ledger or timeMs)'] };
+  return { case: next, annotation: added, errors: [] };
+}
+
+/** Patch an annotation's text, source, status, pause or anchor. */
+export function updateAnnotation(c, id, patch) {
+  const annotations = (c.annotations ?? []).map((a) => (a.id === id ? { ...a, ...patch, id } : a));
+  const next = fresh({ ...c, annotations });
+  return next ?? c;
+}
+
+export function removeAnnotation(c, id) {
+  const next = fresh({ ...c, annotations: (c.annotations ?? []).filter((a) => a.id !== id) });
+  return next ?? c;
+}
+
 /** File name for a case download. */
 export function caseFilename(c) {
   return `${slug(c?.id, 'case')}.sonic-case.json`;

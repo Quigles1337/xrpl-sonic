@@ -146,6 +146,11 @@ export class Visualizer {
     this.reduced = Boolean(on);
   }
 
+  /** Blind comparison: keep the plate but hide the ledger number stamped behind it. */
+  setBlind(on) {
+    this.blind = Boolean(on);
+  }
+
   rgb(hex) {
     let v = this.rgbCache.get(hex);
     if (!v) {
@@ -457,7 +462,7 @@ export class Visualizer {
         ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = 'source-over';
       }
-      if (this.stamp) this.drawStamp(w, h);
+      if (this.stamp && !this.blind) this.drawStamp(w, h);
     }
 
     // --- rings (ledger pulse, Cherenkov rings, escrow releases) ------------

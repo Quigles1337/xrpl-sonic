@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { MAPPING_VERSION } from '../src/mapping.js';
-import { CASE_FORMAT, CASE_VERSION, MAX_CASE_LEDGERS, defaultCase, validateCase, caseFromState, serializeCase, encodeCase, decodeCase, caseLedgerCount, caseFilename } from '../src/case.js';
+import { CASE_FORMAT, CASE_VERSION, MAX_CASE_LEDGERS, defaultCase, validateCase, caseFromState, serializeCase, encodeCase, decodeCase, caseLedgerCount, caseFilename, addAnnotation, updateAnnotation, removeAnnotation } from '../src/case.js';
 
 const A = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
 const B = 'rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z';
@@ -154,5 +154,38 @@ describe('serialisation and links', () => {
   test('caseFilename', () => {
     assert.equal(caseFilename({ id: 'my-case' }), 'my-case.sonic-case.json');
     assert.equal(caseFilename(null), 'case.sonic-case.json');
+  });
+});
+
+describe('annotation editing', () => {
+  test('addAnnotation returns a new validated case and the added note; the original is untouched', () => {
+    const { case: c } = validateCase(sample());
+    const r = addAnnotation(c, { anchor: { timeMs: 50 }, text: 'Added', pause: true });
+    assert.deepEqual(r.errors, []);
+    assert.equal(r.case.annotations.length, 4);
+    assert.equal(r.annotation.text, 'Added');
+    assert.equal(r.annotation.pause, true);
+    assert.match(r.annotation.id, /^a\d+$/);
+    assert.equal(c.annotations.length, 3, 'input not mutated');
+    const bad = addAnnotation(c, { text: 'no anchor' });
+    assert.equal(bad.case, null);
+    assert.match(bad.errors[0], /needs text and an anchor/);
+  });
+
+  test('updateAnnotation patches text, status, pause and anchor; removeAnnotation drops by id', () => {
+    const { case: c } = validateCase(sample());
+    const u = updateAnnotation(c, 'first', { text: 'Edited', status: 'draft', pause: false, anchor: { ledger: 100 } });
+    const a = u.annotations.find((x) => x.id === 'first');
+    assert.equal(a.text, 'Edited');
+    assert.equal(a.status, 'draft');
+    assert.equal(a.pause, false);
+    assert.deepEqual(a.anchor, { ledger: 100 });
+    assert.equal(updateAnnotation(c, 'nope', { text: 'x' }).annotations.length, 3);
+    const r = removeAnnotation(c, 'first');
+    assert.deepEqual(
+      r.annotations.map((x) => x.id),
+      ['a2', 'a3'],
+    );
+    assert.equal(c.annotations.length, 3);
   });
 });

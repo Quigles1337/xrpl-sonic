@@ -83,6 +83,20 @@ Click any line on the tape, or any track on the plate, to open the **inspector**
 
 A **case** is a small JSON file that describes a listening: the network, one or more ledger windows (clips), the cast, the filters and mapping, the speed, and annotations anchored to a transaction, a ledger or a position on the timeline. **Settings → Case** loads one, saves the current one, copies a link that carries it (`#case=`), and saves the **transcript**, a text version of the whole score with every ledger, gap, event and annotation at its time. Changing the scale, key, filters or cast while a case plays rebuilds the score in place, so the file and the link always describe what you are hearing. The silence between clips is explicit: a gap is announced on the tape, in the captions and as a contracting dashed ring on the plate. The format is documented in [docs/case-format.md](docs/case-format.md); the same case and ledgers always give the same score, and a recording (**Capture**) preserves a particular performance.
 
+**Notes.** A case's annotations are edited in place: **Note here** adds one at the current position, **Annotate** in the inspector anchors one to that transaction, and each note in the list can be edited (text, source, draft or reviewed, pause) or deleted; clicking its time jumps to it. Every change rebuilds the score and the link.
+
+A sample case built from real mainnet ledgers ships with the page: [docs/cases/busiest-senders-107777809.sonic-case.json](docs/cases/busiest-senders-107777809.sonic-case.json), the two accounts that submitted the most transactions across ledgers 107777809–107777811, each with its own voice, and annotations that state only counts taken from the ledgers. Load it with **Settings → Case → Load file**, or open it directly:
+
+```
+https://quigles1337.github.io/xrpl-sonic/?case=docs/cases/busiest-senders-107777809.sonic-case.json
+```
+
+`?case=` accepts a relative `.json` path under the site only; once loaded, the case travels in `#case=` like any other.
+
+## Compare two windows
+
+A case with two or more clips gets **A**, **B**, … buttons in the transport: each plays that clip on a loop, so a listener can go back and forth between, say, a quiet window and a busy one, or the same account before and after something changed. **All** returns to the whole case. **Blind comparison** (Settings → Case) keeps the plate and the sound but hides ledger numbers, the tape, the notes and the captions, so the comparison is made by ear and the labels are revealed only afterwards. Two windows with very different transaction counts will always sound different; the useful comparisons hold the mapping, the speed, the filters and the cast fixed and ask whether a particular pattern can be found.
+
 **Captions** show annotations, gaps and cast events as text; **Speak annotations** reads each note aloud through the browser's speech synthesis, independent of the instrument's sound; **Pause at annotations** honours notes that ask for it. The page respects `prefers-reduced-motion` (tracks still appear, without drift, overshoot or flashes), and every control is reachable from the keyboard.
 
 ## Overlay and embed

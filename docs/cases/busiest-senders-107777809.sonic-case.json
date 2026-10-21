@@ -1,0 +1,95 @@
+{
+  "format": "xrpl-sonic/case",
+  "version": 1,
+  "id": "busiest-senders-107777809",
+  "title": "The two busiest senders, ledgers #107,777,809–#107,777,811",
+  "description": "The two accounts that submitted the most transactions across ledgers 107777809–107777811 on mainnet, each with its own voice and side of the stereo field. The annotations state counts taken from the ledgers themselves.",
+  "network": "mainnet",
+  "clips": [
+    {
+      "from": 107777809,
+      "to": 107777811
+    }
+  ],
+  "cast": [
+    {
+      "address": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+      "label": "Sender A",
+      "voice": "brass",
+      "pan": -0.6,
+      "colour": "#ffffff"
+    },
+    {
+      "address": "r33SNW2rSBkXGmn84FSKSY4RG4FJ7fUVhk",
+      "label": "Sender B",
+      "voice": "glass",
+      "pan": 0.6,
+      "colour": "#ffb3c6"
+    }
+  ],
+  "filters": {
+    "enabled": {
+      "payment": true,
+      "offer": true,
+      "trust": true,
+      "nft": true,
+      "escrow": true,
+      "paychan": true,
+      "amm": true,
+      "other": true
+    },
+    "includeFailed": false,
+    "quietThreshold": 0,
+    "castMode": "all"
+  },
+  "mapping": {
+    "version": "1.1.0",
+    "scale": "pentatonicMajor",
+    "key": "C"
+  },
+  "timing": {
+    "speed": 1
+  },
+  "annotations": [
+    {
+      "id": "open",
+      "anchor": {
+        "ledger": 107777809
+      },
+      "text": "Ledger #107,777,809 opens the window: 84 transactions, 60 of them OfferCreate.",
+      "source": "counted from the ledger",
+      "status": "reviewed",
+      "pause": false
+    },
+    {
+      "id": "member-1",
+      "anchor": {
+        "hash": "0176B15458AF71EDF66D5C679FDBDCD360EB1602ECB7925352858D081287FE63"
+      },
+      "text": "Sender A (rBTw…jjah) submitted 50 transactions in this window (50 OfferCreate). In ledger #107,777,809 it submitted 25 of 84 transactions; that ledger held 60 OfferCreate in all.",
+      "source": "counted from the ledgers",
+      "status": "reviewed",
+      "pause": true
+    },
+    {
+      "id": "member-2",
+      "anchor": {
+        "hash": "110AF9924A2EF45A6E398DE26EF6102EE851C9999954333BE9695757B252002B"
+      },
+      "text": "Sender B (r33S…UVhk) submitted 29 transactions in this window (24 NFTokenCreateOffer, 3 Batch, 1 TicketCreate). In ledger #107,777,811 it submitted 28 of 99 transactions; that ledger held 50 OfferCreate in all.",
+      "source": "counted from the ledgers",
+      "status": "reviewed",
+      "pause": false
+    },
+    {
+      "id": "close",
+      "anchor": {
+        "ledger": 107777811
+      },
+      "text": "Ledger #107,777,811 closes the window with 99 transactions. Counts say who appeared in the record, not what they gained or whether orders filled.",
+      "source": "counted from the ledger",
+      "status": "reviewed",
+      "pause": false
+    }
+  ]
+}

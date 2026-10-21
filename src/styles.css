@@ -887,6 +887,185 @@ a.cast-chip:hover {
   margin-bottom: 8px;
 }
 
+/* Notes */
+.notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0 6px;
+}
+
+.notes-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.notes {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notes.hidden {
+  display: none;
+}
+
+.note {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--warn);
+  border-radius: var(--radius);
+  background: rgba(140, 170, 220, 0.04);
+  font-size: 12px;
+}
+
+.note.reviewed {
+  border-left-color: var(--ok);
+}
+
+.note.pause {
+  border-right: 2px solid var(--accent-2, #f72585);
+}
+
+.note-time {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  align-self: start;
+}
+
+.note-time:hover {
+  text-decoration: underline;
+}
+
+.note-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.note-text {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  color: var(--text);
+  cursor: text;
+  font: inherit;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.note-text:hover {
+  color: var(--accent);
+}
+
+.note-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.note.editing {
+  grid-template-columns: 1fr;
+}
+
+.note-edit-text {
+  width: 100%;
+  resize: vertical;
+  background: rgba(140, 170, 220, 0.06);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.note-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.note-edit-source {
+  flex: 1;
+  min-width: 100px;
+  background: rgba(140, 170, 220, 0.06);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.note-edit-status {
+  background: rgba(140, 170, 220, 0.06);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.note-pause {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.btn.small.danger {
+  border-color: color-mix(in srgb, var(--err) 50%, transparent);
+  color: var(--err);
+}
+
+/* Clip buttons for comparisons */
+.t-clips.hidden {
+  display: none;
+}
+
+.t-clip[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+/* Blind comparison: hear the windows, see nothing that names them. */
+body.blind .ledger-index,
+body.blind .log-wrap,
+body.blind .notes,
+body.blind .notes-head,
+body.blind .captions,
+body.blind .inspector,
+body.blind .t-label,
+body.blind .t-clock,
+body.blind .t-marks .mark.note {
+  visibility: hidden;
+}
+
+body.blind .topbar::before {
+  background: linear-gradient(90deg, transparent, var(--warn) 25%, var(--warn) 75%, transparent);
+}
+
 /* ------------------------------------------------------------------ panel */
 
 .panel {

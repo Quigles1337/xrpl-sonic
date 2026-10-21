@@ -151,6 +151,20 @@ export function buildScore(theCase, ledgers) {
   return score;
 }
 
+/** The time range each clip occupies on the score's timeline, for A/B comparison and clip loops. */
+export function clipRanges(score) {
+  const out = [];
+  for (const l of score?.ledgers ?? []) {
+    const r = out[l.clip];
+    if (!r) out[l.clip] = { clip: l.clip, fromMs: l.timeMs, toMs: l.timeMs + l.intervalMs, ledgers: 1 };
+    else {
+      r.toMs = Math.max(r.toMs, l.timeMs + l.intervalMs);
+      r.ledgers += 1;
+    }
+  }
+  return out.filter(Boolean);
+}
+
 /** mm:ss.mmm for a score position. */
 export function formatClock(ms) {
   const t = Math.max(0, Math.round(Number(ms) || 0));
