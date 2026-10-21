@@ -20,6 +20,8 @@ import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
 import { Geiger } from './geiger.js';
 import { FEE_COMMAND, SERVER_SUBSCRIBE, parseFee, parseServerStatus, pressureTone, isFresh } from './health.js';
+import { scoreToMidi, midiFilename } from './midi.js';
+import { MidiOut } from './midi-out.js';
 import {
   RECORD_SECONDS,
   captureSupport,
@@ -88,6 +90,7 @@ const viz = new Visualizer(canvas, { transparent: query.mode === 'overlay', redu
 viz.setExposure(settings.exposure);
 reducedMotion.addEventListener?.('change', (e) => viz.setReduced(e.matches));
 const engine = new AudioEngine({ volume: settings.volume, muted: settings.muted });
+const midiOut = new MidiOut();
 
 let stream = null;
 let running = false;
@@ -153,6 +156,11 @@ const ui = createUI({
     onPrev: (item) => inspectNeighbour(item, -1),
     onNext: (item) => inspectNeighbour(item, +1),
     onAnnotate: (event, item) => annotateEvent(event, item),
+  },
+  midiActions: {
+    onSave: () => saveMidi(),
+    onConnect: () => connectMidi(),
+    onSelect: (id) => selectMidi(id),
   },
   healthActions: {
     onChange: (patch) => {
@@ -326,6 +334,7 @@ function onLedger(ev, intervalSeconds) {
   engine.setLedgerInterval(ledgerState.interval);
   if (ev.txnCount) engine.setExpectedCount(ev.txnCount);
   engine.tick(ev);
+  if (midiOut.active) midiOut.pulse(0);
   viz.ledger(ev);
   ui.setLedger(ev.ledgerIndex, ledgerState.interval);
   ui.log(ev);
@@ -336,6 +345,47 @@ function onLedger(ev, intervalSeconds) {
 function gateFor(msg) {
   const involvement = castFor(msg, settings.cast);
   return { gate: castGate(involvement, settings.cast, settings.castMode), involvement };
+}
+
+// ---------------------------------------------------------------------------
+// MIDI: the score as a file, and live output
+// ---------------------------------------------------------------------------
+
+function saveMidi() {
+  const s = session.active;
+  if (!s) return;
+  const bytes = scoreToMidi(s.score, s.case);
+  const name = midiFilename(s.case, s.score);
+  downloadBlob(new Blob([bytes], { type: 'audio/midi' }), name);
+  ui.logMessage(`Saved ${name} (${Math.round(bytes.length / 1024)} kB, ${s.score.counts.played} notes plus the ledger pulse).`);
+}
+
+async function connectMidi() {
+  try {
+    const list = await midiOut.connect();
+    midiOut.onChange = (outputs) => {
+      ui.midiPanel.setOutputs(outputs, midiOut.output?.id ?? '');
+      if (midiOut.output && !outputs.some((o) => o.id === midiOut.output.id)) {
+        midiOut.select(null);
+        ui.logMessage('MIDI output disconnected.', 'error');
+      }
+    };
+    const preferred = list.find((o) => o.name === settings.midiOutput);
+    if (preferred) selectMidi(preferred.id, { quiet: true });
+    ui.midiPanel.setOutputs(list, midiOut.output?.id ?? '');
+    ui.logMessage(list.length ? `MIDI: ${list.length} output${list.length === 1 ? '' : 's'} available${preferred ? `, sending to ${preferred.name}` : ''}.` : 'MIDI: no outputs found.');
+  } catch (err) {
+    ui.logMessage(`MIDI: ${err?.message ?? err}`, 'error');
+    ui.midiPanel.setStatus(`Could not connect: ${err?.message ?? err}`);
+  }
+}
+
+function selectMidi(id, { quiet = false } = {}) {
+  const chosen = midiOut.select(id);
+  settings.midiOutput = chosen?.name ?? '';
+  saveSettings(settings);
+  if (!quiet) ui.logMessage(chosen ? `MIDI: sending to ${chosen.name}.` : 'MIDI: live output off.');
+  ui.midiPanel.setOutputs(midiOut.outputs(), chosen?.id ?? '');
 }
 
 // ---------------------------------------------------------------------------
@@ -496,6 +546,7 @@ function onTransaction(msg) {
     return;
   }
   if (audible) stats.played += 1;
+  if (midiOut.active) midiOut.play({ event: ev, primary: ev.primary ?? null, gate: 'play' }, delay);
   schedule(() => {
     viz.spawn(ev);
     ui.log(ev);
@@ -765,6 +816,7 @@ async function runCase(theCase) {
   session.loop = null;
   ui.transport.setScore(score, caseTitle(theCase));
   ui.transport.setLoop(null);
+  ui.midiPanel.setScoreAvailable(true);
   ui.casePanel.setCase(theCase, score, result.failures.length ? [`${result.failures.length} ledger${result.failures.length === 1 ? '' : 's'} could not be fetched: ${result.failures.map((f) => `${fmt(f.index)} (${f.error})`).join(', ')}`] : []);
   for (const f of result.failures) ui.logMessage(`Ledger ${fmt(f.index)} could not be fetched: ${f.error}`, 'error');
   for (const w of score.warnings) ui.logMessage(w, 'error');
@@ -803,6 +855,7 @@ function onScoreEvent(item, offsetSec) {
   const dropped = audible && delay < 0;
   if (dropped) stats.dropped += 1;
   else if (audible) stats.played += 1;
+  if (midiOut.active && !dropped) midiOut.play(item, offsetSec);
   schedule(
     () => {
       const now = performance.now();
@@ -851,6 +904,7 @@ function onTransportState(state, detail) {
   ui.transport.setState(state, detail);
   if (state !== 'playing') {
     clearPending();
+    midiOut.allNotesOff();
     if (state === 'ended') hush();
   }
   ui.setStatus('connected', caseStatusText(), undefined);
@@ -1042,6 +1096,8 @@ function endSession({ quiet = false } = {}) {
   clearPending();
   hush();
   ui.transport.setActive(false);
+  ui.midiPanel.setScoreAvailable(false);
+  midiOut.allNotesOff();
   ui.casePanel.setCase(session.pending && !quiet ? session.pending : null, null);
   ui.inspector.hide();
   if (running && stream) {
@@ -1352,6 +1408,7 @@ window.xrplSonic = {
   setBlind,
   geiger,
   health,
+  midi: midiOut,
   transport: () => activeTransport(),
   capture: { support: capture, snapshot, record, stop: () => recording?.stop() },
   get stream() {

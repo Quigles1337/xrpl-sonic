@@ -16,6 +16,7 @@ import { createTransportUI } from './ui-transport.js';
 import { createInspector } from './ui-inspector.js';
 import { createGeigerPanel } from './ui-geiger.js';
 import { createHealthPanel } from './ui-health.js';
+import { createMidiPanel } from './ui-midi.js';
 
 const MAX_LOG_LINES = 80;
 
@@ -40,9 +41,10 @@ function stamp() {
  * @param {object} [args.inspector]   callbacks for the inspector (see ui-inspector.js)
  * @param {object} [args.geigerActions] callbacks for the Geiger group (see ui-geiger.js)
  * @param {object} [args.healthActions] callbacks for the Node group (see ui-health.js)
+ * @param {object} [args.midiActions]   callbacks for the MIDI group (see ui-midi.js)
  * @param {{ recording: boolean, mimeType: string|null }} [args.capture]  what the browser supports
  */
-export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, capture }) {
+export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, capture }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -186,6 +188,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
   const casePanel = createCasePanel({ settings, ...(caseActions ?? {}) });
   const geigerPanel = createGeigerPanel({ settings, ...(geigerActions ?? {}) });
   const healthPanel = createHealthPanel({ settings, ...(healthActions ?? {}) });
+  const midiPanel = createMidiPanel({ settings, ...(midiActions ?? {}) });
 
   const snapshotBtn = el('button', { type: 'button', class: 'btn', id: 'snapshot', text: 'Snapshot', title: 'Save the scene as a PNG with a stats overlay', onclick: () => onSnapshot?.() });
   const recordBtn = el('button', {
@@ -241,6 +244,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
     casePanel.root,
     geigerPanel.root,
     healthPanel.root,
+    midiPanel.root,
     el('section', { class: 'group' }, [
       el('h2', { text: 'Capture' }),
       el('div', { class: 'buttons' }, [snapshotBtn, recordBtn]),
@@ -281,6 +285,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onSnapshot,
     casePanel,
     geigerPanel,
     healthPanel,
+    midiPanel,
 
     setRunning(running) {
       document.body.classList.toggle('running', running);
