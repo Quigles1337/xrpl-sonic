@@ -1,0 +1,151 @@
+{
+  "network": "mainnet",
+  "hash": "6098DC0F3F60018173C6FDCE95A79806F821BA59BED088E5F4A301C209547D4E",
+  "ledgerIndex": 107811687,
+  "case": "OfferCreate filled by AMM liquidity alone; the pool AccountRoot carries AMMID",
+  "source": {
+    "file": "amm-fill.json",
+    "command": {
+      "command": "tx",
+      "transaction": "6098DC0F3F60018173C6FDCE95A79806F821BA59BED088E5F4A301C209547D4E",
+      "binary": false
+    }
+  },
+  "expect": {
+    "transaction": {
+      "type": "OfferCreate",
+      "account": "rEqYHwNakMkL5FVVewd1cBUNs6EphiNLNF",
+      "result": "tesSUCCESS",
+      "fee": "0",
+      "flags": [
+        "tfImmediateOrCancel",
+        "tfInnerBatchTxn",
+        "tfSell"
+      ]
+    },
+    "offers": {},
+    "headline": "rEqY…NLNF offered 0.07116 XRP for 720.31 welth (rDSE…iFv7); filled by an AMM pool; filled entirely: sold all 0.07116 XRP for 72,141 welth, above the 720.31 welth asked; immediate-or-cancel.",
+    "exchange": {
+      "book": {
+        "crossed": [],
+        "bridged": "no"
+      },
+      "amm": {
+        "tier": "rule",
+        "pools": [
+          "raqingKXjHm5HrxAzHXMX6hXfxefiG1ADj"
+        ],
+        "received": {
+          "currency": "welth",
+          "code": "77656C7468000000000000000000000000000000",
+          "issuer": "rDSEfDcJ5UzQyK3UNmUDGvZT1Z7cmoiFv7",
+          "value": "72140.5686981"
+        },
+        "spent": {
+          "currency": "XRP",
+          "issuer": null,
+          "drops": "71160"
+        }
+      },
+      "received": {
+        "currency": "welth",
+        "code": "77656C7468000000000000000000000000000000",
+        "issuer": "rDSEfDcJ5UzQyK3UNmUDGvZT1Z7cmoiFv7",
+        "value": "72140.5686981"
+      },
+      "spent": {
+        "currency": "XRP",
+        "issuer": null,
+        "drops": "71160"
+      },
+      "fill": {
+        "status": "filled",
+        "judgedBy": "takerGets-spent",
+        "requested": {
+          "currency": "XRP",
+          "issuer": null,
+          "drops": "71160"
+        },
+        "achieved": {
+          "currency": "XRP",
+          "issuer": null,
+          "drops": "71160"
+        },
+        "placed": false,
+        "betterThanAsked": "yes"
+      },
+      "corroboration": {
+        "received": "exact",
+        "spent": "exact"
+      }
+    },
+    "balances": [
+      {
+        "account": "rDSEfDcJ5UzQyK3UNmUDGvZT1Z7cmoiFv7",
+        "currency": "welth",
+        "issuer": "rEqYHwNakMkL5FVVewd1cBUNs6EphiNLNF",
+        "exact": {
+          "before": "0",
+          "after": "-72140.5686981",
+          "delta": "-72140.5686981"
+        },
+        "node": 0
+      },
+      {
+        "account": "rEqYHwNakMkL5FVVewd1cBUNs6EphiNLNF",
+        "currency": "welth",
+        "issuer": "rDSEfDcJ5UzQyK3UNmUDGvZT1Z7cmoiFv7",
+        "exact": {
+          "before": "0",
+          "after": "72140.5686981",
+          "delta": "72140.5686981"
+        },
+        "node": 0
+      },
+      {
+        "account": "rEqYHwNakMkL5FVVewd1cBUNs6EphiNLNF",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "1122142103",
+          "after": "1122070943",
+          "delta": "-71160"
+        },
+        "node": 1
+      },
+      {
+        "account": "raqingKXjHm5HrxAzHXMX6hXfxefiG1ADj",
+        "currency": "welth",
+        "issuer": "rDSEfDcJ5UzQyK3UNmUDGvZT1Z7cmoiFv7",
+        "exact": {
+          "before": "361276294.1131352",
+          "after": "361204153.5444371",
+          "delta": "-72140.5686981"
+        },
+        "node": 5
+      },
+      {
+        "account": "rDSEfDcJ5UzQyK3UNmUDGvZT1Z7cmoiFv7",
+        "currency": "welth",
+        "issuer": "raqingKXjHm5HrxAzHXMX6hXfxefiG1ADj",
+        "exact": {
+          "before": "-361276294.1131352",
+          "after": "-361204153.5444371",
+          "delta": "72140.5686981"
+        },
+        "node": 5
+      },
+      {
+        "account": "raqingKXjHm5HrxAzHXMX6hXfxefiG1ADj",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "356230363",
+          "after": "356301523",
+          "delta": "71160"
+        },
+        "node": 6
+      }
+    ]
+  }
+}

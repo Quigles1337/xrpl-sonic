@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { EXPLORERS, EXPLORER_NAMES, DEFAULT_EXPLORER, explorerUrl } from '../src/explorers.js';
+import { EXPLORERS, EXPLORER_NAMES, DEFAULT_EXPLORER, explorerUrl, listenerUrl } from '../src/explorers.js';
 
 const HASH = '0176B15458AF71EDF66D5C679FDBDCD360EB1602ECB7925352858D081287FE63';
 const ADDR = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
@@ -41,5 +41,15 @@ describe('explorer links', () => {
     assert.equal(explorerUrl('xrpscan', 'mainnet', 'ledger', '12abc'), null);
     assert.equal(explorerUrl('xrpscan', 'mainnet', 'ledger', 0), null);
     assert.equal(explorerUrl('xrpscan', 'mainnet', 'token', 'x'), null);
+  });
+});
+
+describe('links from the explorer to the listening page', () => {
+  test('carry ?network=testnet in front of the hash, and nothing extra on mainnet', () => {
+    assert.equal(listenerUrl('mainnet', '#replay=107777809'), './#replay=107777809');
+    assert.equal(listenerUrl('testnet', '#replay=5'), './?network=testnet#replay=5');
+    assert.equal(listenerUrl('testnet', `#cast=${ADDR}~Maker`), `./?network=testnet#cast=${ADDR}~Maker`);
+    assert.equal(listenerUrl('mainnet', ''), './');
+    assert.equal(listenerUrl(undefined, '#replay=1'), './#replay=1');
   });
 });

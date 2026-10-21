@@ -1,0 +1,19 @@
+{
+  "result": {
+    "account": "r4dGHd2neMqSB5zxmyiCVCbFVAQNd5ud5m",
+    "ledger_index_min": 32570,
+    "ledger_index_max": 107811689,
+    "transactions": [],
+    "validated": true,
+    "limit": 20
+  },
+  "id": "xrpl-sonic-req-11",
+  "status": "success",
+  "type": "response",
+  "warnings": [
+    {
+      "id": 2001,
+      "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+    }
+  ]
+}

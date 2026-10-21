@@ -1,0 +1,343 @@
+{
+  "network": "mainnet",
+  "hash": "57F75F6F3F4D5EEEEAA061A807A9E02BD08CF39D9B9A3E144E45CFEC5D72775F",
+  "ledgerIndex": 107811658,
+  "case": "partially funded offers that trade what they hold and then disappear (in a Payment)",
+  "source": {
+    "file": "partially-funded-removed.json",
+    "command": {
+      "command": "tx",
+      "transaction": "57F75F6F3F4D5EEEEAA061A807A9E02BD08CF39D9B9A3E144E45CFEC5D72775F",
+      "binary": false
+    }
+  },
+  "expect": {
+    "transaction": {
+      "type": "Payment",
+      "account": "rwDv3B7YM6rg82LerxEHdVZRzUr6avGcsD",
+      "result": "tesSUCCESS",
+      "fee": "12",
+      "flags": [
+        "tfPartialPayment"
+      ]
+    },
+    "offers": {
+      "4": {
+        "action": "deleted",
+        "owner": "rGgGw8K4YTNPmsHdmWdoGs4ZNKdEbGqysu",
+        "sequence": 107124597,
+        "role": "book",
+        "traded": "yes",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "FUZZY",
+              "code": "46555A5A59000000000000000000000000000000",
+              "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+              "value": "6629465768.38286"
+            },
+            "after": {
+              "currency": "FUZZY",
+              "code": "46555A5A59000000000000000000000000000000",
+              "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+              "value": "6622836302.614477"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "402596869540"
+            },
+            "after": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "402194272671"
+            }
+          }
+        },
+        "tradedAmounts": {
+          "gave": {
+            "currency": "FUZZY",
+            "code": "46555A5A59000000000000000000000000000000",
+            "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+            "value": "6629465.768383"
+          },
+          "got": {
+            "currency": "XRP",
+            "issuer": null,
+            "drops": "402596869"
+          }
+        },
+        "removal": "traded-then-removed-unfunded",
+        "rules": [
+          "offer.removal.traded-unfunded"
+        ]
+      },
+      "12": {
+        "action": "modified",
+        "owner": "rJorxSQTwshe4DdJQL3r4nHiLEpGew8huV",
+        "sequence": 104610995,
+        "role": "book",
+        "traded": "yes",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "FUZZY",
+              "code": "46555A5A59000000000000000000000000000000",
+              "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+              "value": "40000000"
+            },
+            "after": {
+              "currency": "FUZZY",
+              "code": "46555A5A59000000000000000000000000000000",
+              "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+              "value": "34659661.35932871"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "2429257587"
+            },
+            "after": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "2104931133"
+            }
+          }
+        },
+        "tradedAmounts": {
+          "gave": {
+            "currency": "FUZZY",
+            "code": "46555A5A59000000000000000000000000000000",
+            "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+            "value": "5340338.64067129"
+          },
+          "got": {
+            "currency": "XRP",
+            "issuer": null,
+            "drops": "324326454"
+          }
+        },
+        "rules": [
+          "offer.modified.partial"
+        ]
+      },
+      "13": {
+        "action": "deleted",
+        "owner": "r44LyQ3UoTd1NzGKUin6QB5Hx6k38kog95",
+        "sequence": 107376101,
+        "role": "book",
+        "traded": "yes",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "FUZZY",
+              "code": "46555A5A59000000000000000000000000000000",
+              "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+              "value": "380013300"
+            },
+            "after": {
+              "currency": "FUZZY",
+              "code": "46555A5A59000000000000000000000000000000",
+              "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+              "value": "379633286.7"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "23076677693"
+            },
+            "after": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "23053601016"
+            }
+          }
+        },
+        "tradedAmounts": {
+          "gave": {
+            "currency": "FUZZY",
+            "code": "46555A5A59000000000000000000000000000000",
+            "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+            "value": "380013.3"
+          },
+          "got": {
+            "currency": "XRP",
+            "issuer": null,
+            "drops": "23076677"
+          }
+        },
+        "removal": "traded-then-removed-unfunded",
+        "rules": [
+          "offer.removal.traded-unfunded"
+        ]
+      }
+    },
+    "headline": "rwDv…GcsD sent 12,349,818 FUZZY (rhCA…pR62) to rwDv…GcsD, crossing 3 offers on the way. Partial payment allowed. Fee 12 drops.",
+    "exchange": {
+      "book": {
+        "crossed": [
+          4,
+          12,
+          13
+        ]
+      },
+      "request": {
+        "delivered": {
+          "currency": "FUZZY",
+          "code": "46555A5A59000000000000000000000000000000",
+          "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+          "value": "12349817.70905415"
+        }
+      },
+      "crossed": [
+        4,
+        12,
+        13
+      ],
+      "fill": null
+    },
+    "balances": [
+      {
+        "account": "rGgGw8K4YTNPmsHdmWdoGs4ZNKdEbGqysu",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "102925261",
+          "after": "505522130",
+          "delta": "402596869"
+        },
+        "node": 0
+      },
+      {
+        "account": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+        "currency": "FUZZY",
+        "issuer": "r44LyQ3UoTd1NzGKUin6QB5Hx6k38kog95",
+        "exact": {
+          "before": "-380013.3",
+          "after": "0",
+          "delta": "380013.3"
+        },
+        "node": 3
+      },
+      {
+        "account": "r44LyQ3UoTd1NzGKUin6QB5Hx6k38kog95",
+        "currency": "FUZZY",
+        "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+        "exact": {
+          "before": "380013.3",
+          "after": "0",
+          "delta": "-380013.3"
+        },
+        "node": 3
+      },
+      {
+        "account": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+        "currency": "FUZZY",
+        "issuer": "rwDv3B7YM6rg82LerxEHdVZRzUr6avGcsD",
+        "exact": {
+          "before": "-125443281.5438344",
+          "after": "-137793099.2528886",
+          "delta": "-12349817.7090542"
+        },
+        "node": 6
+      },
+      {
+        "account": "rwDv3B7YM6rg82LerxEHdVZRzUr6avGcsD",
+        "currency": "FUZZY",
+        "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+        "exact": {
+          "before": "125443281.5438344",
+          "after": "137793099.2528886",
+          "delta": "12349817.7090542"
+        },
+        "node": 6
+      },
+      {
+        "account": "rJorxSQTwshe4DdJQL3r4nHiLEpGew8huV",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "1754338",
+          "after": "326080792",
+          "delta": "324326454"
+        },
+        "node": 7
+      },
+      {
+        "account": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+        "currency": "FUZZY",
+        "issuer": "rGgGw8K4YTNPmsHdmWdoGs4ZNKdEbGqysu",
+        "exact": {
+          "before": "-6629465.768382857",
+          "after": "0",
+          "delta": "6629465.768382857"
+        },
+        "node": 8
+      },
+      {
+        "account": "rGgGw8K4YTNPmsHdmWdoGs4ZNKdEbGqysu",
+        "currency": "FUZZY",
+        "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+        "exact": {
+          "before": "6629465.768382857",
+          "after": "0",
+          "delta": "-6629465.768382857"
+        },
+        "node": 8
+      },
+      {
+        "account": "rwDv3B7YM6rg82LerxEHdVZRzUr6avGcsD",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "794087861",
+          "after": "44087849",
+          "delta": "-750000012"
+        },
+        "node": 9
+      },
+      {
+        "account": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+        "currency": "FUZZY",
+        "issuer": "rJorxSQTwshe4DdJQL3r4nHiLEpGew8huV",
+        "exact": {
+          "before": "-13685041.88974093",
+          "after": "-8344703.24906964",
+          "delta": "5340338.64067129"
+        },
+        "node": 10
+      },
+      {
+        "account": "rJorxSQTwshe4DdJQL3r4nHiLEpGew8huV",
+        "currency": "FUZZY",
+        "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+        "exact": {
+          "before": "13685041.88974093",
+          "after": "8344703.24906964",
+          "delta": "-5340338.64067129"
+        },
+        "node": 10
+      },
+      {
+        "account": "r44LyQ3UoTd1NzGKUin6QB5Hx6k38kog95",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "2399952",
+          "after": "25476629",
+          "delta": "23076677"
+        },
+        "node": 14
+      }
+    ]
+  },
+  "hypotheses": {
+    "H3": "confirmed twice: nodes 4 and 13 have PreviousFields and final amounts above zero; each owner's FUZZY line went to 0 (gave all it held) and its XRP rose by exactly got"
+  }
+}

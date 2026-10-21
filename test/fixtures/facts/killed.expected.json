@@ -1,0 +1,47 @@
+{
+  "network": "mainnet",
+  "hash": "04F79C2D27503F6809FA08A38E7C0D708FA2E517603BA75238AFA8C866A4F9A6",
+  "ledgerIndex": 107811686,
+  "case": "fill-or-kill that could not fill: tecKILLED, only the fee charged",
+  "source": {
+    "file": "killed.json",
+    "command": {
+      "command": "tx",
+      "transaction": "04F79C2D27503F6809FA08A38E7C0D708FA2E517603BA75238AFA8C866A4F9A6",
+      "binary": false
+    }
+  },
+  "expect": {
+    "transaction": {
+      "type": "OfferCreate",
+      "account": "rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z",
+      "result": "tecKILLED",
+      "fee": "10",
+      "flags": [
+        "tfFillOrKill"
+      ]
+    },
+    "offers": {},
+    "headline": "OfferCreate by rKNR…Ph7z failed: tecKILLED — The offer was killed: fill-or-kill or immediate-or-cancel could not be satisfied. Only the fee of 10 drops was charged.",
+    "exchange": {
+      "fill": {
+        "status": "none"
+      },
+      "received": null,
+      "spent": null
+    },
+    "balances": [
+      {
+        "account": "rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "13999120",
+          "after": "13999110",
+          "delta": "-10"
+        },
+        "node": 1
+      }
+    ]
+  }
+}

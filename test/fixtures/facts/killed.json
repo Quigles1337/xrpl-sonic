@@ -1,0 +1,88 @@
+{
+  "result": {
+    "Account": "rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z",
+    "Fee": "10",
+    "Flags": 262144,
+    "Sequence": 0,
+    "SigningPubKey": "ED72FD88591321C3017FEC1F4A3110F68D5017FE14BB7957B36821A94A3165B28B",
+    "TakerGets": "50000000",
+    "TakerPays": {
+      "currency": "41524D5900000000000000000000000000000000",
+      "issuer": "rGG3wQ4kUzd7Jnmk1n5NWPZjjut62kCBfC",
+      "value": "8135.7803915739"
+    },
+    "TicketSequence": 104382985,
+    "TransactionType": "OfferCreate",
+    "TxnSignature": "5246F07F023091DACF53B19D937D2ECDF8E313530A2D0B923FEA359CFFE173B6768A79363640902CBA6C4ED1B2421E01B11791965665C4864F6C77A01F3CAA03",
+    "hash": "04F79C2D27503F6809FA08A38E7C0D708FA2E517603BA75238AFA8C866A4F9A6",
+    "ctid": "C66D136601330000",
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexPrevious": "20",
+              "Owner": "rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z",
+              "RootIndex": "D880CFF95381C608AA11FD19B71B02DF018407C5EAC8A1DF35B92B73C308222E"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "B823CEFFEA4C9F418BD58B966FAD84568014D74DE584CFDF44BBA2E559AD4533",
+            "PreviousTxnID": "2ED8362414A1F6A51870F060344D73581F086F6722A02352CC3E2EF41A35B67B",
+            "PreviousTxnLgrSeq": 107811679
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z",
+              "Balance": "13999110",
+              "Flags": 0,
+              "OwnerCount": 48,
+              "Sequence": 104382987,
+              "TicketCount": 47
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "DFB55DE47511B116439003E8203D6BC98FD9ABCBBEADC11FA6C9FB39F232280B",
+            "PreviousFields": {
+              "Balance": "13999120",
+              "OwnerCount": 49,
+              "TicketCount": 48
+            },
+            "PreviousTxnID": "37316A57B554A19920555EEFD1571C43628B06F82628C1EFD35EE33A74412C7E",
+            "PreviousTxnLgrSeq": 107811685
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Account": "rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z",
+              "Flags": 0,
+              "OwnerNode": "21",
+              "PreviousTxnID": "2ED8362414A1F6A51870F060344D73581F086F6722A02352CC3E2EF41A35B67B",
+              "PreviousTxnLgrSeq": 107811679,
+              "TicketSequence": 104382985
+            },
+            "LedgerEntryType": "Ticket",
+            "LedgerIndex": "EFB0A4EDFF05B41F56FA054C8B12AC42FF84C35B4A7FE953A5FC1555674A7A8C"
+          }
+        }
+      ],
+      "TransactionIndex": 307,
+      "TransactionResult": "tecKILLED"
+    },
+    "validated": true,
+    "date": 845926210,
+    "ledger_index": 107811686,
+    "inLedger": 107811686
+  },
+  "id": "xrpl-sonic-req-316",
+  "status": "success",
+  "type": "response",
+  "warnings": [
+    {
+      "id": 2001,
+      "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+    }
+  ]
+}

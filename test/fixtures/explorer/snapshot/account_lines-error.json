@@ -1,0 +1,13 @@
+{
+  "id": "error",
+  "status": "error",
+  "type": "response",
+  "error": "actNotFound",
+  "error_message": "Account not found.",
+  "request": {
+    "command": "account_lines",
+    "account": "r4dGHd2neMqSB5zxmyiCVCbFVAQNd5ud5m",
+    "ledger_index": 107811689,
+    "limit": 200
+  }
+}

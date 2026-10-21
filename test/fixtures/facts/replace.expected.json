@@ -1,0 +1,154 @@
+{
+  "network": "mainnet",
+  "hash": "0176B15458AF71EDF66D5C679FDBDCD360EB1602ECB7925352858D081287FE63",
+  "ledgerIndex": 107777809,
+  "case": "explicit replace: OfferCreate with OfferSequence, nothing crossed",
+  "source": {
+    "file": "../explorer/offercreate.json",
+    "command": {
+      "command": "tx",
+      "transaction": "0176B15458AF71EDF66D5C679FDBDCD360EB1602ECB7925352858D081287FE63",
+      "binary": false
+    }
+  },
+  "expect": {
+    "transaction": {
+      "type": "OfferCreate",
+      "account": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+      "result": "tesSUCCESS",
+      "fee": "10",
+      "flags": []
+    },
+    "offers": {
+      "1": {
+        "action": "created",
+        "owner": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+        "sequence": 287256845,
+        "role": "submitter-new",
+        "traded": "no",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "23691000000"
+            },
+            "after": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "23691000000"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "USD",
+              "code": "USD",
+              "issuer": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+              "value": "33490.0352556885"
+            },
+            "after": {
+              "currency": "USD",
+              "code": "USD",
+              "issuer": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+              "value": "33490.0352556885"
+            }
+          }
+        },
+        "tradedAmounts": null
+      },
+      "5": {
+        "action": "deleted",
+        "owner": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+        "sequence": 287256820,
+        "role": "submitter-old",
+        "traded": "no",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "23691000000"
+            },
+            "after": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "23691000000"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "USD",
+              "code": "USD",
+              "issuer": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+              "value": "33490.03762478851"
+            },
+            "after": {
+              "currency": "USD",
+              "code": "USD",
+              "issuer": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+              "value": "33490.03762478851"
+            }
+          }
+        },
+        "tradedAmounts": null,
+        "removal": "replaced",
+        "rules": [
+          "offer.removal.replaced"
+        ]
+      }
+    },
+    "headline": "rBTw…jjah offered 23,691 XRP for 33,490 USD (rhub…F3wq); nothing crossed; placed on the book; replacing its earlier offer #287256820. Fee 10 drops.",
+    "exchange": {
+      "book": {
+        "crossed": [],
+        "bridged": "no"
+      },
+      "amm": null,
+      "received": {
+        "currency": "USD",
+        "code": "USD",
+        "issuer": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+        "value": "0"
+      },
+      "spent": {
+        "currency": "XRP",
+        "issuer": null,
+        "drops": "0"
+      },
+      "fill": {
+        "status": "none",
+        "judgedBy": "takerPays-received",
+        "requested": {
+          "currency": "USD",
+          "code": "USD",
+          "issuer": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+          "value": "33490.0352556885"
+        },
+        "achieved": {
+          "currency": "USD",
+          "code": "USD",
+          "issuer": "rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq",
+          "value": "0"
+        },
+        "placed": true
+      },
+      "corroboration": {
+        "received": "exact",
+        "spent": "exact"
+      }
+    },
+    "balances": [
+      {
+        "account": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "23791790143",
+          "after": "23791790133",
+          "delta": "-10"
+        },
+        "node": 0
+      }
+    ]
+  }
+}

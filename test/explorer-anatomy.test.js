@@ -36,6 +36,17 @@ describe('balance changes', () => {
     const changes = balanceChanges(offerCreate.meta);
     assert.equal(changes.length, 1);
     assert.ok(Math.abs(changes[0].delta - -0.00001) < 1e-12);
+    assert.deepEqual(changes[0].exact, { before: '23791790143', after: '23791790133', delta: '-10' }, 'exact drops beside the rounded number');
+    assert.equal(changes[0].node, 0);
+  });
+
+  test('exact strings: an XRP payment in drops, an issued currency as a decimal', () => {
+    const sender = balanceChanges(paymentXrp.meta).find((c) => c.account === paymentXrp.Account);
+    assert.deepEqual(sender.exact, { before: '237619289', after: '235919277', delta: '-1700012' });
+    const meta = { AffectedNodes: [{ ModifiedNode: { LedgerEntryType: 'RippleState', FinalFields: { Balance: { currency: 'USD', issuer: 'rrrrrrrrrrrrrrrrrrrrBZbvji', value: '-150.5' }, LowLimit: { currency: 'USD', issuer: 'rLow', value: '0' }, HighLimit: { currency: 'USD', issuer: 'rHigh', value: '1000' } }, PreviousFields: { Balance: { currency: 'USD', issuer: 'rrrrrrrrrrrrrrrrrrrrBZbvji', value: '-100' } } } }] };
+    const [low, high] = balanceChanges(meta);
+    assert.deepEqual(low.exact, { before: '-100', after: '-150.5', delta: '-50.5' });
+    assert.deepEqual(high.exact, { before: '100', after: '150.5', delta: '50.5' });
   });
 
   test('a synthetic RippleState change is reported from both sides', () => {
@@ -51,8 +62,8 @@ describe('balance changes', () => {
       ],
     };
     const [low, high] = balanceChanges(meta);
-    assert.deepEqual(low, { account: 'rLow', currency: 'USD', issuer: 'rHigh', delta: -50, before: -100, after: -150 });
-    assert.deepEqual(high, { account: 'rHigh', currency: 'USD', issuer: 'rLow', delta: 50, before: 100, after: 150 });
+    assert.deepEqual(low, { account: 'rLow', currency: 'USD', issuer: 'rHigh', delta: -50, before: -100, after: -150, exact: { before: '-100', after: '-150', delta: '-50' }, node: 0 });
+    assert.deepEqual(high, { account: 'rHigh', currency: 'USD', issuer: 'rLow', delta: 50, before: 100, after: 150, exact: { before: '100', after: '150', delta: '50' }, node: 0 });
     assert.deepEqual(balanceChanges(null), []);
   });
 });
@@ -65,6 +76,8 @@ describe('affected entries in words', () => {
     assert.match(placed.summary, /^Offer placed by rBTw…jjah: gives 23,691 XRP for 33,490 USD \(rhub…F3wq\)$/);
     const replaced = entries.find((e) => e.type === 'Offer' && e.action === 'deleted');
     assert.match(replaced.summary, /^Earlier offer #287256820 by rBTw…jjah replaced/);
+    assert.ok(replaced.rules.includes('offer.removal.replaced'), 'every entry keeps its rule ids');
+    assert.ok(placed.rules.includes('offer.placed'));
     const root = entries.find((e) => e.type === 'AccountRoot');
     assert.deepEqual(root.details[0], ['Balance', '23,791.790143 → 23,791.790133 XRP']);
     assert.deepEqual(root.details[1], ['Sequence', '287256845 → 287256846']);
@@ -75,6 +88,7 @@ describe('affected entries in words', () => {
     const gone = entries.find((e) => e.type === 'Offer');
     assert.equal(gone.action, 'deleted');
     assert.match(gone.summary, /cancelled \(was giving 5\.5 XRP for/);
+    assert.ok(gone.rules.includes('offer.removal.cancelled'));
     const root = entries.find((e) => e.type === 'AccountRoot');
     assert.ok(root.details.some(([k, v]) => k === 'Owned objects' && v === '42 → 41'));
   });
@@ -95,7 +109,7 @@ describe('affected entries in words', () => {
 describe('summaries', () => {
   test('payment, offers, nft offer and a failure read as sentences made from the record', () => {
     assert.equal(summarize(paymentXrp, paymentXrp.meta), 'rnh6…71mV sent 1.7 XRP to raEH…Uo7A. This funded a new account. Fee 12 drops.');
-    assert.equal(summarize(offerCreate, offerCreate.meta), 'rBTw…jjah offered 23,691 XRP for 33,490 USD (rhub…F3wq); the rest was placed on the book; replacing its earlier offer #287256820. Fee 10 drops.');
+    assert.equal(summarize(offerCreate, offerCreate.meta), 'rBTw…jjah offered 23,691 XRP for 33,490 USD (rhub…F3wq); nothing crossed; placed on the book; replacing its earlier offer #287256820. Fee 10 drops.');
     assert.equal(summarize(offerCancel, offerCancel.meta), 'rBWr…nDBG cancelled its offer #107574102. Fee 12 drops.');
     assert.match(summarize(nftOffer, nftOffer.meta), /^rnHe…SsAV offered to buy NFT 00080BB84F… for 570 XRP, until 2026-.*\. Fee 12 drops\.$/);
     assert.equal(summarize(failed, failed.meta), 'Payment by rKNR…Ph7z failed: tecPATH_DRY — No payment path had enough liquidity to deliver the amount. Only the fee of 20 drops was charged.');

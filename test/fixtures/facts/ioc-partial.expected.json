@@ -1,0 +1,192 @@
+{
+  "network": "mainnet",
+  "hash": "BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0",
+  "ledgerIndex": 107811677,
+  "case": "partially filled immediate-or-cancel: one small offer crossed, nothing placed",
+  "source": {
+    "file": "ioc-partial.json",
+    "command": {
+      "command": "tx",
+      "transaction": "BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0",
+      "binary": false
+    }
+  },
+  "expect": {
+    "transaction": {
+      "type": "OfferCreate",
+      "account": "rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy",
+      "result": "tesSUCCESS",
+      "fee": "10",
+      "flags": [
+        "tfImmediateOrCancel"
+      ]
+    },
+    "offers": {
+      "3": {
+        "action": "deleted",
+        "owner": "rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53",
+        "sequence": 105279319,
+        "role": "book",
+        "traded": "yes",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "1.10000054"
+            },
+            "after": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "0"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "795129"
+            },
+            "after": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "0"
+            }
+          }
+        },
+        "tradedAmounts": {
+          "gave": {
+            "currency": "RLUSD",
+            "code": "524C555344000000000000000000000000000000",
+            "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+            "value": "1.10000054"
+          },
+          "got": {
+            "currency": "XRP",
+            "issuer": null,
+            "drops": "795129"
+          }
+        },
+        "removal": "consumed",
+        "rules": [
+          "offer.removal.consumed"
+        ]
+      }
+    },
+    "headline": "rKYd…r4qy offered 7,085 XRP for 9,801 RLUSD (rMxC…m5De); crossing 1 existing offer; partly filled: received 1.1 RLUSD of 9,801 RLUSD for 0.795129 XRP; immediate-or-cancel, so the rest was not placed. Fee 10 drops.",
+    "exchange": {
+      "book": {
+        "crossed": [
+          3
+        ],
+        "bridged": "no"
+      },
+      "amm": null,
+      "received": {
+        "currency": "RLUSD",
+        "code": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "1.10000054"
+      },
+      "spent": {
+        "currency": "XRP",
+        "issuer": null,
+        "drops": "795129"
+      },
+      "fill": {
+        "status": "partial",
+        "judgedBy": "takerPays-received",
+        "requested": {
+          "currency": "RLUSD",
+          "code": "524C555344000000000000000000000000000000",
+          "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+          "value": "9801.315909"
+        },
+        "achieved": {
+          "currency": "RLUSD",
+          "code": "524C555344000000000000000000000000000000",
+          "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+          "value": "1.10000054"
+        },
+        "placed": false
+      },
+      "corroboration": {
+        "received": "exact",
+        "spent": "exact"
+      }
+    },
+    "balances": [
+      {
+        "account": "rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53",
+        "currency": "RLUSD",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "exact": {
+          "before": "16.2249884128331",
+          "after": "15.1249878728331",
+          "delta": "-1.10000054"
+        },
+        "node": 0
+      },
+      {
+        "account": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "currency": "RLUSD",
+        "issuer": "rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53",
+        "exact": {
+          "before": "-16.2249884128331",
+          "after": "-15.1249878728331",
+          "delta": "1.10000054"
+        },
+        "node": 0
+      },
+      {
+        "account": "rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy",
+        "currency": "RLUSD",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "exact": {
+          "before": "823.9475696291931",
+          "after": "825.0475701691931",
+          "delta": "1.10000054"
+        },
+        "node": 1
+      },
+      {
+        "account": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "currency": "RLUSD",
+        "issuer": "rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy",
+        "exact": {
+          "before": "-823.9475696291931",
+          "after": "-825.0475701691931",
+          "delta": "-1.10000054"
+        },
+        "node": 1
+      },
+      {
+        "account": "rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "7088108443",
+          "after": "7087313304",
+          "delta": "-795139"
+        },
+        "node": 2
+      },
+      {
+        "account": "rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "17960062",
+          "after": "18755191",
+          "delta": "795129"
+        },
+        "node": 5
+      }
+    ]
+  },
+  "hypotheses": {
+    "H2": "confirmed: node 3 final amounts zero, owner XRP +795129 drops matches got"
+  }
+}

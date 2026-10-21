@@ -1,0 +1,80 @@
+{
+  "network": "mainnet",
+  "hash": "A3776F7C62B816708D48194F8A91137DBDF593E171F0A41B58ACFA20C0E6AF01",
+  "ledgerIndex": 107777809,
+  "case": "explicit cancel",
+  "source": {
+    "file": "../explorer/offercancel.json",
+    "command": {
+      "command": "tx",
+      "transaction": "A3776F7C62B816708D48194F8A91137DBDF593E171F0A41B58ACFA20C0E6AF01",
+      "binary": false
+    }
+  },
+  "expect": {
+    "transaction": {
+      "type": "OfferCancel",
+      "account": "rBWr5wTBJhc5osje2PcRZkaWFcamqjnDBG",
+      "result": "tesSUCCESS",
+      "fee": "12",
+      "flags": []
+    },
+    "offers": {
+      "0": {
+        "action": "deleted",
+        "owner": "rBWr5wTBJhc5osje2PcRZkaWFcamqjnDBG",
+        "sequence": 107574102,
+        "role": "submitter-old",
+        "traded": "no",
+        "amounts": {
+          "takerGets": {
+            "before": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "5500000"
+            },
+            "after": {
+              "currency": "XRP",
+              "issuer": null,
+              "drops": "5500000"
+            }
+          },
+          "takerPays": {
+            "before": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "7.180679"
+            },
+            "after": {
+              "currency": "RLUSD",
+              "code": "524C555344000000000000000000000000000000",
+              "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+              "value": "7.180679"
+            }
+          }
+        },
+        "tradedAmounts": null,
+        "removal": "cancelled",
+        "rules": [
+          "offer.removal.cancelled"
+        ]
+      }
+    },
+    "headline": "rBWr…nDBG cancelled its offer #107574102. Fee 12 drops.",
+    "exchange": null,
+    "balances": [
+      {
+        "account": "rBWr5wTBJhc5osje2PcRZkaWFcamqjnDBG",
+        "currency": "XRP",
+        "issuer": null,
+        "exact": {
+          "before": "176302525",
+          "after": "176302513",
+          "delta": "-12"
+        },
+        "node": 1
+      }
+    ]
+  }
+}
