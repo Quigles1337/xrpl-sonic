@@ -1,0 +1,61 @@
+{
+  "id": "xrpl-sonic-req-2",
+  "result": {
+    "Account": "rnh6AcSp8JKuihKbchsvAuGyUTqEZh71mV",
+    "Amount": "1700000",
+    "DeliverMax": "1700000",
+    "Destination": "raEHTgpcCanAb56bCWnkms9pb1wXcbUo7A",
+    "Fee": "12",
+    "Flags": 0,
+    "LastLedgerSequence": 107777827,
+    "Sequence": 107593882,
+    "SigningPubKey": "EDFE03AC655D90A93D7D095F79C2ECAB808A64623153A5C5FAC66132EBF441956E",
+    "TransactionType": "Payment",
+    "TxnSignature": "615BD0CFC7F2403BFEAC94CB204D08FF4B5D193E8A2A55D9DE3CCE7A3E75DA78B00B212E31A8E76BE450ED58216C6881412FD42F16AFEE70D58716621C45820A",
+    "ctid": "C66C8F1100150000",
+    "date": 845791082,
+    "hash": "0EC1CCB7553BB931B7C02B484E235692D62DFA2DCB1B44295D15F8090CA90614",
+    "inLedger": 107777809,
+    "ledger_index": 107777809,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rnh6AcSp8JKuihKbchsvAuGyUTqEZh71mV",
+              "Balance": "235919277",
+              "Flags": 0,
+              "OwnerCount": 1,
+              "Sequence": 107593883
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "059E070071FE5C73693F8EB8C4768797B33534F3CC1C6E2211B7A09008F35879",
+            "PreviousFields": {
+              "Balance": "237619289",
+              "Sequence": 107593882
+            },
+            "PreviousTxnID": "816C890B46E0E9D69D5C56480EBCE42431C9A84E650034A6D6AC062F88383C3D",
+            "PreviousTxnLgrSeq": 107777805
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "E298A5EADBA7CBC8DF38E47F4CAE9FA08CDDD425484FF36DA57A506ED7FC9CF7",
+            "NewFields": {
+              "Account": "raEHTgpcCanAb56bCWnkms9pb1wXcbUo7A",
+              "Balance": "1700000",
+              "Sequence": 107777809
+            }
+          }
+        }
+      ],
+      "TransactionIndex": 21,
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": "1700000"
+    },
+    "validated": true
+  },
+  "status": "success",
+  "type": "response"
+}

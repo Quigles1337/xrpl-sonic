@@ -30,11 +30,24 @@ Only validated, successful transactions sound by default; there is a toggle for 
 
 ### The plate
 
-The canvas is laid out like a cloud chamber for a ledger. The horizontal axis is pitch, with a ruler along the bottom marking the octaves (C2 to C7); because payments map amount to pitch, whales land on the left and dust on the right, and a busy issuer or market maker shows up as a column of identical tracks at one position. Every track ignites with a white-hot flash, scales in with a little overshoot and fades on the same schedule as its sound. The same glyphs appear as the legend tiles under **Settings → Transaction types**, on the start screen and beside every line of the transaction tape, so shape, colour and sound are learned together. The field guide lives in `src/glyphs.js`; the renderer in `src/visual.js` keeps it cheap with cached glow sprites, cached grid and ruler layers, capped track counts and no `shadowBlur`.
+The canvas is a cloud chamber for a ledger, seen in perspective: the floor is the pitch axis with a ruler along its near edge marking the octaves (C2 to C7), tracks rise through a shallow volume and fade with distance, ledger closes ripple across the floor, and the camera sways slowly on its own. Drag to orbit it, scroll to move closer, double-click to reset. The horizontal axis is pitch; because payments map amount to pitch, whales land on the left and dust on the right, and a busy issuer or market maker shows up as a column of identical tracks at one position. Every track ignites with a white-hot flash, scales in with a little overshoot and fades on the same schedule as its sound. The same glyphs appear as the legend tiles under **Settings → Transaction types**, on the start screen and beside every line of the transaction tape, so shape, colour and sound are learned together. The field guide lives in `src/glyphs.js`; the renderer in `src/visual.js` keeps it cheap with cached glow sprites, cached grid and ruler layers, capped track counts and no `shadowBlur`.
 
 ### Staying musical when the ledger is busy
 
 Transactions do not trickle in: each validated ledger arrives as a burst of anything from 50 to 600 transactions every few seconds. The audio engine spreads each burst across the expected inter-ledger interval, caps polyphony, and applies a short per-type cooldown. Events that do not fit are rate-limited rather than queued, so the sound never drifts behind the ledger; they still appear as dimmer tracks. The **Session** panel shows how many were played versus rate-limited. **Quiet mode** keeps only transactions at or above a chosen XRP amount.
+
+## The explorer
+
+[explorer.html](https://quigles1337.github.io/xrpl-sonic/explorer.html) is the reading room: one box that takes anything you paste (an account, a transaction hash, a ledger index, a currency code, or the word `latest`) and says what it recognised as you type.
+
+- **An account is a place, in three dimensions.** Its XRP is a ring whose radius grows with the balance; the reserve is the disc inside it (a disc that reaches the ring means the account is at its reserve); each currency it holds is a further orbit on its own tilted plane, with a bead travelling along it; the accounts it dealt with in its recent transactions are stars on a sphere around it, the most frequent nearest, each coloured by what they mostly did together and ringed in the hue of its sigil. Point at a star to name it, click to go there; drag to orbit the view, scroll to move closer, double-click to reset. Beside it: the recent transactions as a tape, trust lines, owned objects, flags in plain words, and the reserve in XRP.
+- **A transaction is explained from its own metadata.** One sentence says what happened (who sent what to whom, which offer was placed and which earlier one it replaced, what a failure code means); then the balance change of every account it touched, before and after; then every ledger entry it created, modified or deleted, in words, with the bookkeeping directory nodes counted rather than listed.
+- **A ledger is a plate.** Its transactions drawn at their pitch, the mix of types as a bar, the tape, and one click to replay it with sound on the listening page.
+- **Sigils.** Every account carries a small mark derived from its address, the same everywhere it appears, so you recognise it without reading it.
+- **Sound.** Turn Sound on and point at any record to hear it; press `P` on an account to play its recent history as a phrase; **Listen live** opens the listening page with the account in the cast.
+- Keys: `/` search, `[` `]` back and forward along the trail, `L` latest ledger, `R` a random account from the latest ledger, `?` help. `?network=testnet` reads the test network.
+
+Everything is read by your browser from a public node, cached for the session, with links to XRPScan, Bithomp and xrpl.org for anything beyond.
 
 ## Follow a cast
 

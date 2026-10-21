@@ -1,0 +1,54 @@
+{
+  "id": "xrpl-sonic-req-6",
+  "result": {
+    "Account": "rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z",
+    "Amount": "100000000000000",
+    "DeliverMax": "100000000000000",
+    "Destination": "rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z",
+    "Fee": "20",
+    "Flags": 131072,
+    "SendMax": {
+      "currency": "524C555344000000000000000000000000000000",
+      "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+      "value": "1000000000000000e-1"
+    },
+    "Sequence": 104373455,
+    "SigningPubKey": "ED72FD88591321C3017FEC1F4A3110F68D5017FE14BB7957B36821A94A3165B28B",
+    "TransactionType": "Payment",
+    "TxnSignature": "476B91C028F72266B190294D4F8901C632CF9189560C7EBC936CB0DF64337134034C310191C956EE17F3057CE6DB8D5531B31108812808E20E3E8083A33BF606",
+    "ctid": "C66C8F1100510000",
+    "date": 845791082,
+    "hash": "1D34E4930EB0013992EFC3886F09FFB059F6FE35EC13AE70F0AA499BF8E618B0",
+    "inLedger": 107777809,
+    "ledger_index": 107777809,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z",
+              "Balance": "13929605",
+              "Flags": 0,
+              "OwnerCount": 16,
+              "Sequence": 104373456,
+              "TicketCount": 15
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "DFB55DE47511B116439003E8203D6BC98FD9ABCBBEADC11FA6C9FB39F232280B",
+            "PreviousFields": {
+              "Balance": "13929625",
+              "Sequence": 104373455
+            },
+            "PreviousTxnID": "866B2D0852476AEFB11FD720C7B50EAC28410B4FC2AF01AAF2968EE51AB20558",
+            "PreviousTxnLgrSeq": 107777794
+          }
+        }
+      ],
+      "TransactionIndex": 81,
+      "TransactionResult": "tecPATH_DRY"
+    },
+    "validated": true
+  },
+  "status": "success",
+  "type": "response"
+}

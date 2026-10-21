@@ -1,0 +1,38 @@
+{
+  "id": "xrpl-sonic-req-8",
+  "result": {
+    "account_data": {
+      "Account": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+      "Balance": "12948919267",
+      "Flags": 0,
+      "LedgerEntryType": "AccountRoot",
+      "OwnerCount": 38,
+      "PreviousTxnID": "BB77109DE01A402ED02102C7889A520D0145B77E8D30DC45AB3F5664A2F64299",
+      "PreviousTxnLgrSeq": 107798579,
+      "Sequence": 287597476,
+      "index": "1ED8DDFD80F275CB1CE7F18BB9D906655DE8029805D8B95FB9020B30425821EB"
+    },
+    "account_flags": {
+      "allowTrustLineClawback": false,
+      "allowTrustLineLocking": false,
+      "defaultRipple": false,
+      "depositAuth": false,
+      "disableMasterKey": false,
+      "disallowIncomingCheck": false,
+      "disallowIncomingNFTokenOffer": false,
+      "disallowIncomingPayChan": false,
+      "disallowIncomingTrustline": false,
+      "disallowIncomingXRP": false,
+      "globalFreeze": false,
+      "noFreeze": false,
+      "passwordSpent": false,
+      "requireAuthorization": false,
+      "requireDestinationTag": false
+    },
+    "ledger_hash": "CBFB35C1BEA431621416D6DC72EECD1A9F710C404A5BAF88EBE64059AE76276A",
+    "ledger_index": 107798579,
+    "validated": true
+  },
+  "status": "success",
+  "type": "response"
+}

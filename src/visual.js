@@ -1,11 +1,13 @@
 // xrpl-sonic — the detector plate.
 //
-// The scene is a cloud chamber for a ledger. The x-axis is pitch (for
-// payments that means amount: whales to the left, dust to the right) and every
-// transaction species leaves its own kind of track — the field guide lives in
-// src/glyphs.js. A ledger close is the pulse: a ring from the centre, the grid
-// lighting up for a moment and the ledger number stamped faintly behind the
-// plate.
+// The scene is a cloud chamber for a ledger, seen in perspective: the floor is
+// the pitch axis (for payments that means amount: whales to the left, dust to
+// the right), tracks rise through a shallow volume and every transaction
+// species leaves its own kind of track — the field guide lives in
+// src/glyphs.js. A ledger close is the pulse: a ripple across the floor, the
+// grid lighting up for a moment and the ledger number stamped faintly behind
+// the plate. The camera sways a little on its own; drag to orbit it, scroll to
+// move closer, double-click to reset.
 //
 // Cost discipline, because this has to run on phones next to a synth: glow
 // sprites are rendered once per colour and blitted, the nebula, grid, ruler
@@ -13,6 +15,7 @@
 // shadowBlur is never used and DPR is capped at 2.
 
 import { GLYPHS, PITCH_AXIS, pitchPosition, shapeFor, hexToRgb } from './glyphs.js';
+import { project, referenceScale, ringPoints, clampCamera } from './projection.js';
 
 const MAX_PARTICLES = 420;
 const MAX_RINGS = 12;
@@ -20,7 +23,9 @@ const SPRITE = 128;
 const PULSE_COLOUR = '#c8dcff';
 const BG = [6, 10, 18]; // #060a12 — keep in step with --bg-0 in styles.css and composeSnapshot
 const INK = [128, 164, 224]; // grid, ruler and stamp tint
-const RULER_BOTTOM = 52; // CSS px from the bottom edge to the ruler baseline (above the footer bar)
+const CAMERA_BASE = Object.freeze({ yaw: 0, pitch: 0.3, distance: 2.05, fov: 1.05, target: Object.freeze([0, 0.28, 0.5]) });
+const CAMERA_LIMITS = { yaw: [-0.75, 0.75], pitch: [0.04, 0.85], distance: [1.6, 3.4] };
+const FOG_START = 2.0; // camera-space depth from which tracks start to fade
 const SPAWN_MS = 220; // ignition: scale-in with a little overshoot
 const FLASH_MS = 180; // ignition: white-hot core
 const MONO = '"JetBrains Mono", "Cascadia Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace';
@@ -101,11 +106,78 @@ export class Visualizer {
     this.onFrame = null; // (nowMs) => void, for the metronome etc.
     this.rgbCache = new Map();
     this.sprites = new Map();
-    this.layers = null; // { nebula, grid, ruler, vignette } cached per resize
+    this.layers = null; // { nebula, vignette } cached per resize
+    this.camera = { ...CAMERA_BASE, target: [...CAMERA_BASE.target] }; // the camera actually used this frame
+    this.orbit = { yaw: 0, pitch: 0, distance: CAMERA_BASE.distance }; // the viewer's own offset, from dragging and scrolling
+    this.spin = { yaw: 0, pitch: 0 };
+    this.drag = null;
+    this.dragged = false; // a drag just ended: the click that follows is not an inspect
     this._resize = () => this.resize();
     this._loop = (ts) => this.frame(ts);
     this.resize();
     globalThis.addEventListener?.('resize', this._resize);
+    this._bindPointer();
+  }
+
+  _bindPointer() {
+    const c = this.canvas;
+    if (!c.addEventListener) return;
+    c.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      this.drag = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false };
+      this.spin = { yaw: 0, pitch: 0 };
+    });
+    c.addEventListener('pointermove', (e) => {
+      if (!this.drag) return;
+      const dx = e.clientX - this.drag.lastX;
+      const dy = e.clientY - this.drag.lastY;
+      if (Math.hypot(e.clientX - this.drag.x, e.clientY - this.drag.y) > 5) this.drag.moved = true;
+      if (this.drag.moved) {
+        const next = clampCamera({ yaw: this.orbit.yaw - dx * 0.004, pitch: this.orbit.pitch + dy * 0.003, distance: this.orbit.distance }, CAMERA_LIMITS);
+        this.spin = { yaw: next.yaw - this.orbit.yaw, pitch: next.pitch - this.orbit.pitch };
+        this.orbit = next;
+        c.style.cursor = 'grabbing';
+      }
+      this.drag.lastX = e.clientX;
+      this.drag.lastY = e.clientY;
+    });
+    const end = () => {
+      if (!this.drag) return;
+      this.dragged = this.drag.moved;
+      this.drag = null;
+      c.style.cursor = '';
+    };
+    c.addEventListener('pointerup', end);
+    c.addEventListener('pointercancel', end);
+    c.addEventListener('dblclick', () => {
+      this.orbit = { yaw: 0, pitch: 0, distance: CAMERA_BASE.distance };
+      this.spin = { yaw: 0, pitch: 0 };
+    });
+    c.addEventListener('wheel', (e) => {
+      if (this.transparent) return;
+      e.preventDefault();
+      this.orbit = clampCamera({ ...this.orbit, distance: this.orbit.distance * (1 + Math.sign(e.deltaY) * 0.07) }, CAMERA_LIMITS);
+    }, { passive: false });
+  }
+
+  /** True once, right after a drag, so the click that ends it does not open the inspector. */
+  consumeDragClick() {
+    const d = this.dragged;
+    this.dragged = false;
+    return d;
+  }
+
+  /** The camera for this frame: the base, the viewer's orbit, a slow sway unless reduced motion is preferred. */
+  cameraNow(ts) {
+    if (!this.drag && (Math.abs(this.spin.yaw) > 1e-4 || Math.abs(this.spin.pitch) > 1e-4)) {
+      this.orbit = clampCamera({ ...this.orbit, yaw: this.orbit.yaw + this.spin.yaw, pitch: this.orbit.pitch + this.spin.pitch }, CAMERA_LIMITS);
+      this.spin = { yaw: this.spin.yaw * 0.9, pitch: this.spin.pitch * 0.9 };
+    }
+    const sway = this.reduced || this.drag ? 0 : 1;
+    this.camera.yaw = CAMERA_BASE.yaw + this.orbit.yaw + Math.sin(ts / 9000) * 0.06 * sway;
+    this.camera.pitch = CAMERA_BASE.pitch + this.orbit.pitch + Math.sin(ts / 13000) * 0.025 * sway;
+    this.camera.distance = this.orbit.distance;
+    return this.camera;
   }
 
   // ---------------------------------------------------------------- lifecycle
@@ -238,8 +310,6 @@ export class Visualizer {
   buildLayers() {
     const w = this.width;
     const h = this.height;
-    const pad = this.pad();
-    const axisX = (midi) => pad + pitchPosition(midi) * (w - 2 * pad);
 
     // Nebula: three soft washes at quarter resolution, drawn oversize so the slow drift never shows an edge.
     const [nebula, ng] = this.layer(0.25);
@@ -255,67 +325,6 @@ export class Visualizer {
     wash(w * 0.76, h * 0.7, Math.max(w, h) * 0.46, [110, 70, 190], 0.13);
     wash(w * 0.55, h * 1.05, Math.max(w, h) * 0.4, [20, 150, 140], 0.07);
 
-    // Grid: one line per octave, a fainter one at the tritone, horizontals every 72 px.
-    const [grid, gg] = this.layer();
-    gg.lineWidth = 1;
-    for (let midi = PITCH_AXIS.low; midi <= PITCH_AXIS.high; midi += 6) {
-      const major = (midi - PITCH_AXIS.low) % 12 === 0;
-      gg.strokeStyle = rgba(INK, major ? 0.11 : 0.045);
-      const x = Math.round(axisX(midi)) + 0.5;
-      gg.beginPath();
-      gg.moveTo(x, 0);
-      gg.lineTo(x, h - RULER_BOTTOM);
-      gg.stroke();
-    }
-    gg.strokeStyle = rgba(INK, 0.04);
-    for (let y = 72; y < h - RULER_BOTTOM; y += 72) {
-      gg.beginPath();
-      gg.moveTo(0, y + 0.5);
-      gg.lineTo(w, y + 0.5);
-      gg.stroke();
-    }
-
-    // Ruler: the pitch axis with octave ticks and note names.
-    const [ruler, rg] = this.layer();
-    const y0 = h - RULER_BOTTOM + 0.5;
-    rg.strokeStyle = rgba(INK, 0.28);
-    rg.lineWidth = 1;
-    rg.beginPath();
-    rg.moveTo(pad, y0);
-    rg.lineTo(w - pad, y0);
-    rg.stroke();
-    for (let midi = PITCH_AXIS.low; midi <= PITCH_AXIS.high; midi += 1) {
-      const octave = (midi - PITCH_AXIS.low) % 12 === 0;
-      const fifth = (midi - PITCH_AXIS.low) % 12 === 7;
-      const x = Math.round(axisX(midi)) + 0.5;
-      rg.strokeStyle = rgba(INK, octave ? 0.6 : fifth ? 0.3 : 0.16);
-      rg.beginPath();
-      rg.moveTo(x, y0);
-      rg.lineTo(x, y0 + (octave ? 9 : fifth ? 6 : 3));
-      rg.stroke();
-    }
-    rg.font = `500 10px ${MONO}`;
-    rg.textAlign = 'center';
-    rg.textBaseline = 'top';
-    rg.fillStyle = rgba(INK, 0.7);
-    for (const tick of PITCH_AXIS.ticks) rg.fillText(tick.label, axisX(tick.midi), y0 + 13);
-    try {
-      rg.letterSpacing = '0.14em';
-    } catch {
-      /* older engines */
-    }
-    rg.font = `500 9px ${MONO}`;
-    rg.textBaseline = 'bottom';
-    rg.fillStyle = rgba(INK, 0.5);
-    rg.textAlign = 'center';
-    rg.fillText('PITCH', w / 2, y0 - 7);
-    if (w >= 600) {
-      rg.textAlign = 'left';
-      rg.fillText('LOW · LARGER PAYMENTS', pad, y0 - 7);
-      rg.textAlign = 'right';
-      rg.fillText('SMALLER PAYMENTS · HIGH', w - pad, y0 - 7);
-    }
-
     // Vignette: darkens the edges so the plate reads as an instrument window.
     const [vignette, vg] = this.layer(0.5);
     const vgrad = vg.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.hypot(w, h) * 0.6);
@@ -329,28 +338,113 @@ export class Visualizer {
     vg.fillStyle = top;
     vg.fillRect(0, 0, w, 120);
 
-    return { nebula, grid, ruler, vignette };
+    return { nebula, vignette };
+  }
+
+  /** World x of a MIDI pitch on the floor: -1 (low) to 1 (high). */
+  floorX(midi) {
+    return pitchPosition(midi) * 2 - 1;
+  }
+
+  /**
+   * The floor: the pitch grid in perspective (one line per octave, a fainter one
+   * at the tritone, depth lines every eighth), the ruler along the near edge
+   * with note names, and the end labels. Drawn each frame, since the camera moves.
+   */
+  drawFloor(ctx, w, h, flash, cam, vp) {
+    const P = (p) => project(p, cam, vp);
+    const line = (a, b, style, width = 1) => {
+      const pa = P(a);
+      const pb = P(b);
+      if (!pa || !pb) return;
+      ctx.strokeStyle = style;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(pb.x, pb.y);
+      ctx.stroke();
+    };
+    const boost = 1 + flash * 1.6;
+    for (let midi = PITCH_AXIS.low; midi <= PITCH_AXIS.high; midi += 6) {
+      const major = (midi - PITCH_AXIS.low) % 12 === 0;
+      const x = this.floorX(midi);
+      line([x, 0, 0], [x, 0, 1], rgba(INK, (major ? 0.14 : 0.05) * boost));
+    }
+    for (let i = 0; i <= 8; i++) {
+      const z = i / 8;
+      line([-1, 0, z], [1, 0, z], rgba(INK, (i === 0 ? 0.3 : 0.05) * boost));
+    }
+    // ruler ticks on the near edge
+    for (let midi = PITCH_AXIS.low; midi <= PITCH_AXIS.high; midi += 1) {
+      const octave = (midi - PITCH_AXIS.low) % 12 === 0;
+      const fifth = (midi - PITCH_AXIS.low) % 12 === 7;
+      const x = this.floorX(midi);
+      line([x, 0, 0], [x, 0, -(octave ? 0.035 : fifth ? 0.022 : 0.012)], rgba(INK, (octave ? 0.6 : fifth ? 0.3 : 0.16) * boost));
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (const tick of PITCH_AXIS.ticks) {
+      const p = P([this.floorX(tick.midi), 0, -0.06]);
+      if (!p) continue;
+      ctx.font = `500 ${Math.max(8, 10 * Math.min(1.2, p.scale / referenceScale(cam, vp))).toFixed(1)}px ${MONO}`;
+      ctx.fillStyle = rgba(INK, 0.7 * boost);
+      ctx.fillText(tick.label, p.x, p.y);
+    }
+    try {
+      ctx.letterSpacing = '0.14em';
+    } catch {
+      /* older engines */
+    }
+    ctx.font = `500 9px ${MONO}`;
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = rgba(INK, 0.5);
+    const mid = P([0, 0.01, 0.02]);
+    if (mid) ctx.fillText('PITCH', mid.x, mid.y - 2);
+    if (w >= 600) {
+      const l = P([-1, 0.01, 0.02]);
+      const r = P([1, 0.01, 0.02]);
+      if (l) {
+        ctx.textAlign = 'left';
+        ctx.fillText('LOW · LARGER PAYMENTS', l.x, l.y - 2);
+      }
+      if (r) {
+        ctx.textAlign = 'right';
+        ctx.fillText('SMALLER PAYMENTS · HIGH', r.x, r.y - 2);
+      }
+    }
+    try {
+      ctx.letterSpacing = '0px';
+    } catch {
+      /* older engines */
+    }
   }
 
   // ------------------------------------------------------------------ events
 
   /** Spawn a track for a transaction event. `dim` marks rate-limited or muted-by-account events. */
   spawn(event, { dim = false } = {}) {
-    const w = this.width;
-    const h = this.height;
-    const pad = this.pad();
-    const x = pad + pitchPosition(event.pitch) * (w - 2 * pad) + (Math.random() - 0.5) * w * 0.035;
-    const y = h * (0.18 + Math.random() * 0.5);
     const glyph = GLYPHS[event.category] ?? GLYPHS.other;
     const hover = glyph.motion === 'hover';
     const life = clamp(event.duration * 2.2, 1.2, 4) * glyph.lifeScale * 1000;
     const r = event.size * (dim ? 0.6 : 1);
+    // World position: x is pitch across the floor, y the height it starts at, z its depth in the chamber.
+    const pos = [this.floorX(event.pitch) + (Math.random() - 0.5) * 0.03, 0.04 + Math.random() * 0.42, 0.1 + Math.random() * 0.8];
+    const vp = { width: this.width, height: this.height };
+    const first = project(pos, this.camera, vp) ?? { x: this.width / 2, y: this.height / 2, scale: referenceScale(this.camera, vp), depth: this.camera.distance };
+    const ref = referenceScale(this.camera, vp);
+    const x = first.x;
+    const y = first.y;
     const p = {
       x,
       y,
       r,
-      vx: (Math.random() - 0.5) * (hover ? 4 : 12),
-      vy: hover ? -(2 + Math.random() * 3) : -(9 + Math.random() * 14) - r * 0.35,
+      pos,
+      vel: [(Math.random() - 0.5) * (hover ? 0.006 : 0.02), hover ? 0.008 + Math.random() * 0.01 : 0.03 + Math.random() * 0.04 + r * 0.0006, 0],
+      scale: first.scale / ref,
+      depth: first.depth,
+      vx: 0,
+      vy: -1, // sign only: the comet tail points down the direction of travel
+
       shape: shapeFor(event),
       colour: event.colour,
       rgb: this.rgb(event.colour),
@@ -389,8 +483,8 @@ export class Visualizer {
       while (this.bonds.length > 24) this.bonds.shift();
     }
     if (!dim) {
-      if (p.whale) this.ring({ colour: event.colour, x, y, life: 1700, width: 2.5, maxR: 160 + r * 6 });
-      if (p.shape === 'vault-open') this.ring({ colour: event.colour, x, y, life: 900, width: 1.5, maxR: 48 + r * 2 });
+      if (p.whale) this.ring({ colour: event.colour, pos: [...pos], life: 1700, width: 2.5, maxR: 0.16 + r * 0.005 });
+      if (p.shape === 'vault-open') this.ring({ colour: event.colour, pos: [...pos], life: 900, width: 1.5, maxR: 0.05 + r * 0.0015 });
     }
     return p;
   }
@@ -400,7 +494,7 @@ export class Visualizer {
     let best = null;
     let bestD = Infinity;
     for (const p of this.particles) {
-      const tol = Math.max(14, p.r * 2.2);
+      const tol = Math.max(14, p.r * (p.scale ?? 1) * 2.2);
       const d = Math.hypot(p.x - x, p.y - y);
       if (d <= tol && (d < bestD - 2 || (Math.abs(d - bestD) <= 2 && p.born > best.born))) {
         best = p;
@@ -412,23 +506,40 @@ export class Visualizer {
 
   /** A gap between clips: a dashed ring that contracts to the centre — time folding. */
   gap() {
-    this.ring({ colour: PULSE_COLOUR, life: 1500, width: 1.5, inward: true });
+    this.ring({ colour: PULSE_COLOUR, life: 1500, width: 1.5, inward: true, maxR: 1.1 });
   }
 
-  /** Expanding ring. The ledger pulse calls this with defaults: centre, pale, to the edge of the plate. */
-  ring({ colour = PULSE_COLOUR, x, y, life = 2600, width = 2, maxR, pulse = false, inward = false } = {}) {
+  /**
+   * Expanding ring, lying flat on the floor at a world position (a ripple). The
+   * ledger pulse calls this with defaults: the centre of the floor, pale, out to
+   * the edges; `maxR` is in world units.
+   */
+  ring({ colour = PULSE_COLOUR, pos, life = 2600, width = 2, maxR, pulse = false, inward = false } = {}) {
     if (this.rings.length >= MAX_RINGS) this.rings.shift();
     this.rings.push({
-      x: x ?? this.width / 2,
-      y: y ?? this.height / 2,
+      pos: pos ?? [0, 0.005, 0.5],
       rgb: this.rgb(colour),
       born: performance.now(),
       life,
       width,
       pulse,
       inward,
-      maxR: maxR ?? Math.hypot(this.width, this.height) / 2,
+      maxR: maxR ?? 1.25,
     });
+  }
+
+  /** Stroke a floor ring of world radius `radius` at `pos`, projected. */
+  strokeRing(ctx, pos, radius, style, width, cam, vp, dashed = false) {
+    const pts = ringPoints(pos, radius, { segments: 56 }).map((p) => project(p, cam, vp));
+    if (pts.some((p) => !p)) return;
+    if (dashed) ctx.setLineDash([6, 8]);
+    ctx.strokeStyle = style;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+    ctx.closePath();
+    ctx.stroke();
+    if (dashed) ctx.setLineDash([]);
   }
 
   /** Ledger close: ring from the centre, grid flash, number stamped behind the plate. */
@@ -479,20 +590,16 @@ export class Visualizer {
       ctx.fillStyle = `rgb(${BG[0] + f * 8}, ${BG[1] + f * 12}, ${BG[2] + f * 22})`;
       ctx.fillRect(0, 0, w, h);
     }
+    const cam = this.cameraNow(ts);
+    const vp = { width: w, height: h };
+    const ref = referenceScale(cam, vp);
     const L = this.layers;
     if (L) {
-      const dx = this.reduced ? 0 : Math.sin(ts / 13000) * w * 0.05;
+      const dx = this.reduced ? 0 : Math.sin(ts / 13000) * w * 0.05 - cam.yaw * w * 0.12;
       const dy = this.reduced ? 0 : Math.cos(ts / 17000) * h * 0.04;
       ctx.drawImage(L.nebula, -w * 0.15 + dx, -h * 0.15 + dy, w * 1.3, h * 1.3);
-      ctx.drawImage(L.grid, 0, 0, w, h);
-      if (f > 0) {
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = f * 0.75;
-        ctx.drawImage(L.grid, 0, 0, w, h);
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
-      }
       if (this.stamp && !this.blind) this.drawStamp(w, h);
+      this.drawFloor(ctx, w, h, f, cam, vp);
     }
 
     // --- long exposure: the accumulated plate, fading slowly ------------------
@@ -510,7 +617,7 @@ export class Visualizer {
       ctx.globalCompositeOperation = 'source-over';
     }
 
-    // --- rings (ledger pulse, Cherenkov rings, escrow releases) ------------
+    // --- rings: ripples on the floor (ledger pulse, Cherenkov rings, escrow releases)
     ctx.globalCompositeOperation = 'lighter';
     ctx.lineCap = 'round';
     for (let i = this.rings.length - 1; i >= 0; i--) {
@@ -522,31 +629,13 @@ export class Visualizer {
       }
       const radius = ring.inward ? (1 - easeOutCubic(age)) * ring.maxR : easeOutCubic(age) * ring.maxR;
       const fade = 1 - age;
-      if (ring.inward) ctx.setLineDash([6, 8]);
-      // wide, faint band
-      ctx.strokeStyle = rgba(ring.rgb, fade * 0.07);
-      ctx.lineWidth = ring.width * 7;
-      ctx.beginPath();
-      ctx.arc(ring.x, ring.y, radius, 0, Math.PI * 2);
-      ctx.stroke();
-      // bright leading edge
-      ctx.strokeStyle = rgba(ring.rgb, fade * 0.8);
-      ctx.lineWidth = Math.max(0.6, ring.width * (1 - age * 0.6));
-      ctx.beginPath();
-      ctx.arc(ring.x, ring.y, radius, 0, Math.PI * 2);
-      ctx.stroke();
-      if (ring.inward) ctx.setLineDash([]);
-      // the ledger pulse carries an echo just behind its edge
-      if (ring.pulse && radius > 12) {
-        ctx.strokeStyle = rgba(ring.rgb, fade * 0.22);
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(ring.x, ring.y, radius * 0.93, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+      this.strokeRing(ctx, ring.pos, radius, rgba(ring.rgb, fade * 0.07), ring.width * 7, cam, vp);
+      this.strokeRing(ctx, ring.pos, radius, rgba(ring.rgb, fade * 0.8), Math.max(0.6, ring.width * (1 - age * 0.6)), cam, vp, ring.inward);
+      if (ring.pulse && radius > 0.03) this.strokeRing(ctx, ring.pos, radius * 0.93, rgba(ring.rgb, fade * 0.22), 1, cam, vp);
     }
 
     // --- tracks --------------------------------------------------------------
+    const live = [];
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       // rAF timestamps can trail performance.now() by a frame, so clamp: a negative age would give negative radii.
@@ -557,18 +646,30 @@ export class Visualizer {
         this.particles.splice(i, 1);
         continue;
       }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vx += Math.sin(ts / 900 + p.y * 0.01) * 6 * dt;
+      p.pos[0] += p.vel[0] * dt + Math.sin(ts / 900 + p.pos[2] * 7) * 0.004 * dt;
+      p.pos[1] += p.vel[1] * dt;
+      const pr = project(p.pos, cam, vp);
+      if (!pr) continue;
+      p.x = pr.x;
+      p.y = pr.y;
+      p.scale = pr.scale / ref;
+      p.depth = pr.depth;
+      p.vx = Math.sin(ts / 900 + p.pos[2] * 7) * 6 * p.scale; // screen-space tail direction, as the shapes expect
+      p.vy = -p.vel[1] * 700 * p.scale;
+      live.push({ p, t, age });
+    }
+    live.sort((a, b) => b.p.depth - a.p.depth); // far first, so near tracks are drawn over them
+    for (const { p, t, age } of live) {
+      const fog = Math.max(0.25, Math.min(1, 1.25 - (p.depth - FOG_START) * 0.7));
       const k = {
         x: p.x,
         y: p.y,
-        r: p.r,
+        r: p.r * p.scale,
         t,
         age,
         s: this.reduced ? 1 : easeOutBack(Math.min(1, t / SPAWN_MS)),
-        a: (age < 0.12 ? 1 : 1 - ((age - 0.12) / 0.88) ** 1.5) * p.alpha,
-        flash: this.reduced ? 0 : Math.max(0, 1 - t / FLASH_MS) * p.alpha,
+        a: (age < 0.12 ? 1 : 1 - ((age - 0.12) / 0.88) ** 1.5) * p.alpha * fog,
+        flash: this.reduced ? 0 : Math.max(0, 1 - t / FLASH_MS) * p.alpha * fog,
       };
       const drawShape = this[`draw_${p.shape.replace('-', '_')}`] ?? this.draw_mote;
       drawShape.call(this, ctx, p, k);
@@ -596,19 +697,9 @@ export class Visualizer {
       ctx.setLineDash([]);
     }
 
-    // --- ruler and vignette on top ------------------------------------------
+    // --- vignette on top ---------------------------------------------------------
     ctx.globalCompositeOperation = 'source-over';
-    if (L) {
-      ctx.drawImage(L.ruler, 0, 0, w, h);
-      if (f > 0) {
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = f * 0.7;
-        ctx.drawImage(L.ruler, 0, 0, w, h);
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
-      }
-      ctx.drawImage(L.vignette, 0, 0, w, h);
-    }
+    if (L) ctx.drawImage(L.vignette, 0, 0, w, h);
   }
 
   drawStamp(w, h) {

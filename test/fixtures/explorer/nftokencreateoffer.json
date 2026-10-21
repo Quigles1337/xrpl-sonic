@@ -1,0 +1,92 @@
+{
+  "id": "xrpl-sonic-req-5",
+  "result": {
+    "Account": "rnHeqy9a1MxQJEYbGBXYNDosZRU7qySsAV",
+    "Amount": "570000000",
+    "Expiration": 848383079,
+    "Fee": "12",
+    "Flags": 0,
+    "LastLedgerSequence": 107777956,
+    "NFTokenID": "00080BB84F44098667FBB6C8E7F589183B68708A94C05FC9BF93461C05E9EB81",
+    "Owner": "rGR7iBpGJ5SXMeLTjjP9gPe9hDQjTY895G",
+    "Sequence": 107382376,
+    "SigningPubKey": "EDEDA27F7353527D8F7B0E1818D9FED7034666B46FFAFEB1CB97E096742B70EE96",
+    "TransactionType": "NFTokenCreateOffer",
+    "TxnSignature": "BA0A887520AF941C82BBF7BE5A13EC811F2946DD54BBE6B6FE85B3B67CCB474B357FA8DA10B550B22A86F986C0C08513E8D051FFCE6F547C4230158A91E3B300",
+    "ctid": "C66C8F1100130000",
+    "date": 845791082,
+    "hash": "047ED1D1782470D7CEE66B6292ED5509F459809D24C49E5AA75C93E23D39E902",
+    "inLedger": 107777809,
+    "ledger_index": 107777809,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rnHeqy9a1MxQJEYbGBXYNDosZRU7qySsAV",
+              "Balance": "2553267662",
+              "Flags": 0,
+              "OwnerCount": 8472,
+              "Sequence": 107382377
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "09E6FE4A744A9777C3CE62D23692D0924C8511B467E4D0FDD89419EF1CDC3031",
+            "PreviousFields": {
+              "Balance": "2553267674",
+              "OwnerCount": 8471,
+              "Sequence": 107382376
+            },
+            "PreviousTxnID": "2845413EC74D0A8C7E41AB268B2DFE3862F318432D9F27A81DA48BA92C2107E4",
+            "PreviousTxnLgrSeq": 107777808
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 1,
+              "NFTokenID": "00080BB84F44098667FBB6C8E7F589183B68708A94C05FC9BF93461C05E9EB81",
+              "RootIndex": "48CD45E1E130548034D8E11C737B933D227B6DC7D401583758737ED2ECD18C80"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "48CD45E1E130548034D8E11C737B933D227B6DC7D401583758737ED2ECD18C80",
+            "PreviousTxnID": "54A97C980D1FACB3ED7C779CA1F3CD343178D344BA546B8D429AFA24A8E0FAC3",
+            "PreviousTxnLgrSeq": 107777351
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexPrevious": "1998",
+              "Owner": "rnHeqy9a1MxQJEYbGBXYNDosZRU7qySsAV",
+              "RootIndex": "37A6B9EF73F1FC66916C921262D7CC5904D6E3C5B59B4F1CE048DCEEAB085E3E"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "66B69B920664ED426DD4F20A8C82312844704F08D579AB656DD6A24AC45FEF09",
+            "PreviousTxnID": "2845413EC74D0A8C7E41AB268B2DFE3862F318432D9F27A81DA48BA92C2107E4",
+            "PreviousTxnLgrSeq": 107777808
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "NFTokenOffer",
+            "LedgerIndex": "6D1E45A96D1027CC3F7045AB4482BCEC8C01F7C10E943DF38B779DE1001D60E8",
+            "NewFields": {
+              "Amount": "570000000",
+              "Expiration": 848383079,
+              "NFTokenID": "00080BB84F44098667FBB6C8E7F589183B68708A94C05FC9BF93461C05E9EB81",
+              "Owner": "rnHeqy9a1MxQJEYbGBXYNDosZRU7qySsAV",
+              "OwnerNode": "1999"
+            }
+          }
+        }
+      ],
+      "TransactionIndex": 19,
+      "TransactionResult": "tesSUCCESS",
+      "offer_id": "6D1E45A96D1027CC3F7045AB4482BCEC8C01F7C10E943DF38B779DE1001D60E8"
+    },
+    "validated": true
+  },
+  "status": "success",
+  "type": "response"
+}

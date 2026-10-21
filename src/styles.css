@@ -2103,6 +2103,7 @@ body.mode-embed .open-full {
 body.mode-embed .panel,
 body.mode-embed #toggle-panel,
 body.mode-embed #share,
+body.mode-embed .explorer-link,
 body.mode-embed .footer,
 body.mode-embed .brand-tag,
 body.mode-embed .tx-rate-cell,
@@ -2290,6 +2291,12 @@ body.mode-embed .inspector {
   body:not(.mode-embed) .actions #share {
     grid-row: 2;
     grid-column: 2;
+  }
+
+  body:not(.mode-embed) .actions .explorer-link {
+    grid-row: 2;
+    grid-column: 1;
+    justify-self: end;
   }
 
   body:not(.mode-embed) .actions #toggle-panel {
