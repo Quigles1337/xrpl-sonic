@@ -1136,6 +1136,7 @@ function inspectNeighbour(item, delta) {
 
 canvas.addEventListener('click', (e) => {
   if (query.mode === 'overlay') return;
+  if (viz.consumeDragClick()) return; // the click that ends a drag is not an inspect
   const p = viz.hitTest(e.clientX, e.clientY);
   if (p?.event) inspect(p.event);
 });

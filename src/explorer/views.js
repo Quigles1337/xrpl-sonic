@@ -8,6 +8,7 @@ import { CATEGORIES, categorize, parseAmount, formatAmount, shortAddress, txToEv
 import { eventIcon, categoryIcon, fieldGuide } from '../glyphs.js';
 import { explorerUrl, EXPLORERS } from '../explorers.js';
 import { sigilSvg } from './sigil.js';
+import { project, referenceScale, ringPoints } from '../projection.js';
 import { formatRoute } from './route.js';
 import { balanceChanges, describeAffected, summarize, resultMeaning, rippleTimeToIso, decodeDomain, decodeFlags, reserveFor, asStreamMessage, typeMix } from './anatomy.js';
 
@@ -208,7 +209,7 @@ export function renderAccount({ address, tag = null, info, network, reserve, onH
       el('span', { style: '--c: #e8eefb', text: 'counterparties: nearer = more often' }),
     ]),
   ]);
-  const constellationCard = el('section', { class: 'card' }, [el('h2', { text: 'Constellation' }), constellationBox, el('p', { class: 'hint', text: 'Stars are the accounts in the recent transactions, coloured by what they mostly did together; a star’s ring is its sigil’s hue. Point at one to name it, click to go there. Orbits are drawn on a log scale.' })]);
+  const constellationCard = el('section', { class: 'card' }, [el('h2', { text: 'Constellation' }), constellationBox, el('p', { class: 'hint', text: 'Stars are the accounts in the recent transactions, placed on a sphere around the account, nearest the most frequent, coloured by what they mostly did together; a star’s ring is its sigil’s hue. Each held currency orbits on its own tilted plane with a bead travelling along it. Point at a star to name it, click to go there; drag to orbit the view, scroll to move closer, double-click to reset. Orbits are on a log scale.' })]);
   const tape = el('ol', { class: 'tape', id: 'account-tape' }, [el('li', { class: 'skeleton', text: 'loading transactions…' })]);
   const foot = el('div', { class: 'tape-foot' });
   const tapeCard = el('section', { class: 'card' }, [el('h2', {}, [document.createTextNode('Recent transactions'), el('span', { class: 'count', id: 'tape-count' })]), tape, foot]);
@@ -393,7 +394,7 @@ export function renderLedger(ledger, { network, onHover, latestIndex = null }) {
   const legend = el('div', { class: 'mix-legend' }, mix.slice(0, 10).map((m) => el('span', { class: 'mix-label', style: `--c: ${CATEGORIES[m.category].colour}`, text: `${m.type} ${m.count}` })));
   const plate = el('div', { class: 'plate' }, [el('canvas', { 'aria-label': 'The ledger as a plate: every transaction at its pitch' })]);
   const hero = el('section', { class: 'card hero' }, [identity, mixBar, legend]);
-  const plateCard = el('section', { class: 'card' }, [el('h2', { text: 'The plate' }), plate, el('p', { class: 'hint', text: 'Each transaction at the horizontal position of its pitch, as the listening page would draw it: whales left, dust right. Point at the tape with Sound on to hear them.' })]);
+  const plateCard = el('section', { class: 'card' }, [el('h2', { text: 'The plate' }), plate, el('p', { class: 'hint', text: 'Each transaction at the horizontal position of its pitch across the floor, as the listening page draws it: whales left, dust right; depth is the hash. Point at the tape with Sound on to hear them.' })]);
   const tape = el('ol', { class: 'tape' });
   const rows = txs.slice(0, 250).map((t) => txRow(t, { onHover }));
   for (const r of rows) tape.append(r.li);
@@ -401,8 +402,8 @@ export function renderLedger(ledger, { network, onHover, latestIndex = null }) {
   return { nodes: [hero, el('div', { class: 'columns' }, [el('div', { class: 'stack' }, [plateCard]), el('div', { class: 'stack' }, [tapeCard])])], plate, events: rows.map((r) => r.event).filter(Boolean) };
 }
 
-/** Draw a ledger's events on the plate canvas: x by pitch, y by hash, glyph colour and size. */
-export function drawPlate(canvas, events) {
+/** Draw a ledger's events on the plate canvas in perspective: x by pitch across the floor, depth by hash, glyph colour and size. */
+export function drawPlate(canvas, events, { yaw = 0.1 } = {}) {
   const rect = canvas.parentElement.getBoundingClientRect();
   const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
   const w = Math.max(1, Math.round(rect.width));
@@ -412,44 +413,75 @@ export function drawPlate(canvas, events) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
-  const pad = 24;
-  ctx.strokeStyle = 'rgba(128, 164, 224, 0.18)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 5; i++) {
-    const x = pad + (i / 5) * (w - 2 * pad);
+  const cam = { yaw, pitch: 0.5, distance: 1.3, fov: 0.9, target: [0, 0.1, 0.45] };
+  const vp = { width: w, height: h };
+  const ref = referenceScale(cam, vp);
+  const P = (p) => project(p, cam, vp);
+  const line = (a, b, style) => {
+    const pa = P(a);
+    const pb = P(b);
+    if (!pa || !pb) return;
+    ctx.strokeStyle = style;
     ctx.beginPath();
-    ctx.moveTo(x, h - 18);
-    ctx.lineTo(x, h - 10);
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
     ctx.stroke();
-  }
-  ctx.beginPath();
-  ctx.moveTo(pad, h - 14.5);
-  ctx.lineTo(w - pad, h - 14.5);
-  ctx.stroke();
+  };
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) line([i / 5 - 1, 0, 0], [i / 5 - 1, 0, 1], `rgba(128, 164, 224, ${i % 2 ? 0.05 : 0.14})`);
+  for (let i = 0; i <= 6; i++) line([-1, 0, i / 6], [1, 0, i / 6], `rgba(128, 164, 224, ${i === 0 ? 0.3 : 0.05})`);
   ctx.font = '500 9px ui-monospace, Menlo, Consolas, monospace';
-  ctx.fillStyle = 'rgba(128, 164, 224, 0.6)';
+  ctx.fillStyle = 'rgba(128, 164, 224, 0.65)';
   ctx.textAlign = 'center';
-  ['C2', 'C3', 'C4', 'C5', 'C6', 'C7'].forEach((l, i) => ctx.fillText(l, pad + (i / 5) * (w - 2 * pad), h - 2));
-  ctx.globalCompositeOperation = 'lighter';
+  ctx.textBaseline = 'top';
+  ['C2', 'C3', 'C4', 'C5', 'C6', 'C7'].forEach((l, i) => {
+    const p = P([i / 2.5 - 1, 0, -0.06]);
+    if (p) ctx.fillText(l, p.x, p.y);
+  });
+  const pts = [];
   for (const ev of events) {
-    const px = Math.min(1, Math.max(0, (ev.pitch - 36) / 60));
-    const x = pad + px * (w - 2 * pad);
-    const y = 16 + ((parseInt(String(ev.hash ?? '0').slice(0, 6), 16) || 0) % 1000) / 1000 * (h - 48);
-    const r = Math.max(2, ev.size * 0.45);
+    const px = Math.min(1, Math.max(0, (ev.pitch - 36) / 60)) * 2 - 1;
+    const seed = parseInt(String(ev.hash ?? '0').slice(0, 6), 16) || 0;
+    const z = 0.08 + ((seed % 1000) / 1000) * 0.84;
+    const y = 0.02 + (((seed >> 10) % 1000) / 1000) * 0.22;
+    const p = P([px, y, z]);
+    if (p) pts.push({ ev, p });
+  }
+  pts.sort((a, b) => b.p.depth - a.p.depth);
+  ctx.globalCompositeOperation = 'lighter';
+  for (const { ev, p } of pts) {
+    const r = Math.max(1.5, ev.size * 0.45 * (p.scale / ref));
     const [cr, cg, cb] = [parseInt(ev.colour.slice(1, 3), 16), parseInt(ev.colour.slice(3, 5), 16), parseInt(ev.colour.slice(5, 7), 16)];
-    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3);
+    const foot = P([ (Math.min(1, Math.max(0, (ev.pitch - 36) / 60)) * 2 - 1), 0, 0.08 + ((parseInt(String(ev.hash ?? '0').slice(0, 6), 16) || 0) % 1000) / 1000 * 0.84 ]);
+    if (foot) {
+      ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, 0.18)`;
+      ctx.beginPath();
+      ctx.moveTo(foot.x, foot.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3);
     g.addColorStop(0, `rgba(${cr}, ${cg}, ${cb}, 0.5)`);
     g.addColorStop(1, `rgba(${cr}, ${cg}, ${cb}, 0)`);
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.arc(x, y, r * 3, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, r * 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${ev.success ? 0.95 : 0.4})`;
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalCompositeOperation = 'source-over';
+  // a faint floor ring, the pulse at rest
+  const ring = ringPoints([0, 0.002, 0.5], 0.5, { segments: 48 }).map(P);
+  if (ring.every(Boolean)) {
+    ctx.strokeStyle = 'rgba(200, 220, 255, 0.12)';
+    ctx.beginPath();
+    ring.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+    ctx.closePath();
+    ctx.stroke();
+  }
 }
 
 export function renderNotice(text, cls = '') {
