@@ -17,6 +17,7 @@ import { validateCase, caseFromState, serializeCase, encodeCase, decodeCase, cas
 import { buildScore, scoreCaption, transcript, formatClock, clipRanges, ledgerAtPosition } from './score.js';
 import { Transport } from './transport.js';
 import { LiveWindow, momentFromLive, momentFromReplay, momentPosition, isMoment } from './moment.js';
+import { describeReport, factsForCase, importAnnotations } from './describe.js';
 import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
 import { Geiger } from './geiger.js';
@@ -34,8 +35,7 @@ import {
   startRecording,
 } from './capture.js';
 import { createUI } from './ui.js';
-
-const SITE_URL = 'https://quigles1337.github.io/xrpl-sonic/';
+import { SITE_URL } from './explorers.js';
 
 const settings = loadSettings();
 
@@ -117,6 +117,8 @@ const ui = createUI({
   onToggleRun: () => (running ? stop() : start()),
   onShare: () => share(),
   onMoment: (question) => saveMoment(question),
+  onAi: () => openAi(),
+  onCopyAi: (level) => copyAi(level),
   onSnapshot: () => snapshot().catch((err) => ui.logMessage(`Snapshot failed: ${err?.message ?? err}`, 'error')),
   onRecord: () => record().catch((err) => ui.logMessage(`Recording failed: ${err?.message ?? err}`, 'error')),
   onPreview: (member) => preview(member),
@@ -140,6 +142,8 @@ const ui = createUI({
     onSave: () => saveCase(),
     onCopyLink: () => copyCaseLink(),
     onTranscript: () => saveTranscript(),
+    onAi: () => openAi(),
+    onImport: (text, source) => importNotes(text, source),
     onToggle: (key, value) => {
       settings[key] = value;
       saveSettings(settings);
@@ -1290,6 +1294,66 @@ function momentSummary(c, placed) {
 }
 
 // ---------------------------------------------------------------------------
+// Copy for AI (src/describe.js, docs/copy-for-ai.md)
+// ---------------------------------------------------------------------------
+
+/** The facts for the loaded case's transactions, built once per session (they depend on the ledgers, not on the settings). */
+function sessionFacts() {
+  const s = session.active;
+  if (!s) return null;
+  if (!s.facts) s.facts = factsForCase(s.case, s.ledgers);
+  return s.facts;
+}
+
+/** describeReport for the case as it stands, at a level. Null (with a message) when no case is playing. */
+async function describeNow(level = 'gist', { budget } = {}) {
+  const s = session.active;
+  if (!s) {
+    ui.logMessage('Copy for AI needs a loaded case with its ledgers: open a replay or a case and press Start.', 'error');
+    return null;
+  }
+  const c = currentCase();
+  return describeReport(c, s.ledgers, sessionFacts(), { level, budget, caseLink: await caseLink(c) });
+}
+
+/** Show the sizes and the events-shown ratio of both levels before anything is copied. */
+async function openAi() {
+  const gist = await describeNow('gist');
+  if (!gist) return;
+  const evidence = await describeNow('evidence');
+  ui.openAiBox({ gist, evidence });
+}
+
+async function copyAi(level) {
+  const r = await describeNow(level);
+  if (!r) return;
+  ui.closeAiBox();
+  try {
+    await navigator.clipboard.writeText(r.text);
+    ui.setAiCopied(true, level);
+    ui.logMessage(`Copied the ${level}: ${r.chars.toLocaleString('en-US')} characters (~${r.tokensApprox.toLocaleString('en-US')} tokens), ${r.shown} of ${r.total} events${r.rule ? ` (${r.rule})` : ''}.`);
+  } catch (err) {
+    console.warn('[xrpl-sonic] clipboard unavailable', err);
+    ui.logMessage('Could not copy: the clipboard is unavailable in this context.', 'error');
+  }
+}
+
+/** An assistant's answer, pasted back: drafts on the case, with what was accepted and rejected. */
+function importNotes(text, source) {
+  const base = noteBase();
+  if (!base) {
+    ui.logMessage('Load a case before importing notes.', 'error');
+    return null;
+  }
+  const r = importAnnotations(base, text, { source, score: session.active?.score ?? null });
+  if (r.accepted.length) commitCase(r.case);
+  ui.casePanel.setImportResult(r);
+  ui.logMessage(`Import: ${r.accepted.length} note${r.accepted.length === 1 ? '' : 's'} accepted as draft${r.accepted.length === 1 ? '' : 's'} from "${source}"${r.rejected.length ? `; ${r.rejected.length} rejected` : ''}.`, r.accepted.length ? 'note' : 'error');
+  for (const x of r.rejected) ui.logMessage(`Import: #${x.index + 1} rejected: ${x.reason}`, 'error');
+  return r;
+}
+
+// ---------------------------------------------------------------------------
 // Snapshot and recording
 // ---------------------------------------------------------------------------
 
@@ -1489,6 +1553,8 @@ window.xrplSonic = {
   live,
   momentNow,
   saveMoment,
+  describeNow,
+  importNotes,
   openCase: (raw) => openCase(raw, 'case', 'the console'),
   playClip,
   setBlind,

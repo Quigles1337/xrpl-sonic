@@ -1,0 +1,639 @@
+xrpl-sonic case · Copy for AI · level evidence
+versions: case 1 · moment 1 · facts 1 · mapping 1.1.0 · score 1
+network: mainnet · host: s1.ripple.com · saved: 2026-10-21T20:00:00.000Z while listening replay
+case: moment-107811677-20261021t200000 · "Moment at ledger #107,811,677"
+question: "Why did this immediate-or-cancel order fill so little?" · anchor: tx BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0
+scope: clip 1: ledgers 107811677–107811677 · #107811677 hash 670B93178D441AA798895ADD2F28958C0239BE809C2F79AA24516F1AA7D3DD77
+loop: 0:01.000–0:05.000 on the case timeline
+coverage (fetched for this text): #107811677 fetched, 60 transactions
+
+counts:
+  available in scope (sum of txn_count over the fetched ledgers): 60
+  selected by the listening settings (events in the score): 59
+  excluded by reason: failed 1
+listening settings (context for the selection, not facts about the ledger): cast: rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker", rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy "Taker"; categories: all on; failed transactions: excluded; quiet threshold: off; scale: pentatonicMajor; key: C; mapping: 1.1.0; cast mode: all; speed: 1x
+
+concentration (submitting accounts among the 60 available transactions):
+  rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah "Maker": 22 (36.7%)
+  rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq: 6 (10.0%)
+  rEqYHwNakMkL5FVVewd1cBUNs6EphiNLNF: 3 (5.0%)
+  rUL5tdABBjVGm38zeh7tEBwGsUk6N9oE3H: 3 (5.0%)
+  r3wKiNh21bQ4rw4LNHLm85WFNsK5kfnVrj: 2 (3.3%)
+  rUMBUV11gQBUadbW9LF58oWeBBPaSGGF2V: 2 (3.3%)
+  rURtT5MMFzSUR54MAq9MKfzBoezTBZbKns: 2 (3.3%)
+  r3zyqf6efQgSDBR1XfKhd92Z2xrGHvkuCF: 1 (1.7%)
+  cast: "Maker" rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah submitted 22, involved 22
+  cast: "Taker" rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy submitted 1, involved 1
+
+events (1 of 59 shown; rule: the anchor event, then cast-involved events, then the rest in application order, up to the budget of 32000 characters):
+  #107811677 tx 18 BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0 OfferCreate tesSUCCESS from rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy "Taker" · gives 7085108443 drops for 9801.315909 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De [anchor] [cast: Taker]
+
+findings for BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0 (OfferCreate, the anchor, cast: Taker):
+  [observed] transaction.flags transaction.flags = [tfImmediateOrCancel] · evidence: tx.Flags
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.issued balance:rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53/RLUSD/rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De.delta = before 16.2249884128331, after 15.1249878728331, delta -1.10000054 · evidence: node 0 Balance.value
+  [calculated] balance.issued balance:rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De/RLUSD/rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53.delta = before -16.2249884128331, after -15.1249878728331, delta 1.10000054 · evidence: node 0 Balance.value
+  [calculated] balance.issued balance:rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy/RLUSD/rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De.delta = before 823.9475696291931, after 825.0475701691931, delta 1.10000054 · evidence: node 1 Balance.value
+  [calculated] balance.issued balance:rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De/RLUSD/rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy.delta = before -823.9475696291931, after -825.0475701691931, delta -1.10000054 · evidence: node 1 Balance.value
+  [calculated] balance.xrp balance:rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy/XRP.delta = before 7088108443, after 7087313304, delta -795139 · evidence: node 2 Balance
+  [calculated] balance.xrp balance:rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53/XRP.delta = before 17960062, after 18755191, delta 795129 · evidence: node 5 Balance
+  [observed] node.action offer:3.action = deleted · evidence: node 3 DeletedNode
+  [observed] offer.identity offer:3.identity = owner rLPV1SBMbiTMno43PxhBEMWK9pz1hXYk53, sequence 105279319, expiration null, sell no · evidence: node 3 FinalFields.Account, node 3 FinalFields.Sequence, node 3 FinalFields.Flags
+  [observed] offer.amounts.after offer:3.amounts.after = takerGets 0 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 0 drops · evidence: node 3 FinalFields.TakerGets, node 3 FinalFields.TakerPays
+  [observed] offer.amounts.before offer:3.amounts.before = takerGets 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 795129 drops · evidence: node 3 PreviousFields.TakerGets, node 3 PreviousFields.TakerPays
+  [calculated] offer.trade.previous-fields offer:3.traded = yes · evidence: node 3 PreviousFields
+  [calculated] offer.trade.delta offer:3.tradedAmounts = gave 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, got 795129 drops · evidence: node 3 PreviousFields.TakerGets, node 3 FinalFields.TakerGets, node 3 PreviousFields.TakerPays, node 3 FinalFields.TakerPays
+  [rule] offer.role offer:3.role = book · evidence: node 3 FinalFields.Account, tx.Account
+  [rule] offer.removal.consumed offer:3.removal = consumed · evidence: node 3 FinalFields.TakerGets, node 3 FinalFields.TakerPays, node 3 PreviousFields.TakerGets, node 3 PreviousFields.TakerPays
+  [observed] exchange.request exchange.request = takerGets 7085108443 drops, takerPays 9801.315909 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, sell no, immediateOrCancel yes, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [3], received {524C555344000000000000000000000000000000/rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De}, spent {XRP 795129 drops} · evidence: node 3 PreviousFields.TakerGets
+  [calculated] exchange.received exchange.received = 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 795129 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status partial, judgedBy takerPays-received, requested 9801.315909 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, achieved 1.10000054 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, shortfall 9800.21590846 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, placed no, betterThanAsked no · evidence: tx.TakerPays, exchange.received
+  [rule] exchange.fill.ioc exchange.fill.immediateOrCancel = not placed by design · evidence: tx.Flags
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy · Flags 131072 (tfImmediateOrCancel) · TakerGets 7085108443 drops · TakerPays 9801.315909 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · Fee 10 · Sequence 103662514 · TransactionResult tesSUCCESS
+findings for 1581703054AAE66EE4C304B207DD5196FDA0E4A75E24404B593EDE9C1D07DEC9 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803417, after 12946803407, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:1.action = deleted · evidence: node 1 DeletedNode
+  [observed] offer.identity offer:1.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809027, expiration null, sell no · evidence: node 1 FinalFields.Account, node 1 FinalFields.Sequence, node 1 FinalFields.Flags
+  [observed] offer.amounts.after offer:1.amounts.after = takerGets 1317990 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 1000000000000 drops · evidence: node 1 FinalFields.TakerGets, node 1 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:1.amounts.before = takerGets 1317990 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 1000000000000 drops · evidence: node 1 PreviousFields
+  [calculated] offer.trade.previous-fields offer:1.traded = no · evidence: node 1 PreviousFields
+  [rule] offer.role offer:1.role = submitter-old · evidence: node 1 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:1.removal = replaced · evidence: node 1 FinalFields.Account, tx.Account, tx.TransactionType, node 1 FinalFields.Sequence, tx.OfferSequence, node 1 PreviousFields
+  [observed] node.action offer:3.action = created · evidence: node 3 CreatedNode
+  [observed] offer.identity offer:3.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809052, expiration null, sell no · evidence: node 3 NewFields.Account, node 3 NewFields.Sequence, node 3 NewFields.Flags
+  [observed] offer.amounts.after offer:3.amounts.after = takerGets 1317860 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 1000000000000 drops · evidence: node 3 NewFields.TakerGets, node 3 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:3.amounts.before = takerGets 1317860 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 1000000000000 drops · evidence: node 3 PreviousFields
+  [calculated] offer.trade.previous-fields offer:3.traded = no · evidence: node 3 PreviousFields
+  [rule] offer.role offer:3.role = submitter-new · evidence: node 3 NewFields.Account, tx.Account
+  [observed] offer.placed offer:3.placed = takerGets 1317860 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 1000000000000 drops · evidence: node 3 CreatedNode, node 3 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 1317860 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 3 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 1317860 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809052 · OfferSequence 287809027 · TransactionResult tesSUCCESS
+findings for 85B6634CEE7C82A4B61B2A636AE3A99AC7AB90D04B357BCE60F9ADCBD0CB37F8 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803407, after 12946803397, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:1.action = deleted · evidence: node 1 DeletedNode
+  [observed] offer.identity offer:1.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809028, expiration null, sell no · evidence: node 1 FinalFields.Account, node 1 FinalFields.Sequence, node 1 FinalFields.Flags
+  [observed] offer.amounts.after offer:1.amounts.after = takerGets 12846000000 drops, takerPays 18666.5226 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · evidence: node 1 FinalFields.TakerGets, node 1 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:1.amounts.before = takerGets 12846000000 drops, takerPays 18666.5226 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · evidence: node 1 PreviousFields
+  [calculated] offer.trade.previous-fields offer:1.traded = no · evidence: node 1 PreviousFields
+  [rule] offer.role offer:1.role = submitter-old · evidence: node 1 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:1.removal = replaced · evidence: node 1 FinalFields.Account, tx.Account, tx.TransactionType, node 1 FinalFields.Sequence, tx.OfferSequence, node 1 PreviousFields
+  [observed] node.action offer:5.action = created · evidence: node 5 CreatedNode
+  [observed] offer.identity offer:5.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809053, expiration null, sell no · evidence: node 5 NewFields.Account, node 5 NewFields.Sequence, node 5 NewFields.Flags
+  [observed] offer.amounts.after offer:5.amounts.after = takerGets 12846000000 drops, takerPays 18664.5957 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · evidence: node 5 NewFields.TakerGets, node 5 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:5.amounts.before = takerGets 12846000000 drops, takerPays 18664.5957 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · evidence: node 5 PreviousFields
+  [calculated] offer.trade.previous-fields offer:5.traded = no · evidence: node 5 PreviousFields
+  [rule] offer.role offer:5.role = submitter-new · evidence: node 5 NewFields.Account, tx.Account
+  [observed] offer.placed offer:5.placed = takerGets 12846000000 drops, takerPays 18664.5957 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · evidence: node 5 CreatedNode, node 5 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 18664.5957 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 18664.5957 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, achieved 0 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 5 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 18664.5957 RLUSD (524C555344000000000000000000000000000000) issuer rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De · Fee 10 · Sequence 287809053 · OfferSequence 287809028 · TransactionResult tesSUCCESS
+findings for 282D493DA8AE4312095ED0DC26F1C94E16C48BFCEE1CE06BAF2B69F88FE45A9B (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803397, after 12946803387, delta -10 · evidence: node 1 Balance
+  [observed] node.action offer:0.action = created · evidence: node 0 CreatedNode
+  [observed] offer.identity offer:0.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809054, expiration null, sell no · evidence: node 0 NewFields.Account, node 0 NewFields.Sequence, node 0 NewFields.Flags
+  [observed] offer.amounts.after offer:0.amounts.after = takerGets 12846000000 drops, takerPays 18309.01842 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE · evidence: node 0 NewFields.TakerGets, node 0 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:0.amounts.before = takerGets 12846000000 drops, takerPays 18309.01842 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE · evidence: node 0 PreviousFields
+  [calculated] offer.trade.previous-fields offer:0.traded = no · evidence: node 0 PreviousFields
+  [rule] offer.role offer:0.role = submitter-new · evidence: node 0 NewFields.Account, tx.Account
+  [observed] offer.placed offer:0.placed = takerGets 12846000000 drops, takerPays 18309.01842 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE · evidence: node 0 CreatedNode, node 0 NewFields.Account
+  [observed] node.action offer:4.action = deleted · evidence: node 4 DeletedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809029, expiration null, sell no · evidence: node 4 FinalFields.Account, node 4 FinalFields.Sequence, node 4 FinalFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 12846000000 drops, takerPays 18310.94532 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE · evidence: node 4 FinalFields.TakerGets, node 4 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 12846000000 drops, takerPays 18310.94532 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-old · evidence: node 4 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:4.removal = replaced · evidence: node 4 FinalFields.Account, tx.Account, tx.TransactionType, node 4 FinalFields.Sequence, tx.OfferSequence, node 4 PreviousFields
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 18309.01842 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 18309.01842 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE, achieved 0 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 0 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 18309.01842 USDC (5553444300000000000000000000000000000000) issuer rGm7WCVp9gb4jZHWTEtGUr4dd74z2XuWhE · Fee 10 · Sequence 287809054 · OfferSequence 287809029 · TransactionResult tesSUCCESS
+findings for A4803147C1A007CBA3DFF23D82DDB7971EE958783382450EF5CE727005032EBB (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803387, after 12946803377, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:4.action = deleted · evidence: node 4 DeletedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809030, expiration null, sell no · evidence: node 4 FinalFields.Account, node 4 FinalFields.Sequence, node 4 FinalFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 1317990 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 4 FinalFields.TakerGets, node 4 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 1317990 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-old · evidence: node 4 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:4.removal = replaced · evidence: node 4 FinalFields.Account, tx.Account, tx.TransactionType, node 4 FinalFields.Sequence, tx.OfferSequence, node 4 PreviousFields
+  [observed] node.action offer:5.action = created · evidence: node 5 CreatedNode
+  [observed] offer.identity offer:5.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809055, expiration null, sell no · evidence: node 5 NewFields.Account, node 5 NewFields.Sequence, node 5 NewFields.Flags
+  [observed] offer.amounts.after offer:5.amounts.after = takerGets 1317860 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 5 NewFields.TakerGets, node 5 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:5.amounts.before = takerGets 1317860 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 5 PreviousFields
+  [calculated] offer.trade.previous-fields offer:5.traded = no · evidence: node 5 PreviousFields
+  [rule] offer.role offer:5.role = submitter-new · evidence: node 5 NewFields.Account, tx.Account
+  [observed] offer.placed offer:5.placed = takerGets 1317860 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 5 CreatedNode, node 5 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 1317860 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 5 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 1317860 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809055 · OfferSequence 287809030 · TransactionResult tesSUCCESS
+findings for E8D0FFA3CDCB7E34AEA26AA2AA7A91E25C6F3EB7697AD9DBBED77701466B8275 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803377, after 12946803367, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:2.action = created · evidence: node 2 CreatedNode
+  [observed] offer.identity offer:2.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809056, expiration null, sell no · evidence: node 2 NewFields.Account, node 2 NewFields.Sequence, node 2 NewFields.Flags
+  [observed] offer.amounts.after offer:2.amounts.after = takerGets 12846000000 drops, takerPays 18664.5957 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 2 NewFields.TakerGets, node 2 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:2.amounts.before = takerGets 12846000000 drops, takerPays 18664.5957 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 2 PreviousFields
+  [calculated] offer.trade.previous-fields offer:2.traded = no · evidence: node 2 PreviousFields
+  [rule] offer.role offer:2.role = submitter-new · evidence: node 2 NewFields.Account, tx.Account
+  [observed] offer.placed offer:2.placed = takerGets 12846000000 drops, takerPays 18664.5957 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 2 CreatedNode, node 2 NewFields.Account
+  [observed] node.action offer:5.action = deleted · evidence: node 5 DeletedNode
+  [observed] offer.identity offer:5.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809031, expiration null, sell no · evidence: node 5 FinalFields.Account, node 5 FinalFields.Sequence, node 5 FinalFields.Flags
+  [observed] offer.amounts.after offer:5.amounts.after = takerGets 12846000000 drops, takerPays 18666.5226 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 5 FinalFields.TakerGets, node 5 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:5.amounts.before = takerGets 12846000000 drops, takerPays 18666.5226 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 5 PreviousFields
+  [calculated] offer.trade.previous-fields offer:5.traded = no · evidence: node 5 PreviousFields
+  [rule] offer.role offer:5.role = submitter-old · evidence: node 5 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:5.removal = replaced · evidence: node 5 FinalFields.Account, tx.Account, tx.TransactionType, node 5 FinalFields.Sequence, tx.OfferSequence, node 5 PreviousFields
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 18664.5957 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 18664.5957 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, achieved 0 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 2 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 18664.5957 USD issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · Fee 10 · Sequence 287809056 · OfferSequence 287809031 · TransactionResult tesSUCCESS
+findings for A98B545AD200670F30D6B8D8437365FA1748F4CAE06D34CC664A315FC4FCCC04 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803367, after 12946803357, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:1.action = created · evidence: node 1 CreatedNode
+  [observed] offer.identity offer:1.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809057, expiration null, sell no · evidence: node 1 NewFields.Account, node 1 NewFields.Sequence, node 1 NewFields.Flags
+  [observed] offer.amounts.after offer:1.amounts.after = takerGets 1371661.7594 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 1 NewFields.TakerGets, node 1 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:1.amounts.before = takerGets 1371661.7594 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 1 PreviousFields
+  [calculated] offer.trade.previous-fields offer:1.traded = no · evidence: node 1 PreviousFields
+  [rule] offer.role offer:1.role = submitter-new · evidence: node 1 NewFields.Account, tx.Account
+  [observed] offer.placed offer:1.placed = takerGets 1371661.7594 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 1 CreatedNode, node 1 NewFields.Account
+  [observed] node.action offer:3.action = deleted · evidence: node 3 DeletedNode
+  [observed] offer.identity offer:3.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809032, expiration null, sell no · evidence: node 3 FinalFields.Account, node 3 FinalFields.Sequence, node 3 FinalFields.Flags
+  [observed] offer.amounts.after offer:3.amounts.after = takerGets 1371661.9594 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 3 FinalFields.TakerGets, node 3 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:3.amounts.before = takerGets 1371661.9594 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 3 PreviousFields
+  [calculated] offer.trade.previous-fields offer:3.traded = no · evidence: node 3 PreviousFields
+  [rule] offer.role offer:3.role = submitter-old · evidence: node 3 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:3.removal = replaced · evidence: node 3 FinalFields.Account, tx.Account, tx.TransactionType, node 3 FinalFields.Sequence, tx.OfferSequence, node 3 PreviousFields
+  [observed] exchange.request exchange.request = takerGets 1371661.7594 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 1 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 1371661.7594 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809057 · OfferSequence 287809032 · TransactionResult tesSUCCESS
+findings for F0B3BFEB03CCA60131CAA515B27C9DD392EF646DD8B4D686693AB49463962CDF (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803357, after 12946803347, delta -10 · evidence: node 1 Balance
+  [observed] node.action offer:0.action = created · evidence: node 0 CreatedNode
+  [observed] offer.identity offer:0.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809058, expiration null, sell no · evidence: node 0 NewFields.Account, node 0 NewFields.Sequence, node 0 NewFields.Flags
+  [observed] offer.amounts.after offer:0.amounts.after = takerGets 12846000000 drops, takerPays 19055.9397368274 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 0 NewFields.TakerGets, node 0 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:0.amounts.before = takerGets 12846000000 drops, takerPays 19055.9397368274 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 0 PreviousFields
+  [calculated] offer.trade.previous-fields offer:0.traded = no · evidence: node 0 PreviousFields
+  [rule] offer.role offer:0.role = submitter-new · evidence: node 0 NewFields.Account, tx.Account
+  [observed] offer.placed offer:0.placed = takerGets 12846000000 drops, takerPays 19055.9397368274 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 0 CreatedNode, node 0 NewFields.Account
+  [observed] node.action offer:5.action = deleted · evidence: node 5 DeletedNode
+  [observed] offer.identity offer:5.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809033, expiration null, sell no · evidence: node 5 FinalFields.Account, node 5 FinalFields.Sequence, node 5 FinalFields.Flags
+  [observed] offer.amounts.after offer:5.amounts.after = takerGets 12846000000 drops, takerPays 19055.9333138274 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 5 FinalFields.TakerGets, node 5 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:5.amounts.before = takerGets 12846000000 drops, takerPays 19055.9333138274 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 5 PreviousFields
+  [calculated] offer.trade.previous-fields offer:5.traded = no · evidence: node 5 PreviousFields
+  [rule] offer.role offer:5.role = submitter-old · evidence: node 5 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:5.removal = replaced · evidence: node 5 FinalFields.Account, tx.Account, tx.TransactionType, node 5 FinalFields.Sequence, tx.OfferSequence, node 5 PreviousFields
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 19055.9397368274 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 19055.9397368274 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, achieved 0 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 0 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 19055.9397368274 USD issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · Fee 10 · Sequence 287809058 · OfferSequence 287809033 · TransactionResult tesSUCCESS
+findings for AB74BFF7429E1334606953B1F28C15AB68CB6836E59719BA0CE8E69117541B9A (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803347, after 12946803337, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:4.action = created · evidence: node 4 CreatedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809059, expiration null, sell no · evidence: node 4 NewFields.Account, node 4 NewFields.Sequence, node 4 NewFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 1356620 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y, takerPays 1000000000000 drops · evidence: node 4 NewFields.TakerGets, node 4 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 1356620 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y, takerPays 1000000000000 drops · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-new · evidence: node 4 NewFields.Account, tx.Account
+  [observed] offer.placed offer:4.placed = takerGets 1356620 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y, takerPays 1000000000000 drops · evidence: node 4 CreatedNode, node 4 NewFields.Account
+  [observed] node.action offer:5.action = deleted · evidence: node 5 DeletedNode
+  [observed] offer.identity offer:5.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809034, expiration null, sell no · evidence: node 5 FinalFields.Account, node 5 FinalFields.Sequence, node 5 FinalFields.Flags
+  [observed] offer.amounts.after offer:5.amounts.after = takerGets 1356750 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y, takerPays 1000000000000 drops · evidence: node 5 FinalFields.TakerGets, node 5 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:5.amounts.before = takerGets 1356750 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y, takerPays 1000000000000 drops · evidence: node 5 PreviousFields
+  [calculated] offer.trade.previous-fields offer:5.traded = no · evidence: node 5 PreviousFields
+  [rule] offer.role offer:5.role = submitter-old · evidence: node 5 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:5.removal = replaced · evidence: node 5 FinalFields.Account, tx.Account, tx.TransactionType, node 5 FinalFields.Sequence, tx.OfferSequence, node 5 PreviousFields
+  [observed] exchange.request exchange.request = takerGets 1356620 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 4 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 1356620 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809059 · OfferSequence 287809034 · TransactionResult tesSUCCESS
+findings for 6C9FAA8DF4F239ACCBBC1EB12A8323254B13BE58B04BE832308FA7745EB03163 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803337, after 12946803327, delta -10 · evidence: node 3 Balance
+  [observed] node.action offer:2.action = deleted · evidence: node 2 DeletedNode
+  [observed] offer.identity offer:2.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809035, expiration null, sell no · evidence: node 2 FinalFields.Account, node 2 FinalFields.Sequence, node 2 FinalFields.Flags
+  [observed] offer.amounts.after offer:2.amounts.after = takerGets 12846000000 drops, takerPays 18310.94532 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · evidence: node 2 FinalFields.TakerGets, node 2 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:2.amounts.before = takerGets 12846000000 drops, takerPays 18310.94532 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · evidence: node 2 PreviousFields
+  [calculated] offer.trade.previous-fields offer:2.traded = no · evidence: node 2 PreviousFields
+  [rule] offer.role offer:2.role = submitter-old · evidence: node 2 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:2.removal = replaced · evidence: node 2 FinalFields.Account, tx.Account, tx.TransactionType, node 2 FinalFields.Sequence, tx.OfferSequence, node 2 PreviousFields
+  [observed] node.action offer:5.action = created · evidence: node 5 CreatedNode
+  [observed] offer.identity offer:5.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809060, expiration null, sell no · evidence: node 5 NewFields.Account, node 5 NewFields.Sequence, node 5 NewFields.Flags
+  [observed] offer.amounts.after offer:5.amounts.after = takerGets 12846000000 drops, takerPays 18309.01842 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · evidence: node 5 NewFields.TakerGets, node 5 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:5.amounts.before = takerGets 12846000000 drops, takerPays 18309.01842 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · evidence: node 5 PreviousFields
+  [calculated] offer.trade.previous-fields offer:5.traded = no · evidence: node 5 PreviousFields
+  [rule] offer.role offer:5.role = submitter-new · evidence: node 5 NewFields.Account, tx.Account
+  [observed] offer.placed offer:5.placed = takerGets 12846000000 drops, takerPays 18309.01842 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · evidence: node 5 CreatedNode, node 5 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 18309.01842 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 18309.01842 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y, achieved 0 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 5 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 18309.01842 USD issuer rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y · Fee 10 · Sequence 287809060 · OfferSequence 287809035 · TransactionResult tesSUCCESS
+findings for 4AAF16B743F04003ECFD799FB1E4F721E0E0819917C4D5CC0787B5CDFD206A21 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803327, after 12946803317, delta -10 · evidence: node 2 Balance
+  [observed] node.action offer:3.action = deleted · evidence: node 3 DeletedNode
+  [observed] offer.identity offer:3.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809036, expiration null, sell no · evidence: node 3 FinalFields.Account, node 3 FinalFields.Sequence, node 3 FinalFields.Flags
+  [observed] offer.amounts.after offer:3.amounts.after = takerGets 1354468.6855 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu, takerPays 1000000000000 drops · evidence: node 3 FinalFields.TakerGets, node 3 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:3.amounts.before = takerGets 1354468.6855 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu, takerPays 1000000000000 drops · evidence: node 3 PreviousFields
+  [calculated] offer.trade.previous-fields offer:3.traded = no · evidence: node 3 PreviousFields
+  [rule] offer.role offer:3.role = submitter-old · evidence: node 3 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:3.removal = replaced · evidence: node 3 FinalFields.Account, tx.Account, tx.TransactionType, node 3 FinalFields.Sequence, tx.OfferSequence, node 3 PreviousFields
+  [observed] node.action offer:4.action = created · evidence: node 4 CreatedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809061, expiration null, sell no · evidence: node 4 NewFields.Account, node 4 NewFields.Sequence, node 4 NewFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 1354468.4855 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu, takerPays 1000000000000 drops · evidence: node 4 NewFields.TakerGets, node 4 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 1354468.4855 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu, takerPays 1000000000000 drops · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-new · evidence: node 4 NewFields.Account, tx.Account
+  [observed] offer.placed offer:4.placed = takerGets 1354468.4855 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu, takerPays 1000000000000 drops · evidence: node 4 CreatedNode, node 4 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 1354468.4855 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 4 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 1354468.4855 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809061 · OfferSequence 287809036 · TransactionResult tesSUCCESS
+findings for 0A9611EBF327BAF3CAA32A900D93338C9314C4ED9767FC4E32926285F7965C41 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803317, after 12946803307, delta -10 · evidence: node 1 Balance
+  [observed] node.action offer:0.action = created · evidence: node 0 CreatedNode
+  [observed] offer.identity offer:0.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809062, expiration null, sell no · evidence: node 0 NewFields.Account, node 0 NewFields.Sequence, node 0 NewFields.Flags
+  [observed] offer.amounts.after offer:0.amounts.after = takerGets 12846000000 drops, takerPays 18159.29495004 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · evidence: node 0 NewFields.TakerGets, node 0 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:0.amounts.before = takerGets 12846000000 drops, takerPays 18159.29495004 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · evidence: node 0 PreviousFields
+  [calculated] offer.trade.previous-fields offer:0.traded = no · evidence: node 0 PreviousFields
+  [rule] offer.role offer:0.role = submitter-new · evidence: node 0 NewFields.Account, tx.Account
+  [observed] offer.placed offer:0.placed = takerGets 12846000000 drops, takerPays 18159.29495004 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · evidence: node 0 CreatedNode, node 0 NewFields.Account
+  [observed] node.action offer:4.action = deleted · evidence: node 4 DeletedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809037, expiration null, sell no · evidence: node 4 FinalFields.Account, node 4 FinalFields.Sequence, node 4 FinalFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 12846000000 drops, takerPays 18159.29623464 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · evidence: node 4 FinalFields.TakerGets, node 4 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 12846000000 drops, takerPays 18159.29623464 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-old · evidence: node 4 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:4.removal = replaced · evidence: node 4 FinalFields.Account, tx.Account, tx.TransactionType, node 4 FinalFields.Sequence, tx.OfferSequence, node 4 PreviousFields
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 18159.29495004 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 18159.29495004 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu, achieved 0 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 0 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 18159.29495004 USDC (5553444300000000000000000000000000000000) issuer rcEGREd8NmkKRE8GE424sksyt1tJVFZwu · Fee 10 · Sequence 287809062 · OfferSequence 287809037 · TransactionResult tesSUCCESS
+findings for 62B8B3329437FC2C79596CAB618C8445DA1F828DA0A31C774F08D8F354EEA619 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803307, after 12946803297, delta -10 · evidence: node 1 Balance
+  [observed] node.action offer:0.action = deleted · evidence: node 0 DeletedNode
+  [observed] offer.identity offer:0.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809038, expiration null, sell no · evidence: node 0 FinalFields.Account, node 0 FinalFields.Sequence, node 0 FinalFields.Flags
+  [observed] offer.amounts.after offer:0.amounts.after = takerGets 1364864.2215 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq, takerPays 1000000000000 drops · evidence: node 0 FinalFields.TakerGets, node 0 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:0.amounts.before = takerGets 1364864.2215 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq, takerPays 1000000000000 drops · evidence: node 0 PreviousFields
+  [calculated] offer.trade.previous-fields offer:0.traded = no · evidence: node 0 PreviousFields
+  [rule] offer.role offer:0.role = submitter-old · evidence: node 0 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:0.removal = replaced · evidence: node 0 FinalFields.Account, tx.Account, tx.TransactionType, node 0 FinalFields.Sequence, tx.OfferSequence, node 0 PreviousFields
+  [observed] node.action offer:5.action = created · evidence: node 5 CreatedNode
+  [observed] offer.identity offer:5.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809063, expiration null, sell no · evidence: node 5 NewFields.Account, node 5 NewFields.Sequence, node 5 NewFields.Flags
+  [observed] offer.amounts.after offer:5.amounts.after = takerGets 1364864.5215 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq, takerPays 1000000000000 drops · evidence: node 5 NewFields.TakerGets, node 5 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:5.amounts.before = takerGets 1364864.5215 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq, takerPays 1000000000000 drops · evidence: node 5 PreviousFields
+  [calculated] offer.trade.previous-fields offer:5.traded = no · evidence: node 5 PreviousFields
+  [rule] offer.role offer:5.role = submitter-new · evidence: node 5 NewFields.Account, tx.Account
+  [observed] offer.placed offer:5.placed = takerGets 1364864.5215 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq, takerPays 1000000000000 drops · evidence: node 5 CreatedNode, node 5 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 1364864.5215 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 5 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 1364864.5215 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809063 · OfferSequence 287809038 · TransactionResult tesSUCCESS
+findings for A2A49516BAF6D37C679D062755C6081BB7F04F2F03D1641C0059B4B7B224A45B (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803297, after 12946803287, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:3.action = created · evidence: node 3 CreatedNode
+  [observed] offer.identity offer:3.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809064, expiration null, sell no · evidence: node 3 NewFields.Account, node 3 NewFields.Sequence, node 3 NewFields.Flags
+  [observed] offer.amounts.after offer:3.amounts.after = takerGets 12846000000 drops, takerPays 18664.5957 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · evidence: node 3 NewFields.TakerGets, node 3 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:3.amounts.before = takerGets 12846000000 drops, takerPays 18664.5957 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · evidence: node 3 PreviousFields
+  [calculated] offer.trade.previous-fields offer:3.traded = no · evidence: node 3 PreviousFields
+  [rule] offer.role offer:3.role = submitter-new · evidence: node 3 NewFields.Account, tx.Account
+  [observed] offer.placed offer:3.placed = takerGets 12846000000 drops, takerPays 18664.5957 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · evidence: node 3 CreatedNode, node 3 NewFields.Account
+  [observed] node.action offer:5.action = deleted · evidence: node 5 DeletedNode
+  [observed] offer.identity offer:5.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809039, expiration null, sell no · evidence: node 5 FinalFields.Account, node 5 FinalFields.Sequence, node 5 FinalFields.Flags
+  [observed] offer.amounts.after offer:5.amounts.after = takerGets 12846000000 drops, takerPays 18666.5226 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · evidence: node 5 FinalFields.TakerGets, node 5 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:5.amounts.before = takerGets 12846000000 drops, takerPays 18666.5226 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · evidence: node 5 PreviousFields
+  [calculated] offer.trade.previous-fields offer:5.traded = no · evidence: node 5 PreviousFields
+  [rule] offer.role offer:5.role = submitter-old · evidence: node 5 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:5.removal = replaced · evidence: node 5 FinalFields.Account, tx.Account, tx.TransactionType, node 5 FinalFields.Sequence, tx.OfferSequence, node 5 PreviousFields
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 18664.5957 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 18664.5957 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq, achieved 0 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 3 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 18664.5957 USDT (5553445400000000000000000000000000000000) issuer rcvxE9PS9YBwxtGg1qNeewV6ZB3wGubZq · Fee 10 · Sequence 287809064 · OfferSequence 287809039 · TransactionResult tesSUCCESS
+findings for C41A470E0E3D1B8E3A45A67AA0FE5737D74C8C762FC7371921A6A95396392925 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803287, after 12946803277, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:1.action = created · evidence: node 1 CreatedNode
+  [observed] offer.identity offer:1.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809065, expiration null, sell no · evidence: node 1 NewFields.Account, node 1 NewFields.Sequence, node 1 NewFields.Flags
+  [observed] offer.amounts.after offer:1.amounts.after = takerGets 1152270 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 1 NewFields.TakerGets, node 1 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:1.amounts.before = takerGets 1152270 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 1 PreviousFields
+  [calculated] offer.trade.previous-fields offer:1.traded = no · evidence: node 1 PreviousFields
+  [rule] offer.role offer:1.role = submitter-new · evidence: node 1 NewFields.Account, tx.Account
+  [observed] offer.placed offer:1.placed = takerGets 1152270 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 1 CreatedNode, node 1 NewFields.Account
+  [observed] node.action offer:3.action = deleted · evidence: node 3 DeletedNode
+  [observed] offer.identity offer:3.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809040, expiration null, sell no · evidence: node 3 FinalFields.Account, node 3 FinalFields.Sequence, node 3 FinalFields.Flags
+  [observed] offer.amounts.after offer:3.amounts.after = takerGets 1152270 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 3 FinalFields.TakerGets, node 3 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:3.amounts.before = takerGets 1152270 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops · evidence: node 3 PreviousFields
+  [calculated] offer.trade.previous-fields offer:3.traded = no · evidence: node 3 PreviousFields
+  [rule] offer.role offer:3.role = submitter-old · evidence: node 3 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:3.removal = replaced · evidence: node 3 FinalFields.Account, tx.Account, tx.TransactionType, node 3 FinalFields.Sequence, tx.OfferSequence, node 3 PreviousFields
+  [observed] exchange.request exchange.request = takerGets 1152270 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 1 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 1152270 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809065 · OfferSequence 287809040 · TransactionResult tesSUCCESS
+findings for 6AF8A91EF55FA02D4CC6A728BD63CEAA4BC546E10746BD5053C97131C754F943 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803277, after 12946803267, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:1.action = deleted · evidence: node 1 DeletedNode
+  [observed] offer.identity offer:1.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809041, expiration null, sell no · evidence: node 1 FinalFields.Account, node 1 FinalFields.Sequence, node 1 FinalFields.Flags
+  [observed] offer.amounts.after offer:1.amounts.after = takerGets 12846000000 drops, takerPays 16626.70626 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 1 FinalFields.TakerGets, node 1 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:1.amounts.before = takerGets 12846000000 drops, takerPays 16626.70626 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 1 PreviousFields
+  [calculated] offer.trade.previous-fields offer:1.traded = no · evidence: node 1 PreviousFields
+  [rule] offer.role offer:1.role = submitter-old · evidence: node 1 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:1.removal = replaced · evidence: node 1 FinalFields.Account, tx.Account, tx.TransactionType, node 1 FinalFields.Sequence, tx.OfferSequence, node 1 PreviousFields
+  [observed] node.action offer:2.action = created · evidence: node 2 CreatedNode
+  [observed] offer.identity offer:2.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809066, expiration null, sell no · evidence: node 2 NewFields.Account, node 2 NewFields.Sequence, node 2 NewFields.Flags
+  [observed] offer.amounts.after offer:2.amounts.after = takerGets 12846000000 drops, takerPays 16626.70626 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 2 NewFields.TakerGets, node 2 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:2.amounts.before = takerGets 12846000000 drops, takerPays 16626.70626 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 2 PreviousFields
+  [calculated] offer.trade.previous-fields offer:2.traded = no · evidence: node 2 PreviousFields
+  [rule] offer.role offer:2.role = submitter-new · evidence: node 2 NewFields.Account, tx.Account
+  [observed] offer.placed offer:2.placed = takerGets 12846000000 drops, takerPays 16626.70626 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: node 2 CreatedNode, node 2 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 16626.70626 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 16626.70626 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, achieved 0 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 2 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 16626.70626 EUR issuer rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq · Fee 10 · Sequence 287809066 · OfferSequence 287809041 · TransactionResult tesSUCCESS
+findings for 3BE132B6E913165F3AC56F2E1EC20CC21F0105C447C24F34003F152BE730DE31 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803267, after 12946803257, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:1.action = deleted · evidence: node 1 DeletedNode
+  [observed] offer.identity offer:1.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809042, expiration null, sell no · evidence: node 1 FinalFields.Account, node 1 FinalFields.Sequence, node 1 FinalFields.Flags
+  [observed] offer.amounts.after offer:1.amounts.after = takerGets 1145630 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK, takerPays 1000000000000 drops · evidence: node 1 FinalFields.TakerGets, node 1 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:1.amounts.before = takerGets 1145630 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK, takerPays 1000000000000 drops · evidence: node 1 PreviousFields
+  [calculated] offer.trade.previous-fields offer:1.traded = no · evidence: node 1 PreviousFields
+  [rule] offer.role offer:1.role = submitter-old · evidence: node 1 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:1.removal = replaced · evidence: node 1 FinalFields.Account, tx.Account, tx.TransactionType, node 1 FinalFields.Sequence, tx.OfferSequence, node 1 PreviousFields
+  [observed] node.action offer:3.action = created · evidence: node 3 CreatedNode
+  [observed] offer.identity offer:3.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809067, expiration null, sell no · evidence: node 3 NewFields.Account, node 3 NewFields.Sequence, node 3 NewFields.Flags
+  [observed] offer.amounts.after offer:3.amounts.after = takerGets 1145630 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK, takerPays 1000000000000 drops · evidence: node 3 NewFields.TakerGets, node 3 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:3.amounts.before = takerGets 1145630 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK, takerPays 1000000000000 drops · evidence: node 3 PreviousFields
+  [calculated] offer.trade.previous-fields offer:3.traded = no · evidence: node 3 PreviousFields
+  [rule] offer.role offer:3.role = submitter-new · evidence: node 3 NewFields.Account, tx.Account
+  [observed] offer.placed offer:3.placed = takerGets 1145630 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK, takerPays 1000000000000 drops · evidence: node 3 CreatedNode, node 3 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 1145630 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 3 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 1145630 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809067 · OfferSequence 287809042 · TransactionResult tesSUCCESS
+findings for 2BD8DB651FEC7A427214B7EC0C39D871718A63BBF4377C172938C5C59B2B4CD5 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803257, after 12946803247, delta -10 · evidence: node 1 Balance
+  [observed] node.action offer:0.action = created · evidence: node 0 CreatedNode
+  [observed] offer.identity offer:0.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809068, expiration null, sell no · evidence: node 0 NewFields.Account, node 0 NewFields.Sequence, node 0 NewFields.Flags
+  [observed] offer.amounts.after offer:0.amounts.after = takerGets 12846000000 drops, takerPays 19002.06012 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · evidence: node 0 NewFields.TakerGets, node 0 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:0.amounts.before = takerGets 12846000000 drops, takerPays 19002.06012 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · evidence: node 0 PreviousFields
+  [calculated] offer.trade.previous-fields offer:0.traded = no · evidence: node 0 PreviousFields
+  [rule] offer.role offer:0.role = submitter-new · evidence: node 0 NewFields.Account, tx.Account
+  [observed] offer.placed offer:0.placed = takerGets 12846000000 drops, takerPays 19002.06012 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · evidence: node 0 CreatedNode, node 0 NewFields.Account
+  [observed] node.action offer:4.action = deleted · evidence: node 4 DeletedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809043, expiration null, sell no · evidence: node 4 FinalFields.Account, node 4 FinalFields.Sequence, node 4 FinalFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 12846000000 drops, takerPays 19002.06012 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · evidence: node 4 FinalFields.TakerGets, node 4 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 12846000000 drops, takerPays 19002.06012 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-old · evidence: node 4 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:4.removal = replaced · evidence: node 4 FinalFields.Account, tx.Account, tx.TransactionType, node 4 FinalFields.Sequence, tx.OfferSequence, node 4 PreviousFields
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 19002.06012 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 19002.06012 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK, achieved 0 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 0 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 19002.06012 EUROP (4555524F50000000000000000000000000000000) issuer rMkEuRii9w9uBMQDnWV5AA43gvYZR9JxVK · Fee 10 · Sequence 287809068 · OfferSequence 287809043 · TransactionResult tesSUCCESS
+findings for C8ECDBFDC9DB8517CBBF2D55EDE4673E24F3719938B61639DDF98D58BD4695CD (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803247, after 12946803237, delta -10 · evidence: node 1 Balance
+  [observed] node.action offer:0.action = deleted · evidence: node 0 DeletedNode
+  [observed] offer.identity offer:0.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809044, expiration null, sell no · evidence: node 0 FinalFields.Account, node 0 FinalFields.Sequence, node 0 FinalFields.Flags
+  [observed] offer.amounts.after offer:0.amounts.after = takerGets 15.9181 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL, takerPays 1000000000000 drops · evidence: node 0 FinalFields.TakerGets, node 0 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:0.amounts.before = takerGets 15.9181 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL, takerPays 1000000000000 drops · evidence: node 0 PreviousFields
+  [calculated] offer.trade.previous-fields offer:0.traded = no · evidence: node 0 PreviousFields
+  [rule] offer.role offer:0.role = submitter-old · evidence: node 0 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:0.removal = replaced · evidence: node 0 FinalFields.Account, tx.Account, tx.TransactionType, node 0 FinalFields.Sequence, tx.OfferSequence, node 0 PreviousFields
+  [observed] node.action offer:2.action = created · evidence: node 2 CreatedNode
+  [observed] offer.identity offer:2.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809069, expiration null, sell no · evidence: node 2 NewFields.Account, node 2 NewFields.Sequence, node 2 NewFields.Flags
+  [observed] offer.amounts.after offer:2.amounts.after = takerGets 15.9181 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL, takerPays 1000000000000 drops · evidence: node 2 NewFields.TakerGets, node 2 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:2.amounts.before = takerGets 15.9181 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL, takerPays 1000000000000 drops · evidence: node 2 PreviousFields
+  [calculated] offer.trade.previous-fields offer:2.traded = no · evidence: node 2 PreviousFields
+  [rule] offer.role offer:2.role = submitter-new · evidence: node 2 NewFields.Account, tx.Account
+  [observed] offer.placed offer:2.placed = takerGets 15.9181 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL, takerPays 1000000000000 drops · evidence: node 2 CreatedNode, node 2 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 15.9181 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 2 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 15.9181 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809069 · OfferSequence 287809044 · TransactionResult tesSUCCESS
+findings for A0FBACF3023B05AA05D3F17CCB5B7A786D4A30800954D70444F6A153487B19CA (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803237, after 12946803227, delta -10 · evidence: node 1 Balance
+  [observed] node.action offer:2.action = deleted · evidence: node 2 DeletedNode
+  [observed] offer.identity offer:2.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809045, expiration null, sell no · evidence: node 2 FinalFields.Account, node 2 FinalFields.Sequence, node 2 FinalFields.Flags
+  [observed] offer.amounts.after offer:2.amounts.after = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · evidence: node 2 FinalFields.TakerGets, node 2 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:2.amounts.before = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · evidence: node 2 PreviousFields
+  [calculated] offer.trade.previous-fields offer:2.traded = no · evidence: node 2 PreviousFields
+  [rule] offer.role offer:2.role = submitter-old · evidence: node 2 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:2.removal = replaced · evidence: node 2 FinalFields.Account, tx.Account, tx.TransactionType, node 2 FinalFields.Sequence, tx.OfferSequence, node 2 PreviousFields
+  [observed] node.action offer:4.action = created · evidence: node 4 CreatedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809070, expiration null, sell no · evidence: node 4 NewFields.Account, node 4 NewFields.Sequence, node 4 NewFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · evidence: node 4 NewFields.TakerGets, node 4 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-new · evidence: node 4 NewFields.Account, tx.Account
+  [observed] offer.placed offer:4.placed = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · evidence: node 4 CreatedNode, node 4 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 0.23135646 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL, achieved 0 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 4 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 0.23135646 BTC issuer rchGBxcD1A1C2tdxF6papQYZ8kjRKMYcL · Fee 10 · Sequence 287809070 · OfferSequence 287809045 · TransactionResult tesSUCCESS
+findings for E3723AAFEEC1126C4C8ADCF46F6C1A3C445BD6086BD832D4554D93FE887B1726 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803227, after 12946803217, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:1.action = deleted · evidence: node 1 DeletedNode
+  [observed] offer.identity offer:1.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809046, expiration null, sell no · evidence: node 1 FinalFields.Account, node 1 FinalFields.Sequence, node 1 FinalFields.Flags
+  [observed] offer.amounts.after offer:1.amounts.after = takerGets 14.8059 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 1 FinalFields.TakerGets, node 1 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:1.amounts.before = takerGets 14.8059 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 1 PreviousFields
+  [calculated] offer.trade.previous-fields offer:1.traded = no · evidence: node 1 PreviousFields
+  [rule] offer.role offer:1.role = submitter-old · evidence: node 1 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:1.removal = replaced · evidence: node 1 FinalFields.Account, tx.Account, tx.TransactionType, node 1 FinalFields.Sequence, tx.OfferSequence, node 1 PreviousFields
+  [observed] node.action offer:4.action = created · evidence: node 4 CreatedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809071, expiration null, sell no · evidence: node 4 NewFields.Account, node 4 NewFields.Sequence, node 4 NewFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 14.8059 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 4 NewFields.TakerGets, node 4 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 14.8059 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-new · evidence: node 4 NewFields.Account, tx.Account
+  [observed] offer.placed offer:4.placed = takerGets 14.8059 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops · evidence: node 4 CreatedNode, node 4 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 14.8059 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 4 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 14.8059 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809071 · OfferSequence 287809046 · TransactionResult tesSUCCESS
+findings for D47F1AF9D17FA5FCF68A22C00E67185D87A438A3404A6FB6DB19ABA271335A2B (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803217, after 12946803207, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:2.action = deleted · evidence: node 2 DeletedNode
+  [observed] offer.identity offer:2.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809047, expiration null, sell no · evidence: node 2 FinalFields.Account, node 2 FinalFields.Sequence, node 2 FinalFields.Flags
+  [observed] offer.amounts.after offer:2.amounts.after = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 2 FinalFields.TakerGets, node 2 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:2.amounts.before = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 2 PreviousFields
+  [calculated] offer.trade.previous-fields offer:2.traded = no · evidence: node 2 PreviousFields
+  [rule] offer.role offer:2.role = submitter-old · evidence: node 2 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:2.removal = replaced · evidence: node 2 FinalFields.Account, tx.Account, tx.TransactionType, node 2 FinalFields.Sequence, tx.OfferSequence, node 2 PreviousFields
+  [observed] node.action offer:4.action = created · evidence: node 4 CreatedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809072, expiration null, sell no · evidence: node 4 NewFields.Account, node 4 NewFields.Sequence, node 4 NewFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 4 NewFields.TakerGets, node 4 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-new · evidence: node 4 NewFields.Account, tx.Account
+  [observed] offer.placed offer:4.placed = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: node 4 CreatedNode, node 4 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 12846000000 drops, takerPays 0.23135646 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 drops · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 0.23135646 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, achieved 0 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 4 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 12846000000 drops · TakerPays 0.23135646 BTC issuer rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B · Fee 10 · Sequence 287809072 · OfferSequence 287809047 · TransactionResult tesSUCCESS
+findings for 2693745BE75EEE9199A0333A3AF58A85C6E73F9E0F90343CFB68B61115494B75 (OfferCreate, cast: Maker):
+  [observed] result transaction.result = code tesSUCCESS, family tes · evidence: meta.TransactionResult
+  [calculated] balance.xrp balance:rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah/XRP.delta = before 12946803207, after 12946803197, delta -10 · evidence: node 0 Balance
+  [observed] node.action offer:1.action = deleted · evidence: node 1 DeletedNode
+  [observed] offer.identity offer:1.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809048, expiration null, sell no · evidence: node 1 FinalFields.Account, node 1 FinalFields.Sequence, node 1 FinalFields.Flags
+  [observed] offer.amounts.after offer:1.amounts.after = takerGets 545.7656999999999 ETH issuer rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h, takerPays 1000000000000 drops · evidence: node 1 FinalFields.TakerGets, node 1 FinalFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:1.amounts.before = takerGets 545.7656999999999 ETH issuer rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h, takerPays 1000000000000 drops · evidence: node 1 PreviousFields
+  [calculated] offer.trade.previous-fields offer:1.traded = no · evidence: node 1 PreviousFields
+  [rule] offer.role offer:1.role = submitter-old · evidence: node 1 FinalFields.Account, tx.Account
+  [rule] offer.removal.replaced offer:1.removal = replaced · evidence: node 1 FinalFields.Account, tx.Account, tx.TransactionType, node 1 FinalFields.Sequence, tx.OfferSequence, node 1 PreviousFields
+  [observed] node.action offer:4.action = created · evidence: node 4 CreatedNode
+  [observed] offer.identity offer:4.identity = owner rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah, sequence 287809073, expiration null, sell no · evidence: node 4 NewFields.Account, node 4 NewFields.Sequence, node 4 NewFields.Flags
+  [observed] offer.amounts.after offer:4.amounts.after = takerGets 545.7656999999999 ETH issuer rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h, takerPays 1000000000000 drops · evidence: node 4 NewFields.TakerGets, node 4 NewFields.TakerPays
+  [observed] offer.amounts.before.unchanged offer:4.amounts.before = takerGets 545.7656999999999 ETH issuer rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h, takerPays 1000000000000 drops · evidence: node 4 PreviousFields
+  [calculated] offer.trade.previous-fields offer:4.traded = no · evidence: node 4 PreviousFields
+  [rule] offer.role offer:4.role = submitter-new · evidence: node 4 NewFields.Account, tx.Account
+  [observed] offer.placed offer:4.placed = takerGets 545.7656999999999 ETH issuer rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h, takerPays 1000000000000 drops · evidence: node 4 CreatedNode, node 4 NewFields.Account
+  [observed] exchange.request exchange.request = takerGets 545.7656999999999 ETH issuer rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h, takerPays 1000000000000 drops, sell no, immediateOrCancel no, fillOrKill no, passive no · evidence: tx.TakerGets, tx.TakerPays, tx.Flags
+  [calculated] exchange.book exchange.book = crossed [], received {}, spent {}
+  [calculated] exchange.received exchange.received = 0 drops · evidence: book.received, amm.received
+  [calculated] exchange.spent exchange.spent = 0 ETH issuer rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h · evidence: book.spent, amm.spent
+  [calculated] exchange.fill exchange.fill = status none, judgedBy takerPays-received, requested 1000000000000 drops, achieved 0 drops, shortfall null, placed yes, betterThanAsked no · evidence: tx.TakerPays, exchange.received, node 4 CreatedNode
+  [calculated] exchange.corroboration.received exchange.corroboration.received = exact · evidence: balance.delta, expected
+  [calculated] exchange.corroboration.spent exchange.corroboration.spent = exact · evidence: balance.delta, expected
+  source fields: TransactionType OfferCreate · Account rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah · Flags 0 (none) · TakerGets 545.7656999999999 ETH issuer rcA8X3TVMST1n3CJeAdGk1RdRCHii7N2h · TakerPays 1000000000000 drops · Fee 10 · Sequence 287809073 · OfferSequence 287809048 · TransactionResult tesSUCCESS
+
+links:
+  case: https://quigles1337.github.io/xrpl-sonic/#case=z:example
+  explorer: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/<hash> for any hash in this text
+  BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0
+  1581703054AAE66EE4C304B207DD5196FDA0E4A75E24404B593EDE9C1D07DEC9: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/1581703054AAE66EE4C304B207DD5196FDA0E4A75E24404B593EDE9C1D07DEC9
+  85B6634CEE7C82A4B61B2A636AE3A99AC7AB90D04B357BCE60F9ADCBD0CB37F8: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/85B6634CEE7C82A4B61B2A636AE3A99AC7AB90D04B357BCE60F9ADCBD0CB37F8
+  282D493DA8AE4312095ED0DC26F1C94E16C48BFCEE1CE06BAF2B69F88FE45A9B: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/282D493DA8AE4312095ED0DC26F1C94E16C48BFCEE1CE06BAF2B69F88FE45A9B
+  A4803147C1A007CBA3DFF23D82DDB7971EE958783382450EF5CE727005032EBB: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/A4803147C1A007CBA3DFF23D82DDB7971EE958783382450EF5CE727005032EBB
+  E8D0FFA3CDCB7E34AEA26AA2AA7A91E25C6F3EB7697AD9DBBED77701466B8275: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/E8D0FFA3CDCB7E34AEA26AA2AA7A91E25C6F3EB7697AD9DBBED77701466B8275
+  A98B545AD200670F30D6B8D8437365FA1748F4CAE06D34CC664A315FC4FCCC04: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/A98B545AD200670F30D6B8D8437365FA1748F4CAE06D34CC664A315FC4FCCC04
+  F0B3BFEB03CCA60131CAA515B27C9DD392EF646DD8B4D686693AB49463962CDF: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/F0B3BFEB03CCA60131CAA515B27C9DD392EF646DD8B4D686693AB49463962CDF
+  AB74BFF7429E1334606953B1F28C15AB68CB6836E59719BA0CE8E69117541B9A: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/AB74BFF7429E1334606953B1F28C15AB68CB6836E59719BA0CE8E69117541B9A
+  6C9FAA8DF4F239ACCBBC1EB12A8323254B13BE58B04BE832308FA7745EB03163: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/6C9FAA8DF4F239ACCBBC1EB12A8323254B13BE58B04BE832308FA7745EB03163
+  4AAF16B743F04003ECFD799FB1E4F721E0E0819917C4D5CC0787B5CDFD206A21: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/4AAF16B743F04003ECFD799FB1E4F721E0E0819917C4D5CC0787B5CDFD206A21
+  0A9611EBF327BAF3CAA32A900D93338C9314C4ED9767FC4E32926285F7965C41: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/0A9611EBF327BAF3CAA32A900D93338C9314C4ED9767FC4E32926285F7965C41
+  62B8B3329437FC2C79596CAB618C8445DA1F828DA0A31C774F08D8F354EEA619: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/62B8B3329437FC2C79596CAB618C8445DA1F828DA0A31C774F08D8F354EEA619
+  A2A49516BAF6D37C679D062755C6081BB7F04F2F03D1641C0059B4B7B224A45B: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/A2A49516BAF6D37C679D062755C6081BB7F04F2F03D1641C0059B4B7B224A45B
+  C41A470E0E3D1B8E3A45A67AA0FE5737D74C8C762FC7371921A6A95396392925: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/C41A470E0E3D1B8E3A45A67AA0FE5737D74C8C762FC7371921A6A95396392925
+  6AF8A91EF55FA02D4CC6A728BD63CEAA4BC546E10746BD5053C97131C754F943: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/6AF8A91EF55FA02D4CC6A728BD63CEAA4BC546E10746BD5053C97131C754F943
+  3BE132B6E913165F3AC56F2E1EC20CC21F0105C447C24F34003F152BE730DE31: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/3BE132B6E913165F3AC56F2E1EC20CC21F0105C447C24F34003F152BE730DE31
+  2BD8DB651FEC7A427214B7EC0C39D871718A63BBF4377C172938C5C59B2B4CD5: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/2BD8DB651FEC7A427214B7EC0C39D871718A63BBF4377C172938C5C59B2B4CD5
+  C8ECDBFDC9DB8517CBBF2D55EDE4673E24F3719938B61639DDF98D58BD4695CD: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/C8ECDBFDC9DB8517CBBF2D55EDE4673E24F3719938B61639DDF98D58BD4695CD
+  A0FBACF3023B05AA05D3F17CCB5B7A786D4A30800954D70444F6A153487B19CA: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/A0FBACF3023B05AA05D3F17CCB5B7A786D4A30800954D70444F6A153487B19CA
+  E3723AAFEEC1126C4C8ADCF46F6C1A3C445BD6086BD832D4554D93FE887B1726: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/E3723AAFEEC1126C4C8ADCF46F6C1A3C445BD6086BD832D4554D93FE887B1726
+  D47F1AF9D17FA5FCF68A22C00E67185D87A438A3404A6FB6DB19ABA271335A2B: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/D47F1AF9D17FA5FCF68A22C00E67185D87A438A3404A6FB6DB19ABA271335A2B
+  2693745BE75EEE9199A0333A3AF58A85C6E73F9E0F90343CFB68B61115494B75: https://quigles1337.github.io/xrpl-sonic/explorer.html#tx/2693745BE75EEE9199A0333A3AF58A85C6E73F9E0F90343CFB68B61115494B75
+
+how to reply:
+Answer the question above (or, if there is none, say what happened in these records and what to look at). Keep observations, what these records show, apart from hypotheses, what might explain them. For each one, cite the hash of every transaction you rely on, taken from this text. Say plainly what you could not establish from this text. Do not infer common ownership or intent from accounts appearing together. Then return your notes as a JSON array of annotations in this shape, which xrpl-sonic imports as drafts:
+[{"text": "...", "anchor": {"hash": "<64-hex transaction hash from this text>"} or {"ledger": <ledger index>} or {"timeMs": <milliseconds on the case timeline>}, "kind": "observation" or "hypothesis" or "question", "evidence": ["<hash>", ...], "source": "<who you are>", "status": "draft"}]
+example:
+[{"text":"One sentence of what the cited record shows.","anchor":{"hash":"BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0"},"kind":"observation","evidence":["BDA7EDF8F28F36120B4CD96614C670A077659E4B3B2B4C3E4EB46CBD8AF03DF0"],"source":"assistant","status":"draft"}]

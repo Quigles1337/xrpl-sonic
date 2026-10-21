@@ -22,6 +22,9 @@ export const EXPLORERS = Object.freeze({
 });
 
 export const EXPLORER_NAMES = Object.freeze(Object.keys(EXPLORERS));
+
+/** Where the pages live; links that leave the page are built on it. */
+export const SITE_URL = 'https://quigles1337.github.io/xrpl-sonic/';
 export const DEFAULT_EXPLORER = 'xrpscan';
 
 const TX_HASH = /^[0-9A-Fa-f]{64}$/;

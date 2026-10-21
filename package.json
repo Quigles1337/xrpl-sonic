@@ -16,6 +16,7 @@
   "scripts": {
     "test": "node --test",
     "smoke": "node scripts/smoke.mjs",
-    "serve": "npx --yes serve -l 4173 ."
+    "serve": "npx --yes serve -l 4173 .",
+    "describe": "node scripts/describe.mjs"
   }
 }
