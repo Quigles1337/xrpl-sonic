@@ -116,7 +116,7 @@
         ]
       }
     },
-    "headline": "rHtc…qL3U sent 0.081879 XRP to rHtc…qL3U, crossing 1 offer on the way. Partial payment allowed.",
+    "headline": "rHtc…qL3U paid itself 0.081879 XRP for 606,931 AmericaFirst (r4GD…zqwo), crossing 1 offer on the way. Partial payment allowed.",
     "exchange": {
       "book": {
         "crossed": [
@@ -133,7 +133,13 @@
       "crossed": [
         0
       ],
-      "fill": null
+      "fill": null,
+      "spent": {
+        "currency": "AmericaFirst",
+        "code": "416D657269636146697273740000000000000000",
+        "issuer": "r4GD2HMVKJWhfzvgHcUL6frneuUACAzqwo",
+        "value": "606931.2581115"
+      }
     },
     "balances": [
       {

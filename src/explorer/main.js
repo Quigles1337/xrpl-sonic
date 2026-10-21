@@ -11,7 +11,7 @@ import { shortAddress, decodeCurrency } from '../mapping.js';
 import { ExplorerApi } from './api.js';
 import { classify, parseRoute, formatRoute, routeFor, routeTitle } from './route.js';
 import { sigilSvg } from './sigil.js';
-import { counterparties } from './anatomy.js';
+import { loadAccount, loadOlder, coverageOf } from './account.js';
 import { Constellation } from './constellation.js';
 import { renderHome, latestListItem, renderAccount, renderAccountMissing, renderTx, renderLedger, drawPlate, txRow, renderNotice } from './views.js';
 
@@ -40,6 +40,7 @@ const state = {
   token: 0, // render generation, to drop late results
   constellation: null,
   accountEvents: [], // events of the account tape, for "play history"
+  facts: null, // the facts object of the current render (account snapshot, or a transaction's findings)
   lastHover: 0,
 };
 
@@ -242,72 +243,100 @@ async function takeMeSomewhere() {
 // Account
 // ---------------------------------------------------------------------------
 
+const PART_LABELS = Object.freeze({ info: 'the account', lines: 'the trust lines', objects: 'the ledger objects', nfts: 'the NFTs', tx: 'the transactions' });
+
 async function renderAccountRoute(route, token) {
   const { address, tag } = route;
   view.replaceChildren(el('section', { class: 'card hero' }, [el('div', { class: 'identity' }, [svg(sigilSvg(address, 56)), el('div', { class: 'identity-main' }, [el('div', { class: 'identity-title' }, [el('span', { text: address })]), el('div', { class: 'identity-sub' }, [el('span', { class: 'skeleton', text: 'reading the account…' })])])])]));
-  let info;
-  try {
-    info = await api.accountInfo(address);
-  } catch (err) {
-    if (token !== state.token) return;
-    view.replaceChildren(...renderAccountMissing(address, err));
-    return;
-  }
+  state.facts = null;
+  let page = null;
+  let constellation = null;
+  const queued = [];
+  const stars = (f, part) => {
+    const parties = f.counterparties.parties;
+    constellation.setData({ ...constellation.data, parties });
+    page.setCoverage(parties.length ? `Stars from ${coverageOf(f.counterparties.covers)}.` : part.state === 'unavailable' ? `The transactions could not be read (${part.error?.code ?? 'error'}), so there are no stars.` : 'No counterparties in the loaded transactions.');
+  };
+  const applyPart = (name, part, f) => {
+    if (!page) {
+      queued.push([name, part, f]);
+      return;
+    }
+    if (name === 'tx') {
+      fillTape(page, part, address, token, f);
+      stars(f, part);
+    } else if (name === 'lines') {
+      page.fill({ lines: part });
+      if (part.items.length) constellation.setData({ ...constellation.data, lines: part.items.map((l) => ({ currency: decodeCurrency(l.currency).slice(0, 8), issuer: l.account, balance: l.balance })) });
+    } else page.fill({ [name]: part });
+  };
+  // One validated ledger; every part at it; each fills in as it lands.
+  const facts = await loadAccount(api, address, {
+    limit: 40,
+    onPart: (name, part, f) => {
+      if (token !== state.token) return;
+      if (name !== 'info') {
+        applyPart(name, part, f);
+        return;
+      }
+      if (part.state !== 'loaded') {
+        view.replaceChildren(...renderAccountMissing(address, part.error));
+        return;
+      }
+      page = renderAccount({ address, tag, info: part.result, network, reserve: state.reserve, onPlay: () => playHistory() });
+      view.replaceChildren(...page.nodes);
+      const canvas = page.constellationBox.querySelector('canvas');
+      constellation = new Constellation(canvas, {
+        reduced: reducedMotion,
+        onHover: (party, x, y) => showTip(party, x, y),
+        onClick: (party) => navigate({ name: 'account', address: party.address, tag: null }),
+      });
+      state.constellation = constellation;
+      const xrp = Number(part.result.account_data.Balance) / 1e6;
+      constellation.setData({ account: address, xrp, reserve: page.reserve.total, lines: [], parties: [] });
+      for (const [n, p, ff] of queued.splice(0)) applyPart(n, p, ff);
+    },
+  });
   if (token !== state.token) return;
-  const page = renderAccount({ address, tag, info, network, reserve: state.reserve, onPlay: () => playHistory() });
-  view.replaceChildren(...page.nodes);
-  const canvas = page.constellationBox.querySelector('canvas');
-  const constellation = new Constellation(canvas, {
-    reduced: reducedMotion,
-    onHover: (party, x, y) => showTip(party, x, y),
-    onClick: (party) => navigate({ name: 'account', address: party.address, tag: null }),
-  });
-  state.constellation = constellation;
-  const xrp = Number(info.account_data.Balance) / 1e6;
-  constellation.setData({ account: address, xrp, reserve: page.reserve.total, lines: [], parties: [] });
-
-  // Transactions, trust lines, objects and NFTs in parallel; each fills in as it lands.
-  const txPromise = api.accountTx(address, { limit: 40 }).then((r) => {
-    if (token !== state.token) return;
-    fillTape(page, r, address, token);
-    const parties = counterparties(r.transactions, address);
-    constellation.setData({ account: address, xrp, reserve: page.reserve.total, lines: constellation.data?.lines ?? [], parties });
-    if (!parties.length) page.constellationBox.append(el('div', { class: 'empty', text: 'No counterparties in the recent transactions.' }));
-  });
-  const linesPromise = api.accountLines(address).then((r) => {
-    if (token !== state.token) return;
-    page.fill({ lines: r });
-    constellation.setData({ ...constellation.data, lines: (r.lines ?? []).map((l) => ({ currency: decodeCurrency(l.currency).slice(0, 8), issuer: l.account, balance: l.balance })) });
-  });
-  const objectsPromise = Promise.all([api.accountObjects(address).catch(() => ({ account_objects: [] })), api.accountNfts(address).catch(() => ({ account_nfts: [] }))]).then(([objects, nfts]) => {
-    if (token !== state.token) return;
-    page.fill({ objects, nfts });
-  });
-  await Promise.allSettled([txPromise, linesPromise, objectsPromise]).then((results) => {
-    if (token !== state.token) return;
-    for (const r of results) if (r.status === 'rejected') note(`Part of the account could not be read: ${r.reason?.message ?? r.reason}`, 'err');
-  });
+  state.facts = facts;
+  if (!page) return; // the account could not be read; the notice is up
+  const unavailable = Object.entries(facts.parts)
+    .filter(([, p]) => p?.state === 'unavailable')
+    .map(([n, p]) => `${PART_LABELS[n]} (${p.error?.code ?? p.error?.message ?? 'error'})`);
+  if (unavailable.length) note(`Part of the account could not be read: ${unavailable.join(', ')}.`, 'err');
+  if (facts.snapshot.state !== 'loaded') note(`No validated ledger could be resolved (${facts.snapshot.error?.message ?? 'unknown'}), so the parts were read unbound and may not agree with each other.`, 'err');
 }
 
-function fillTape(page, result, address, token, { append = false } = {}) {
-  const rows = (result.transactions ?? []).map((entry) => txRow(entry, { account: address, onHover: hear }));
+/** The tape from a tx part: rows, the count, the foot with the bound and "Load older" (which keeps the bound and recomputes the stars). */
+function fillTape(page, part, address, token, facts, { append = false, entries = null } = {}) {
+  const list = entries ?? part.entries ?? [];
+  const rows = list.map((entry) => txRow(entry, { account: address, onHover: hear }));
   if (!append) page.tape.replaceChildren();
   for (const r of rows) page.tape.append(r.li);
   state.accountEvents.push(...rows.map((r) => r.event).filter(Boolean));
   const count = page.tape.children.length;
   const countEl = $('#tape-count');
   if (countEl) countEl.textContent = String(count);
+  const bound = part.ledgerIndexMax != null ? ` as of ledger #${Number(part.ledgerIndexMax).toLocaleString('en-US')}` : '';
+  let foot;
+  if (part.state === 'unavailable') foot = `The transactions could not be read: ${part.error?.message ?? part.error?.code ?? 'error'}.`;
+  else if (part.state === 'empty') foot = `No transactions${bound}.`;
+  else foot = `${count} ${part.state === 'partial' ? 'shown' : 'in all'}, newest first${bound}.`;
   page.foot.replaceChildren(
-    el('span', { text: result.marker ? `${count} shown, newest first.` : `${count} in all, newest first.` }),
-    result.marker
+    el('span', { text: foot }),
+    part.state === 'partial'
       ? el('button', { type: 'button', class: 'btn small', text: 'Load older', onclick: async (e) => {
           e.target.disabled = true;
           try {
-            const more = await api.accountTx(address, { limit: 40, marker: result.marker });
-            if (token !== state.token) return;
-            fillTape(page, more, address, token, { append: true });
+            const more = await loadOlder(api, facts);
+            if (token !== state.token || !more) return;
+            fillTape(page, facts.parts.tx, address, token, facts, { append: true, entries: more.entries });
+            const parties = facts.counterparties.parties;
+            state.constellation?.setData({ ...state.constellation.data, parties });
+            page.setCoverage(parties.length ? `Stars from ${coverageOf(facts.counterparties.covers)}.` : 'No counterparties in the loaded transactions.');
           } catch (err) {
             note(`Could not load older transactions: ${err?.message ?? err}`, 'err');
+            e.target.disabled = false;
           }
         } })
       : '',
@@ -348,7 +377,8 @@ async function renderTxRoute(route, token) {
   try {
     const result = await api.tx(route.hash);
     if (token !== state.token) return;
-    view.replaceChildren(...renderTx(result, { network, onHover: (ev) => hearNow(ev) }));
+    state.facts = null;
+    view.replaceChildren(...renderTx(result, { network, onHover: (ev) => hearNow(ev), onFacts: (f) => (state.facts = f) }));
   } catch (err) {
     if (token !== state.token) return;
     view.replaceChildren(renderNotice(err?.code === 'txnNotFound' ? `No transaction ${route.hash.slice(0, 16)}… is known to this node. It may be on another network, not yet validated, or older than the node's history.` : `Could not read the transaction: ${err?.message ?? err}`, 'err'));

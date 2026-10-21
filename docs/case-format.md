@@ -59,7 +59,7 @@ The score is built in the browser from the case and the fetched ledgers (`src/sc
 - `events[]`: `{ n, clip, ledgerIndex, txIndex, hash, offsetMs, timeMs, gate, cast, primary, event }`. `event` is the mapped transaction (category, voice, notes, velocity, duration, amount, parties). `gate` is `play` or `dim` (drawn, silent). `cast` lists the involved members; `primary` is the member whose voice plays.
 - `gaps[]`: the silences between clips, with the number of omitted ledgers.
 - `annotations[]`: the case's annotations with a resolved `timeMs` (and `eventN` when anchored to a transaction), in time order.
-- `counts`: totals, so a report can say how many events sounded and how many were silent.
+- `counts`: `events`, `played` (selected to sound), `dim` (drawn silent), `missingLedgers`, `byCategory`, and `excluded: { total, byReason }`, the transactions that produced no event and why (`failed`, `categoryDisabled`, `quietThreshold`, `castHidden`, `notATransaction`), so a report can say what was left out as well as what was played. The transcript header carries the same numbers; "selected to sound" is the score's claim, whether a note sounded is the synthesiser's.
 
 ### Timing
 

@@ -78,7 +78,7 @@ One per `Offer` entry in `AffectedNodes`.
 | `traded` | calculated | `yes` when `PreviousFields` carries `TakerGets` or `TakerPays`; otherwise `no`. |
 | `tradedAmounts` | calculated | `{ gave, got }`: what the owner gave (`TakerGets` before minus after) and received (`TakerPays` before minus after). `null` when not traded. |
 | `removal` | rule | For deleted entries only: `consumed` / `traded-then-removed-unfunded` / `cleanup-without-trade` / `cancelled` / `replaced` / `self-cross` / `unresolved`. See the rule table. |
-| `expired` | calculated | For `cleanup-without-trade`: `yes` when the entry's `Expiration` is at or before the ledger's close time, `no` when it is after, `unknown` when the entry has no expiration or no close time was given. |
+| `expired` | calculated | For `cleanup-without-trade`: `yes` when the entry's `Expiration` is at or before the ledger's close time, `no` when it is after or the entry has no expiration, `unknown` when no close time was given. |
 
 ### ExchangeFacts
 
@@ -94,10 +94,13 @@ For an `OfferCreate` (and, with a reduced set, a `Payment`).
 | `received`, `spent` | calculated | Totals in the request's `TakerPays` and `TakerGets` currencies (book plus AMM). |
 | `fill` | calculated | `{ status, judgedBy, requested, achieved, shortfall, placed, remainder }`. Without `tfSell`, judged by `TakerPays` received; with `tfSell`, by `TakerGets` spent. `status` is `filled` (shortfall ≤ 0, or within one part in 10¹⁰ with the `exchange.fill.rounding` note), `partial`, `none`, or `unresolved` (for example `filled` while a remainder was also placed). `placed` says whether a `CreatedNode` Offer by the submitter exists; `remainder` is its amounts. |
 | `fill.immediateOrCancel` / `fill.fillOrKill` | rule | What the flag means for the remainder: not placed by design; must have filled entirely or the transaction would have failed with `tecKILLED`. |
-| `corroboration.xrp` | calculated | The submitter's own `AccountRoot` delta compared with ±(received or spent in XRP) − `Fee`: `exact` / `mismatch` / `unavailable`. |
-| `corroboration.issued` | calculated | The submitter's own trust-line delta compared with ±(received or spent): `exact`; `consistent-with-transfer-fee` when more was debited than spent by a factor between 1 and 2 (the issuer's `TransferRate` is not in the record); `mismatch`; `unavailable`. |
+| `corroboration.received` | calculated | The submitter's own balance delta in the received currency compared with the total received (less `Fee` when that currency is XRP): `exact` / `mismatch` / `unavailable`. A line that did not change has no node and counts as zero. |
+| `corroboration.spent` | calculated | The submitter's own balance delta in the spent currency compared with the total spent (plus `Fee` when XRP): `exact`; `consistent-with-transfer-fee` when more was debited than spent by a factor between 1 and 2 (the issuer's `TransferRate` is not in the record); `mismatch`; `unavailable`. |
+| `corroboration.fee` | calculated | When neither side is XRP: the submitter's XRP moved by exactly the fee, or not. |
 
-For a `Payment`: `crossed` lists offers consumed on the way, with their deltas; `delivered` is observed from the metadata; `fill` is not applicable.
+`exact` on an issued currency means equal to within the last place of the 16-significant-digit figures involved (`nearlyEqual` in `src/decimal.js`); a 0.15 % transfer fee is far outside that band.
+
+For a `Payment`: `crossed` lists offers consumed on the way, with their deltas; `request.delivered` is observed from the metadata; `spent` is the sender's own balance change in the `SendMax` currency (`payment.spent`); `fill` is not applicable; `amm` is a rule when a pool's `AccountRoot` is in the record and a hypothesis when only its trust lines moved.
 
 ### BalanceFacts
 
@@ -139,17 +142,20 @@ For a `Payment`: `crossed` lists offers consumed on the way, with their deltas; 
 | `exchange.corroboration.issued` | calculated | exact / consistent-with-transfer-fee / mismatch / unavailable | Submitter's trust-line delta vs ±amount. |
 | `payment.delivered` | observed | what arrived | `meta.delivered_amount`. |
 | `payment.crossed` | calculated | offers consumed on the way | Offer nodes with `traded: yes`. |
+| `payment.spent` | calculated | what the sender paid | The sender's own balance delta in the `SendMax` currency, the fee removed when that is XRP. |
 | `balance.xrp` | calculated | before / after / delta in drops | `AccountRoot` `Balance` before and after. |
 | `balance.issued` | calculated | before / after / delta, both sides | `RippleState` `Balance` before and after; the high account sees the negation. |
 | `result` | observed | result code and family | `meta.TransactionResult`. |
 
 ## Hypotheses tested against real fixtures
 
-Three readings of a deleted Offer were hypotheses when this layer was designed. They were tested against real mainnet records (`test/fixtures/facts/`) and the outcome is recorded in the fixture's `.expected.json` and in the final report of the change that introduced this layer:
+Three readings of a deleted Offer were hypotheses when this layer was designed. They were tested against real mainnet records (`test/fixtures/facts/`, each with its outcome in the `hypotheses` field of its `.expected.json`) and against a scan of 300 consecutive validated ledgers (#107811389–#107811688, 62,968 transactions, 10,113 deleted and 308 modified Offer entries):
 
-1. A `DeletedNode` with no `PreviousFields` amounts left the book without trading.
-2. `PreviousFields` present with `FinalFields` amounts at zero is fully consumed.
-3. `PreviousFields` present with `FinalFields` amounts above zero traded and was removed with its remainder unfunded.
+1. **A `DeletedNode` with no `PreviousFields` amounts left the book without trading.** Confirmed. Of 9,841 such entries, 9,833 were the submitter's own offer named by `OfferSequence` (replace or cancel), 1 was the submitter's own offer on the opposite side of its new one (self-cross, `2E505251…`), and 7 were other accounts' offers swept off the book; the swept ones were either expired (`50DA65F6…` node 2, `7E6FE52D…` node 43, and `5DB7C7D4…` node 10 inside a Payment, each a few seconds past its `Expiration`) or unfunded (`503514A7…` node 1: no expiration, and its owner's XRP balance, untouched by the transaction, equalled its reserve). In every case the owner's balances did not move.
+2. **`PreviousFields` present with `FinalFields` amounts at zero is fully consumed.** Confirmed on 266 entries; in the fixtures (`EE75811B…` node 9, `BDA7EDF8…` node 3 and others) the owner's balance moved by exactly what the offer got.
+3. **`PreviousFields` present with `FinalFields` amounts above zero traded and was removed with its remainder unfunded.** Confirmed on 6 entries, two of them in `57F75F6F…` (nodes 4 and 13): each owner's trust line in the currency it was giving went to zero (it gave everything it held) and its XRP rose by exactly what it got, while the entry's remaining `TakerGets` was still above zero.
+
+Also observed: `PreviousFields` on an Offer either carries both `TakerGets` and `TakerPays` or neither (never one side) in all 10,421 entries; no offer owned by the submitter was ever recorded as traded; and all 260 OfferCreates that touched an AMM carried `AMMID` on the pool's modified `AccountRoot`, none modified the `AMM` entry itself, and 24 crossed the book as well.
 
 ## Renderers
 

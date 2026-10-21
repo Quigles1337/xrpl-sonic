@@ -178,7 +178,7 @@
         ]
       }
     },
-    "headline": "rwDv…GcsD sent 12,349,818 FUZZY (rhCA…pR62) to rwDv…GcsD, crossing 3 offers on the way. Partial payment allowed. Fee 12 drops.",
+    "headline": "rwDv…GcsD paid itself 12,349,818 FUZZY (rhCA…pR62) for 750 XRP, crossing 3 offers on the way. Partial payment allowed. Fee 12 drops.",
     "exchange": {
       "book": {
         "crossed": [
@@ -200,7 +200,12 @@
         12,
         13
       ],
-      "fill": null
+      "fill": null,
+      "spent": {
+        "currency": "XRP",
+        "issuer": null,
+        "drops": "750000000"
+      }
     },
     "balances": [
       {

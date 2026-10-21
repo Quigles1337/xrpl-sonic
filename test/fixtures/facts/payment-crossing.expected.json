@@ -180,7 +180,7 @@
         ]
       }
     },
-    "headline": "rBqU…dyax sent 1.26 POLICE (rfju…P3yt) to rBqU…dyax, crossing 3 offers on the way. Partial payment allowed.",
+    "headline": "rBqU…dyax paid itself 1.26 POLICE (rfju…P3yt) for 1.25 XRP, crossing 3 offers on the way. Partial payment allowed.",
     "exchange": {
       "book": {
         "crossed": [
@@ -203,6 +203,11 @@
         14
       ],
       "fill": null,
+      "spent": {
+        "currency": "XRP",
+        "issuer": null,
+        "drops": "1251239"
+      },
       "amm": {
         "tier": "hypothesis"
       }
