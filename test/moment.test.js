@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { LiveWindow, LIVE_WINDOW_LEDGERS, momentFromLive, momentFromReplay, momentFromTransaction, momentPosition, isMoment, MOMENT_VERSION } from '../src/moment.js';
 import { unwrapTransactionMessage, extractAmount } from '../src/mapping.js';
 import { logVolume } from '../src/coherence.js';
+import { touchOf } from '../src/record.js';
 import { validateCase, caseFromState, serializeCase, encodeCase, decodeCase, updateAnnotation, addAnnotation, caseFilename, MAX_CASE_LEDGERS } from '../src/case.js';
 import { buildScore, GAP_MS } from '../src/score.js';
 import { replayIntervalMs } from '../src/replay.js';
@@ -61,7 +62,14 @@ describe('LiveWindow', () => {
       rec.count += 1;
       rec.volume += logVolume({ amount: extractAmount(u.tx, u.meta) });
     }
-    assert.deepEqual(w.ledgers[0], { index: LIVE, hash: closed.ledger_hash, closeTime: Number(closed.ledger_time), txnCount: Number(closed.txn_count), received: 2, accounts });
+    // and the touch record of each (src/record.js), for the record check behind coherence
+    const touches = [txA, txB].map((t) => {
+      const u = unwrapTransactionMessage(t);
+      return touchOf(u.tx, u.meta, { hash: u.hash, ledgerIndex: LIVE });
+    });
+    assert.deepEqual(w.ledgers[0], { index: LIVE, hash: closed.ledger_hash, closeTime: Number(closed.ledger_time), txnCount: Number(closed.txn_count), received: 2, accounts, touches });
+    assert.equal(touches.length, 2);
+    assert.ok(touches.every((t) => /^[0-9A-F]{64}$/.test(t.hash) && t.ledgerIndex === LIVE && t.submitter));
     assert.equal(Object.values(accounts).reduce((n, r) => n + r.count, 0), 2, 'the replayed transaction was not counted twice');
     assert.equal(w.latest.index, LIVE);
     // a transaction for a ledger that is not in the window is not counted anywhere

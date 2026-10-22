@@ -18,6 +18,7 @@ import { ledgerAtPosition } from './score.js';
 import { defaultCase, MOMENT_VERSION } from './case.js';
 import { unwrapTransactionMessage, extractAmount } from './mapping.js';
 import { logVolume } from './coherence.js';
+import { touchOf } from './record.js';
 
 export { MOMENT_VERSION };
 
@@ -61,7 +62,7 @@ export class LiveWindow {
     if (entry || !create) return entry ?? null;
     const latest = this.entries.at(-1);
     if (latest && (index < latest.index - this.max || index - latest.index > this.max)) return null; // too far from what is here to belong to it
-    entry = { index, closed: false, hash: null, closeTime: null, txnCount: null, hashes: new Set(), anonymous: 0, accounts: new Map() };
+    entry = { index, closed: false, hash: null, closeTime: null, txnCount: null, hashes: new Set(), anonymous: 0, accounts: new Map(), touches: [] };
     this.entries.push(entry);
     this.entries.sort((a, b) => a.index - b.index);
     while (this.entries.length > this.max) this.entries.shift();
@@ -106,6 +107,11 @@ export class LiveWindow {
       rec.volume += logVolume({ amount: extractAmount(u.tx, u.meta) });
       entry.accounts.set(address, rec);
     }
+    // and the touch record (src/record.js), so a pair can be checked against the record heard
+    if (fresh) {
+      const t = touchOf(u.tx, u.meta, { hash: u.hash, ledgerIndex: index });
+      if (t) entry.touches.push(t);
+    }
     return true;
   }
 
@@ -119,9 +125,13 @@ export class LiveWindow {
     return e ? e.hashes.size + e.anonymous : 0;
   }
 
-  /** The closed ledgers, oldest first: { index, hash, closeTime, txnCount, received, accounts }, `accounts` being address → { count, volume } of the submitters heard. */
+  /**
+   * The closed ledgers, oldest first: { index, hash, closeTime, txnCount, received, accounts, touches },
+   * `accounts` being address → { count, volume } of the submitters heard and `touches` the touch records
+   * (src/record.js) of the transactions heard, in arrival order.
+   */
   get ledgers() {
-    return this.entries.filter((e) => e.closed).map((e) => ({ index: e.index, hash: e.hash, closeTime: e.closeTime, txnCount: e.txnCount, received: e.hashes.size + e.anonymous, accounts: Object.fromEntries([...e.accounts].map(([a, r]) => [a, { ...r }])) }));
+    return this.entries.filter((e) => e.closed).map((e) => ({ index: e.index, hash: e.hash, closeTime: e.closeTime, txnCount: e.txnCount, received: e.hashes.size + e.anonymous, accounts: Object.fromEntries([...e.accounts].map(([a, r]) => [a, { ...r }])), touches: e.touches.map((t) => ({ ...t })) }));
   }
 
   get latest() {

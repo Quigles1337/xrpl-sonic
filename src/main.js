@@ -1325,7 +1325,7 @@ async function describeNow(level = 'gist', { budget } = {}) {
  */
 function coherenceNow({ measure = 'count', topK, maxLag } = {}) {
   const s = session.active;
-  const frame = s ? frameFromScore(s.score, { cast: s.case.cast, topK, measure }) : frameFromLive(live, { cast: settings.cast ?? [], topK, measure });
+  const frame = s ? frameFromScore(s.score, { cast: s.case.cast, topK, measure, ledgers: s.ledgers }) : frameFromLive(live, { cast: settings.cast ?? [], topK, measure });
   return coherence(frame, { maxLag });
 }
 
