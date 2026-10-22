@@ -2515,3 +2515,25 @@ body.mode-embed .ai-box {
   border: 1px solid var(--line);
   border-radius: 6px;
 }
+
+/* ---------------------------------------------------------- coherence readout (src/coherence.js) */
+
+.coherence-out {
+  margin: 8px 0 4px;
+  padding: 8px 10px;
+  max-height: 260px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.coherence-out.hidden {
+  display: none;
+}

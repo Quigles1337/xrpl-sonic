@@ -18,6 +18,7 @@ import { buildScore, scoreCaption, transcript, formatClock, clipRanges, ledgerAt
 import { Transport } from './transport.js';
 import { LiveWindow, momentFromLive, momentFromReplay, momentPosition, isMoment } from './moment.js';
 import { describeReport, factsForCase, importAnnotations } from './describe.js';
+import { frameFromScore, frameFromLive, coherence, readout as coherenceReadout, describePair } from './coherence.js';
 import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
 import { Geiger } from './geiger.js';
@@ -144,6 +145,7 @@ const ui = createUI({
     onTranscript: () => saveTranscript(),
     onAi: () => openAi(),
     onImport: (text, source) => importNotes(text, source),
+    onCoherence: () => showCoherence(),
     onToggle: (key, value) => {
       settings[key] = value;
       saveSettings(settings);
@@ -1316,6 +1318,26 @@ async function describeNow(level = 'gist', { budget } = {}) {
   return describeReport(c, s.ledgers, sessionFacts(), { level, budget, caseLink: await caseLink(c) });
 }
 
+/**
+ * Coherence (src/coherence.js, docs/coherence.md): the statistic over the
+ * playing case's score, else over the ledgers heard live; the cast, or with
+ * none the top submitters.
+ */
+function coherenceNow({ measure = 'count', topK, maxLag } = {}) {
+  const s = session.active;
+  const frame = s ? frameFromScore(s.score, { cast: s.case.cast, topK, measure }) : frameFromLive(live, { cast: settings.cast ?? [], topK, measure });
+  return coherence(frame, { maxLag });
+}
+
+/** The readout into the case panel, and the top pair's line on the tape. */
+function showCoherence() {
+  const report = coherenceNow();
+  ui.casePanel.setCoherence(coherenceReadout(report));
+  const first = report.pairs[0];
+  ui.logMessage(first ? `Coherence · ${describePair(first)}` : report.window.ledgers ? 'Coherence: fewer than two accounts to compare.' : 'Coherence: no ledger heard yet.', 'info');
+  return report;
+}
+
 /** Show the sizes and the events-shown ratio of both levels before anything is copied. */
 async function openAi() {
   const gist = await describeNow('gist');
@@ -1555,6 +1577,8 @@ window.xrplSonic = {
   saveMoment,
   describeNow,
   importNotes,
+  coherenceNow,
+  showCoherence,
   openCase: (raw) => openCase(raw, 'case', 'the console'),
   playClip,
   setBlind,

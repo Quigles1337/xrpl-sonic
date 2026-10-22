@@ -8,6 +8,8 @@
 //   node scripts/describe.mjs case.json --level evidence                 # with findings for every cast-involved event
 //   node scripts/describe.mjs case.json --budget 60000                   # characters; the text says N of M events when it must select
 //   node scripts/describe.mjs case.json --measure                        # sizes only, for both levels
+//   node scripts/describe.mjs case.json --coherence [--top K] [--lags L] [--series count|volume]
+//                                                                        # the coherence readout (docs/coherence.md) instead of the text
 //
 // The text goes to stdout; the size and the events-shown ratio go to stderr.
 
@@ -16,6 +18,8 @@ import { XrplStream, NETWORKS } from '../src/ws.js';
 import { validateCase, encodeCase } from '../src/case.js';
 import { fetchCaseLedgers } from '../src/ledgers.js';
 import { describeReport, factsForCase, DEFAULT_BUDGET } from '../src/describe.js';
+import { buildScore } from '../src/score.js';
+import { frameFromScore, coherence, readout, DEFAULTS as COHERENCE_DEFAULTS } from '../src/coherence.js';
 import { buildHash } from '../src/params.js';
 import { SITE_URL } from '../src/explorers.js';
 
@@ -26,7 +30,7 @@ const opt = (name, fallback) => {
   return i >= 0 && args[i + 1] != null ? args[i + 1] : fallback;
 };
 if (!file) {
-  console.error('usage: node scripts/describe.mjs <case.sonic-case.json> [--level gist|evidence] [--budget N] [--measure]');
+  console.error('usage: node scripts/describe.mjs <case.sonic-case.json> [--level gist|evidence] [--budget N] [--measure] [--coherence [--top K] [--lags L] [--series count|volume]]');
   process.exit(2);
 }
 if (typeof globalThis.WebSocket !== 'function') {
@@ -36,6 +40,7 @@ if (typeof globalThis.WebSocket !== 'function') {
 const level = opt('level', 'gist');
 const budget = Number(opt('budget', DEFAULT_BUDGET)) || DEFAULT_BUDGET;
 const measureOnly = args.includes('--measure');
+const coherenceOnly = args.includes('--coherence');
 
 let raw;
 try {
@@ -70,6 +75,15 @@ const t0 = Date.now();
 const { ledgers, failures } = await fetchCaseLedgers((cmd) => stream.request(cmd), theCase, { onProgress: (d, t) => process.stderr.write(`\rfetching ledgers ${d}/${t}`) });
 process.stderr.write('\n');
 for (const f of failures) console.error(`ledger #${f.index} could not be fetched: ${f.error}`);
+if (coherenceOnly) {
+  const score = buildScore(theCase, ledgers);
+  const frame = frameFromScore(score, { cast: theCase.cast, topK: Number(opt('top', COHERENCE_DEFAULTS.topK)) || COHERENCE_DEFAULTS.topK, measure: opt('series', COHERENCE_DEFAULTS.measure) });
+  const report = coherence(frame, { maxLag: Number(opt('lags', COHERENCE_DEFAULTS.maxLag)) || COHERENCE_DEFAULTS.maxLag });
+  process.stdout.write(`${readout(report)}\n`);
+  console.error(`${ledgers.size} ledgers, ${score.counts.events} events, ${report.pairs.length} pair${report.pairs.length === 1 ? '' : 's'}, ${((Date.now() - t0) / 1000).toFixed(1)} s via ${stream.endpoint.replace(/^wss:\/\//, '')}`);
+  stream.close();
+  process.exit(0);
+}
 const facts = factsForCase(theCase, ledgers);
 const caseLink = `${SITE_URL}${theCase.network !== 'mainnet' ? `?network=${theCase.network}` : ''}${buildHash({ case: await encodeCase(theCase) })}`;
 const sizeLine = (r) => `${r.level}: ${r.chars.toLocaleString('en-US')} characters (~${r.tokensApprox.toLocaleString('en-US')} tokens) · ${r.shown} of ${r.total} events shown${r.rule ? ` (${r.rule})` : ''} · budget ${r.budget.toLocaleString('en-US')}`;

@@ -16,7 +16,8 @@
 import { MAX_REPLAY_LEDGERS } from './replay.js';
 import { ledgerAtPosition } from './score.js';
 import { defaultCase, MOMENT_VERSION } from './case.js';
-import { unwrapTransactionMessage } from './mapping.js';
+import { unwrapTransactionMessage, extractAmount } from './mapping.js';
+import { logVolume } from './coherence.js';
 
 export { MOMENT_VERSION };
 
@@ -60,7 +61,7 @@ export class LiveWindow {
     if (entry || !create) return entry ?? null;
     const latest = this.entries.at(-1);
     if (latest && (index < latest.index - this.max || index - latest.index > this.max)) return null; // too far from what is here to belong to it
-    entry = { index, closed: false, hash: null, closeTime: null, txnCount: null, hashes: new Set(), anonymous: 0 };
+    entry = { index, closed: false, hash: null, closeTime: null, txnCount: null, hashes: new Set(), anonymous: 0, accounts: new Map() };
     this.entries.push(entry);
     this.entries.sort((a, b) => a.index - b.index);
     while (this.entries.length > this.max) this.entries.shift();
@@ -91,8 +92,20 @@ export class LiveWindow {
     if (index == null) return false;
     const entry = this._entry(index, { create: true });
     if (!entry) return false;
-    if (validHash(u.hash)) entry.hashes.add(u.hash.toUpperCase());
-    else entry.anonymous += 1; // delivered without a hash: counted, since it cannot be deduplicated
+    let fresh = true;
+    if (validHash(u.hash)) {
+      const h = u.hash.toUpperCase();
+      fresh = !entry.hashes.has(h);
+      entry.hashes.add(h);
+    } else entry.anonymous += 1; // delivered without a hash: counted, since it cannot be deduplicated
+    // the submitter, for coherence (src/coherence.js): count and log volume per account, once per transaction
+    const address = u.tx?.Account;
+    if (fresh && typeof address === 'string' && address) {
+      const rec = entry.accounts.get(address) ?? { count: 0, volume: 0 };
+      rec.count += 1;
+      rec.volume += logVolume({ amount: extractAmount(u.tx, u.meta) });
+      entry.accounts.set(address, rec);
+    }
     return true;
   }
 
@@ -106,9 +119,9 @@ export class LiveWindow {
     return e ? e.hashes.size + e.anonymous : 0;
   }
 
-  /** The closed ledgers, oldest first: { index, hash, closeTime, txnCount, received }. */
+  /** The closed ledgers, oldest first: { index, hash, closeTime, txnCount, received, accounts }, `accounts` being address → { count, volume } of the submitters heard. */
   get ledgers() {
-    return this.entries.filter((e) => e.closed).map((e) => ({ index: e.index, hash: e.hash, closeTime: e.closeTime, txnCount: e.txnCount, received: e.hashes.size + e.anonymous }));
+    return this.entries.filter((e) => e.closed).map((e) => ({ index: e.index, hash: e.hash, closeTime: e.closeTime, txnCount: e.txnCount, received: e.hashes.size + e.anonymous, accounts: Object.fromEntries([...e.accounts].map(([a, r]) => [a, { ...r }])) }));
   }
 
   get latest() {

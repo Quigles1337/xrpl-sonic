@@ -10,7 +10,7 @@ import { formatClock } from './score.js';
 import { speechSupported } from './speech.js';
 import { el, option } from './dom.js';
 
-export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTranscript, onAi, onImport, onToggle, onAddNote, onEditNote, onRemoveNote, onJumpNote, onBlind }) {
+export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTranscript, onAi, onImport, onCoherence, onToggle, onAddNote, onEditNote, onRemoveNote, onJumpNote, onBlind }) {
   const status = el('p', { class: 'case-status', id: 'case-status', text: 'No case loaded. Open #replay=… or load a file.' });
   const warnings = el('ul', { class: 'case-warnings hidden', id: 'case-warnings' });
   const file = el('input', { type: 'file', accept: '.json,application/json', class: 'visually-hidden', id: 'case-file', 'aria-label': 'Load a case file' });
@@ -24,6 +24,9 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
   const linkBtn = el('button', { type: 'button', class: 'btn small', id: 'case-link', text: 'Copy link', disabled: true, onclick: () => onCopyLink?.() });
   const transcriptBtn = el('button', { type: 'button', class: 'btn small', id: 'case-transcript', text: 'Transcript', disabled: true, title: 'Save the whole score as text', onclick: () => onTranscript?.() });
   const aiBtn = el('button', { type: 'button', class: 'btn small', id: 'case-ai', text: 'Copy for AI', disabled: true, title: 'Copy the case as text an assistant can work from', onclick: () => onAi?.() });
+  // Coherence (src/coherence.js): the correlation of the cast's (or the top submitters') activity per ledger, over the playing case or the live window
+  const coherenceBtn = el('button', { type: 'button', class: 'btn small', id: 'case-coherence', text: 'Coherence', title: 'How the cast members’ (or the top submitters’) activity per ledger correlates, over the playing case or the ledgers heard live', onclick: () => onCoherence?.() });
+  const coherenceOut = el('pre', { class: 'coherence-out hidden', id: 'coherence-out', 'aria-live': 'polite' });
 
   // --- Import notes: an assistant's answer, pasted back as drafts --------------
   const importText = el('textarea', { class: 'import-text', id: 'import-text', rows: 3, placeholder: 'Paste the JSON an assistant returned: an array of annotations, or a whole case', 'aria-label': 'Annotations to import' });
@@ -138,7 +141,8 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
     el('h2', { text: 'Case' }),
     status,
     warnings,
-    el('div', { class: 'buttons' }, [loadBtn, saveBtn, linkBtn, transcriptBtn, aiBtn, file]),
+    el('div', { class: 'buttons' }, [loadBtn, saveBtn, linkBtn, transcriptBtn, aiBtn, coherenceBtn, file]),
+    coherenceOut,
     notesHead,
     notesList,
     importBox,
@@ -179,6 +183,12 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
       warnings.replaceChildren(...all.map((w) => el('li', { text: w })));
       warnings.classList.toggle('hidden', all.length === 0);
       render();
+    },
+
+    /** The coherence readout (src/coherence.js), as text under the buttons; empty hides it. */
+    setCoherence(text) {
+      coherenceOut.textContent = text ?? '';
+      coherenceOut.classList.toggle('hidden', !text);
     },
 
     /** What an import did: accepted and rejected, in a line under the box; the pasted text is cleared when something was accepted. */
