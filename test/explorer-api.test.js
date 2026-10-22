@@ -28,15 +28,18 @@ describe('explorer api: an AMM pseudo-account resolves through ledger_entry', ()
   });
 
   test('accountInfo falls back to ledger_entry only when account_info fails, at the same ledger, and gives account_info’s error when both fail', async () => {
-    const api = new ExplorerApi({ network: 'mainnet' });
+    // the method on a stub with only `request`: the real constructor opens a WebSocket client, which Node 20 has no global for
     const calls = [];
     const answers = { account_info: null, ledger_entry: null };
-    api.request = async (cmd) => {
-      calls.push(cmd);
-      const a = answers[cmd.command];
-      if (a instanceof Error) throw a;
-      return a;
+    const stub = {
+      async request(cmd) {
+        calls.push(cmd);
+        const a = answers[cmd.command];
+        if (a instanceof Error) throw a;
+        return a;
+      },
     };
+    const api = { accountInfo: (...args) => ExplorerApi.prototype.accountInfo.apply(stub, args) };
     answers.account_info = { result: { account_data: { Account: POOL, Balance: '1' }, account_flags: {}, ledger_index: 5 } };
     assert.equal((await api.accountInfo(POOL, { ledgerIndex: 5 })).via, undefined, 'account_info answered: no fallback');
     assert.deepEqual(calls.map((c) => c.command), ['account_info']);
@@ -48,6 +51,5 @@ describe('explorer api: an AMM pseudo-account resolves through ledger_entry', ()
     assert.deepEqual(calls, [{ command: 'account_info', account: POOL, ledger_index: 5 }, { command: 'ledger_entry', account_root: POOL, ledger_index: 5 }]);
     answers.ledger_entry = Object.assign(new Error('entryNotFound'), { code: 'entryNotFound' });
     await assert.rejects(api.accountInfo(POOL), /Internal error/, 'the first error is the one reported');
-    api.close();
   });
 });
