@@ -10,6 +10,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { LiveWindow, LIVE_WINDOW_LEDGERS, momentFromLive, momentFromReplay, momentFromTransaction, momentPosition, isMoment, MOMENT_VERSION } from '../src/moment.js';
+import { unwrapTransactionMessage, extractAmount } from '../src/mapping.js';
+import { logVolume } from '../src/coherence.js';
 import { validateCase, caseFromState, serializeCase, encodeCase, decodeCase, updateAnnotation, addAnnotation, caseFilename, MAX_CASE_LEDGERS } from '../src/case.js';
 import { buildScore, GAP_MS } from '../src/score.js';
 import { replayIntervalMs } from '../src/replay.js';
@@ -51,7 +53,16 @@ describe('LiveWindow', () => {
     w.noteTransaction(txB);
     w.noteTransaction(txA); // a reconnect replays the stream
     assert.equal(w.ledgers.length, 1);
-    assert.deepEqual(w.ledgers[0], { index: LIVE, hash: closed.ledger_hash, closeTime: Number(closed.ledger_time), txnCount: Number(closed.txn_count), received: 2 });
+    // the submitters heard, once per transaction, for coherence (src/coherence.js)
+    const accounts = {};
+    for (const t of [txA, txB]) {
+      const u = unwrapTransactionMessage(t);
+      const rec = (accounts[u.tx.Account] ??= { count: 0, volume: 0 });
+      rec.count += 1;
+      rec.volume += logVolume({ amount: extractAmount(u.tx, u.meta) });
+    }
+    assert.deepEqual(w.ledgers[0], { index: LIVE, hash: closed.ledger_hash, closeTime: Number(closed.ledger_time), txnCount: Number(closed.txn_count), received: 2, accounts });
+    assert.equal(Object.values(accounts).reduce((n, r) => n + r.count, 0), 2, 'the replayed transaction was not counted twice');
     assert.equal(w.latest.index, LIVE);
     // a transaction for a ledger that is not in the window is not counted anywhere
     w.noteTransaction({ ...txA, ledger_index: LIVE - 5 });

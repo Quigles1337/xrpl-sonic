@@ -1,0 +1,54 @@
+{
+  "format": "xrpl-sonic/case",
+  "version": 1,
+  "id": "coherence-107777790-107777839",
+  "title": "The two busiest senders of #107,777,809–#107,777,811, over the 50 ledgers around them",
+  "description": "The sample case's cast (docs/cases/busiest-senders-107777809) over ledgers 107777790-107777839 on mainnet, a window long enough for coherence to be judged. The annotations of the sample case are not carried over.",
+  "network": "mainnet",
+  "clips": [
+    {
+      "from": 107777790,
+      "to": 107777839
+    }
+  ],
+  "cast": [
+    {
+      "address": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+      "label": "Sender A",
+      "voice": "marimba",
+      "pan": 0,
+      "colour": "#ffffff"
+    },
+    {
+      "address": "r33SNW2rSBkXGmn84FSKSY4RG4FJ7fUVhk",
+      "label": "Sender B",
+      "voice": "glass",
+      "pan": -0.6,
+      "colour": "#ffb3c6"
+    }
+  ],
+  "filters": {
+    "enabled": {
+      "payment": true,
+      "offer": true,
+      "trust": true,
+      "nft": true,
+      "escrow": true,
+      "paychan": true,
+      "amm": true,
+      "other": true
+    },
+    "includeFailed": false,
+    "quietThreshold": 0,
+    "castMode": "all"
+  },
+  "mapping": {
+    "version": "1.1.0",
+    "scale": "pentatonicMajor",
+    "key": "C"
+  },
+  "timing": {
+    "speed": 1
+  },
+  "annotations": []
+}

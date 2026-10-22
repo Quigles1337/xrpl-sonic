@@ -1,0 +1,39 @@
+{
+  "format": "xrpl-sonic/case",
+  "version": 1,
+  "id": "coherence-107822030-107822079",
+  "title": "Coherence window: ledgers #107,822,030–#107,822,079, top submitters",
+  "description": "Fifty consecutive mainnet ledgers with no cast, so the statistic takes the five accounts that submitted the most; recorded for the coherence measurements in docs/coherence.md.",
+  "network": "mainnet",
+  "clips": [
+    {
+      "from": 107822030,
+      "to": 107822079
+    }
+  ],
+  "cast": [],
+  "filters": {
+    "enabled": {
+      "payment": true,
+      "offer": true,
+      "trust": true,
+      "nft": true,
+      "escrow": true,
+      "paychan": true,
+      "amm": true,
+      "other": true
+    },
+    "includeFailed": false,
+    "quietThreshold": 0,
+    "castMode": "all"
+  },
+  "mapping": {
+    "version": "1.1.0",
+    "scale": "pentatonicMajor",
+    "key": "C"
+  },
+  "timing": {
+    "speed": 1
+  },
+  "annotations": []
+}
