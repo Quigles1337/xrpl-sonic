@@ -5,7 +5,9 @@ import { EXPLORERS, DEFAULT_EXPLORER } from './explorers.js';
 import { normalizeCast, CAST_MODES } from './cast.js';
 import { normalizeGeigerConfig, GEIGER_DEFAULTS } from './geiger.js';
 
-export const STORAGE_KEY = 'xrpl-sonic:settings:v1';
+export const STORAGE_KEY = 'xrpl-sonic:settings:v2';
+/** The key of builds whose default explorer was XRPScan. Read when there is no v2 entry; never written, so an older build still finds its settings. */
+export const LEGACY_STORAGE_KEY = 'xrpl-sonic:settings:v1';
 
 export const DEFAULT_SETTINGS = Object.freeze({
   network: 'mainnet',
@@ -73,12 +75,26 @@ export function sanitizeSettings(input) {
   return s;
 }
 
+/**
+ * v1 stored the explorer even when it was the default (XRPScan), so a stored
+ * XRPScan cannot be told from no choice at all. A choice of another external
+ * explorer is carried over; XRPScan takes the new default, this site's explorer.
+ */
+export function migrateV1(input) {
+  if (!input || typeof input !== 'object') return input;
+  if (input.explorer !== 'xrpscan') return input;
+  const { explorer, ...rest } = input;
+  return rest;
+}
+
 export function loadSettings() {
   const store = storage();
   if (!store) return sanitizeSettings(null);
   try {
     const raw = store.getItem(STORAGE_KEY);
-    return sanitizeSettings(raw ? JSON.parse(raw) : null);
+    if (raw) return sanitizeSettings(JSON.parse(raw));
+    const legacy = store.getItem(LEGACY_STORAGE_KEY);
+    return sanitizeSettings(legacy ? migrateV1(JSON.parse(legacy)) : null);
   } catch {
     return sanitizeSettings(null);
   }

@@ -1,9 +1,17 @@
 // xrpl-sonic — explorer link builders.
 //
 // Pure: no DOM. Every log entry links to the transaction, account or ledger on
-// the explorer the user picked, on the network the page is listening to.
+// the explorer the user picked, on the network the page is listening to. The
+// default is this site's own explorer (explorer.html); XRPScan, Bithomp and
+// xrpl.org are the external choices.
 
 export const EXPLORERS = Object.freeze({
+  sonic: Object.freeze({
+    label: 'xrpl-sonic',
+    // Relative, so the link works wherever the pages are served; the network goes in the query, in front of the route hash.
+    base: Object.freeze({ mainnet: './explorer.html', testnet: './explorer.html?network=testnet' }),
+    paths: Object.freeze({ tx: '#tx/', account: '#account/', ledger: '#ledger/' }),
+  }),
   xrpscan: Object.freeze({
     label: 'XRPScan',
     base: Object.freeze({ mainnet: 'https://xrpscan.com', testnet: 'https://testnet.xrpscan.com' }),
@@ -23,9 +31,13 @@ export const EXPLORERS = Object.freeze({
 
 export const EXPLORER_NAMES = Object.freeze(Object.keys(EXPLORERS));
 
+/** This site's own explorer: the default target of every link, and never listed among the external links on its own pages. */
+export const SONIC_EXPLORER = 'sonic';
+export const EXTERNAL_EXPLORER_NAMES = Object.freeze(EXPLORER_NAMES.filter((name) => name !== SONIC_EXPLORER));
+export const DEFAULT_EXPLORER = SONIC_EXPLORER;
+
 /** Where the pages live; links that leave the page are built on it. */
 export const SITE_URL = 'https://quigles1337.github.io/xrpl-sonic/';
-export const DEFAULT_EXPLORER = 'xrpscan';
 
 const TX_HASH = /^[0-9A-Fa-f]{64}$/;
 const ADDRESS = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;

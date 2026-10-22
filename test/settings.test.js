@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DEFAULT_SETTINGS, sanitizeSettings, loadSettings, saveSettings, mappingOptions, STORAGE_KEY } from '../src/settings.js';
+import { DEFAULT_SETTINGS, sanitizeSettings, loadSettings, saveSettings, mappingOptions, migrateV1, STORAGE_KEY, LEGACY_STORAGE_KEY } from '../src/settings.js';
 
 describe('settings', () => {
   test('sanitize returns defaults for garbage and never shares the enabled object', () => {
@@ -84,9 +84,37 @@ describe('settings', () => {
     assert.equal(s.cast[0].muted, false);
     const bad = sanitizeSettings({ castMode: 'loud', explorer: 'etherscan', cast: 'nope' });
     assert.equal(bad.castMode, 'all');
-    assert.equal(bad.explorer, 'xrpscan');
+    assert.equal(bad.explorer, 'sonic', "an unknown explorer falls back to this site's own");
+    assert.equal(sanitizeSettings({ explorer: 'xrpscan' }).explorer, 'xrpscan', 'XRPScan chosen in this build is kept');
     assert.deepEqual(bad.cast, []);
     assert.equal(sanitizeSettings({ accountMode: 'mute' }).castMode, 'mute', 'the key from before the cast existed is still read');
+  });
+
+  test('settings stored by builds whose default explorer was XRPScan are read once: a stored XRPScan was the default, another choice is kept', () => {
+    assert.equal(migrateV1({ explorer: 'xrpscan', key: 'G' }).explorer, undefined);
+    assert.equal(migrateV1({ explorer: 'xrpscan', key: 'G' }).key, 'G');
+    assert.equal(migrateV1({ explorer: 'bithomp' }).explorer, 'bithomp');
+    assert.equal(migrateV1(null), null);
+    const backing = new Map();
+    globalThis.localStorage = {
+      getItem: (k) => (backing.has(k) ? backing.get(k) : null),
+      setItem: (k, v) => backing.set(k, String(v)),
+    };
+    try {
+      backing.set(LEGACY_STORAGE_KEY, JSON.stringify({ explorer: 'xrpscan', key: 'G', network: 'testnet' }));
+      let loaded = loadSettings();
+      assert.equal(loaded.explorer, 'sonic');
+      assert.equal(loaded.key, 'G');
+      assert.equal(loaded.network, 'testnet', 'everything else carries over');
+      backing.set(LEGACY_STORAGE_KEY, JSON.stringify({ explorer: 'bithomp' }));
+      assert.equal(loadSettings().explorer, 'bithomp');
+      assert.equal(saveSettings({ explorer: 'xrpscan' }), true);
+      assert.ok(backing.has(STORAGE_KEY));
+      assert.equal(loadSettings().explorer, 'xrpscan', 'a v2 entry is read as stored and wins over the legacy one');
+      assert.ok(backing.has(LEGACY_STORAGE_KEY), 'the legacy entry is left for older builds');
+    } finally {
+      delete globalThis.localStorage;
+    }
   });
 
   test('caption, speech and pause-at-notes toggles are booleans with sensible defaults', () => {
