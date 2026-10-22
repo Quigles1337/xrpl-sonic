@@ -4,6 +4,10 @@ import { CATEGORY_NAMES, SCALES, KEYS } from './mapping.js';
 import { EXPLORERS, DEFAULT_EXPLORER } from './explorers.js';
 import { normalizeCast, CAST_MODES } from './cast.js';
 import { normalizeGeigerConfig, GEIGER_DEFAULTS } from './geiger.js';
+import { isValidAddress } from './mapping.js';
+
+/** The interference field's modes (src/field.js): off, every cast pair, or one chosen pair. */
+export const FIELD_MODES = Object.freeze(['off', 'cast', 'pair']);
 
 export const STORAGE_KEY = 'xrpl-sonic:settings:v2';
 /** The key of builds whose default explorer was XRPScan. Read when there is no v2 entry; never written, so an older build still finds its settings. */
@@ -24,6 +28,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   speak: false, // read annotations aloud (Web Speech), independent of the sound
   pauseAtNotes: true, // honour annotations that ask the transport to pause
   exposure: false, // long-exposure plate: a fading trace of where tracks landed
+  field: Object.freeze({ mode: 'off', pair: null }), // the interference field (src/field.js): off by default; `pair` is [addressA, addressB] in pair mode
   geiger: Object.freeze({ enabled: false, ...GEIGER_DEFAULTS }), // the detector (src/geiger.js)
   health: Object.freeze({ poll: false, sound: false }), // observed fee pressure (src/health.js)
   midiOutput: '', // name of the preferred live MIDI output, re-selected after Connect
@@ -45,7 +50,7 @@ function storage() {
 
 /** Validate and coerce a partial settings object onto the defaults. */
 export function sanitizeSettings(input) {
-  const s = { ...DEFAULT_SETTINGS, enabled: { ...DEFAULT_SETTINGS.enabled }, cast: [], geiger: { ...DEFAULT_SETTINGS.geiger }, health: { ...DEFAULT_SETTINGS.health } };
+  const s = { ...DEFAULT_SETTINGS, enabled: { ...DEFAULT_SETTINGS.enabled }, cast: [], geiger: { ...DEFAULT_SETTINGS.geiger }, health: { ...DEFAULT_SETTINGS.health }, field: { ...DEFAULT_SETTINGS.field } };
   if (!input || typeof input !== 'object') return s;
   if (input.network === 'mainnet' || input.network === 'testnet') s.network = input.network;
   const vol = Number(input.volume);
@@ -66,6 +71,7 @@ export function sanitizeSettings(input) {
   for (const k of ['captions', 'speak', 'pauseAtNotes', 'exposure']) if (typeof input[k] === 'boolean') s[k] = input[k];
   s.geiger = { enabled: input.geiger?.enabled === true, ...normalizeGeigerConfig(input.geiger) };
   s.health = { poll: input.health?.poll === true, sound: input.health?.sound === true };
+  s.field = sanitizeField(input.field);
   if (typeof input.midiOutput === 'string') s.midiOutput = input.midiOutput.slice(0, 120);
   const mode = input.castMode ?? input.accountMode; // accountMode: the key from before the cast existed
   if (typeof mode === 'string' && CAST_MODES[mode]) s.castMode = mode;
@@ -73,6 +79,13 @@ export function sanitizeSettings(input) {
   if (typeof input.explorer === 'string' && EXPLORERS[input.explorer]) s.explorer = input.explorer;
   // `account` (the single watched address of older builds) is not persisted; the cast lives here and in the URL hash.
   return s;
+}
+
+/** The field setting: a known mode (else off) and, for pair mode, two distinct valid addresses (else the mode falls back to cast). */
+export function sanitizeField(input) {
+  const mode = typeof input?.mode === 'string' && FIELD_MODES.includes(input.mode) ? input.mode : 'off';
+  const pair = Array.isArray(input?.pair) && input.pair.length === 2 && input.pair.every((a) => isValidAddress(a)) && input.pair[0] !== input.pair[1] ? [input.pair[0], input.pair[1]] : null;
+  return { mode: mode === 'pair' && !pair ? 'cast' : mode, pair };
 }
 
 /**

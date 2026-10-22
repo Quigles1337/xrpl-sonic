@@ -8,8 +8,8 @@
 //   node scripts/describe.mjs case.json --level evidence                 # with findings for every cast-involved event
 //   node scripts/describe.mjs case.json --budget 60000                   # characters; the text says N of M events when it must select
 //   node scripts/describe.mjs case.json --measure                        # sizes only, for both levels
-//   node scripts/describe.mjs case.json --coherence [--top K] [--lags L] [--series count|volume]
-//                                                                        # the coherence readout (docs/coherence.md) instead of the text
+//   node scripts/describe.mjs case.json --coherence [--top K] [--lags L] [--series count|volume] [--bin ledger|minute|hour|day]
+//                                                                        # the coherence readout (docs/coherence.md) instead of the text; --bin reads the series per minute, hour or day
 //   node scripts/describe.mjs --coherence --accounts rA[~Label],rB,... --ledgers FROM-TO [--series count|involved|volume] [--include-failed]
 //                                                                        # the same readout over series fetched with account_tx for the named accounts (no case file)
 //   ... [--network mainnet|testnet] [--endpoint wss://s2.ripple.com]      # the node: the network's endpoints in order, or one given endpoint first
@@ -22,7 +22,7 @@ import { validateCase, encodeCase } from '../src/case.js';
 import { fetchCaseLedgers } from '../src/ledgers.js';
 import { describeReport, factsForCase, DEFAULT_BUDGET } from '../src/describe.js';
 import { buildScore } from '../src/score.js';
-import { frameFromScore, frameFromAccountTx, coherence, readout, DEFAULTS as COHERENCE_DEFAULTS } from '../src/coherence.js';
+import { frameFromScore, frameFromAccountTx, coherence, readout, DEFAULTS as COHERENCE_DEFAULTS, BIN_NAMES } from '../src/coherence.js';
 import { fetchAccountSeries, MAX_RANGE } from '../src/account-tx.js';
 import { parseReplayRange } from '../src/replay.js';
 import { buildHash } from '../src/params.js';
@@ -38,7 +38,7 @@ const accountsSpec = opt('accounts', '');
 const ledgersSpec = opt('ledgers', '');
 const byAccounts = Boolean(accountsSpec || ledgersSpec);
 if (!file && !byAccounts) {
-  console.error('usage: node scripts/describe.mjs <case.sonic-case.json> [--level gist|evidence] [--budget N] [--measure] [--coherence [--top K] [--lags L] [--series count|volume]]');
+  console.error('usage: node scripts/describe.mjs <case.sonic-case.json> [--level gist|evidence] [--budget N] [--measure] [--coherence [--top K] [--lags L] [--series count|volume] [--bin ledger|minute|hour|day]]');
   console.error('       node scripts/describe.mjs --coherence --accounts rA[~Label],rB,... --ledgers FROM-TO [--series count|involved|volume] [--include-failed] [--network mainnet|testnet] [--endpoint wss://...]');
   process.exit(2);
 }
@@ -50,7 +50,12 @@ const level = opt('level', 'gist');
 const budget = Number(opt('budget', DEFAULT_BUDGET)) || DEFAULT_BUDGET;
 const measureOnly = args.includes('--measure');
 const coherenceOnly = args.includes('--coherence');
-const coherenceOptions = { maxLag: Number(opt('lags', COHERENCE_DEFAULTS.maxLag)) || COHERENCE_DEFAULTS.maxLag };
+const bin = opt('bin', COHERENCE_DEFAULTS.bin);
+if (!BIN_NAMES.includes(bin)) {
+  console.error(`--bin needs one of ${BIN_NAMES.join(', ')}`);
+  process.exit(2);
+}
+const coherenceOptions = { maxLag: Number(opt('lags', COHERENCE_DEFAULTS.maxLag)) || COHERENCE_DEFAULTS.maxLag, bin };
 
 // --- the series source: a case file, or named accounts over a range (account_tx)
 let theCase = null;

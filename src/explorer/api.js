@@ -7,7 +7,35 @@
 
 import { XrplStream, NETWORKS } from '../ws.js';
 
-const CACHE_MS = { account_info: 15000, account_lines: 30000, account_objects: 30000, account_nfts: 60000, account_tx: 15000, tx: Infinity, ledger: Infinity, server_info: 60000 };
+const CACHE_MS = { account_info: 15000, account_lines: 30000, account_objects: 30000, account_nfts: 60000, account_tx: 15000, tx: Infinity, ledger: Infinity, ledger_entry: 15000, server_info: 60000 };
+
+/** AccountRoot flag bits (lsf*), by the key account_info's `account_flags` uses for each. */
+export const ACCOUNT_ROOT_FLAGS = Object.freeze({
+  passwordSpent: 0x00010000,
+  requireDestinationTag: 0x00020000,
+  requireAuthorization: 0x00040000,
+  disallowIncomingXRP: 0x00080000,
+  disableMasterKey: 0x00100000,
+  noFreeze: 0x00200000,
+  globalFreeze: 0x00400000,
+  defaultRipple: 0x00800000,
+  depositAuth: 0x01000000,
+  amm: 0x02000000,
+  disallowIncomingNFTokenOffer: 0x04000000,
+  disallowIncomingCheck: 0x08000000,
+  disallowIncomingPayChan: 0x10000000,
+  disallowIncomingTrustline: 0x20000000,
+  allowTrustLineClawback: 0x80000000,
+});
+
+/** A ledger_entry (account_root) result as an account_info result: account_data, account_flags from the bits, the ledger, and `via` with the error account_info gave. */
+export function accountInfoFromEntry(result, error = null) {
+  const node = result?.node;
+  if (!node || node.LedgerEntryType !== 'AccountRoot') throw error ?? Object.assign(new Error('not an account root'), { code: 'entryNotFound' });
+  const bits = Number(node.Flags) || 0;
+  const account_flags = Object.fromEntries(Object.entries(ACCOUNT_ROOT_FLAGS).map(([k, bit]) => [k, (bits & bit) !== 0 || (bit === 0x80000000 && bits >= 0x80000000)]));
+  return { account_data: { ...node, index: node.index ?? result.index }, account_flags, ledger_index: result.ledger_index ?? result.ledger_current_index ?? null, ledger_hash: result.ledger_hash ?? null, validated: result.validated ?? null, via: 'ledger_entry', error: error ? { code: error.code ?? 'unknown', message: error.message ?? String(error) } : null };
+}
 
 export class ExplorerApi {
   constructor({ network = 'mainnet', onStatus, onLedger } = {}) {
@@ -78,8 +106,19 @@ export class ExplorerApi {
     return this.request({ command: 'ledger', ledger_index: 'validated', transactions: false }, { ttl: 2000 }).then((r) => r.result);
   }
 
+  /**
+   * account_info, or, when the node refuses it, the account's root entry
+   * through ledger_entry shaped like an account_info result and marked
+   * `via: 'ledger_entry'`: rippled answers account_info for an AMM
+   * pseudo-account with an internal error (docs/coherence.md, phase 2), and
+   * the entry itself (lsfAMM, AMMID) is what names it one.
+   */
   accountInfo(account, { ledgerIndex } = {}) {
-    return this.request({ command: 'account_info', account, ledger_index: ledgerIndex ?? 'validated' }).then((r) => r.result);
+    const at = ledgerIndex ?? 'validated';
+    return this.request({ command: 'account_info', account, ledger_index: at }).then(
+      (r) => r.result,
+      (err) => this.request({ command: 'ledger_entry', account_root: account, ledger_index: at }).then((r) => accountInfoFromEntry(r.result, err), () => Promise.reject(err)),
+    );
   }
 
   accountLines(account, { ledgerIndex, limit = 200, marker } = {}) {

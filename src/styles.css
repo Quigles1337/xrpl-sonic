@@ -2537,3 +2537,72 @@ body.mode-embed .ai-box {
 .coherence-out.hidden {
   display: none;
 }
+
+/* ---------------------------------------------------------- the interference field (src/field.js) */
+
+.field-line {
+  position: fixed;
+  top: calc(var(--topbar-h) + 58px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  width: min(820px, calc(100vw - 32px));
+  padding: 8px 12px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.field-line.hidden {
+  display: none;
+}
+
+.field-line-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.field-line-label {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.field-line-text {
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.field-pair select {
+  flex: 1 1 90px;
+  min-width: 80px;
+}
+
+.field-pair.hidden {
+  display: none;
+}
+
+.field-pair-sep {
+  color: var(--text-dim);
+}
+
+.field-summary {
+  margin: 6px 0 0;
+}
+
+body.mode-overlay .field-line,
+body.blind .field-line {
+  display: none;
+}

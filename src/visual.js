@@ -13,9 +13,16 @@
 // sprites are rendered once per colour and blitted, the nebula, grid, ruler
 // and vignette are cached per resize, particle and ring counts are capped,
 // shadowBlur is never used and DPR is capped at 2.
+//
+// The interference field (src/field.js, docs/coherence.md phase 2) is an
+// additive layer under the cast's sigils in the upper plate, drawn before
+// the tracks: off unless a model is set, stationary under reduced motion,
+// its grid recomputed only when it animates or the geometry changes, its
+// cell size governed by a measured budget (resolution drops before frame rate).
 
 import { GLYPHS, PITCH_AXIS, pitchPosition, shapeFor, hexToRgb } from './glyphs.js';
 import { project, referenceScale, ringPoints, clampCamera } from './projection.js';
+import { fieldLayout, fieldGrid, fringeLines, labelPoint, fieldHit, nextCell, beatPhase, CELL_SIZES, BUDGET } from './field.js';
 
 const MAX_PARTICLES = 420;
 const MAX_RINGS = 12;
@@ -112,6 +119,8 @@ export class Visualizer {
     this.spin = { yaw: 0, pitch: 0 };
     this.drag = null;
     this.dragged = false; // a drag just ended: the click that follows is not an inspect
+    this.field = null; // the interference field's model (src/field.js), or null when off
+    this.fieldState = { grid: null, key: '', cell: CELL_SIZES[0], image: null, samples: [], lastCompute: 0, phase: 0 };
     this._resize = () => this.resize();
     this._loop = (ts) => this.frame(ts);
     this.resize();
@@ -192,6 +201,8 @@ export class Visualizer {
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     this.layers = this.hud ? this.buildLayers() : null;
     this.plateLayer = null;
+    this.fieldState.grid = null;
+    this.fieldState.key = '';
     if (this.transparent) {
       this.ctx.clearRect(0, 0, this.width, this.height);
     } else {
@@ -237,6 +248,142 @@ export class Visualizer {
       this.plateLayer = { canvas: c, ctx: g, lastFade: 0 };
     }
     return this.plateLayer;
+  }
+
+  /**
+   * The interference field to draw (a model from src/field.js fieldModel()),
+   * or null to draw none. A new model invalidates the grid; the cell size
+   * the budget rule reached is kept.
+   */
+  setField(model) {
+    this.field = model && model.on ? model : null;
+    this.fieldState.grid = null;
+    this.fieldState.key = '';
+    this.fieldState.image = null;
+  }
+
+  /** The drawn pair under a point (CSS px), when the field reaches it: { index, pair, value } or null. */
+  fieldHit(x, y) {
+    if (!this.field || !this.fieldState.grid) return null;
+    return fieldHit(this.field, this.fieldState.grid, x, y);
+  }
+
+  /** What the field costs: the cell size in force and the mean of its last frame times. */
+  fieldStats() {
+    const st = this.fieldState;
+    const mean = st.samples.length ? st.samples.reduce((a, b) => a + b, 0) / st.samples.length : 0;
+    return { cell: st.cell, meanMs: mean, samples: st.samples.length, grid: st.grid ? { cols: st.grid.cols, rows: st.grid.rows } : null };
+  }
+
+  /** Compute the field's grid when it is stale (a new model, a resize, a cell change, or the beat's phase advancing), and render it to a small image. */
+  _fieldGrid(ts) {
+    const st = this.fieldState;
+    const model = this.field;
+    const animate = model.animated && !this.reduced;
+    const phase = animate ? beatPhase(model, ts / 1000) : 0;
+    const key = `${this.width}x${this.height}:${st.cell}:${model.pairs.length}:${model.sources.length}`;
+    const stale = !st.grid || st.key !== key || (animate && ts - st.lastCompute > 50);
+    if (!stale) return;
+    const t0 = performance.now();
+    const grid = fieldGrid(model, { width: this.width, height: this.height, cell: st.cell, phase });
+    const img = document.createElement('canvas');
+    img.width = grid.cols;
+    img.height = grid.rows;
+    const g = img.getContext('2d');
+    const data = g.createImageData(grid.cols, grid.rows);
+    const gain = 1.3; // r 0.44, the ARMY pairs, reads as a clear fringe; r 1 saturates
+    for (let i = 0; i < grid.cols * grid.rows; i++) {
+      data.data[i * 4] = Math.min(255, Math.round(grid.rgb[i * 3] * gain * 255));
+      data.data[i * 4 + 1] = Math.min(255, Math.round(grid.rgb[i * 3 + 1] * gain * 255));
+      data.data[i * 4 + 2] = Math.min(255, Math.round(grid.rgb[i * 3 + 2] * gain * 255));
+      data.data[i * 4 + 3] = 255;
+    }
+    g.putImageData(data, 0, 0);
+    st.grid = grid;
+    st.image = img;
+    st.key = key;
+    st.phase = phase;
+    st.lastCompute = ts;
+    st.lines = model.pairs.map((_, k) => fringeLines(grid, k));
+    st.samples.push(performance.now() - t0);
+    if (st.samples.length >= BUDGET.frames) {
+      const mean = st.samples.reduce((a, b) => a + b, 0) / st.samples.length;
+      const next = nextCell(st.cell, mean);
+      st.samples = [];
+      if (next !== st.cell) {
+        st.cell = next;
+        st.key = '';
+      }
+    }
+  }
+
+  /** The field: the glow (additive), the fringe lines, the sigils of the sources, the labels and the caption. */
+  drawField(ctx, ts) {
+    const model = this.field;
+    if (!model) return;
+    this._fieldGrid(ts);
+    const st = this.fieldState;
+    const grid = st.grid;
+    if (!grid) return;
+    const lay = grid.layout;
+    const w = this.width;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.6;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(st.image, 0, grid.top * grid.cell, grid.cols * grid.cell, grid.rows * grid.cell);
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 1;
+    model.pairs.forEach((p, k) => {
+      ctx.strokeStyle = rgba(p.rgb, 0.45);
+      ctx.beginPath();
+      for (const seg of st.lines?.[k] ?? []) {
+        ctx.moveTo(seg.x1, seg.y1);
+        ctx.lineTo(seg.x2, seg.y2);
+      }
+      ctx.stroke();
+    });
+    ctx.globalCompositeOperation = 'source-over';
+    // the sigils: the source of each pulse train, in the member's colour, labelled
+    const size = 22;
+    const cellPx = size / 5;
+    model.sources.forEach((src, i) => {
+      const { x, y } = lay.points[i];
+      ctx.fillStyle = rgba(src.rgb, 0.16);
+      ctx.fillRect(x - size / 2 - 3, y - size / 2 - 3, size + 6, size + 6);
+      ctx.fillStyle = rgba(src.rgb, 0.95);
+      src.cells.forEach((on, c) => {
+        if (!on) return;
+        ctx.fillRect(x - size / 2 + (c % 5) * cellPx + 0.5, y - size / 2 + Math.floor(c / 5) * cellPx + 0.5, cellPx - 1, cellPx - 1);
+      });
+      ctx.font = `600 9px ${MONO}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = rgba(src.rgb, 0.9);
+      ctx.fillText(String(src.label).toUpperCase().slice(0, 14), x, y + size / 2 + 5);
+    });
+    // the labels: the lag and the record check, at the bright fringe of each drawn pair
+    ctx.font = `500 10px ${MONO}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    model.pairs.forEach((p, k) => {
+      const at = labelPoint(model, grid, k);
+      const text = p.label;
+      const tw = ctx.measureText(text).width + 10;
+      const x = clamp(at.x, tw / 2 + 4, w - tw / 2 - 4);
+      ctx.fillStyle = rgba(BG, 0.72);
+      ctx.fillRect(x - tw / 2, at.y - 8, tw, 16);
+      ctx.fillStyle = rgba(p.rgb, 1);
+      ctx.fillText(text, x, at.y);
+    });
+    // the caption: the bin, the window, the lag range, the pairs tested; the cell when the budget moved it
+    ctx.font = `500 9px ${MONO}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = rgba(INK, 0.75);
+    const caption = `${model.summary ?? `field · ${model.pairs.length} of ${model.tested} pair${model.tested === 1 ? '' : 's'} drawn`} · ${model.caption}${st.cell !== CELL_SIZES[0] ? ` · cells ${st.cell} px (budget)` : ''}`;
+    ctx.fillText(caption.slice(0, Math.floor((lay.right - lay.left) / 5.4)), lay.left - 12, lay.bottom - 4);
+    ctx.restore();
   }
 
   /** Blind comparison: keep the plate but hide the ledger number stamped behind it. */
@@ -615,6 +762,14 @@ export class Visualizer {
       ctx.globalCompositeOperation = 'lighter';
       ctx.drawImage(L.canvas, 0, 0, w, h);
       ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // --- the interference field, under the sigils, before the tracks --------
+    if (this.field) {
+      const t0 = performance.now();
+      this.drawField(ctx, ts);
+      const st = this.fieldState;
+      if (st.samples.length && st.lastCompute === ts) st.samples[st.samples.length - 1] += performance.now() - t0; // the paint joins the compute's sample
     }
 
     // --- rings: ripples on the floor (ledger pulse, Cherenkov rings, escrow releases)
