@@ -63,7 +63,7 @@ https://quigles1337.github.io/xrpl-sonic/#cast=rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jja
 
 `#account=<r-address>` still works as the one-member shortcut: it follows that account and mutes everything else, as it always has. Addresses are validated as base58 r-addresses and the cast is shown in the command strip, each chip linking to the explorer.
 
-Every line in the log is a link: the transaction opens on an explorer, each account opens its account page, and ledger lines open the ledger. The default explorer is XRPScan; Bithomp and xrpl.org are selectable, and the testnet equivalents are used when the page is on testnet. Links open in a new tab with `rel="noopener noreferrer"`.
+Every line in the log is a link, as are the cast chips and the inspector's parties, ledger and hash: the transaction opens on an explorer, each account opens its account page, and ledger lines open the ledger. The default explorer is xrpl-sonic's own ([explorer.html](https://quigles1337.github.io/xrpl-sonic/explorer.html), opened on the network the page is listening to); XRPScan, Bithomp and xrpl.org are selectable under *Explorer for links*, with their testnet equivalents when the page is on testnet. Links open in a new tab with `rel="noopener noreferrer"`, so the stream keeps playing.
 
 ## Replay a ledger, with a permalink
 

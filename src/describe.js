@@ -25,7 +25,7 @@ import { facts as factsOf, FACTS_VERSION, flagNames, amountOf } from './explorer
 import { featuresOf } from './geiger.js';
 import { CASE_VERSION, MOMENT_VERSION, ANNOTATION_KINDS, MAX_ANNOTATION_CHARS, validateCase, serializeCase, normalizeAnchor } from './case.js';
 import { MAPPING_VERSION, CATEGORY_NAMES } from './mapping.js';
-import { SITE_URL } from './explorers.js';
+import { SITE_URL, SONIC_EXPLORER, explorerUrl } from './explorers.js';
 
 export const LEVELS = Object.freeze(['gist', 'evidence']);
 
@@ -52,9 +52,10 @@ export function exampleAnnotation(hash) {
   return { text: 'One sentence of what the cited record shows.', anchor: { hash }, kind: 'observation', evidence: [hash], source: 'assistant', status: 'draft' };
 }
 
-/** The explorer's route for a transaction, on the network's page. */
+/** The explorer's route for a transaction on the network's page, absolute because the text leaves the site; null for a malformed hash. */
 export function explorerRoute(network, hash) {
-  return `${SITE_URL}explorer.html${network === 'testnet' ? '?network=testnet' : ''}#tx/${hash}`;
+  const relative = explorerUrl(SONIC_EXPLORER, network, 'tx', hash);
+  return relative ? new URL(relative, SITE_URL).href : null;
 }
 
 const HASH = /^[0-9A-F]{64}$/i;

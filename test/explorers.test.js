@@ -1,20 +1,43 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { EXPLORERS, EXPLORER_NAMES, DEFAULT_EXPLORER, explorerUrl, listenerUrl } from '../src/explorers.js';
+import { EXPLORERS, EXPLORER_NAMES, EXTERNAL_EXPLORER_NAMES, SONIC_EXPLORER, DEFAULT_EXPLORER, SITE_URL, explorerUrl, listenerUrl } from '../src/explorers.js';
+import { parseRoute } from '../src/explorer/route.js';
 
 const HASH = '0176B15458AF71EDF66D5C679FDBDCD360EB1602ECB7925352858D081287FE63';
 const ADDR = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
 
 describe('explorer links', () => {
-  test('default explorer is XRPScan and every explorer has both networks', () => {
-    assert.equal(DEFAULT_EXPLORER, 'xrpscan');
+  test("the default explorer is this site's own; the external ones are absolute and have both networks", () => {
+    assert.equal(DEFAULT_EXPLORER, SONIC_EXPLORER);
+    assert.equal(EXPLORER_NAMES[0], SONIC_EXPLORER, 'listed first in the select');
+    assert.deepEqual(EXTERNAL_EXPLORER_NAMES, ['xrpscan', 'bithomp', 'xrplorg']);
     for (const name of EXPLORER_NAMES) {
       const ex = EXPLORERS[name];
+      assert.ok(ex.label, name);
+      assert.ok(ex.base.mainnet && ex.base.testnet, name);
+      if (name === SONIC_EXPLORER) continue;
       assert.match(ex.base.mainnet, /^https:\/\//, name);
       assert.match(ex.base.testnet, /^https:\/\//, name);
-      assert.ok(ex.label);
     }
+  });
+
+  test("this site's explorer links are relative routes the explorer page reads, with the network in front of the hash", () => {
+    assert.equal(explorerUrl('sonic', 'mainnet', 'tx', HASH), `./explorer.html#tx/${HASH}`);
+    assert.equal(explorerUrl('sonic', 'mainnet', 'account', ADDR), `./explorer.html#account/${ADDR}`);
+    assert.equal(explorerUrl('sonic', 'mainnet', 'ledger', 107777809), './explorer.html#ledger/107777809');
+    assert.equal(explorerUrl('sonic', 'testnet', 'account', ADDR), `./explorer.html?network=testnet#account/${ADDR}`);
+    for (const [kind, id, route] of [
+      ['tx', HASH, { name: 'tx', hash: HASH }],
+      ['account', ADDR, { name: 'account', address: ADDR, tag: null }],
+      ['ledger', 107777809, { name: 'ledger', index: 107777809 }],
+    ]) {
+      const url = new URL(explorerUrl('sonic', 'testnet', kind, id), SITE_URL);
+      assert.equal(url.href, `${SITE_URL}explorer.html?network=testnet${explorerUrl('sonic', 'mainnet', kind, id).slice('./explorer.html'.length)}`);
+      assert.equal(url.searchParams.get('network'), 'testnet');
+      assert.deepEqual(parseRoute(url.hash), route, kind);
+    }
+    assert.equal(explorerUrl('sonic', 'mainnet', 'tx', 'not-a-hash'), null);
   });
 
   test('transaction, account and ledger URLs per explorer and network', () => {
@@ -30,7 +53,8 @@ describe('explorer links', () => {
   });
 
   test('unknown explorer or network falls back to the defaults', () => {
-    assert.equal(explorerUrl('nope', 'devnet', 'tx', HASH), `https://xrpscan.com/tx/${HASH}`);
+    assert.equal(explorerUrl('nope', 'devnet', 'tx', HASH), `./explorer.html#tx/${HASH}`);
+    assert.equal(explorerUrl('xrpscan', 'devnet', 'tx', HASH), `https://xrpscan.com/tx/${HASH}`);
   });
 
   test('malformed identifiers never become links', () => {

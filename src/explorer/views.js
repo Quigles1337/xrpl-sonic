@@ -6,7 +6,7 @@
 import { el, svg } from '../dom.js';
 import { CATEGORIES, categorize, parseAmount, formatAmount, shortAddress, txToEvent } from '../mapping.js';
 import { eventIcon, categoryIcon, fieldGuide } from '../glyphs.js';
-import { explorerUrl, EXPLORERS, listenerUrl } from '../explorers.js';
+import { explorerUrl, EXPLORERS, EXTERNAL_EXPLORER_NAMES, listenerUrl } from '../explorers.js';
 import { sigilSvg } from './sigil.js';
 import { project, referenceScale, ringPoints } from '../projection.js';
 import { formatRoute } from './route.js';
@@ -76,7 +76,7 @@ function typeBadge(txType) {
 }
 
 function externalLinks(kind, id, network) {
-  return Object.keys(EXPLORERS).map((k) => {
+  return EXTERNAL_EXPLORER_NAMES.map((k) => {
     const href = explorerUrl(k, network, kind, id);
     return href ? el('a', { class: 'btn small', href, target: '_blank', rel: 'noopener noreferrer', text: EXPLORERS[k].label }) : '';
   });
