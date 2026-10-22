@@ -1,0 +1,94 @@
+# UX pass: the listening page
+
+What the listening page says, where, and in which mode. This document is the agreed specification of the pass, written before the two pull requests that build it, and below each part the record of how it was built. The ground rules of every other session hold: read before writing, never assume a value, no dependencies, no build step, and every keyboard and screen-reader path unchanged or better. Every sentence the page shows about a project term is taken from the existing documents and cited here; what could not be grounded is listed at the end as a proposal, not slipped in.
+
+## The mode map (PR 2)
+
+Three modes in the top bar, one of which is in force at a time; Settings is a panel, not a mode. Start/Stop is in every mode.
+
+| Mode | What it is for | What is on screen | Top-bar actions |
+| --- | --- | --- | --- |
+| **Listen** | Hear the ledger. | The plate, the transaction tape, the sound; the transport when a case plays. | Start/Stop · Share · Settings · the Explorer link |
+| **Watch** | Follow accounts and keep what you find. | The plate with a workbench beside it: Cast, Case (load, save, link, notes), Moments (save this moment, the saved question), Coherence (the readout drawer and the field), Copy for AI, Import notes. | Start/Stop · Moment · Copy for AI · Share · Settings · the Explorer link |
+| **Learn** | Be shown. | The plate with a tour panel: three tours built from the existing captions and transport: the legend, follow a payment, the market maker's cadence. The legend is a click away from every mode. | Start/Stop · Settings |
+| **Settings** (panel) | Configure the instrument. | Sound, Stream, Transaction types, Node, MIDI, Capture, Session. | opens from every mode |
+
+Where today's groups go: Sound, Stream and Transaction types, Node, MIDI, Capture and Session stay in Settings (the brief names sound, stream, MIDI and capture; Transaction types, Node and Session are placed with them as proposals, see the end). Cast, Case, Field, Geiger, the coherence readout, Copy for AI and Import notes move to the Watch workbench (Field and Geiger are placed there as proposals: both watch accounts). The tours are new and live in Learn.
+
+The welcome overlay offers the three doors with one line each, in the words of the README: Listen, "every transaction on the XRP Ledger becomes a sound, every ledger close a pulse"; Watch, "follow up to five accounts, each with a voice of its own, save a moment, read the coherence between them"; Learn, "three short tours: the legend, follow a payment, the market maker's cadence". The legend (the field guide tiles that are on the start screen today) stays one click away in every mode.
+
+The URL and hash contracts are unchanged: `#cast=`, `#account=`, `#replay=`, `#case=`, `?case=`, `?network=`, `?autostart=1`, `?overlay=1`, `?embed=1` open exactly as before. The mode is not in the URL; it is remembered with the settings, defaults to Listen, and a link that carries a case or a replay opens in Watch so the case is visible, as it was in the settings column before.
+
+## The vocabulary
+
+Each project term gets one sentence beside it at the point of use, taken from the documents below, not written for the control. Where the page needs a shorter form, the sentence is cut, never reworded.
+
+| Term | The sentence at the point of use | Source |
+| --- | --- | --- |
+| Moment | Something catches your ear, live or in replay: Moment (or S) saves the selection and your observation as a case file and copies its link, without stopping playback. | README, "Save this moment"; [save-this-moment.md](save-this-moment.md), "What it is" |
+| Case | A case is a small JSON file that describes a listening: the network, one or more ledger windows (clips), the cast, the filters and mapping, the speed, and annotations anchored to a transaction, a ledger or a position on the timeline. | README, "Cases"; [case-format.md](case-format.md) |
+| Cast | The cast is up to five accounts to follow; each gets a voice of its own, a place in the stereo field, a colour and a label, so the same participant sounds and looks the same every time it acts. | README, "Follow a cast" |
+| Outside the cast | Transactions that involve nobody in the cast are played in their category voice (Play everything), drawn dimmed and silent (Mute others) or not drawn at all (Hide others). | README, "Follow a cast"; [case-format.md](case-format.md), `filters.castMode` |
+| Clip | A clip is one ledger window of a case; a case with two or more gets A, B, … buttons that play each on a loop, and the silence between clips is announced on the tape, in the captions and on the plate. | [case-format.md](case-format.md), `clips`; README, "Compare two windows" |
+| Transcript | The transcript is a text version of the whole score with every ledger, gap, event and annotation at its time. | README, "Cases" |
+| Geiger | The Geiger is a detector: for every validated ledger it measures a few plain things before any filter or rate limiting, compares each with a baseline formed from the previous ledgers, and reports a crossing with the numbers that produced it. | README, "Geiger mode" |
+| Coherence | Coherence reads a relation between accounts from when they act: for every pair, the peak cross-correlation of their transactions per ledger, prewhitened and raw, each with its null, the number of pairs tested, and the record check; a correlation at a lag is what the series show, and coordination is not stated. | README, "Coherence"; [coherence.md](coherence.md) |
+| The field | The field draws what the readout says: interference between the cast members' sigils for the pairs whose prewhitened percentile clears the 95th, and for no other pair. | README, "Coherence" (the field paragraph) |
+| Blind comparison | Blind comparison keeps the plate and the sound but hides ledger numbers, the tape, the notes and the captions, so the comparison is made by ear and the labels are revealed only afterwards. | README, "Compare two windows" |
+| Pause at annotations | Pause at annotations honours notes that ask the transport to pause when they are reached. | README, "Compare two windows" (the captions paragraph); [case-format.md](case-format.md), `annotations[].pause` |
+| Captions | Captions show annotations, gaps and cast events as text. | README, "Compare two windows" |
+| Speak annotations | Speak annotations reads each note aloud through the browser's speech synthesis, independent of the instrument's sound. | README, "Compare two windows" |
+| Notes | A case's annotations are edited in place: Note here adds one at the current position, Annotate in the inspector anchors one to that transaction, and each note can be edited or deleted. | README, "Cases" (Notes) |
+| Copy for AI | Copy for AI turns the loaded case into text an assistant can work from without the page; the size and the events-shown ratio are shown before copying. | README, "Copy for AI"; [copy-for-ai.md](copy-for-ai.md) |
+| Import notes | An assistant's answer, a JSON array of annotations, is pasted into Import notes and lands as drafts at its anchors, with what was accepted and rejected and why. | README, "Copy for AI" |
+| Long exposure | Long exposure keeps a fading trace of where every track landed on the plate, so a column forms under an account that keeps acting at one pitch. | README, "Geiger mode" (last paragraph) |
+| Observed fee pressure | Observed fee pressure asks the connected node, after each ledger close, for its fee report; it describes the node you are connected to, not one network-wide state. | README, "Observed fee pressure" |
+| MIDI | Save MIDI file writes the score of the loaded case as a Standard MIDI File; Live output sends the same notes as they play to an instrument through the Web MIDI API. | README, "MIDI" |
+| Capture | Snapshot composes the scene with a small stats box and downloads it as a PNG; Record 30 s captures the canvas together with the audio mix. | README, "Snapshot and recording" |
+| Quiet mode | Quiet mode keeps only transactions at or above a chosen XRP amount. | README, "Staying musical when the ledger is busy" |
+| Transaction types | The same glyphs appear as the legend tiles, on the start screen and beside every line of the tape, so shape, colour and sound are learned together. | README, "The plate" |
+| Share | Share copies a permalink to the ledger currently playing together with the network and the cast, so a moment you heard can be sent to someone else. | README, "Replay a ledger, with a permalink" |
+| Session | The Session panel shows how many events were played versus rate-limited. | README, "Staying musical when the ledger is busy" |
+
+## Empty and guarded states
+
+Every empty or guarded state says what it is and what to do next, in the order of ease. "Guarded" means a control that exists but cannot act yet; such a control is not removed and not greyed into silence: it keeps keyboard focus (`aria-disabled`, not `disabled`), its reason shows on hover and on focus, and pressing it shows the same reason.
+
+| State | Where | What it says | What to do next, easiest first | Grounded in |
+| --- | --- | --- | --- | --- |
+| No case loaded | Case group status | "No case loaded." | Press **Moment** (or S) while listening to save what is playing as a case; open the **sample case** (one click); **Load file**; open a `#replay=<ledger>` or `#case=` link; from the explorer, **Open as moment in the listener** on a transaction. | README, "Save this moment", "Cases" (the sample case), "Replay a ledger"; save-this-moment.md (the explorer handoff) |
+| A case is loaded but not playing | Case group status, the start screen's lede | "<title> will play when you press Start." | Press Start. | main.js `setReplayPending` (existing wording) |
+| Coherence: no ledger heard yet | the coherence drawer | "No ledger heard yet." | Press Start and listen; the readout needs at least 12 ledgers. | coherence.md, "The statistic" (the guard) |
+| Coherence: fewer than two accounts | the coherence drawer | "Fewer than two accounts to compare." | Add a second cast member, or listen until two accounts have submitted. | coherence.md (accounts: the cast, else the top submitters) |
+| Coherence: not judged | the coherence drawer | "Not judged." then which account is short and by how much: "Sender B has 3 events over 50 ledgers; the guard needs 10 per account", or "3 ledgers used; the guard needs 12". | For the ledgers: listen for N more ledgers, or load a case with 12 or more. For the events: "at its rate so far it would need about N more ledgers", or widen the window. | coherence.md, "The statistic" (the guard: 12 ledgers, 10 events); the numbers from the report |
+| Coherence: nothing above the bar | the coherence drawer counts line | "pairs tested: N · above the 95th: raw a, prewhitened b · chance alone gives about c" (unchanged). | Nothing to do: that is the finding. | coherence.md, "Multiple comparisons" |
+| Field: off / no cast / nothing drawn | Field group, the plate's caption | As built in phase 2: "field off", "no cast; the field draws interference between cast sigils only", "nothing drawn · N pairs tested, …". | Turn it on; add a cast; nothing to do when nothing clears the bar. | coherence.md, "As built (phase 2)" |
+| No cast | Cast group | "No cast: playing everything." | Add an account below (address, optional label), or load the **example cast**. | README, "Follow a cast" |
+| The example cast | Cast group header, the command strip | "Example cast" with **Clear**. | Clear it, or add your own account; the plate labels follow the cast labels as now. | README's example link (Maker and Issuer) |
+| Cast full | Cast group, Add | "A cast has at most 5 members." | Remove one (×) first. | README, "Follow a cast"; cast.js `CAST_MAX` |
+| No notes | Case group, notes | "No notes yet." | **Note here** adds one at the current position; **Annotate** in the inspector anchors one to that transaction. | README, "Cases" (Notes) |
+| Save file, Copy link, Import notes, Note here without a case | Case group | the reason on hover, focus and press: "Needs a loaded case: see No case loaded." | As for no case loaded. | — |
+| Transcript, Copy for AI, Save MIDI file without a score | Case and MIDI groups | "Needs a case with its ledgers fetched: press Start." | Press Start. | README, "Cases", "MIDI" |
+| Connect (MIDI) unsupported | MIDI group | existing: "Web MIDI is not available here (it needs a secure context and a browser that offers it)". | Use the file export. | README, "MIDI" |
+| Record unsupported | Capture group | existing: the browser cannot record. | Use a screen recorder; Snapshot still works. | README, "Snapshot and recording" |
+| Field pair with fewer than two cast members | Field group | "One chosen pair needs two cast members." | Add a second account. | coherence.md, phase 2 |
+| Geiger off, Node not polling | their groups | existing sentences. | Turn them on. | README |
+| The tape before Start | Transaction tape | "Nothing yet: press Start to listen." | Press Start. | — |
+
+## PR 1: fixes with no design decisions
+
+1. **The moment prompt opens on page load.** Cause: `index.html` gives the prompt and the Copy for AI box the class `hidden`, and `src/ui.js` toggles that class, but `src/styles.css` has no `.moment-prompt.hidden` or `.ai-box.hidden` rule; every other hidden element on the page has its own rule (`.captions.hidden`, `.inspector.hidden`, …), and `.moment-prompt` sets `display: flex`, so both boxes have shown since Save this moment landed (commit 865439d, PR #21). The fix is the missing rule.
+2. **Vocabulary at the point of use**: the sentences of the table above, as a hint under each group header and beside each named control; `title` and `aria-describedby` on the buttons so the sentence reaches hover, focus and screen readers.
+3. **Empty and guarded states** as in the table above; guarded controls become `aria-disabled` so they keep focus and can say why.
+4. **The example cast**: labelled "Example cast" wherever the cast is shown, with Clear, and the add form stays visible beside it.
+5. **The readout drawer**: Coherence and Transcript move out of the settings column into a drawer under the command strip with a header, the counts, one row per pair or per event, and a **Copy raw** button; the computation and the text are unchanged (Copy raw copies exactly the readout or the transcript as the script prints it). The drawer is a dialog: it opens from the buttons, takes focus, closes on Escape and on its Close button, and its rows are a list a screen reader can walk.
+6. **Legibility.** The colour tokens pass WCAG AA on every background (`--muted` 5.7:1 on the panel and 5.9:1 on the plate; `--text-dim` 11:1; `--text` 17:1). What fails is text dimmed by `opacity`: a dimmed tape line reads 3.9:1 on its text and 2.5:1 on its timestamp, a muted cast chip 4.0:1, an unchecked transaction-type chip's sound label 2.8:1, a muted cast row 4.5:1 at the edge. Those become colour rules instead of opacity (the glyph may still dim; the words do not), and a guarded button sits at 0.6 rather than 0.45 (6.4:1). Small caps (uppercase with tracking) stay on section headers only: the panel title, the group headers, the tape header, the brand name on the start screen; buttons, chips, readout labels, the tagline, the legend tiles, the footer and the caption kinds go to sentence case.
+
+## Proposed, not grounded
+
+What the documents do not settle and this pass had to decide:
+
+- Where Transaction types, Node, Session, Field and Geiger live in the three modes (the brief names only sound, stream, MIDI and capture for Settings, and cast, case, moments, coherence, Copy for AI and Import notes for Watch).
+- The example cast itself: the page has no example cast today. The README's example link (`#cast=rBTw…~Maker…,rKNR…~Issuer`) and the sample case's cast (Sender A and Sender B) are the two casts the documents show; the pass takes the README's as the example cast and labels a cast that equals it "Example cast".
+- The wording of guard reasons ("Needs a loaded case…"), the tape's empty line, the not-judged arithmetic ("at its rate so far it would need about N more ledgers"), the three doors' one-liners (cut from the README) and the tours' scripts: the tours use the field guide's labels, sounds and track descriptions (`src/glyphs.js`, which the README's sound-mapping table is rendered from), the sample case's annotations ("state only counts taken from the ledgers", README) and the measured cadence of the market maker (coherence.md, "Measurements": a cadence of 3 ledgers, self-correlation 0.96 around the sample case) with no sentence beyond those sources.
+- The drawer as the home of the readouts, and "Copy raw" as its button's name.
