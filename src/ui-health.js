@@ -2,6 +2,7 @@
 
 import { describeHealth, formatPressure, pressureLevel, isFresh } from './health.js';
 import { el } from './dom.js';
+import { TERMS } from './vocabulary.js';
 
 export function createHealthPanel({ settings, onChange }) {
   const poll = el('input', { type: 'checkbox', id: 'health-poll', checked: Boolean(settings.health?.poll), onchange: (e) => onChange?.({ poll: e.target.checked }) });
@@ -11,6 +12,7 @@ export function createHealthPanel({ settings, onChange }) {
   const detail = el('p', { class: 'health-detail', id: 'health-detail', text: 'Not polling.' });
   const root = el('section', { class: 'group health-group' }, [
     el('h2', { text: 'Node' }),
+    el('p', { class: 'group-hint', text: TERMS.feePressure.sentence }),
     el('label', { class: 'row check' }, [poll, el('span', { class: 'row-label', text: 'Observed fee pressure' }), el('span', { class: 'hint', text: 'ask the connected node for its open-ledger fee and queue after each ledger close (live only)' })]),
     headline,
     gauge,

@@ -8,6 +8,7 @@
 
 import { BIN_NAMES } from './coherence.js';
 import { el, option } from './dom.js';
+import { TERMS, REASONS } from './vocabulary.js';
 
 const MODE_WORDS = Object.freeze({ off: 'Off', cast: 'Every cast pair above the bar', pair: 'One chosen pair' });
 
@@ -24,6 +25,7 @@ export function createFieldPanel({ settings, onChange, binNow }) {
   const bin = el('select', { id: 'coherence-bin', 'aria-label': 'Read the series per ledger, minute, hour or day', onchange: (e) => onChange?.({ bin: e.target.value }) }, BIN_NAMES.map((b) => option(b, b === 'ledger' ? 'ledger (default)' : b, (binNow?.() ?? 'ledger') === b)));
   const summary = el('p', { class: 'hint field-summary', id: 'field-summary', 'aria-live': 'polite', text: 'Off. Interference between cast sigils, drawn only for pairs above the coherence bar; a click on a fringe shows the pair’s line.' });
   const pairRow = el('label', { class: 'row field-pair' }, [el('span', { class: 'row-label', text: 'Pair' }), first, el('span', { class: 'field-pair-sep', text: '↔', 'aria-hidden': 'true' }), second]);
+  const pairHint = el('p', { class: 'hint reason hidden', id: 'field-pair-reason', text: REASONS.pairNeedsTwo });
 
   function members() {
     return Array.isArray(settings.cast) ? settings.cast : [];
@@ -61,13 +63,16 @@ export function createFieldPanel({ settings, onChange, binNow }) {
     pairRow.classList.toggle('hidden', f.mode !== 'pair');
     first.disabled = second.disabled = !pairable;
     for (const o of mode.options) if (o.value === 'pair') o.disabled = !pairable;
+    pairHint.classList.toggle('hidden', pairable);
     bin.value = binNow?.() ?? 'ledger';
   }
 
   const root = el('section', { class: 'group field-group' }, [
     el('h2', { text: 'Field' }),
+    el('p', { class: 'group-hint', text: TERMS.field.sentence }),
     el('label', { class: 'row' }, [el('span', { class: 'row-label', text: 'Interference' }), mode]),
     pairRow,
+    pairHint,
     el('label', { class: 'row' }, [el('span', { class: 'row-label', text: 'Read per' }), bin]),
     summary,
   ]);

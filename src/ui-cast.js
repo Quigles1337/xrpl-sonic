@@ -1,8 +1,9 @@
 // xrpl-sonic — the cast panel: follow up to five accounts, each with a voice of its own.
 
-import { CAST_MAX, CAST_VOICES, CAST_VOICE_NAMES, CAST_MODES, normalizeCast } from './cast.js';
+import { CAST_MAX, CAST_VOICES, CAST_VOICE_NAMES, CAST_MODES, normalizeCast, EXAMPLE_CAST, isExampleCast } from './cast.js';
 import { isValidAddress, shortAddress } from './mapping.js';
-import { el, option } from './dom.js';
+import { el, option, setGuard, reasonStrip, guarded } from './dom.js';
+import { TERMS, REASONS } from './vocabulary.js';
 
 /**
  * Build the Cast group for the settings panel.
@@ -45,7 +46,13 @@ export function createCastPanel({ settings, onChange, onPreview, linkFor }) {
       }
     },
   });
-  const addBtn = el('button', { type: 'button', class: 'btn small', id: 'cast-add', text: 'Add', onclick: () => add() });
+  const addBtn = el('button', { type: 'button', class: 'btn small', id: 'cast-add', text: 'Add', title: 'Add this account to the cast' });
+  addBtn.addEventListener('click', guarded(addBtn, () => add()));
+  const addReasons = reasonStrip([addBtn], 'cast-reasons');
+  // the example cast: the README's cast link, labelled as such with Clear; offered when the cast is empty (docs/ux.md)
+  const clearBtn = el('button', { type: 'button', class: 'btn tiny', id: 'cast-clear', text: 'Clear', title: 'Remove the example cast', onclick: () => commit([]) });
+  const exampleBtn = el('button', { type: 'button', class: 'btn small', id: 'cast-example', text: 'Load the example cast', title: 'Maker and Issuer, the cast of the README’s example link', onclick: () => commit(EXAMPLE_CAST.map((m) => ({ ...m }))) });
+  const exampleRow = el('div', { class: 'cast-example hidden', id: 'cast-example-row' });
   const mode = el(
     'select',
     { id: 'cast-mode', 'aria-label': 'What to do with transactions outside the cast', onchange: (e) => onChange({ castMode: e.target.value }) },
@@ -54,10 +61,14 @@ export function createCastPanel({ settings, onChange, onPreview, linkFor }) {
 
   const root = el('section', { class: 'group cast-group' }, [
     el('h2', { text: 'Cast' }),
+    el('p', { class: 'group-hint', text: TERMS.cast.sentence }),
+    exampleRow,
     list,
     el('div', { class: 'cast-add' }, [addAddress, addLabel, addBtn]),
+    addReasons,
     hint,
     el('label', { class: 'row' }, [el('span', { class: 'row-label', text: 'Outside the cast' }), mode]),
+    el('p', { class: 'group-hint', text: TERMS.outsideTheCast.sentence }),
   ]);
 
   function fail(message) {
@@ -142,10 +153,11 @@ export function createCastPanel({ settings, onChange, onPreview, linkFor }) {
   function render() {
     list.replaceChildren(...settings.cast.map(memberRow));
     const n = settings.cast.length;
-    addBtn.disabled = n >= CAST_MAX;
-    addAddress.disabled = n >= CAST_MAX;
-    addLabel.disabled = n >= CAST_MAX;
-    if (!hint.classList.contains('error')) hint.textContent = n === 0 ? 'Follow up to five accounts. Each gets a voice, a place in the stereo field, a colour and a label.' : n >= CAST_MAX ? 'The cast is full.' : `${n} of ${CAST_MAX}. ▶ previews a voice; S solos, M mutes.`;
+    setGuard(addBtn, n >= CAST_MAX ? REASONS.castFull : null);
+    if (!hint.classList.contains('error')) hint.textContent = n === 0 ? 'No cast: playing everything. Add an account below (address, optional label), or load the example cast.' : n >= CAST_MAX ? `The cast is full (${CAST_MAX} of ${CAST_MAX}).` : `${n} of ${CAST_MAX}. ▶ previews a voice; S solos, M mutes.`;
+    const example = isExampleCast(settings.cast);
+    exampleRow.classList.toggle('hidden', !(example || n === 0));
+    exampleRow.replaceChildren(...(example ? [el('span', { class: 'cast-example-tag', text: 'Example cast' }), el('span', { text: 'Maker and Issuer, from the README’s example link; add your own account below.' }), clearBtn] : n === 0 ? [exampleBtn] : []));
     if (mode.value !== settings.castMode) mode.value = settings.castMode;
   }
 

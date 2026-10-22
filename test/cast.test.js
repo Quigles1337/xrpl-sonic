@@ -5,6 +5,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { txToEvent, shortAddress, getScaleSteps } from '../src/mapping.js';
+import { EXAMPLE_CAST, isExampleCast } from '../src/cast.js';
 import {
   CAST_MAX,
   CAST_VOICE_NAMES,
@@ -159,5 +160,18 @@ describe('cast URL spec', () => {
     assert.match(r.errors[1], /at most 5/);
     assert.deepEqual(parseCastSpec(''), { cast: [], errors: [] });
     assert.deepEqual(parseCastSpec(undefined), { cast: [], errors: [] });
+  });
+});
+
+describe('the example cast (docs/ux.md)', () => {
+  test('the README cast link: the maker as the brass on the left, the issuer as the glass in the centre; equality by address and order', () => {
+    const cast = normalizeCast(EXAMPLE_CAST);
+    assert.deepEqual(cast.map((m) => [m.label, m.voice, m.pan]), [['Maker', 'brass', -0.6], ['Issuer', 'glass', 0]]);
+    assert.equal(isExampleCast(cast), true);
+    assert.equal(isExampleCast(normalizeCast([EXAMPLE_CAST[1], EXAMPLE_CAST[0]])), false, 'another order is another cast');
+    assert.equal(isExampleCast(normalizeCast([EXAMPLE_CAST[0]])), false);
+    assert.equal(isExampleCast([]), false);
+    assert.equal(isExampleCast(null), false);
+    assert.equal(isExampleCast(normalizeCast([{ ...EXAMPLE_CAST[0], label: 'Renamed' }, EXAMPLE_CAST[1]])), true, 'a relabelled example is still the example');
   });
 });

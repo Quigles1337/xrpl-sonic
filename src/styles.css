@@ -69,20 +69,27 @@ a {
   color: var(--accent);
 }
 
-/* Uppercase micro-label used for every caption in the instrument. */
-.readout-label,
-.brand-tag,
+/* Uppercase with tracking marks a section header and nothing else (docs/ux.md, legibility). */
 .panel-title,
 .group h2,
-.log-head,
+.log-head {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Labels: the same mono voice in sentence case. */
+.readout-label,
+.brand-tag,
 .overlay-sub,
 .guide-item,
 .chip-sound,
 .footer {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   color: var(--muted);
 }
 
@@ -101,9 +108,8 @@ a {
   cursor: pointer;
   padding: 7px 14px;
   font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.02em;
   text-decoration: none;
   white-space: nowrap;
   transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.05s;
@@ -145,8 +151,8 @@ body.running .btn.primary {
 
 .btn.big {
   position: relative;
-  font-size: 13px;
-  letter-spacing: 0.18em;
+  font-size: 14px;
+  letter-spacing: 0.04em;
   padding: 14px 38px;
 }
 
@@ -196,8 +202,9 @@ body.running .btn.primary {
   color: var(--ok);
 }
 
-.btn:disabled {
-  opacity: 0.45;
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.6; /* 6.4:1 on the panel; 0.45 gave 4.1 */
   cursor: not-allowed;
 }
 
@@ -422,7 +429,8 @@ body.running .btn.primary {
 }
 
 .cast-chip.muted {
-  opacity: 0.45;
+  opacity: 0.7; /* 7.5:1; 0.45 gave 4.0 */
+  text-decoration: line-through;
 }
 
 .cast-chip.solo {
@@ -653,9 +661,8 @@ a.cast-chip:hover {
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.02em;
 }
 
 .replay-speed select {
@@ -701,9 +708,8 @@ a.cast-chip:hover {
 
 .caption-kind {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   color: var(--muted);
   flex: none;
 }
@@ -793,9 +799,8 @@ a.cast-chip:hover {
 
 .insp-grid dt {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   color: var(--muted);
   padding-top: 2px;
 }
@@ -1088,8 +1093,7 @@ a.cast-chip:hover {
 .geiger-state {
   font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--text-dim);
 }
 
@@ -1182,14 +1186,13 @@ a.cast-chip:hover {
 }
 
 .health-headline.stale .health-pressure {
-  opacity: 0.5;
+  opacity: 0.65;
 }
 
 .health-level {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   color: var(--muted);
 }
 
@@ -1479,7 +1482,7 @@ body.blind .topbar::before {
 }
 
 .cast-row.muted {
-  opacity: 0.6;
+  opacity: 0.75; /* 5.6:1; 0.6 gave 4.5 */
 }
 
 .cast-row.solo {
@@ -1672,8 +1675,12 @@ a.cast-address:hover {
 }
 
 .chip:has(input:not(:checked)) {
-  color: var(--muted);
-  opacity: 0.6;
+  color: var(--text-dim);
+  opacity: 0.75; /* the label 9.7:1, the sound 5.4:1; 0.6 on muted gave 2.8 */
+}
+
+.chip:has(input:not(:checked)) .chip-sound {
+  color: var(--text-dim);
 }
 
 .chip:has(input:not(:checked)) .swatch {
@@ -1823,8 +1830,14 @@ a.cast-address:hover {
   border: 1px solid color-mix(in srgb, var(--cast) 40%, transparent);
 }
 
-.log li.dim {
-  opacity: 0.55;
+.log li.dim .line,
+.log li.dim .ts {
+  color: var(--muted); /* 5.9:1; the line at 0.55 opacity read 3.9, its timestamp 2.5 */
+}
+
+.log li.dim .glyph,
+.log li.dim svg {
+  opacity: 0.5;
 }
 
 .log li.dim .glyph {
@@ -2436,6 +2449,12 @@ body.mode-embed .inspector {
   border-radius: var(--radius);
 }
 
+/* Every other hidden element has its own rule; these two had none, so they showed at load (docs/ux.md). */
+.moment-prompt.hidden,
+.ai-box.hidden {
+  display: none;
+}
+
 .moment-prompt .moment-label {
   font-size: 12px;
   color: var(--muted, #8d99ae);
@@ -2604,5 +2623,250 @@ body.mode-embed .ai-box {
 
 body.mode-overlay .field-line,
 body.blind .field-line {
+  display: none;
+}
+
+/* ---------------------------------------------------------- the UX pass (docs/ux.md) */
+
+/* A project term's sentence under its group header, from the documents. */
+.group-hint {
+  margin: -4px 0 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* The reason a guarded control cannot act yet: shown on hover, on focus and on press. */
+.hint.reason {
+  margin: 6px 0 0;
+  min-height: 1.4em;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.hint.reason.hidden {
+  display: none;
+}
+
+/* An empty state: what it is and what to do next, easiest first. */
+.empty-state {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.empty-state ol {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.empty-state li {
+  margin: 2px 0;
+}
+
+.empty-state .btn.inline {
+  padding: 1px 8px;
+  font-size: 11px;
+  vertical-align: baseline;
+}
+
+/* The example cast: labelled, with Clear. */
+.cast-example {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.cast-example .cast-example-tag {
+  padding: 1px 6px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.cast-chip.example::after {
+  content: "example";
+  margin-left: 4px;
+  font-size: 9.5px;
+  color: var(--muted);
+}
+
+/* The tape before anything has played. */
+.log li.log-empty {
+  color: var(--text-dim);
+  animation: none;
+}
+
+/* The readout drawer: a dialog under the command strip holding the coherence readout or the transcript, structured, with Copy raw. */
+.drawer {
+  position: fixed;
+  top: calc(var(--topbar-h) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  width: min(1000px, calc(100vw - 32px));
+  max-height: min(70vh, calc(100vh - var(--topbar-h) - 80px));
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+}
+
+.drawer.hidden {
+  display: none;
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.drawer-head h2 {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.drawer-counts {
+  flex: 1 1 240px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.drawer-body {
+  overflow: auto;
+  padding: 8px 14px 12px;
+}
+
+.drawer-raw {
+  display: block;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  resize: vertical;
+}
+
+.drawer-lines {
+  margin: 0 0 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.drawer-empty {
+  margin: 4px 0 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.drawer-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.drawer-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.6fr) 3fr;
+  gap: 4px 12px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+.drawer-row:first-child {
+  border-top: 0;
+}
+
+.drawer-row-head {
+  color: var(--text);
+}
+
+.drawer-row[data-kind="ledger"] .drawer-row-head {
+  color: var(--pulse);
+}
+
+.drawer-row[data-kind="gap"] .drawer-row-head,
+.drawer-row[data-kind="gap"] .drawer-cells {
+  color: var(--muted);
+}
+
+.drawer-row[data-kind="note"] .drawer-cells {
+  color: var(--warn);
+}
+
+.drawer-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  color: var(--text-dim);
+}
+
+.drawer-cell.lead {
+  color: var(--text);
+}
+
+.drawer-cell.record {
+  color: var(--accent);
+}
+
+.drawer-row details {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.drawer-row summary {
+  cursor: pointer;
+  color: var(--text-dim);
+}
+
+@media (max-width: 720px) {
+  .drawer-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+body.mode-overlay .drawer,
+body.blind .drawer {
   display: none;
 }

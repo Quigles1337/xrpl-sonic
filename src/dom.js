@@ -25,3 +25,65 @@ export function svg(markup) {
   t.innerHTML = markup;
   return t.content.firstElementChild;
 }
+
+/**
+ * Guard a control: it keeps keyboard focus (`aria-disabled`, not `disabled`)
+ * and says why it cannot act yet, on hover, on focus and on press. A null
+ * reason lifts the guard and restores the control's own title.
+ */
+export function setGuard(node, reason) {
+  if (!node) return;
+  if (!('baseTitle' in node.dataset)) node.dataset.baseTitle = node.getAttribute('title') ?? '';
+  if (reason) {
+    node.setAttribute('aria-disabled', 'true');
+    node.dataset.reason = reason;
+    node.setAttribute('title', reason);
+  } else {
+    node.removeAttribute('aria-disabled');
+    delete node.dataset.reason;
+    if (node.dataset.baseTitle) node.setAttribute('title', node.dataset.baseTitle);
+    else node.removeAttribute('title');
+  }
+}
+
+export function isGuarded(node) {
+  return node?.getAttribute('aria-disabled') === 'true';
+}
+
+/**
+ * A line under a row of controls that shows the hovered, focused or pressed
+ * control's reason; the controls name it with aria-describedby so a screen
+ * reader hears it with the control. `announce(node)` shows it on a press.
+ */
+export function reasonStrip(nodes, id) {
+  const strip = el('p', { class: 'hint reason hidden', id, 'aria-live': 'polite' });
+  const show = (n) => {
+    const reason = n.dataset.reason ?? '';
+    strip.textContent = reason;
+    strip.classList.toggle('hidden', !reason);
+  };
+  const clear = () => {
+    strip.textContent = '';
+    strip.classList.add('hidden');
+  };
+  for (const n of nodes) {
+    n.setAttribute('aria-describedby', id);
+    n.addEventListener('mouseenter', () => show(n));
+    n.addEventListener('focus', () => show(n));
+    n.addEventListener('mouseleave', clear);
+    n.addEventListener('blur', clear);
+  }
+  return Object.assign(strip, { announce: show });
+}
+
+/** Wrap a click handler so a guarded control shows its reason instead of acting. */
+export function guarded(node, handler) {
+  return (...args) => {
+    if (isGuarded(node)) {
+      const strip = document.getElementById(node.getAttribute('aria-describedby') ?? '');
+      strip?.announce?.(node);
+      return undefined;
+    }
+    return handler(...args);
+  };
+}

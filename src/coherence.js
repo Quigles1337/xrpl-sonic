@@ -917,6 +917,35 @@ export function describePair(pair, { significance = DEFAULTS.significance } = {}
   return `${head}: ${parts.join(' · ')}`;
 }
 
+/**
+ * Why nothing was judged, and what would satisfy the guard, for the readout's
+ * empty state (docs/ux.md): no ledger heard, fewer than two accounts, too
+ * few ledgers used, or an account short of events, with its rate so far
+ * turned into the ledgers it would take. Null when a pair was judged.
+ */
+export function guardText(report) {
+  if (!report) return null;
+  const o = report.options ?? DEFAULTS;
+  const unit = report.unit ?? 'ledger';
+  if (!report.window?.ledgers) return `No ledger heard yet: press Start and listen; the readout needs at least ${plural(o.minLedgers, unit)}.`;
+  if ((report.accounts ?? []).length < 2) return 'Fewer than two accounts to compare: add a second cast member, or listen until two accounts have submitted.';
+  if ((report.pairs ?? []).some((p) => p.judged)) return null;
+  const used = report.window.used;
+  const bits = [];
+  if (used < o.minLedgers) {
+    const more = o.minLedgers - used;
+    bits.push(`${plural(used, unit)} used; the guard needs ${o.minLedgers}: ${report.source === 'live' ? `listen for ${more} more ${unit}${more === 1 ? '' : 's'}` : `a case with ${o.minLedgers} or more ${unit}s`}`);
+  }
+  for (const a of report.accounts) {
+    if (a.events >= o.minEvents) continue;
+    const rate = used > 0 ? a.events / used : 0;
+    const more = rate > 0 ? Math.ceil((o.minEvents - a.events) / rate) : null;
+    bits.push(`${a.label} has ${plural(a.events, 'event')} over ${plural(used, unit)}; the guard needs ${o.minEvents} per account${more != null ? `: at its rate so far it would need about ${more} more ${unit}${more === 1 ? '' : 's'}` : ''}`);
+  }
+  if (!bits.length) bits.push(report.pairs[0]?.reason ?? 'below the guard');
+  return `Not judged: ${bits.join(' · ')}.`;
+}
+
 /** The continuation lines of a pair: the connecting transactions' hashes, when there are any. */
 export function pairDetailLines(pair, { maxHashes = DEFAULTS.maxHashes } = {}) {
   if (!pair?.record?.count) return [];

@@ -250,6 +250,27 @@ export function transcript(score, theCase) {
   return lines.join('\n');
 }
 
+/**
+ * The transcript text read back as its header lines and one row per line
+ * stamped with a time (ledger, gap, event or note), for a structured view that
+ * changes no word of the text (docs/ux.md). Pure.
+ * @returns {{ header: string[], rows: { time: string, kind: 'ledger'|'gap'|'event'|'note', text: string }[] }}
+ */
+export function transcriptRows(text) {
+  const lines = String(text ?? '').split('\n');
+  const blank = lines.indexOf('');
+  const header = blank < 0 ? lines.slice() : lines.slice(0, blank);
+  const rows = [];
+  for (const line of blank < 0 ? [] : lines.slice(blank + 1)) {
+    const m = /^(\d+:\d{2}\.\d{3}) (.*)$/.exec(line);
+    if (!m) continue;
+    const body = m[2];
+    const kind = body.startsWith('  >> ') ? 'note' : body.startsWith('— gap') ? 'gap' : body.startsWith('ledger #') ? 'ledger' : 'event';
+    rows.push({ time: m[1], kind, text: body.trim() });
+  }
+  return { header, rows };
+}
+
 /** Short label for a member id in a score, falling back to a short address. */
 export function memberLabel(cast, id) {
   const m = (cast ?? []).find((x) => x.id === id);

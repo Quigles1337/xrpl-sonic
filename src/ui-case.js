@@ -8,10 +8,18 @@
 import { caseLedgerCount, ANNOTATION_STATUSES } from './case.js';
 import { formatClock } from './score.js';
 import { speechSupported } from './speech.js';
-import { el, option } from './dom.js';
+import { el, option, setGuard, reasonStrip, guarded } from './dom.js';
+import { TERMS, REASONS, WAYS_TO_A_CASE } from './vocabulary.js';
 
-export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTranscript, onAi, onImport, onCoherence, onToggle, onAddNote, onEditNote, onRemoveNote, onJumpNote, onBlind }) {
-  const status = el('p', { class: 'case-status', id: 'case-status', text: 'No case loaded. Open #replay=… or load a file.' });
+export function createCasePanel({ settings, onLoadFile, onLoadSample, onSave, onCopyLink, onTranscript, onAi, onImport, onCoherence, onToggle, onAddNote, onEditNote, onRemoveNote, onJumpNote, onBlind }) {
+  const status = el('p', { class: 'case-status', id: 'case-status', text: 'No case loaded.' });
+  // the empty state: the ways to get a case, easiest first (docs/ux.md)
+  const sampleBtn = el('button', { type: 'button', class: 'btn small inline', id: 'case-sample', text: 'Open the sample case', title: 'Two real accounts over three mainnet ledgers, from docs/cases', onclick: () => onLoadSample?.() });
+  const loadInline = el('button', { type: 'button', class: 'btn small inline', text: 'Load file', onclick: () => file.click() });
+  const empty = el('div', { class: 'empty-state', id: 'case-empty' }, [
+    el('span', { text: 'A case is how a listening is kept. Ways to get one, easiest first:' }),
+    el('ol', {}, WAYS_TO_A_CASE.map((way, i) => el('li', {}, i === 1 ? [sampleBtn, document.createTextNode(`: ${way.replace(/^Open the sample case: /, '')}`)] : i === 2 ? [loadInline, document.createTextNode(': a .sonic-case.json file.')] : [document.createTextNode(way)]))),
+  ]);
   const warnings = el('ul', { class: 'case-warnings hidden', id: 'case-warnings' });
   const file = el('input', { type: 'file', accept: '.json,application/json', class: 'visually-hidden', id: 'case-file', 'aria-label': 'Load a case file' });
   file.addEventListener('change', () => {
@@ -20,43 +28,53 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
     file.value = '';
   });
   const loadBtn = el('button', { type: 'button', class: 'btn small', id: 'case-load', text: 'Load file', onclick: () => file.click() });
-  const saveBtn = el('button', { type: 'button', class: 'btn small', id: 'case-save', text: 'Save file', disabled: true, onclick: () => onSave?.() });
-  const linkBtn = el('button', { type: 'button', class: 'btn small', id: 'case-link', text: 'Copy link', disabled: true, onclick: () => onCopyLink?.() });
-  const transcriptBtn = el('button', { type: 'button', class: 'btn small', id: 'case-transcript', text: 'Transcript', disabled: true, title: 'Save the whole score as text', onclick: () => onTranscript?.() });
-  const aiBtn = el('button', { type: 'button', class: 'btn small', id: 'case-ai', text: 'Copy for AI', disabled: true, title: 'Copy the case as text an assistant can work from', onclick: () => onAi?.() });
+  // guarded, not disabled: each keeps focus and says why it cannot act yet (docs/ux.md)
+  const saveBtn = el('button', { type: 'button', class: 'btn small', id: 'case-save', text: 'Save file', title: 'Save the case as a .sonic-case.json file' });
+  saveBtn.addEventListener('click', guarded(saveBtn, () => onSave?.()));
+  const linkBtn = el('button', { type: 'button', class: 'btn small', id: 'case-link', text: 'Copy link', title: 'Copy a link that carries the case (#case=)' });
+  linkBtn.addEventListener('click', guarded(linkBtn, () => onCopyLink?.()));
+  const transcriptBtn = el('button', { type: 'button', class: 'btn small', id: 'case-transcript', text: 'Transcript', title: TERMS.transcript.sentence });
+  transcriptBtn.addEventListener('click', guarded(transcriptBtn, () => onTranscript?.()));
+  const aiBtn = el('button', { type: 'button', class: 'btn small', id: 'case-ai', text: 'Copy for AI', title: TERMS.copyForAi.sentence });
+  aiBtn.addEventListener('click', guarded(aiBtn, () => onAi?.()));
   // Coherence (src/coherence.js): the correlation of the cast's (or the top submitters') activity per ledger, over the playing case or the live window
-  const coherenceBtn = el('button', { type: 'button', class: 'btn small', id: 'case-coherence', text: 'Coherence', title: 'How the cast members’ (or the top submitters’) activity per ledger correlates, over the playing case or the ledgers heard live', onclick: () => onCoherence?.() });
-  const coherenceOut = el('pre', { class: 'coherence-out hidden', id: 'coherence-out', 'aria-live': 'polite' });
+  const coherenceBtn = el('button', { type: 'button', class: 'btn small', id: 'case-coherence', text: 'Coherence', title: TERMS.coherence.sentence, onclick: () => onCoherence?.() });
+  const buttonReasons = reasonStrip([saveBtn, linkBtn, transcriptBtn, aiBtn], 'case-reasons');
 
   // --- Import notes: an assistant's answer, pasted back as drafts --------------
   const importText = el('textarea', { class: 'import-text', id: 'import-text', rows: 3, placeholder: 'Paste the JSON an assistant returned: an array of annotations, or a whole case', 'aria-label': 'Annotations to import' });
   const importSource = el('input', { type: 'text', id: 'import-source', maxlength: 120, placeholder: 'Source (who wrote them)', 'aria-label': 'Source of the imported notes' });
   importSource.value = 'assistant';
-  const importBtn = el('button', { type: 'button', class: 'btn small', id: 'import-notes', text: 'Import notes', disabled: true, title: 'Add the pasted annotations to the case as drafts', onclick: () => {
+  const importBtn = el('button', { type: 'button', class: 'btn small', id: 'import-notes', text: 'Import notes', title: TERMS.importNotes.sentence });
+  importBtn.addEventListener('click', guarded(importBtn, () => {
     const text = importText.value.trim();
     if (!text) {
       importText.focus();
       return;
     }
     onImport?.(text, importSource.value.trim() || 'assistant');
-  } });
+  }));
+  const importReasons = reasonStrip([importBtn], 'import-reasons');
   const importResult = el('p', { class: 'hint import-result hidden', id: 'import-result' });
-  const importBox = el('div', { class: 'import-box' }, [importText, el('div', { class: 'import-row' }, [importSource, importBtn]), importResult]);
+  const importBox = el('div', { class: 'import-box' }, [el('p', { class: 'group-hint', text: TERMS.importNotes.sentence }), importText, el('div', { class: 'import-row' }, [importSource, importBtn]), importReasons, importResult]);
 
   const toggle = (key, labelText, hint, disabled = false) => {
     const box = el('input', { type: 'checkbox', id: `opt-${key}`, checked: Boolean(settings[key]), disabled, onchange: (e) => onToggle?.(key, e.target.checked) });
     return { box, row: el('label', { class: 'row check' }, [box, el('span', { class: 'row-label', text: labelText }), hint ? el('span', { class: 'hint', text: hint }) : '']) };
   };
-  const captions = toggle('captions', 'Captions', 'annotations, gaps and cast events as text');
-  const speak = toggle('speak', 'Speak annotations', speechSupported() ? 'read each note aloud, independent of the sound' : 'this browser has no speech synthesis', !speechSupported());
-  const pause = toggle('pauseAtNotes', 'Pause at annotations', 'when a note asks for it');
+  const captions = toggle('captions', 'Captions', TERMS.captions.sentence);
+  const speak = toggle('speak', 'Speak annotations', speechSupported() ? TERMS.speak.sentence : `${TERMS.speak.sentence} This browser has no speech synthesis.`, !speechSupported());
+  const pause = toggle('pauseAtNotes', 'Pause at annotations', TERMS.pauseAtNotes.sentence);
   const blindBox = el('input', { type: 'checkbox', id: 'opt-blind', onchange: (e) => onBlind?.(e.target.checked) });
-  const blindRow = el('label', { class: 'row check' }, [blindBox, el('span', { class: 'row-label', text: 'Blind comparison' }), el('span', { class: 'hint', text: 'hide ledger numbers, the tape, notes and captions: compare windows by ear' })]);
+  const blindRow = el('label', { class: 'row check' }, [blindBox, el('span', { class: 'row-label', text: 'Blind comparison' }), el('span', { class: 'hint', text: TERMS.blind.sentence })]);
 
   // --- Notes ------------------------------------------------------------------
   const notesList = el('ul', { class: 'notes', id: 'notes' });
-  const addBtn = el('button', { type: 'button', class: 'btn small', id: 'note-add', text: 'Note here', title: 'Add a note at the current position', disabled: true, onclick: () => onAddNote?.() });
+  const addBtn = el('button', { type: 'button', class: 'btn small', id: 'note-add', text: 'Note here', title: 'Add a note at the current position' });
+  addBtn.addEventListener('click', guarded(addBtn, () => onAddNote?.()));
+  const addReasons = reasonStrip([addBtn], 'note-reasons');
   const notesHead = el('div', { class: 'notes-head' }, [el('span', { class: 'notes-title', text: 'Notes' }), addBtn]);
+  const notesEmpty = el('p', { class: 'empty-state hidden', id: 'notes-empty', text: `No notes yet. ${TERMS.notes.sentence}` });
   let current = null; // { case, score }
   let editing = null; // annotation id
   let fresh = null; // id of a note that was just added: cancelling its first edit removes it
@@ -128,7 +146,8 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
     const sorted = [...list].sort((x, y) => (order.get(x.id) ?? 1e9) - (order.get(y.id) ?? 1e9));
     notesList.replaceChildren(...sorted.map(noteRow));
     notesList.classList.toggle('hidden', sorted.length === 0);
-    addBtn.disabled = !current?.case;
+    notesEmpty.classList.toggle('hidden', !current?.case || sorted.length > 0);
+    setGuard(addBtn, current?.case ? null : REASONS.needsCase);
   }
 
   function openEditor(id) {
@@ -137,14 +156,21 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
     notesList.querySelector('.note.editing')?.scrollIntoView({ block: 'nearest' });
   }
 
+  // the initial state is the empty one: every control that needs a case says so from the start
+  for (const b of [saveBtn, linkBtn, transcriptBtn, aiBtn, importBtn, addBtn]) setGuard(b, REASONS.needsCase);
+
   const root = el('section', { class: 'group case-group' }, [
     el('h2', { text: 'Case' }),
+    el('p', { class: 'group-hint', text: TERMS.case.sentence }),
     status,
+    empty,
     warnings,
     el('div', { class: 'buttons' }, [loadBtn, saveBtn, linkBtn, transcriptBtn, aiBtn, coherenceBtn, file]),
-    coherenceOut,
+    buttonReasons,
     notesHead,
     notesList,
+    notesEmpty,
+    addReasons,
     importBox,
     captions.row,
     speak.row,
@@ -159,13 +185,14 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
     setCase(theCase, score, extraWarnings = []) {
       current = theCase ? { case: theCase, score } : null;
       const has = Boolean(theCase);
-      saveBtn.disabled = !has;
-      linkBtn.disabled = !has;
-      transcriptBtn.disabled = !score;
-      aiBtn.disabled = !score;
-      importBtn.disabled = !has;
+      setGuard(saveBtn, has ? null : REASONS.needsCase);
+      setGuard(linkBtn, has ? null : REASONS.needsCase);
+      setGuard(transcriptBtn, score ? null : has ? REASONS.needsScore : REASONS.needsCase);
+      setGuard(aiBtn, score ? null : has ? REASONS.needsScore : REASONS.needsCase);
+      setGuard(importBtn, has ? null : REASONS.needsCase);
+      empty.classList.toggle('hidden', has);
       if (!has) {
-        status.textContent = 'No case loaded. Open #replay=… or load a file.';
+        status.textContent = 'No case loaded.';
         warnings.classList.add('hidden');
         warnings.replaceChildren();
         editing = null;
@@ -178,17 +205,12 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
       const bits = [`${title}`, `${theCase.network}`, `${clips} clip${clips === 1 ? '' : 's'}`, `${ledgers} ledger${ledgers === 1 ? '' : 's'}`, `cast ${theCase.cast.length}`];
       if (score) bits.push(`${score.counts.events} events (${score.counts.dim} silent)`, formatClock(score.totalMs));
       if (theCase.annotations.length) bits.push(`${theCase.annotations.length} note${theCase.annotations.length === 1 ? '' : 's'}`);
+      if (!score) bits.push('press Start to play it');
       status.textContent = bits.join(' · ');
       const all = [...extraWarnings, ...(score?.warnings ?? [])];
       warnings.replaceChildren(...all.map((w) => el('li', { text: w })));
       warnings.classList.toggle('hidden', all.length === 0);
       render();
-    },
-
-    /** The coherence readout (src/coherence.js), as text under the buttons; empty hides it. */
-    setCoherence(text) {
-      coherenceOut.textContent = text ?? '';
-      coherenceOut.classList.toggle('hidden', !text);
     },
 
     /** What an import did: accepted and rejected, in a line under the box; the pasted text is cleared when something was accepted. */
@@ -222,7 +244,7 @@ export function createCasePanel({ settings, onLoadFile, onSave, onCopyLink, onTr
     },
 
     setBusy(busy) {
-      loadBtn.disabled = busy;
+      setGuard(loadBtn, busy ? REASONS.loading : null);
     },
   };
 }
