@@ -1,27 +1,38 @@
-// xrpl-sonic — coherence, phase 1: the statistic and its readout.
+// xrpl-sonic — coherence: the statistic and its readout (phase 1, and phase
+// 1.5: the null fixed by prewhitening, a wider window from account_tx, and
+// the record checked for every pair).
 //
 // Relations between accounts, read from when they act. Each account gets a
 // series over the window: per ledger, the transactions it submitted (the
 // primary measure; `volume` is the alternative, the sum of log10(1 + XRP) of
-// the XRP-denominated amounts). Each series is normalised as the deviation
-// from the account's own baseline over the window (a z-score over the
-// ledgers used), so a constant always-on account comes out flat and can show
-// no coherence. Between two normalised series the cross-correlation at each
-// lag in [−L, L] is the normalised sum of products over the ledgers that
+// the XRP-denominated amounts; `involved` counts every transaction the
+// account appears in, from account_tx). Each series is normalised as the
+// deviation from the account's own baseline over the window (a z-score over
+// the ledgers used), so a constant always-on account comes out flat and can
+// show no coherence. Between two normalised series the cross-correlation at
+// each lag in [−L, L] is the normalised sum of products over the ledgers that
 // overlap at that lag; the lag with the largest |r| is the peak, and a
 // positive lag means the second account follows the first. Lags are counted
 // in ledgers on the ledger-index axis, so a missing ledger, or one the live
 // stream did not fully receive, is simply absent: it pairs with nothing,
 // contributes nothing, and is never read as zero.
 //
-// Behind a guard (a minimum of ledgers used and of events per account) the
-// pairs are ranked by |r|. Beside r stands a null: the largest |r| over
-// circular shifts of the second series, a fixed count of shifts in a seeded
-// order, excluding shifts within L of zero (those reproduce the real
-// alignment at another lag), reported as the share of shifts the observed
-// |r| exceeds. Sub-windows give the peak lag over consecutive thirds of the
-// window, so a cadence mismatch (two periods, drifting phase) shows as a
-// drifting lag rather than hiding inside one small r.
+// A series with a rhythm of its own (a market maker on a three-ledger
+// cadence) correlates with any other rhythmic series at some lag by
+// construction. So each series is also prewhitened: its own autoregressive
+// structure (an AR fit by Burg's method, the order by AICc up to L) is removed and the residuals are correlated instead. The
+// raw and the prewhitened r are both reported, each with its null, and the
+// pairs are ranked by the prewhitened one. The null is the largest |r| over
+// seeded circular shifts of the second series, excluding shifts within L of
+// zero (those reproduce the real alignment at another lag), reported as the
+// share of shifts the observed |r| exceeds, with the number of pairs tested
+// beside it. Each account's own cadence (its best self-correlation at a lag
+// of two or more) is kept and named, and two cadences give a beat.
+//
+// For every pair above the guard the record is checked (src/record.js): the
+// transactions of the window in which one submitted and the other is the
+// Destination, owns an entry in the AffectedNodes, or owned an offer that
+// was crossed. A high r with no connection is co-activity, not a relation.
 //
 // Everything reported is tier `observation` (docs/facts.md): a correlation
 // at a lag is what the series show; coordination or common ownership would
@@ -30,9 +41,11 @@
 // Pure: no DOM, no network, no audio, no canvas.
 
 import { shortAddress } from './mapping.js';
+import { touchesOfLedger, touchesOfEntries, connections, describeConnections, connectionLines } from './record.js';
+import { uncovered, COVERAGE_REASONS } from './account-tx.js';
 
-export const COHERENCE_VERSION = 1;
-export const MEASURES = Object.freeze(['count', 'volume']);
+export const COHERENCE_VERSION = 2;
+export const MEASURES = Object.freeze(['count', 'volume', 'involved']);
 export const TIER = 'observation';
 
 /**
@@ -41,26 +54,42 @@ export const TIER = 'observation';
  * minEvents 10: see docs/coherence.md, "Defaults", for the measurements they
  * rest on. shuffles 200 is a ceiling; a 50-ledger window has 33 admissible
  * shifts and uses them all, so the percentile's resolution is stated beside it.
+ * maxOrder 0 means "up to L" for the AR fit. significance 0.95 is the
+ * percentile at which a pair is counted among those "above the 95th".
  */
-export const DEFAULTS = Object.freeze({ measure: 'count', maxLag: 8, minLedgers: 12, minEvents: 10, topK: 5, shuffles: 200, seed: 1337, subWindows: 3, minSubOverlap: 6 });
-export const LIMITS = Object.freeze({ maxLag: [1, 25], minLedgers: [2, 50], minEvents: [1, 100000], topK: [2, 12], shuffles: [0, 5000], subWindows: [2, 6] });
+export const DEFAULTS = Object.freeze({ measure: 'count', maxLag: 8, minLedgers: 12, minEvents: 10, topK: 5, shuffles: 200, seed: 1337, subWindows: 3, minSubOverlap: 6, maxOrder: 0, significance: 0.95, maxHashes: 8 });
+export const LIMITS = Object.freeze({ maxLag: [1, 25], minLedgers: [2, 50], minEvents: [1, 100000], topK: [2, 12], shuffles: [0, 5000], subWindows: [2, 6], maxOrder: [0, 25], maxHashes: [0, 200] });
+
+/**
+ * The share of a series' variance an AR fit may leave before the series
+ * counts as fully predicted by its own past: below one part in two hundred
+ * the residual is end effects and rounding (an exact pulse every third
+ * ledger leaves 7 parts in ten thousand at order 2, an exact pulse every
+ * sixth 4 parts in a thousand at order 5), and there is nothing left to
+ * correlate; the fit stops at that order. Real series stay far above it
+ * (a market maker on a near-exact three-ledger cadence leaves 4.5%).
+ */
+export const PREDICTED_VARIANCE = 0.005;
 
 /** Why a ledger is not used: it is absent, not zero. */
 export const EXCLUSIONS = Object.freeze({
   missing: 'not available from the node',
   incomplete: 'not fully received (received < txn_count)',
   unknown: 'transaction count unknown',
+  history: COVERAGE_REASONS.history,
+  unvalidated: COVERAGE_REASONS.unvalidated,
 });
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const fmtLag = (k) => (k > 0 ? `+${k}` : String(k));
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const fmtN = (n) => Number(n).toLocaleString('en-US');
 
 export function normalizeOptions(input) {
   const o = { ...DEFAULTS };
   if (!input || typeof input !== 'object') return o;
   if (MEASURES.includes(input.measure)) o.measure = input.measure;
-  for (const key of ['maxLag', 'minLedgers', 'minEvents', 'topK', 'shuffles', 'subWindows']) {
+  for (const key of ['maxLag', 'minLedgers', 'minEvents', 'topK', 'shuffles', 'subWindows', 'maxOrder', 'maxHashes']) {
     const v = Number(input[key]);
     if (Number.isFinite(v)) o[key] = clamp(Math.round(v), LIMITS[key][0], LIMITS[key][1]);
   }
@@ -68,6 +97,8 @@ export function normalizeOptions(input) {
   if (Number.isFinite(seed)) o.seed = Math.round(seed) >>> 0;
   const mso = Number(input.minSubOverlap);
   if (Number.isFinite(mso) && mso >= 2) o.minSubOverlap = Math.round(mso);
+  const sig = Number(input.significance);
+  if (Number.isFinite(sig) && sig > 0.5 && sig < 1) o.significance = sig;
   return o;
 }
 
@@ -78,7 +109,7 @@ export function logVolume(event) {
 }
 
 // ---------------------------------------------------------------------------
-// Frames: the ledgers of a window and one series per account
+// Frames: the ledgers of a window, one series per account, and the record
 // ---------------------------------------------------------------------------
 
 /**
@@ -97,20 +128,22 @@ export function accountsFor(cast, totals, { topK = DEFAULTS.topK } = {}) {
 }
 
 function emptyFrame(source) {
-  return { source, measure: DEFAULTS.measure, ledgers: [], accounts: [], series: new Map(), totals: new Map(), chosen: 'none' };
+  return { source, measure: DEFAULTS.measure, ledgers: [], accounts: [], series: new Map(), totals: new Map(), chosen: 'none', records: null, fetched: null };
 }
 
 /**
  * The frame of a score: one row per ledger of the score in play order (a
  * missing ledger is a row that is not used), the submitters' totals over the
  * ledgers used, the accounts chosen, and per account a series aligned to the
- * rows. Events are the score's: what the listening settings selected.
+ * rows. Events are the score's: what the listening settings selected. With
+ * the fetched `ledgers` (the Map src/ledgers.js returns) the frame also
+ * carries the touch records of every transaction in them, for the record check.
  * @param {object} score  from buildScore()
- * @param {{ cast?: object[], topK?: number, measure?: 'count'|'volume' }} [options]
+ * @param {{ cast?: object[], topK?: number, measure?: 'count'|'volume', ledgers?: Map<number, { ledger: object|null }> }} [options]
  */
-export function frameFromScore(score, { cast = [], topK = DEFAULTS.topK, measure = DEFAULTS.measure } = {}) {
+export function frameFromScore(score, { cast = [], topK = DEFAULTS.topK, measure = DEFAULTS.measure, ledgers = null } = {}) {
   const frame = emptyFrame('score');
-  frame.measure = MEASURES.includes(measure) ? measure : DEFAULTS.measure;
+  frame.measure = measure === 'volume' ? 'volume' : DEFAULTS.measure;
   if (!score || !Array.isArray(score.ledgers)) return frame;
   frame.ledgers = score.ledgers.map((l) => ({ index: Number(l.ledgerIndex), included: !l.missing, reason: l.missing ? 'missing' : null, hash: l.hash ?? null }));
   const row = new Map(frame.ledgers.map((l, i) => [l.index, i]));
@@ -133,18 +166,26 @@ export function frameFromScore(score, { cast = [], topK = DEFAULTS.topK, measure
   frame.chosen = cast?.length ? 'cast' : `top ${topK} submitters`;
   const source = frame.measure === 'volume' ? volumes : counts;
   for (const a of frame.accounts) frame.series.set(a.address, source.get(a.address) ?? new Array(frame.ledgers.length).fill(0));
+  if (ledgers && typeof ledgers.get === 'function') {
+    frame.records = [];
+    for (const l of frame.ledgers) {
+      const entry = ledgers.get(l.index);
+      if (entry?.ledger) frame.records.push(...touchesOfLedger(entry.ledger));
+    }
+  }
   return frame;
 }
 
 /**
  * The frame of the live window: the closed ledgers heard, used only when
  * the ledger's transaction count is known and every transaction was
- * received; the submitters counted by the window as transactions arrived.
- * @param {{ ledgers: { index, hash, txnCount, received, accounts }[] }} window  a LiveWindow (src/moment.js) or its `ledgers`
+ * received; the submitters counted by the window as transactions arrived,
+ * and the touch records it kept, when it kept them.
+ * @param {{ ledgers: { index, hash, txnCount, received, accounts, touches? }[] }} window  a LiveWindow (src/moment.js) or its `ledgers`
  */
 export function frameFromLive(window, { cast = [], topK = DEFAULTS.topK, measure = DEFAULTS.measure } = {}) {
   const frame = emptyFrame('live');
-  frame.measure = MEASURES.includes(measure) ? measure : DEFAULTS.measure;
+  frame.measure = measure === 'volume' ? 'volume' : DEFAULTS.measure;
   const heard = Array.isArray(window) ? window : Array.isArray(window?.ledgers) ? window.ledgers : [];
   if (!heard.length) return frame;
   frame.ledgers = heard.map((l) => {
@@ -171,7 +212,77 @@ export function frameFromLive(window, { cast = [], topK = DEFAULTS.topK, measure
   frame.chosen = cast?.length ? 'cast' : `top ${topK} submitters`;
   const source = frame.measure === 'volume' ? volumes : counts;
   for (const a of frame.accounts) frame.series.set(a.address, source.get(a.address) ?? new Array(heard.length).fill(0));
+  if (heard.some((l) => Array.isArray(l.touches))) {
+    frame.records = [];
+    heard.forEach((l, i) => {
+      if (frame.ledgers[i].included && Array.isArray(l.touches)) frame.records.push(...l.touches);
+    });
+  }
   return frame;
+}
+
+/**
+ * The frame of an account_tx fetch (src/account-tx.js): one row per ledger
+ * of the range, used only when every account's fetch covered it; per
+ * account the transactions it submitted (`count`), the transactions it is
+ * involved in (`involved`, every entry account_tx returned for it) or its
+ * log volume, failed transactions out unless `includeFailed`; the touch
+ * records of every entry, once per hash. The accounts are the named ones,
+ * in the order given.
+ * @param {{ from: number, to: number, validatedLedger: object|null, accounts: object[] }} fetched  from fetchAccountSeries()
+ */
+export function frameFromAccountTx(fetched, { measure = DEFAULTS.measure, includeFailed = false, host = null } = {}) {
+  const frame = emptyFrame('account_tx');
+  frame.measure = MEASURES.includes(measure) ? measure : DEFAULTS.measure;
+  const from = Number(fetched?.from);
+  const to = Number(fetched?.to);
+  if (!Number.isInteger(from) || !Number.isInteger(to) || to < from) return frame;
+  const results = fetched.accounts ?? [];
+  const reasons = new Map();
+  for (const r of results) {
+    const u = uncovered(r, from, to);
+    for (const [n, reason] of u.reasons) if (!reasons.has(n)) reasons.set(n, reason);
+  }
+  frame.ledgers = [];
+  for (let n = from; n <= to; n++) frame.ledgers.push({ index: n, included: !reasons.has(n), reason: reasons.get(n) ?? null, hash: null });
+  const row = new Map(frame.ledgers.map((l, i) => [l.index, i]));
+  frame.accounts = results.map((r) => ({ address: r.account, label: r.label || shortAddress(r.account) }));
+  frame.chosen = 'named accounts';
+  const all = [];
+  for (const r of results) {
+    const counts = new Array(frame.ledgers.length).fill(0);
+    const involved = new Array(frame.ledgers.length).fill(0);
+    const volumes = new Array(frame.ledgers.length).fill(0);
+    for (const e of r.entries ?? []) {
+      const i = row.get(e.ledgerIndex);
+      if (i == null || !frame.ledgers[i].included) continue;
+      all.push(e);
+      if (!e.success && !includeFailed) continue;
+      involved[i] += 1;
+      if (e.tx?.Account === r.account) {
+        counts[i] += 1;
+        volumes[i] += logVolume({ amount: xrpAmountOf(e) });
+      }
+    }
+    frame.totals.set(r.account, counts.reduce((a, b) => a + b, 0));
+    frame.series.set(r.account, frame.measure === 'volume' ? volumes : frame.measure === 'involved' ? involved : counts);
+  }
+  frame.records = touchesOfEntries(all.map((e) => ({ tx: e.tx, meta: e.meta, hash: e.hash, ledger_index: e.ledgerIndex })));
+  frame.fetched = {
+    host,
+    validatedLedger: fetched.validatedLedger ?? null,
+    includeFailed,
+    accounts: results.map((r) => ({ address: r.account, label: r.label || shortAddress(r.account), bounds: r.bounds, pages: r.pages, requests: r.requests, entries: (r.entries ?? []).length, missing: r.missing ?? [], error: r.error ?? null })),
+  };
+  return frame;
+}
+
+/** The XRP amount of an account_tx entry as the mapping's amount shape, for logVolume; null when it is not XRP. */
+function xrpAmountOf(e) {
+  const delivered = e?.meta?.delivered_amount ?? e?.meta?.DeliveredAmount;
+  const raw = typeof delivered === 'string' ? delivered : typeof e?.tx?.Amount === 'string' ? e.tx.Amount : typeof e?.tx?.DeliverMax === 'string' ? e.tx.DeliverMax : typeof e?.tx?.TakerGets === 'string' ? e.tx.TakerGets : null;
+  if (raw == null || !/^\d+$/.test(raw)) return null;
+  return { isXrp: true, value: Number(raw) / 1e6 };
 }
 
 // ---------------------------------------------------------------------------
@@ -307,6 +418,137 @@ export function effectiveLag(maxLag, used) {
   return Math.max(1, Math.min(Math.round(Number(maxLag) || 0), Math.floor(used / 4)));
 }
 
+/** AICc of an AR(p) fit with relative innovation variance sigma2 over n rows; Infinity when n cannot bear p, −Infinity when nothing is left to predict. */
+export function aicc(n, sigma2, p) {
+  if (!(n - p - 1 > 0)) return Infinity;
+  if (!(sigma2 > 0)) return -Infinity;
+  if (sigma2 < PREDICTED_VARIANCE) return -Infinity;
+  return n * Math.log(sigma2) + 2 * p + (2 * p * (p + 1)) / (n - p - 1);
+}
+
+/**
+ * An autoregressive fit of a series to itself by Burg's method: the
+ * reflection coefficient of each order minimises the forward and backward
+ * prediction errors over the rows used, taken along every run of
+ * consecutive ledgers (a gap starts a new run; no error crosses it), and
+ * the coefficients follow by the Levinson recursion. Burg rather than
+ * Yule-Walker because a series with a near-exact cadence, a market maker
+ * acting every third ledger, puts its poles on the unit circle, where the
+ * autocorrelation route stalls at a low order while Burg keeps its
+ * reflection coefficients inside (−1, 1) and reaches the order that
+ * whitens it. The order is chosen by AICc among 0..maxOrder, ties to the
+ * lower order; a fit that leaves nothing to predict is taken as it stands.
+ * @returns {{ order: number, phi: number[], sigma2: number, n: number, candidates: { order: number, sigma2: number, aicc: number }[] }}
+ *   `phi[j]` multiplies the value j + 1 ledgers earlier; `sigma2` is the innovation variance relative to the series' own.
+ */
+export function arFit(z, maxOrder, { positions = null, included = null } = {}) {
+  const P = Math.max(0, Math.round(Number(maxOrder) || 0));
+  const len = z?.length ?? 0;
+  const pos = positions ?? Array.from({ length: len }, (_, i) => i);
+  const use = (i) => (included ? Boolean(included[i]) : true);
+  let n = 0;
+  let sum = 0;
+  for (let i = 0; i < len; i++) {
+    if (!use(i)) continue;
+    n += 1;
+    sum += Number(z[i]) || 0;
+  }
+  const mean = n ? sum / n : 0;
+  // runs of consecutive ledgers among the rows used
+  const runs = [];
+  let cur = null;
+  for (let i = 0; i < len; i++) {
+    if (!use(i)) {
+      cur = null;
+      continue;
+    }
+    const x = (Number(z[i]) || 0) - mean;
+    if (cur && pos[i] === cur.last + 1) {
+      cur.f.push(x);
+      cur.b.push(x);
+    } else {
+      cur = { last: pos[i], f: [x], b: [x] };
+      runs.push(cur);
+    }
+    cur.last = pos[i];
+  }
+  let a = [1]; // the prediction-error filter: e_t = Σ a_j z_{t−j}, a_0 = 1
+  let sigma2 = 1;
+  const candidates = [{ order: 0, phi: [], sigma2: 1, aicc: aicc(n, 1, 0) }];
+  for (let p = 1; p <= P; p++) {
+    let num = 0;
+    let den = 0;
+    for (const r of runs) {
+      for (let t = p; t < r.f.length; t++) {
+        num += r.f[t] * r.b[t - 1];
+        den += r.f[t] * r.f[t] + r.b[t - 1] * r.b[t - 1];
+      }
+    }
+    if (!(den > 0)) break;
+    const k = (-2 * num) / den;
+    if (!Number.isFinite(k) || Math.abs(k) > 1) break;
+    const next = new Array(p + 1).fill(0);
+    next[0] = 1;
+    for (let j = 1; j < p; j++) next[j] = a[j] + k * a[p - j];
+    next[p] = k;
+    for (const r of runs) {
+      for (let t = r.f.length - 1; t >= p; t--) {
+        const ft = r.f[t];
+        const bt = r.b[t - 1];
+        r.f[t] = ft + k * bt;
+        r.b[t] = bt + k * ft;
+      }
+    }
+    a = next;
+    sigma2 *= 1 - k * k;
+    const predicted = !(sigma2 >= PREDICTED_VARIANCE);
+    candidates.push({ order: p, phi: a.slice(1).map((v) => -v), sigma2, aicc: predicted ? -Infinity : aicc(n, sigma2, p), predicted });
+    if (predicted) break;
+  }
+  let best = candidates[0];
+  for (const c of candidates) if (c.aicc < best.aicc - 1e-12 || (c.aicc === -Infinity && best.aicc !== -Infinity)) best = c;
+  return { order: best.order, phi: best.phi, sigma2: best.sigma2, predicted: Boolean(best.predicted), n, candidates: candidates.map(({ order, sigma2: s2, aicc: ac }) => ({ order, sigma2: s2, aicc: ac })) };
+}
+
+/**
+ * A series with its own autoregressive structure removed: the residuals
+ * z_t − Σ phi_j z_{t−j} at every row whose p predecessors on the ledger axis
+ * are all used (a row after a gap, or among the first p, has no residual and
+ * is not used), normalised again. `flat` when the residuals do not vary,
+ * or when the fit left less than PREDICTED_VARIANCE of the variance: the
+ * series is fully predicted by its own past and has nothing left to correlate.
+ * @returns {{ residual: number[], included: boolean[], order: number, phi: number[], sigma2: number, n: number, flat: boolean, predicted: boolean }}
+ */
+export function prewhiten(z, maxOrder, { positions = null, included = null } = {}) {
+  const len = z?.length ?? 0;
+  const fit = arFit(z, maxOrder, { positions, included });
+  const pos = positions ?? Array.from({ length: len }, (_, i) => i);
+  const use = (i) => (included ? Boolean(included[i]) : true);
+  const at = new Map();
+  for (let i = 0; i < len; i++) if (use(i)) at.set(pos[i], i);
+  const raw = new Array(len).fill(0);
+  const mask = new Array(len).fill(false);
+  for (let i = 0; i < len; i++) {
+    if (!use(i)) continue;
+    let e = Number(z[i]) || 0;
+    let ok = true;
+    for (let j = 1; j <= fit.order; j++) {
+      const t = at.get(pos[i] - j);
+      if (t == null) {
+        ok = false;
+        break;
+      }
+      e -= fit.phi[j - 1] * (Number(z[t]) || 0);
+    }
+    if (!ok) continue;
+    raw[i] = e;
+    mask[i] = true;
+  }
+  const norm = normalise(raw, mask);
+  const flat = norm.flat || fit.predicted;
+  return { residual: flat ? raw.map(() => 0) : norm.z, included: mask, order: fit.order, phi: fit.phi, sigma2: fit.sigma2, n: norm.n, flat, predicted: fit.predicted, candidates: fit.candidates };
+}
+
 /**
  * The peak lag over consecutive parts of the window (the rows used, split
  * into up to `parts` runs of equal length, each at least `minPart` ledgers,
@@ -355,7 +597,12 @@ export function cadenceOf(z, maxLag, { positions = null, included = null, least 
   return best;
 }
 
-/** The pair's record: the guard, the normalisation, the peak, the null and the sub-windows. */
+/** The AR order limit for a frame: the option, or L when the option is 0. */
+export function orderLimit(options, L) {
+  return options.maxOrder > 0 ? Math.min(options.maxOrder, L) : L;
+}
+
+/** The pair's record: the guard, the normalisation, the raw peak and its null, the prewhitened peak and its null, the record check, the parts and the cadences. */
 export function pairCoherence(frame, first, second, options = DEFAULTS) {
   const o = normalizeOptions(options);
   const included = frame.ledgers.map((l) => l.included);
@@ -366,7 +613,7 @@ export function pairCoherence(frame, first, second, options = DEFAULTS) {
   const eventsA = frame.totals.get(first.address) ?? 0;
   const eventsB = frame.totals.get(second.address) ?? 0;
   const L = effectiveLag(o.maxLag, used);
-  const pair = { a: { ...first, events: eventsA }, b: { ...second, events: eventsB }, n: used, measure: frame.measure ?? o.measure, maxLag: L, judged: false, reason: null, flat: null, r: null, lag: null, overlap: null, shuffle: null, subWindows: [], drift: null, cadence: null, beat: null, byLag: null };
+  const pair = { a: { ...first, events: eventsA }, b: { ...second, events: eventsB }, n: used, measure: frame.measure ?? o.measure, maxLag: L, judged: false, reason: null, flat: null, r: null, lag: null, overlap: null, shuffle: null, white: null, record: null, tested: null, subWindows: [], drift: null, cadence: null, beat: null, byLag: null };
   if (used < o.minLedgers) {
     pair.reason = `${plural(used, 'ledger')} used (guard ≥ ${o.minLedgers})`;
     return pair;
@@ -379,6 +626,7 @@ export function pairCoherence(frame, first, second, options = DEFAULTS) {
   const zb = normalise(b, included);
   pair.judged = true;
   pair.flat = { a: za.flat, b: zb.flat };
+  pair.record = frame.records ? connections(frame.records, first.address, second.address) : null;
   if (za.flat || zb.flat) {
     pair.r = 0;
     pair.lag = 0;
@@ -392,6 +640,26 @@ export function pairCoherence(frame, first, second, options = DEFAULTS) {
   pair.overlap = c.overlap;
   pair.byLag = c.byLag;
   pair.shuffle = shuffleTest(za.z, zb.z, L, { positions, included, count: o.shuffles, seed: o.seed, observed: Math.abs(c.r) });
+  // prewhitened: each series less its own AR structure, correlated on the rows where both residuals exist
+  const P = orderLimit(o, L);
+  const wa = prewhiten(za.z, P, { positions, included });
+  const wb = prewhiten(zb.z, P, { positions, included });
+  const mask = included.map((u, i) => Boolean(u && wa.included[i] && wb.included[i]));
+  const rows = mask.filter(Boolean).length;
+  pair.white = { ar: { a: wa.order, b: wb.order }, sigma2: { a: wa.sigma2, b: wb.sigma2 }, n: rows, flat: { a: wa.flat, b: wb.flat }, reason: null, r: null, lag: null, overlap: null, shuffle: null, byLag: null };
+  if (wa.flat || wb.flat) {
+    const who = wa.flat && wb.flat ? 'both are' : `${wa.flat ? first.label : second.label} is`;
+    pair.white.reason = `${who} fully predicted by its own past (AR(${wa.flat ? wa.order : wb.order})), no residual to correlate`;
+  } else if (rows < 3) {
+    pair.white.reason = `${plural(rows, 'residual row')}, too few to correlate`;
+  } else {
+    const w = crossCorrelation(wa.residual, wb.residual, L, { positions, included: mask });
+    pair.white.r = w.r;
+    pair.white.lag = w.lag;
+    pair.white.overlap = w.overlap;
+    pair.white.byLag = w.byLag;
+    pair.white.shuffle = shuffleTest(wa.residual, wb.residual, L, { positions, included: mask, count: o.shuffles, seed: o.seed, observed: Math.abs(w.r) });
+  }
   pair.subWindows = subWindowLags(za.z, zb.z, L, { positions, included, parts: o.subWindows, minOverlap: o.minSubOverlap });
   const lags = pair.subWindows.filter((s) => s.lag != null).map((s) => s.lag);
   pair.drift = lags.length >= 2 ? Math.max(...lags) - Math.min(...lags) : null;
@@ -414,10 +682,29 @@ export function beatOf(a, b) {
   return { periods: [p, q], every: Math.round((p * q) / Math.abs(q - p)) };
 }
 
+/** The shifts a null needs before the significance percentile means anything: 20 for the 95th (one shift is 5% of twenty). */
+export function minShuffles(significance = DEFAULTS.significance) {
+  return Math.ceil(1 / (1 - significance) - 1e-9);
+}
+
+/**
+ * Is the pair above the significance percentile on the prewhitened (or, when
+ * that is unavailable, the raw) null, with enough shifts to resolve it? A
+ * pair above all 7 of 7 shifts is not called significant: at 20 ledgers the
+ * null cannot tell the 95th from the 86th, and the count printed beside the
+ * percentile is the warning.
+ */
+export function significant(pair, significance = DEFAULTS.significance) {
+  const s = pair?.white?.shuffle ?? pair?.shuffle;
+  return Boolean(s && s.count >= minShuffles(significance) && s.percentile >= significance);
+}
+
 /**
  * The report for a frame: every pair of its accounts, judged pairs first by
- * |r| (then by the shuffle percentile), the rest after, with the window and
- * the options stated so the readout can be checked.
+ * the prewhitened |r| (then by its percentile, then by the raw |r|), the
+ * rest after, with the window, the options, the number of pairs tested and
+ * how many stand above the significance percentile on each null, so the
+ * readout can be checked.
  */
 export function coherence(frame, options = DEFAULTS) {
   const o = normalizeOptions(options);
@@ -425,19 +712,33 @@ export function coherence(frame, options = DEFAULTS) {
   const accounts = frame?.accounts ?? [];
   const pairs = [];
   for (let i = 0; i < accounts.length; i++) for (let j = i + 1; j < accounts.length; j++) pairs.push(pairCoherence(frame, accounts[i], accounts[j], o));
-  const rank = (p) => (p.judged && !p.flat?.a && !p.flat?.b ? 2 : p.judged ? 1 : 0);
-  pairs.sort((x, y) => rank(y) - rank(x) || Math.abs(y.r ?? 0) - Math.abs(x.r ?? 0) || (y.shuffle?.percentile ?? 0) - (x.shuffle?.percentile ?? 0) || x.a.label.localeCompare(y.a.label));
+  const tested = pairs.filter((p) => p.shuffle?.count).length;
+  for (const p of pairs) p.tested = tested;
+  const rank = (p) => (p.judged && !p.flat?.a && !p.flat?.b ? (p.white?.r != null ? 3 : 2) : p.judged ? 1 : 0);
+  pairs.sort((x, y) => rank(y) - rank(x) || Math.abs(y.white?.r ?? 0) - Math.abs(x.white?.r ?? 0) || (y.white?.shuffle?.percentile ?? 0) - (x.white?.shuffle?.percentile ?? 0) || Math.abs(y.r ?? 0) - Math.abs(x.r ?? 0) || (y.shuffle?.percentile ?? 0) - (x.shuffle?.percentile ?? 0) || x.a.label.localeCompare(y.a.label));
   const excluded = {};
   for (const l of ledgers) if (!l.included) excluded[l.reason ?? 'missing'] = (excluded[l.reason ?? 'missing'] ?? 0) + 1;
   const included = ledgers.map((l) => l.included);
   const positions = ledgers.map((l) => l.index);
   const used = included.filter(Boolean).length;
   const L = effectiveLag(o.maxLag, used);
-  // each account's own cadence, from its autocorrelation, when the window can bear it
-  const cadence = (address) => {
-    if (used < o.minLedgers) return null;
+  const P = orderLimit(o, L);
+  // each account's own cadence and AR order, when the window can bear it
+  const own = (address) => {
+    if (used < o.minLedgers) return { cadence: null, ar: null };
     const z = normalise(frame.series.get(address) ?? [], included);
-    return z.flat ? null : cadenceOf(z.z, L, { positions, included });
+    if (z.flat) return { cadence: null, ar: null };
+    return { cadence: cadenceOf(z.z, L, { positions, included }), ar: arFit(z.z, P, { positions, included }).order };
+  };
+  const least = minShuffles(o.significance);
+  const resolved = pairs.filter((p) => p.shuffle?.count >= least).length;
+  const above = {
+    raw: pairs.filter((p) => p.shuffle?.count >= least && p.shuffle.percentile >= o.significance).length,
+    white: pairs.filter((p) => p.white?.shuffle?.count >= least && p.white.shuffle.percentile >= o.significance).length,
+    expected: resolved * (1 - o.significance),
+    resolved,
+    unresolved: tested - resolved,
+    minShuffles: least,
   };
   return {
     version: COHERENCE_VERSION,
@@ -447,8 +748,13 @@ export function coherence(frame, options = DEFAULTS) {
     chosen: frame?.chosen ?? 'none',
     options: o,
     maxLag: L,
+    maxOrder: P,
     window: { from: ledgers[0]?.index ?? null, to: ledgers.at(-1)?.index ?? null, ledgers: ledgers.length, used, excluded },
-    accounts: accounts.map((a) => ({ ...a, events: frame.totals.get(a.address) ?? 0, cadence: cadence(a.address) })),
+    accounts: accounts.map((a) => ({ ...a, events: frame.totals.get(a.address) ?? 0, ...own(a.address) })),
+    records: frame?.records ? frame.records.length : null,
+    fetched: frame?.fetched ?? null,
+    tested,
+    above,
     pairs,
   };
 }
@@ -457,46 +763,97 @@ export function coherence(frame, options = DEFAULTS) {
 // The readout
 // ---------------------------------------------------------------------------
 
-/** "B follows A by 2 ledgers", "A follows B by 1 ledger", "in step". */
-export function followText(pair) {
-  if (pair.lag > 0) return `${pair.b.label} follows ${pair.a.label} by ${plural(pair.lag, 'ledger')}`;
-  if (pair.lag < 0) return `${pair.a.label} follows ${pair.b.label} by ${plural(-pair.lag, 'ledger')}`;
+/** "B follows A by 2 ledgers", "A follows B by 1 ledger", "in step", for a lag. */
+export function followText(pair, lag = pair?.lag) {
+  if (lag > 0) return `${pair.b.label} follows ${pair.a.label} by ${plural(lag, 'ledger')}`;
+  if (lag < 0) return `${pair.a.label} follows ${pair.b.label} by ${plural(-lag, 'ledger')}`;
   return 'in step';
 }
 
+/** "above 61% of shuffles (20 of 33; 10 pairs tested)". */
+function nullText(s, tested) {
+  if (!s || !s.count) return 'no shuffle test (too few ledgers for a shift beyond the lags)';
+  return `above ${Math.round(s.percentile * 100)}% of shuffles (${s.above} of ${s.count}${tested != null ? `; ${plural(tested, 'pair')} tested` : ''})`;
+}
+
 /** One line per pair, in the project's voice; every number in it is one the statistic produced. */
-export function describePair(pair) {
+export function describePair(pair, { significance = DEFAULTS.significance } = {}) {
   const head = `${pair.a.label} ↔ ${pair.b.label}`;
   if (!pair.judged) return `${head}: not judged: ${pair.reason}`;
   if (pair.flat?.a || pair.flat?.b) {
     const why = pair.measure === 'volume' ? 'the same XRP volume in every ledger used, which for an account that moves no XRP is none' : 'the same count in every ledger used';
-    return `${head}: no coherence: ${pair.reason} (${why}) · ${plural(pair.n, 'ledger')} · events ${pair.a.events}/${pair.b.events}`;
+    return `${head}: no coherence: ${pair.reason} (${why}) · ${plural(pair.n, 'ledger')} · events ${pair.a.events}/${pair.b.events} · ${pair.record ? describeConnections(pair.record) : 'record not available'}`;
   }
-  const s = pair.shuffle;
-  const nullText = s && s.count ? `above ${Math.round(s.percentile * 100)}% of shuffles (${s.above} of ${s.count})` : 'no shuffle test (too few ledgers for a shift beyond the lags)';
-  const subs = pair.subWindows.filter((w) => w.lag != null);
-  const subText = subs.length >= 2 ? ` · ${subs.length} parts of ${subs[0].ledgers}: lag ${subs.map((w) => `${fmtLag(w.lag)} (r ${w.r.toFixed(2)})`).join(', ')}` : '';
+  const w = pair.white;
+  const parts = [];
+  if (w && w.r != null) {
+    parts.push(`prewhitened r ${w.r.toFixed(2)} at lag ${fmtLag(w.lag)} (${followText(pair, w.lag)}) ${nullText(w.shuffle, pair.tested)}`);
+    parts.push(`raw r ${pair.r.toFixed(2)} at lag ${fmtLag(pair.lag)} ${nullText(pair.shuffle, pair.tested)}`);
+    parts.push(`${plural(pair.n, 'ledger')} (overlap ${pair.overlap}; ${plural(w.n, 'residual row')} after AR(${w.ar.a})/AR(${w.ar.b}), overlap ${w.overlap})`);
+  } else {
+    parts.push(`raw r ${pair.r.toFixed(2)} at lag ${fmtLag(pair.lag)} (${followText(pair)}) ${nullText(pair.shuffle, pair.tested)}`);
+    parts.push(`prewhitened: ${w ? w.reason : 'not computed'}`);
+    parts.push(`${plural(pair.n, 'ledger')} (overlap ${pair.overlap})`);
+  }
+  parts.push(`events ${pair.a.events}/${pair.b.events}`);
+  if (pair.record) {
+    const text = describeConnections(pair.record);
+    parts.push(!pair.record.count && significant(pair, significance) ? `co-activity, not a relation: ${text}` : text);
+  } else parts.push('record not available');
+  const subs = pair.subWindows.filter((s) => s.lag != null);
+  if (subs.length >= 2) parts.push(`${subs.length} parts of ${subs[0].ledgers}: lag ${subs.map((s) => `${fmtLag(s.lag)} (r ${s.r.toFixed(2)})`).join(', ')}`);
   const beat = pair.beat;
-  const beatText = !beat ? '' : beat.shared != null ? ` · shared cadence of ${plural(beat.shared, 'ledger')}` : ` · cadences of ${beat.periods[0]} and ${beat.periods[1]} ledgers: a mismatch, the alignment recurs every ${plural(beat.every, 'ledger')}`;
-  return `${head}: r ${pair.r.toFixed(2)} at lag ${fmtLag(pair.lag)} (${followText(pair)}) · ${plural(pair.n, 'ledger')} (overlap ${pair.overlap}) · events ${pair.a.events}/${pair.b.events} · ${nullText}${subText}${beatText}`;
+  if (beat) parts.push(beat.shared != null ? `shared cadence of ${plural(beat.shared, 'ledger')}` : `cadences of ${beat.periods[0]} and ${beat.periods[1]} ledgers: a mismatch, the alignment recurs every ${plural(beat.every, 'ledger')}`);
+  return `${head}: ${parts.join(' · ')}`;
 }
 
-/** The whole report as text: what was measured, over what, under which settings, then one line per pair. */
+/** The continuation lines of a pair: the connecting transactions' hashes, when there are any. */
+export function pairDetailLines(pair, { maxHashes = DEFAULTS.maxHashes } = {}) {
+  if (!pair?.record?.count) return [];
+  const labelOf = (address) => (address === pair.a.address ? pair.a.label : address === pair.b.address ? pair.b.label : shortAddress(address));
+  return connectionLines(pair.record, labelOf, { max: maxHashes }).map((l) => `  ${l}`);
+}
+
+const SOURCE_WORDS = Object.freeze({ live: 'live window', score: 'case', account_tx: 'account_tx' });
+
+/** The whole report as text: what was measured, over what, under which settings, then one line per pair (and its hashes). */
 export function readout(report) {
   if (!report) return '';
   const w = report.window;
+  const o = report.options;
   const lines = [];
   const excluded = Object.entries(w.excluded ?? {}).map(([k, n]) => `${n} ${EXCLUSIONS[k] ?? k}`);
   const span = w.from != null ? `#${w.from}–#${w.to}` : 'empty';
-  lines.push(`coherence v${report.version} · ${report.source === 'live' ? 'live window' : 'case'} ${span} · ${w.used} of ${plural(w.ledgers, 'ledger')} used${excluded.length ? ` (excluded: ${excluded.join(', ')})` : ''}`);
-  const measure = report.measure === 'volume' ? 'log volume per ledger (sum of log10(1 + XRP) of the XRP-denominated amounts submitted)' : 'transactions submitted per ledger';
-  const L = report.maxLag ?? report.options.maxLag;
-  const lagText = L < report.options.maxLag ? `lags ±${L} ledgers (a quarter of the ${w.used} used; the option is ±${report.options.maxLag})` : `lags ±${L} ledgers`;
-  lines.push(`series: ${measure}, ${report.source === 'live' ? 'counted as the stream delivered them' : 'from the score (events selected by the listening settings)'} · accounts: ${report.chosen} · ${lagText} · guard ≥${report.options.minLedgers} ledgers, ≥${report.options.minEvents} events each · null: up to ${report.options.shuffles} circular shifts beyond ±${L}, seed ${report.options.seed} · parts of ≥${3 * L} ledgers for the drift check`);
-  const cadenceText = (a) => (a.cadence ? `, cadence ${plural(a.cadence.period, 'ledger')} (self-correlation ${a.cadence.r.toFixed(2)})` : '');
-  lines.push(`accounts: ${report.accounts.length ? report.accounts.map((a) => `${a.label} = ${a.address} (${plural(a.events, 'event')}${cadenceText(a)})`).join('; ') : 'none'}`);
+  lines.push(`coherence v${report.version} · ${SOURCE_WORDS[report.source] ?? report.source} ${span} · ${w.used} of ${plural(w.ledgers, 'ledger')} used${excluded.length ? ` (excluded: ${excluded.join(', ')})` : ''}`);
+  const measure = report.measure === 'volume' ? 'log volume per ledger (sum of log10(1 + XRP) of the XRP-denominated amounts submitted)' : report.measure === 'involved' ? 'transactions involved in per ledger (the account anywhere in the transaction or its metadata)' : 'transactions submitted per ledger';
+  const origin = report.source === 'live' ? 'counted as the stream delivered them' : report.source === 'account_tx' ? `from account_tx (failed ${report.fetched?.includeFailed ? 'included' : 'excluded'})` : 'from the score (events selected by the listening settings)';
+  const L = report.maxLag ?? o.maxLag;
+  const P = report.maxOrder ?? L;
+  const lagText = L < o.maxLag ? `lags ±${L} ledgers (a quarter of the ${w.used} used; the option is ±${o.maxLag})` : `lags ±${L} ledgers`;
+  lines.push(`series: ${measure}, ${origin} · accounts: ${report.chosen} · ${lagText} · guard ≥${o.minLedgers} ledgers, ≥${o.minEvents} events each · null: up to ${o.shuffles} circular shifts beyond ±${L}, seed ${o.seed}, on the raw series and on the residuals · prewhitening: each series less its own AR fit (Burg, order by AICc up to ${P}); pairs ranked by the prewhitened r · parts of ≥${3 * L} ledgers for inspection`);
+  if (report.fetched) {
+    const f = report.fetched;
+    const v = f.validatedLedger ? `validated ledger #${f.validatedLedger.index} at query time` : 'validated ledger at query time unknown';
+    const per = f.accounts.map((a) => {
+      const bits = [a.bounds ? `bounds #${a.bounds.min}–#${a.bounds.max}` : 'no bounds echoed', `${plural(a.pages, 'page')} in ${plural(a.requests, 'request')}`, `${a.entries} ${a.entries === 1 ? 'entry' : 'entries'}`];
+      for (const m of a.missing) bits.push(`#${m.from}–#${m.to} ${EXCLUSIONS[m.reason] ?? m.reason}`);
+      if (a.error) bits.push(`error: ${a.error}`);
+      return `${a.label}: ${bits.join(', ')}`;
+    });
+    lines.push(`account_tx${f.host ? ` on ${f.host}` : ''} · ${v} · ${per.join('; ')}`);
+  }
+  const ownText = (a) => `${a.cadence ? `, cadence ${plural(a.cadence.period, 'ledger')} (self-correlation ${a.cadence.r.toFixed(2)})` : ''}${a.ar != null ? `, AR(${a.ar})` : ''}`;
+  lines.push(`accounts: ${report.accounts.length ? report.accounts.map((a) => `${a.label} = ${a.address} (${plural(a.events, 'event')}${ownText(a)})`).join('; ') : 'none'}`);
+  const recordText = report.records == null ? 'not available' : report.source === 'live' ? `${fmtN(report.records)} transactions heard in the ledgers used` : report.source === 'account_tx' ? `${fmtN(report.records)} transactions of the named accounts in the ledgers used` : `${fmtN(report.records)} transactions of the window’s ledgers (failed included)`;
+  const pct = Math.round(o.significance * 100);
+  const ab = report.above ?? { raw: 0, white: 0, expected: 0, resolved: report.tested ?? 0, unresolved: 0, minShuffles: 20 };
+  const unresolved = ab.unresolved ? ` · ${plural(ab.unresolved, 'pair')} with fewer than ${ab.minShuffles} shifts, where the ${pct}th cannot be resolved` : '';
+  lines.push(`record: ${recordText} · pairs tested: ${report.tested ?? 0} · above the ${pct}th of their shuffles: raw ${ab.raw}, prewhitened ${ab.white} · chance alone gives about ${ab.expected.toFixed(1)} of ${ab.resolved}${unresolved}`);
   lines.push(`tier ${report.tier}: a correlation at a lag is what these series show; coordination or common ownership would be a hypothesis and is not stated here.`);
   if (!report.pairs.length) lines.push(report.accounts.length < 2 ? 'no pair: fewer than two accounts to compare' : 'no pair');
-  for (const p of report.pairs) lines.push(describePair(p));
+  for (const p of report.pairs) {
+    lines.push(describePair(p, { significance: o.significance }));
+    lines.push(...pairDetailLines(p, { maxHashes: o.maxHashes }));
+  }
   return lines.join('\n');
 }

@@ -25,7 +25,20 @@ Phase 1 touches no canvas.
 
 The plan is posted before the build. At the end: the coherence tables for the checked-in cases and for every case file in the folder the owner names, each pair with r, lag, n, overlap and percentile; the defaults chosen and why; anything the real data did that the synthetic trains did not predict. Phase 2 (superposed delayed pulse trains on a coarse grid under the sigils, off by default, cast-only or a chosen pair, reduced-motion compliant, every fringe region showing its pair's line on click) waits for a go decision on those numbers.
 
+## Phase 1.5: fix the null, widen the window, check the record
+
+Still no canvas. Same ground rules as phase 1; this section is the agreed specification, the as-built record follows the phase 1 one below.
+
+1. **Prewhitening.** Before cross-correlating, remove each series' own autocorrelation structure (an AR fit, or an equivalent that is justified) and correlate the residuals; run the circular-shift null on the residuals. Report both the raw and the prewhitened r with their percentiles; rank by the prewhitened one. Required synthetic tests: two independent periodic series with the same period come out not significant after prewhitening; a planted lagged relation on top of a shared periodicity survives it; the phase 1 synthetic cases still pass or are re-pinned with a stated reason.
+2. **Multiple comparisons.** Print the number of pairs tested next to every percentile, and state here how to read "1 of 10 pairs above the 95th".
+3. **Series from `account_tx`.** For a named list of accounts over a ledger range: per-ledger counts of submitted (`Account` equals the address) and involved transactions, with `ledger_index_min`/`max` carried through pagination (the marker) until the range is complete; the bounds, the validated ledger at query time, and any page that failed are recorded, a failed page as missing ledgers, never zero. Entrance: the describe script behind flags for the accounts and the range, per its conventions. The units cost per account per thousand ledgers against the public cluster is measured and written here. The score remains the series source for cases and the live window.
+4. **Record check per pair.** For every pair above the guard, count the transactions in the window where the two touch: one is the other's `Destination`, the other's ledger entries appear in its `AffectedNodes`, or Part A's findings show an offer owned by one crossed by the other. Print "connected in the record: N transactions" with the hashes, or "not connected in this window". A high r with no connection is reported as co-activity, not relation.
+5. **Ground truth.** The owner supplies the accounts and ledger ranges of a known coordinated cluster, and a control set of unrelated active accounts in the same range. The full readout runs on both. The tables are reported raw and prewhitened, with the record check, and the report says plainly whether the known pairs rank above the controls. That result is the phase 2 decision; the report does not argue it either way.
+6. **Cadence stays.** The self-correlation cadence and the beat lines are kept; they are real, and the market maker's three-ledger rhythm is a finding about one account worth showing on its own.
+
 ## As built (phase 1)
+
+*The record of phase 1 as it was built. Phase 1.5 (below) kept every number in it; the pair lines now carry the prewhitened statistic first and the record check, and the tables of the recorded windows are ranked by the prewhitened r.*
 
 ### The series
 
@@ -95,3 +108,98 @@ Volume series of the same window: rMsX…xgfY is flat (182 offers, none XRP-deno
 7. **Failed transactions are out by default** (689 and 677 of the two windows' transactions), because the series are the score's events; a case with `includeFailed` counts them.
 8. **A shared cadence makes a high |r| at some lag by construction.** Live, over 20 complete ledgers (#107,822,293–#107,822,312, the button pressed in a headless browser), two market makers both on a three-ledger cadence read r −0.84 at lag −4, above all 9 admissible shuffles; a third, on a two-ledger cadence, read 0.53 at +5 against the first. Two series that each repeat every three ledgers must line up, or anti-line up, at some lag within ±5, and nine shifts cannot say how special that is. The beat line names the shared cadence next to the number for exactly this case; the percentile's count is the warning.
 9. **The public cluster's quota empties a 50-ledger case.** Through `xrplcluster.com`, the page's and the script's first endpoint, the loader's two attempts fetched 12 of the 50 ledgers of `coherence-window-107822030-107822079` before `units quota (10000 per 60s) exhausted`; the readout said `12 of 50 ledgers used (excluded: 38 not available from the node)`, capped L at 3 and judged the pairs over those 12. The exclusion rule held, and so did the limit: a 50-ledger case needs `s1`/`s2.ripple.com` (where the same fetch takes 7 to 13 seconds) or a paced loader, which is outside this phase.
+
+## As built (phase 1.5)
+
+Still no canvas. Version 2 of the statistic (`COHERENCE_VERSION`): the raw numbers of phase 1 are unchanged and re-pinned; what is new stands beside them.
+
+### Prewhitening
+
+- **Each series less its own autoregressive fit.** On the normalised series, an AR(p) fit by Burg's method: the reflection coefficient of each order minimises the forward and backward prediction errors over the rows used, taken along every run of consecutive ledgers (a gap starts a new run; no error term crosses it), and the coefficients follow by the Levinson recursion. The order is chosen by AICc among 0..L (L the lag range), ties to the lower order. The residual at every row whose p predecessors on the ledger axis are used (the first p rows of a run have none) is the series' innovation; the residuals are normalised again, and the pair's prewhitened r is the same cross-correlation on the rows where both residuals exist, with the same circular-shift null run on the residuals.
+- **Why Burg and not Yule-Walker.** Yule-Walker was built first. On the market maker's near-exact three-ledger cadence (self-correlation 0.96) the Levinson recursion on the biased autocorrelation reaches a reflection coefficient of −0.99 at order 2 and fails the |k| < 1 guard at order 3; the fit stalls where the residual is still periodic, and the prewhitened r is inflated by construction again. Burg keeps every reflection coefficient inside (−1, 1) by construction and reaches the order that whitens. It is the standard choice for short records and sinusoidal structure, and both are the case here (50 rows, a cadence).
+- **A cadence of three ledgers is an AR(2), not an AR(3).** A zero-mean series that repeats every three ledgers satisfies z_t = −z_{t−1} − z_{t−2}; Sender A around the sample case takes AR(2) with 4.5% of its variance left, and an exact pulse every six ledgers takes AR(5). The order in the readout is the fit's, not the period's.
+- **Fully predicted.** A fit that leaves less than 0.5% of the variance (`PREDICTED_VARIANCE`) stops at that order and the series has no residual to correlate: the line says "fully predicted by its own past (AR(p)), no residual to correlate" and reports the raw numbers only. An exact pulse train leaves 7 parts in ten thousand at order 2 (Burg's end effects); real series stay far above the bar. `maxOrder` (0 = up to L) caps the fit.
+- **Reported and ranked.** Every pair line carries the prewhitened r, lag and null first, the raw r, lag and null second, the residual rows and the two AR orders, then the record check. The pairs are ranked by the prewhitened |r|, then by its percentile, then by the raw |r|; the recorded windows' tables below are in that order. `significant()` is the prewhitened null's verdict when there is one, else the raw's.
+- **The synthetic tests the brief required.** Twenty seeded pairs of independent pulse trains with the same period (six ledgers, noise added): the raw |r| is at least 0.5 in 20 of 20 and above the raw null's 95th in 5 of 20 (a circular shift of a periodic series realigns at some lag, so the raw null is itself confounded); after prewhitening, AR(6) to AR(8) on both sides in 18 of 20, and 1 of 20 above the 95th, which is what chance gives. The same trains with a's noise planted into b three ledgers later: the prewhitened peak is at lag +3 in 20 of 20 and above the 95th in 19 of 20 (the twentieth at 33 of 36). The phase 1 trains pass under prewhitening (lockstep 1 at 0, the lagged copy at its lag, the exact cadence said as fully predicted, the cadence mismatch and the beat unchanged); the phase 1 lines and the recorded windows' tables were re-pinned with the new line shape and the new ranking, every raw number equal.
+
+### Multiple comparisons
+
+- The number of pairs tested (pairs with a null: judged, not flat, at least one admissible shift) is printed beside every percentile, raw and prewhitened: "above 98% of shuffles (195 of 200; 10 pairs tested)". The header line counts the pairs above the 95th on each null and what chance alone gives: "pairs tested: 10 · above the 95th of their shuffles: raw 1, prewhitened 1 · chance alone gives about 0.5 of 10".
+- **How to read "1 of 10 pairs above the 95th".** Ten independent pairs tested at the 95th give 0.5 above it by chance, and at least one in 40% of windows; one of ten is the expected outcome of nothing. To call one pair of ten at the 5% level it would need the 99.5th, which a 50-ledger window cannot resolve (33 admissible shifts, a step of 3%) and a 1000-ledger window just can (983 admissible, 200 drawn). The 1000-ledger run below is exactly this case: one of ten at 195 of 200, with no connection in the record.
+- **A null that cannot resolve the 95th.** Fewer than 20 shifts (`minShuffles`) cannot place a 95th percentile: one shift is more than 5%. Such pairs are tested and printed with their counts, but not counted among the "above", not called significant, and the header says "N pairs with fewer than 20 shifts, where the 95th cannot be resolved". Live over 20 ledgers the null has 7 to 9 shifts; the two recorded 50-ledger windows have 29 to 33.
+
+### Series from account_tx
+
+- **`src/account-tx.js`** (pure apart from the request function). `fetchAccountTx(request, account, { from, to })` pages `account_tx` oldest first (`forward: true`) with `ledger_index_min` and `ledger_index_max` carried on every page and the marker from the page before, until the node returns no marker. A page that fails after its retry leaves the ledgers from the marker's ledger (the previous page covered it only in part) to the end of the range recorded as missing, and the fetch stops; the first page failing leaves the whole range missing; a bad range is missing with an error. The bounds the node echoed on its first page are its coverage: a `ledger_index_min` above the request is "outside the node's history" below it, a `ledger_index_max` below the request is "beyond the validated ledger at query time" above it. `fetchAccountSeries` reads the validated ledger first (`ledger validated`), then the accounts one at a time, and records ledgers past the validated one as missing. A ledger inside the covered span with no entry is a genuine zero; one outside it is absent.
+- **The frame** (`frameFromAccountTx`): one row per ledger of the range, used only when every account's fetch covered it; per account the transactions it submitted (`count`, the primary measure, as for a case), the transactions it is involved in (`involved`: every entry account_tx returned for it, the account anywhere in the transaction or its metadata) or its log volume; failed transactions out of the series unless `--include-failed`, but in the record (the record is the ledger's). The touch records of every entry, once per hash, for the record check. The readout's third line names the host, the validated ledger at query time, and per account the bounds, pages, requests, entries, missing spans and error.
+- **Entrance**: `npm run describe -- --coherence --accounts rA[~Label],rB,... --ledgers FROM-TO [--series count|involved|volume] [--include-failed] [--network mainnet|testnet] [--endpoint wss://s2.ripple.com]`, no case file; `--endpoint` puts one node first for either form. Up to 20,000 ledgers (`MAX_RANGE`).
+- **Units cost against the public cluster**, measured on 2026-10-22 with the same account over the same thousand ledgers: `xrplcluster.com` now meters `2000 units per 10s` (phase 1 saw `10000 per 60s`) and charges about **10 units per transaction returned**: one page of 200 entries exhausts the bucket (the second request fails with "units quota (2000 per 10s) exhausted, retry in ~14 s"), two pages of 100 do, and 22 pages of 20 pass in 10.0 seconds as the bucket refills at about 200 units per second. **Per account per thousand ledgers the cost is ten units per transaction the account is involved in**: for the five accounts of the window below, 161,330, 37,800, 25,630, 19,030 and 21,120 units, about 13.4, 3.2, 2.1, 1.6 and 1.8 minutes each at the cluster's pace, 22 minutes for the five; `s2.ripple.com` served the same 26,447 entries in 146 requests in 44 seconds. The fetcher does not pace itself to the cluster; the page's and the script's first endpoint is still the cluster, and for a wide window `--endpoint` names `s1` or `s2`.
+- **The score remains the series source for cases and the live window.** The account_tx frame is a third source with the same statistic.
+
+### The record check
+
+- **`src/record.js`** (pure). A touch record per validated transaction: the submitter, the `Destination`, the accounts whose ledger entries are in the `AffectedNodes` (`Account`, `Owner`, `Destination`, `Issuer`, `Subject` and `Authorize` of each entry's final or new fields), the two sides of every `RippleState` touched (kept apart as `lines`, because a trust line belongs to both sides and an issued-currency trade touches the issuer's line every time), and the owners of the book offers the transaction crossed, from Part A's findings (`facts().offers` with role `book` and traded `yes`), computed only when an offer not the submitter's is in the record.
+- **A connection** is a transaction in the window submitted by one of the pair that touches the other, by its strongest kind: `destination`, `crossed`, `entry`, `line`; each hash once; failed transactions counted and marked. A transaction submitted by a third party that touches both is not a connection between the two.
+- **Where the records come from.** A case: the fetched ledgers' transactions, all of them (`frameFromScore(score, { ledgers })`; the page passes its session's ledgers). The live window: `LiveWindow` keeps a touch record per transaction heard, once per hash, beside the submitter counts; a moment file does not carry them, so a reopened moment's records come from the refetched ledgers like any case. account_tx: the entries of the named accounts, which hold every transaction either submitted.
+- **Wording.** "connected in the record: 44 transactions (44 crossed)" or "not connected in this window", then an indented line with the hashes, up to 8 (`maxHashes`), each with its ledger, its submitter and the kind. A pair above the 95th with no connection reads "co-activity, not a relation: not connected in this window". A frame without records says "record not available".
+
+### Ground truth
+
+Not supplied at the time of this build: the owner's known coordinated cluster and its control set of unrelated active accounts over the same range are the input, and the readout runs on them with
+
+```sh
+node scripts/describe.mjs --coherence --accounts rA~Known1,rB~Known2,... --ledgers FROM-TO --endpoint wss://s2.ripple.com
+node scripts/describe.mjs --coherence --accounts rC~Control1,rD~Control2,... --ledgers FROM-TO --endpoint wss://s2.ripple.com
+```
+
+The report will give both tables raw and prewhitened with the record check, and say whether the known pairs rank above the controls by the prewhitened r. That result is the phase 2 decision and this document does not argue it. What the runs below say about the instrument itself: at a thousand ledgers it resolves the 99.5th, its |r| for unrelated active accounts sits at 0.04 to 0.10, and a shared book shows in the record check without showing in the statistic.
+
+### Measurements
+
+**The recorded 50-ledger windows of phase 1, prewhitened.** Sender A ↔ Sender B over #107,777,790–#107,777,839: AR(2) and AR(1); prewhitened r −0.51 at lag +7 above 24 of 31 shuffles (77%), raw 0.19 at −3 above 20 of 33 (61%); not coherent either way. (Volume: −0.52 at +7, 24 of 31.) The top five of #107,822,030–#107,822,079, count series, ranked by the prewhitened r; the market maker rBTw…jjah takes AR(4), rLCN…Ujm5 AR(2), rURt…bKns AR(1), the other two are white:
+
+| pair | raw r | lag | shuffles above | prewhitened r | lag | shuffles above | AR |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| rBTw…jjah ↔ rLCN…Ujm5 | −0.37 | −8 | 25 of 33 (76%) | −0.38 | −2 | 22 of 29 (76%) | 4/2 |
+| rLCN…Ujm5 ↔ rEqY…NLNF | 0.36 | −5 | 31 of 33 (94%) | 0.38 | −5 | 26 of 31 (84%) | 2/0 |
+| rMsX…xgfY ↔ rLCN…Ujm5 | 0.32 | −8 | 17 of 33 (52%) | 0.34 | −8 | 17 of 31 (55%) | 0/2 |
+| rBTw…jjah ↔ rMsX…xgfY | 0.31 | −1 | 11 of 33 (33%) | −0.34 | +8 | 22 of 29 (76%) | 4/0 |
+| rBTw…jjah ↔ rEqY…NLNF | 0.42 | +1 | 32 of 33 (97%) | −0.34 | +2 | 19 of 29 (66%) | 4/0 |
+| rMsX…xgfY ↔ rURt…bKns | 0.36 | 0 | 33 of 33 (100%) | 0.31 | 0 | 18 of 32 (56%) | 0/1 |
+| rBTw…jjah ↔ rURt…bKns | 0.18 | +1 | 2 of 33 (6%) | −0.31 | +8 | 13 of 29 (45%) | 4/1 |
+| rLCN…Ujm5 ↔ rURt…bKns | −0.27 | 0 | 1 of 33 (3%) | −0.30 | 0 | 8 of 31 (26%) | 2/1 |
+| rMsX…xgfY ↔ rEqY…NLNF | 0.27 | +2 | 20 of 33 (61%) | 0.27 | +2 | 20 of 33 (61%) | 0/0 |
+| rEqY…NLNF ↔ rURt…bKns | −0.22 | −1 | 7 of 33 (21%) | 0.21 | +6 | 6 of 32 (19%) | 0/1 |
+
+Ten pairs tested; above the 95th: raw 2, prewhitened 0. The record check does not run on these fixtures (they keep the series, not the transactions); on the page and in the script it does.
+
+**A thousand ledgers from account_tx, #107,821,080–#107,822,079, the same five accounts** (`test/fixtures/coherence/accounttx-107821080-107822079.json`, derived from the pages with the connecting touch records kept; `test/account-tx.test.js` reproduces every number): every page arrived from `s2.ripple.com`, bounds echoed as requested, 26,447 entries. Submitted: rBTw…jjah 16,133 with a cadence of 3 ledgers (self-correlation 0.75), AR(5); rMsX…xgfY 3,779, cadence 3 (0.31), AR(5); rLCN…Ujm5 2,563, AR(8); rEqY…NLNF 1,903, AR(4); rURt…bKns 1,913, AR(5). Count series, 983 admissible shifts, 200 drawn:
+
+| pair | raw r | lag | shuffles above | prewhitened r | lag | shuffles above | AR | record |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| rLCN…Ujm5 ↔ rURt…bKns | 0.08 | −6 | 135 of 200 (68%) | 0.08 | −6 | 195 of 200 (98%) | 8/5 | not connected: co-activity |
+| rLCN…Ujm5 ↔ rEqY…NLNF | 0.08 | −5 | 145 of 200 (73%) | 0.08 | −5 | 180 of 200 (90%) | 8/4 | not connected |
+| rEqY…NLNF ↔ rURt…bKns | 0.10 | −1 | 191 of 200 (96%) | 0.08 | 0 | 164 of 200 (82%) | 4/5 | connected: 44 (44 crossed) |
+| rMsX…xgfY ↔ rURt…bKns | 0.08 | −1 | 174 of 200 (87%) | −0.08 | +3 | 134 of 200 (67%) | 5/5 | not connected |
+| rBTw…jjah ↔ rMsX…xgfY | 0.05 | +2 | 33 of 200 (17%) | 0.06 | 0 | 92 of 200 (46%) | 5/5 | not connected; shared cadence of 3 |
+| rBTw…jjah ↔ rLCN…Ujm5 | 0.07 | +3 | 152 of 200 (76%) | 0.06 | −5 | 72 of 200 (36%) | 5/8 | not connected |
+| rMsX…xgfY ↔ rLCN…Ujm5 | 0.05 | +1 | 34 of 200 (17%) | 0.06 | +1 | 60 of 200 (30%) | 5/8 | not connected |
+| rBTw…jjah ↔ rEqY…NLNF | 0.05 | +1 | 89 of 200 (45%) | −0.06 | −3 | 44 of 200 (22%) | 5/4 | not connected |
+| rBTw…jjah ↔ rURt…bKns | 0.04 | +3 | 17 of 200 (9%) | −0.05 | −3 | 26 of 200 (13%) | 5/5 | not connected |
+| rMsX…xgfY ↔ rEqY…NLNF | −0.04 | −2 | 15 of 200 (8%) | 0.04 | −1 | 2 of 200 (1%) | 5/4 | not connected |
+
+Ten pairs tested; above the 95th: raw 1, prewhitened 1; chance alone gives 0.5. The 44 connections are all rEqY…NLNF crossing offers of rURt…bKns. The `involved` series puts those 44 transactions on both sides of that pair and reads r 0.20 in step above 200 of 200 (0.17 prewhitened): the record check seen as a correlation, which is why submitted is the primary measure. The volume series leaves rMsX…xgfY flat (no XRP side) and nothing above the 95th among the six pairs left.
+
+**Live, 20 ledgers** (#107,831,293–#107,831,312, the button pressed in a headless browser; the live window keeps touch records now): 3,218 transactions heard, top five submitters, L 5, 7 to 9 shifts. The top pair reads prewhitened r −0.83 at +5 above 7 of 7 with cadences of 3 and 2 ledgers and no connection; rMsX…xgfY ↔ rEqY…NLNF reads 0.55 at +5 above 6 of 8 and "connected in the record: 3 transactions (3 crossed)" with the three hashes. The header says every pair has fewer than 20 shifts; nothing at this size is called significant.
+
+### What the real data did that the synthetic trains did not predict (phase 1.5)
+
+10. **Yule-Walker stalls on the real cadence.** The synthetic trains never put a reflection coefficient at the edge; the market maker did, at order 2, and the first implementation left its residual periodic. Burg replaced it (see above).
+11. **The two pairs above the raw null in the recent window are not above it once the series are prewhitened.** 0.42 at +1 above 32 of 33 falls to −0.34 at +2 above 19 of 29; 0.36 in step above 33 of 33 falls to 0.31 above 18 of 32. The second is the more instructive: both series are nearly white (AR(0) and AR(1) with φ 0.28), the r barely moved, and the null moved from 33 of 33 to 18 of 32. A null of 33 shifts is a 3%-resolution statement, and "above all 33" was a borderline value's luck.
+12. **A thousand ledgers put |r| where the arithmetic says it should be.** The standard error of r at n = 1000 is about 0.03 and the largest of 17 lags of noise about 0.08; the ten pairs sit at 0.04 to 0.10 raw and prewhitened. The one pair above the 95th after prewhitening (195 of 200) has no connection in the record: co-activity, and one of ten.
+13. **Sharing a book is not acting in step.** The only connected pair of the thousand ledgers (44 crossings, one always the taker of the other's offers) reads 0.08 in step above 164 of 200 after prewhitening. The record check and the statistic answer different questions, and the line now carries both.
+14. **At 20 ledgers the prewhitened r reaches −0.83.** With 13 residual rows at the peak lag and 7 admissible shifts, the number is noise with a sign; the counts beside it and the header's "fewer than 20 shifts" are the only honest reading, and `significant()` refuses it.
+15. **The market maker's order grows with the window.** AR(2) over the 50 ledgers around its burst (near-exact cadence, 4.5% left), AR(4) in the recent 50, AR(5) over a thousand, where its cadence reads 0.75: the rhythm is stable over an hour but not exact, and the fit says so.
+16. **The involved measure is the record check in disguise.** A transaction between two named accounts is in both involved series, so a pair that trades together correlates in step by construction (0.20 above 200 of 200). It is kept as an option because it is what the brief named; the primary measure is submitted.
+17. **The failed-page rule was not exercised by the nodes.** `s2.ripple.com` answered every page (146 of 146 and, on the fixture run, every retry succeeded), and the cluster fails on its quota before any page fails for another reason. The missing-span rule rests on the fake-node tests, and the cluster's quota is the one failure a public node reliably produces.
+18. **The public cluster's quota changed between phases.** Phase 1 recorded `10000 per 60s`; phase 1.5 measured `2000 per 10s` at about 10 units per transaction returned. A number in this document is a measurement with a date, not a constant.
