@@ -20,6 +20,7 @@ import { LiveWindow, momentFromLive, momentFromReplay, momentPosition, isMoment 
 import { describeReport, factsForCase, importAnnotations } from './describe.js';
 import { frameFromScore, frameFromLive, coherence, readout as coherenceReadout, describePair, BIN_NAMES, DEFAULTS as COHERENCE_DEFAULTS } from './coherence.js';
 import { fieldModel } from './field.js';
+import { TOURS, tourById, tourSteps, stepText } from './tours.js';
 import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
 import { Geiger } from './geiger.js';
@@ -169,6 +170,14 @@ const ui = createUI({
     onNext: (item) => inspectNeighbour(item, +1),
     onAnnotate: (event, item) => annotateEvent(event, item),
   },
+  onView: (view) => setView(view, { fromUi: true }),
+  onDoor: (view) => enterDoor(view),
+  learnActions: {
+    onRun: (id) => runTour(id),
+    onNext: () => tourMove(+1),
+    onBack: () => tourMove(-1),
+    onExit: () => exitTour(),
+  },
   fieldActions: {
     // the bin is a per-case choice, not a setting: it starts at the ledger and is printed on every line and on the picture
     binNow: () => field.bin,
@@ -248,6 +257,159 @@ const ui = createUI({
     if (session.active && ['scale', 'key', 'enabled', 'includeFailed', 'quietMode', 'quietThreshold', 'cast', 'castMode'].some((k) => k in patch)) rebuildScore();
   },
 });
+
+// ---------------------------------------------------------------------------
+// The three modes and the tours (docs/ux.md, PR 2)
+// ---------------------------------------------------------------------------
+
+/** The mode in force: Listen, Watch or Learn; remembered with the settings. A case or a replay opens in Watch. */
+function setView(view, { fromUi = false } = {}) {
+  if (settings.view === view && fromUi) return;
+  settings.view = view;
+  saveSettings(settings);
+  if (!fromUi) ui.setView(view, { announce: false });
+  if (view !== 'learn' && tour.steps) exitTour({ quiet: true });
+}
+
+/** A door on the welcome overlay: Listen and Watch start the stream in that mode; Learn opens the tours. */
+function enterDoor(view) {
+  setView(view);
+  if (view === 'learn') {
+    ui.setRunning(running);
+    document.querySelector('#overlay')?.classList.add('hidden');
+    document.querySelector('#learn [data-run]')?.focus();
+    return;
+  }
+  if (!running) start();
+}
+
+const tour = { id: null, steps: null, index: 0, ctx: {}, item: null };
+
+async function fetchCase(url) {
+  const r = await fetch(url, { cache: 'no-cache' });
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
+/** Wait until the pending case plays (its ledgers fetched and its score built), or give up after a while. */
+function whenActive(timeoutMs = 90000) {
+  return new Promise((resolve) => {
+    const t0 = performance.now();
+    const tick = () => {
+      ui.learn.setBusy(session.loading ? document.querySelector('#t-label')?.textContent : 'Loading the case…');
+      if (session.active) resolve(true);
+      else if (performance.now() - t0 > timeoutMs) resolve(false);
+      else setTimeout(tick, 200);
+    };
+    tick();
+  });
+}
+
+/** Do a step's action through what exists: a shipped case, the transport, the inspector, the coherence drawer, the field. */
+async function tourAct(step) {
+  const a = step.action ?? { kind: 'none' };
+  const t = activeTransport();
+  switch (a.kind) {
+    case 'case': {
+      const current = session.active?.case ?? session.pending;
+      if (!current || !String(current.id).startsWith(a.url.includes('cadence') ? 'cadence' : 'busiest')) {
+        openCase(await fetchCase(a.url), 'file', 'the tour');
+      }
+      if (!running) await start();
+      const ok = await whenActive();
+      if (ok) {
+        const s = session.active;
+        tour.ctx.firstNote = s.case.annotations.find((n) => n.anchor?.ledger != null)?.text ?? null;
+        tour.ctx.caseDescription = s.case.description || s.case.title || null;
+        tour.ctx.accountsLine = null;
+      }
+      break;
+    }
+    case 'seek':
+      t?.seek(a.ms ?? 0);
+      t?.pause();
+      break;
+    case 'seekEvent': {
+      const s = session.active;
+      const item = s?.score.events.find((e) => e.event?.category === a.category) ?? null;
+      tour.item = item;
+      tour.ctx.caption = item ? scoreCaption(item, s.case.cast) : null;
+      if (item && t) {
+        t.seek(item.timeMs);
+        t.pause();
+      }
+      break;
+    }
+    case 'inspect':
+      if (tour.item) inspect(tour.item.event, tour.item);
+      break;
+    case 'play':
+      ui.inspector.hide();
+      t?.play();
+      break;
+    case 'coherence': {
+      const report = showCoherence();
+      tour.ctx.accountsLine = report?.accounts?.map((x) => `${x.label} = ${x.address} (${x.events} events${x.cadence ? `, cadence ${x.cadence.period} ledgers (self-correlation ${x.cadence.r.toFixed(2)})` : ''})`).join('; ') ?? null;
+      break;
+    }
+    case 'field':
+      ui.drawer.hide();
+      settings.field = { mode: 'cast', pair: null };
+      saveSettings(settings);
+      ui.applySettings();
+      refreshField({ announce: true });
+      break;
+    case 'end':
+      ui.drawer.hide();
+      break;
+    default:
+      break;
+  }
+}
+
+async function tourGo(index) {
+  const steps = tour.steps;
+  if (!steps || index < 0 || index >= steps.length) return;
+  const def = tourById(tour.id);
+  const step = steps[index];
+  tour.index = index;
+  ui.learn.showStep({ tour: def, index, total: steps.length, text: 'Loading…', glyph: step.glyph ?? null, busy: true, first: index === 0, last: index === steps.length - 1 });
+  try {
+    await tourAct(step);
+  } catch (err) {
+    ui.logMessage(`The tour could not take its step: ${err?.message ?? err}`, 'error');
+  }
+  const text = stepText(step, tour.ctx);
+  ui.learn.showStep({ tour: def, index, total: steps.length, text, glyph: step.glyph ?? null, first: index === 0, last: index === steps.length - 1 });
+  ui.transport.caption({ kind: 'info', text, sticky: true });
+}
+
+function runTour(id) {
+  if (!tourById(id)) return;
+  tour.id = id;
+  tour.steps = tourSteps(id);
+  tour.ctx = {};
+  tour.item = null;
+  if (settings.view !== 'learn') setView('learn');
+  tourGo(0);
+}
+
+function tourMove(delta) {
+  if (!tour.steps) return;
+  const next = tour.index + delta;
+  if (next >= tour.steps.length) exitTour();
+  else tourGo(next);
+}
+
+function exitTour({ quiet = false } = {}) {
+  const was = tour.id;
+  tour.id = null;
+  tour.steps = null;
+  tour.index = 0;
+  ui.learn.clear();
+  ui.transport.caption(null);
+  if (was && !quiet) ui.logMessage(`Tour ended: ${tourById(was)?.name ?? was}.`);
+}
 
 // ---------------------------------------------------------------------------
 // URL and cast
@@ -717,6 +879,7 @@ function armReplayFromUrl(spec) {
   session.pending = c;
   session.speed = 1;
   ui.setReplayPending(c, caseTitle(c));
+  setView('watch'); // a replay link opens in Watch, where the case is in view
   if (range.clamped) ui.logMessage('Replay ranges are capped at 50 ledgers.', 'error');
 }
 
@@ -736,6 +899,7 @@ function openCase(raw, source, sourceText) {
   session.speed = c.timing.speed;
   urlState.replay = null;
   ui.setReplayPending(c, caseTitle(c));
+  if (sourceText !== 'the tour') setView('watch'); // a case opens in Watch, where it is in view; a tour keeps Learn
   ui.casePanel.setCase(c, null, warnings);
   syncHash();
   if (running && stream) {
@@ -842,6 +1006,7 @@ async function runCase(theCase) {
   if (geiger.detector) startGeiger(); // replayed ledgers form (or are judged against) their own baseline
   session.active = { case: theCase, ledgers: result.ledgers, score, transport, failures: result.failures };
   session.loop = null;
+  ui.setMomentNote(isMoment(theCase) ? theCase.annotations.find((n) => n.question)?.text ?? '' : '');
   ui.transport.setScore(score, caseTitle(theCase));
   ui.transport.setLoop(null);
   ui.midiPanel.setScoreAvailable(true);
@@ -1142,6 +1307,7 @@ function endSession({ quiet = false } = {}) {
   midiOut.allNotesOff();
   ui.casePanel.setCase(session.pending && !quiet ? session.pending : null, null);
   ui.inspector.hide();
+  ui.setMomentNote('');
   refreshField();
   if (running && stream) {
     resetLedgerState();
@@ -1595,6 +1761,7 @@ window.addEventListener('keydown', (e) => {
     ui.inspector.hide();
     ui.hideFieldLine();
     ui.drawer.hide();
+    ui.closeMomentPrompt();
     return;
   }
   if ((e.key === 's' || e.key === 'S') && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -1666,6 +1833,9 @@ window.xrplSonic = {
   showCoherence,
   showTranscript,
   loadSample,
+  setView,
+  enterDoor,
+  tours: { list: TOURS, run: runTour, next: () => tourMove(+1), back: () => tourMove(-1), exit: () => exitTour(), state: () => ({ id: tour.id, index: tour.index, total: tour.steps?.length ?? 0 }) },
   fieldNow,
   refreshField,
   coherenceFromFrame,
