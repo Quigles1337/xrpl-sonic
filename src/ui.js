@@ -17,6 +17,7 @@ import { createInspector } from './ui-inspector.js';
 import { createGeigerPanel } from './ui-geiger.js';
 import { createHealthPanel } from './ui-health.js';
 import { createMidiPanel } from './ui-midi.js';
+import { createFieldPanel } from './ui-field.js';
 
 const MAX_LOG_LINES = 80;
 
@@ -42,9 +43,10 @@ function stamp() {
  * @param {object} [args.geigerActions] callbacks for the Geiger group (see ui-geiger.js)
  * @param {object} [args.healthActions] callbacks for the Node group (see ui-health.js)
  * @param {object} [args.midiActions]   callbacks for the MIDI group (see ui-midi.js)
+ * @param {object} [args.fieldActions]  callbacks for the Field group (see ui-field.js): onChange({ field } | { bin }), binNow()
  * @param {{ recording: boolean, mimeType: string|null }} [args.capture]  what the browser supports
  */
-export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, onAi, onCopyAi, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, capture }) {
+export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, onAi, onCopyAi, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, fieldActions, capture }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -74,6 +76,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
   const aiCopyEvidence = $('#ai-copy-evidence');
   const aiCancel = $('#ai-cancel');
   const overlayLede = $('#overlay .lede');
+  const fieldLine = $('#field-line');
   const defaultLede = overlayLede?.textContent ?? '';
 
   const update = (patch) => {
@@ -235,6 +238,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
   const geigerPanel = createGeigerPanel({ settings, ...(geigerActions ?? {}) });
   const healthPanel = createHealthPanel({ settings, ...(healthActions ?? {}) });
   const midiPanel = createMidiPanel({ settings, ...(midiActions ?? {}) });
+  const fieldPanel = createFieldPanel({ settings, onChange: (patch) => ('field' in patch ? update(patch) : fieldActions?.onChange?.(patch)), binNow: fieldActions?.binNow });
 
   const snapshotBtn = el('button', { type: 'button', class: 'btn', id: 'snapshot', text: 'Snapshot', title: 'Save the scene as a PNG with a stats overlay', onclick: () => onSnapshot?.() });
   const recordBtn = el('button', {
@@ -287,6 +291,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
     ]),
     el('section', { class: 'group' }, [el('h2', { text: 'Transaction types' }), el('div', { class: 'chips' }, categoryToggles)]),
     castPanel.root,
+    fieldPanel.root,
     casePanel.root,
     geigerPanel.root,
     healthPanel.root,
@@ -332,6 +337,21 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
     geigerPanel,
     healthPanel,
     midiPanel,
+    fieldPanel,
+
+    /** The pair under the pointer (src/field.js): its full readout line and its hashes, until closed. */
+    showFieldLine({ label, line, detail = [] }) {
+      if (!fieldLine) return;
+      fieldLine.replaceChildren(
+        el('div', { class: 'field-line-head' }, [el('span', { class: 'field-line-label', text: label }), el('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', title: 'Close (Esc)', text: '×', onclick: () => this.hideFieldLine() })]),
+        el('pre', { class: 'field-line-text', text: [line, ...detail].join('\n') }),
+      );
+      fieldLine.classList.remove('hidden');
+    },
+
+    hideFieldLine() {
+      fieldLine?.classList.add('hidden');
+    },
 
     setRunning(running) {
       document.body.classList.toggle('running', running);
@@ -465,6 +485,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
         }),
       );
       castPanel.render();
+      fieldPanel.render();
     },
 
     /** A line that is not a transaction: 'info', 'error' or 'note' (an annotation). */
@@ -490,6 +511,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
       casePanel.applySettings();
       geigerPanel.applySettings();
       healthPanel.applySettings();
+      fieldPanel.applySettings();
       applyLogVisibility();
     },
   };

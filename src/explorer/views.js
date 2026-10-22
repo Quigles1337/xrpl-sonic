@@ -189,6 +189,7 @@ export function renderAccount({ address, tag = null, info, network, reserve, onH
         data?.RegularKey ? el('span', {}, [document.createTextNode('regular key '), addrLink(data.RegularKey, { size: 12 })]) : '',
         data ? el('span', { text: `sequence ${fmtInt(data.Sequence)}` }) : '',
         info?.ledger_index ? el('span', { text: `as of ledger #${fmtInt(info.ledger_index)}` }) : '',
+        info?.via === 'ledger_entry' ? el('span', { text: `read as a ledger entry (account_info answered: ${info.error?.message ?? 'an error'})`, title: 'rippled refuses account_info for an AMM pseudo-account; the account root itself is read with ledger_entry' }) : '',
       ]),
     ]),
     el('div', { class: 'identity-actions' }, [

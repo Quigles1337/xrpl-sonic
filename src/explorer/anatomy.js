@@ -97,6 +97,7 @@ export const FLAG_WORDS = Object.freeze({
   disallowIncomingTrustline: 'Refuses incoming trust lines',
   allowTrustLineClawback: 'Can claw back issued tokens',
   allowTrustLineLocking: 'Allows trust line locking',
+  amm: 'An AMM pseudo-account (its AMM entry holds the pool)',
 });
 
 export function decodeFlags(accountFlags) {

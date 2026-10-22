@@ -42,6 +42,11 @@ import {
   minShuffles,
   orderLimit,
   PREDICTED_VARIANCE,
+  BINS,
+  BIN_NAMES,
+  ASSUMED_CLOSE_SECONDS,
+  interpolateCloseTimes,
+  binFrame,
   DEFAULTS,
   EXCLUSIONS,
   COHERENCE_VERSION,
@@ -198,7 +203,7 @@ describe('coherence: synthetic trains', () => {
     assert.ok(Math.abs(pair.r - 1) < 1e-9);
     assert.equal(normalise(a, included).n, 18, 'the baseline is over the ledgers used');
     const report = coherence(frame, { minLedgers: 5, minEvents: 1, maxLag: 2 });
-    assert.deepEqual(report.window, { from: 1000, to: 1019, ledgers: 20, used: 18, excluded: { missing: 2 } });
+    assert.deepEqual(report.window, { from: 1000, to: 1019, ledgers: 20, used: 18, excluded: { missing: 2 }, ledgerCount: 20 });
     assert.match(readout(report), /18 of 20 ledgers used \(excluded: 2 not available from the node\)/);
   });
 
@@ -220,7 +225,7 @@ describe('coherence: synthetic trains', () => {
     assert.deepEqual(normalizeOptions(null), DEFAULTS);
     assert.deepEqual(normalizeOptions({ maxLag: 99, minLedgers: 0, topK: 50, measure: 'bogus', seed: 7.9, shuffles: -1 }), { ...DEFAULTS, maxLag: 25, minLedgers: 2, topK: 12, seed: 8, shuffles: 0 });
     assert.equal(normalizeOptions({ measure: 'volume' }).measure, 'volume');
-    assert.equal(COHERENCE_VERSION, 2, 'phase 1.5: the prewhitened statistic and the record check');
+    assert.equal(COHERENCE_VERSION, 3, 'phase 2: the frame in bins, the unit on every line, undefined parts');
     assert.equal(TIER, 'observation');
     assert.deepEqual(Object.keys(EXCLUSIONS), ['missing', 'incomplete', 'unknown', 'history', 'unvalidated']);
     assert.equal(normalizeOptions({ maxOrder: 3 }).maxOrder, 3);
@@ -491,7 +496,7 @@ describe('coherence: frames', () => {
     assert.deepEqual(f.series.get(B), [1, 0, 0, 1]);
     assert.equal(f.totals.get(A), 2);
     const report = coherence(f, { minLedgers: 2, minEvents: 1 });
-    assert.match(readout(report), /^coherence v2 · live window #500–#503 · 2 of 4 ledgers used \(excluded: 1 not fully received \(received < txn_count\), 1 transaction count unknown\)/);
+    assert.match(readout(report), /^coherence v3 · live window #500–#503 · 2 of 4 ledgers used \(excluded: 1 not fully received \(received < txn_count\), 1 transaction count unknown\)/);
     assert.match(readout(report), /counted as the stream delivered them/);
     assert.equal(f.records.length, 4, 'the touch records of the ledgers used, kept by the window');
     assert.ok(f.records.every((t) => t.destination === C));
@@ -520,7 +525,7 @@ describe('coherence: the report and its readout', () => {
     assert.deepEqual(report.accounts.map((x) => x.events), [a.reduce((x, y) => x + y, 0), lagged.reduce((x, y) => x + y, 0), frame.totals.get(C)]);
     const text = readout(report);
     const lines = text.split('\n');
-    assert.equal(lines[0], 'coherence v2 · case #1000–#1039 · 40 of 40 ledgers used');
+    assert.equal(lines[0], 'coherence v3 · case #1000–#1039 · 40 of 40 ledgers used');
     assert.equal(lines[1], 'series: transactions submitted per ledger, from the score (events selected by the listening settings) · accounts: cast · lags ±8 ledgers · guard ≥12 ledgers, ≥10 events each · null: up to 200 circular shifts beyond ±8, seed 1337, on the raw series and on the residuals · prewhitening: each series less its own AR fit (Burg, order by AICc up to 8); pairs ranked by the prewhitened r · parts of ≥24 ledgers for inspection');
     const cadenceText = (x) => (x.cadence ? `, cadence ${x.cadence.period} ledgers (self-correlation ${x.cadence.r.toFixed(2)})` : '');
     assert.equal(lines[2], `accounts: ${report.accounts.map((x) => `${x.label} = ${x.address} (${x.events} events${cadenceText(x)}, AR(${x.ar}))`).join('; ')}`);
@@ -645,5 +650,84 @@ describe('coherence: the checked-in cases', () => {
     assert.deepEqual(volume.accounts.map((x) => x.ar), [4, null, 2, 0, 0], 'a flat account has no fit');
     assert.deepEqual([volume.tested, volume.above.raw, volume.above.white], [6, 0, 0]);
     assert.ok(volume.pairs.every((p) => p.beat === null));
+  });
+});
+
+describe('coherence: bins and the two defects (phase 2)', () => {
+  /** A frame with close times four seconds apart from a minute boundary, so every fifteen ledgers make a minute. */
+  function timedFrame(series, { missing = [], labels = {}, start = 1_700_000_040 } = {}) {
+    const f = frameOf(series, { missing, labels });
+    f.ledgers.forEach((l, i) => (l.closeTime = start + i * 4));
+    return f;
+  }
+
+  test('close times: known rows as they are, a row between dated neighbours in proportion, the ends at the dated span’s mean interval', () => {
+    assert.deepEqual(interpolateCloseTimes([100, null, null, 112], [10, 11, 12, 13]), [100, 104, 108, 112]);
+    assert.deepEqual(interpolateCloseTimes([null, 100, null, 108, null], [1, 2, 3, 4, 6]), [96, 100, 104, 108, 116], 'four seconds per ledger from the dated span; the last row is two ledgers on');
+    assert.deepEqual(interpolateCloseTimes([null, 100, null], [5, 6, 7]), [100 - ASSUMED_CLOSE_SECONDS, 100, 100 + ASSUMED_CLOSE_SECONDS], 'one date: the assumed interval');
+    assert.deepEqual(interpolateCloseTimes([null, null], [1, 2]), [null, null], 'no date at all');
+    assert.deepEqual(BIN_NAMES, ['ledger', 'minute', 'hour', 'day']);
+    assert.deepEqual(BINS, { ledger: 0, minute: 60, hour: 3600, day: 86400 });
+  });
+
+  test('a frame in bins of one minute: fifteen ledgers each, the series summed, a missing ledger excludes its bin, an empty minute is absent', () => {
+    const a = train(120, 21);
+    const b = train(120, 22);
+    const f = timedFrame({ [A]: a, [B]: b }, { missing: [20], labels: { [A]: 'A', [B]: 'B' } });
+    const m = binFrame(f, 'minute');
+    assert.equal(m.unit, 'minute');
+    assert.deepEqual(m.bin, { unit: 'minute', seconds: 60, ledgers: 120, bins: 8, error: null });
+    assert.deepEqual(m.ledgers.map((l) => [l.index, l.included, l.reason, l.from, l.to, l.ledgers]), [[0, true, null, 1000, 1014, 15], [1, false, 'missing', 1015, 1029, 15], [2, true, null, 1030, 1044, 15], [3, true, null, 1045, 1059, 15], [4, true, null, 1060, 1074, 15], [5, true, null, 1075, 1089, 15], [6, true, null, 1090, 1104, 15], [7, true, null, 1105, 1119, 15]]);
+    assert.equal(m.series.get(A)[0], a.slice(0, 15).reduce((x, y) => x + y, 0));
+    assert.equal(m.series.get(A)[1], 0, 'nothing is counted for a bin not used');
+    assert.equal(m.totals.get(A), a.reduce((x, y, i) => x + (i >= 15 && i < 30 ? 0 : y), 0), 'the totals are over the bins used');
+    assert.equal(m.records, f.records, 'the records are the ledgers’, unchanged');
+    assert.equal(binFrame(f, 'ledger'), f, 'per ledger is the frame itself');
+    assert.equal(binFrame(m, 'hour'), m, 'a binned frame is not binned again');
+    // a gap in time is a gap in position: ledgers 60.. close ten minutes later
+    const g = timedFrame({ [A]: a, [B]: b }, { labels: { [A]: 'A', [B]: 'B' } });
+    g.ledgers.forEach((l, i) => (l.closeTime = 1_700_000_040 + i * 4 + (i >= 60 ? 600 : 0)));
+    const gm = binFrame(g, 'minute');
+    assert.deepEqual(gm.ledgers.map((l) => l.index), [0, 1, 2, 3, 14, 15, 16, 17], 'ten empty minutes are absent, never zero');
+    const undated = frameOf({ [A]: a, [B]: b });
+    const u = binFrame(undated, 'minute');
+    assert.equal(u.unit, 'ledger');
+    assert.equal(u.bin.error, 'no close time is known for any ledger of the window');
+  });
+
+  test('coherence in bins: the lags, the guard, the parts and every line count in the unit, and the header says how many ledgers the bins hold', () => {
+    const a = train(300, 23);
+    const f = timedFrame({ [A]: a, [B]: a.slice() }, { labels: { [A]: 'A', [B]: 'B' } });
+    const report = coherence(f, { bin: 'minute' });
+    assert.equal(report.unit, 'minute');
+    assert.deepEqual(report.window, { from: 1000, to: 1299, ledgers: 20, used: 20, excluded: {}, ledgerCount: 300 });
+    assert.equal(report.maxLag, 5, 'a quarter of twenty minutes');
+    const lines = readout(report).split('\n');
+    assert.equal(lines[0], 'coherence v3 · case #1000–#1299 · 20 of 20 minutes used (300 ledgers in bins of one minute, UTC)');
+    assert.match(lines[1], /^series: transactions submitted per minute, from the score .* · lags ±5 minutes \(a quarter of the 20 used; the option is ±8\) · guard ≥12 minutes, ≥10 events each · .* · parts of ≥15 minutes for inspection$/);
+    const p = report.pairs[0];
+    assert.equal(p.unit, 'minute');
+    assert.match(describePair(p), /^A ↔ B: prewhitened r 1\.00 at lag 0 \(in step\) above \d+% of shuffles \(\d+ of \d+; 1 pair tested\) · raw r 1\.00 at lag 0 above .* · 20 minutes \(overlap 20; \d+ residual rows after AR\(\d\)\/AR\(\d\), overlap \d+\) · events \d+\/\d+ · record not available/);
+    assert.equal(coherence(f).unit, 'ledger', 'the default stays the ledger');
+    assert.equal(normalizeOptions({ bin: 'hour' }).bin, 'hour');
+    assert.equal(normalizeOptions({ bin: 'fortnight' }).bin, 'ledger');
+    const undated = coherence(frameOf({ [A]: a, [B]: a.slice() }, { labels: { [A]: 'A', [B]: 'B' } }), { bin: 'hour' });
+    assert.equal(undated.unit, 'ledger');
+    assert.match(readout(undated).split('\n')[0], /300 of 300 ledgers used \(bins of one hour: no close time is known for any ledger of the window; read per ledger\)$/);
+  });
+
+  test('a part in which a series does not vary reports undefined, not r 1.00', () => {
+    const n = 90;
+    const a = train(n, 24);
+    const b = train(n, 25);
+    for (let i = 0; i < 30; i++) b[i] = 0; // the first third of B is silent: on the window's z-scale a constant, not zero
+    const f = frameOf({ [A]: a, [B]: b }, { labels: { [A]: 'A', [B]: 'B' } });
+    const parts = subWindowLags(z(a), z(b), 8, { parts: 3 });
+    assert.equal(parts.length, 3);
+    assert.deepEqual([parts[0].r, parts[0].lag, parts[0].flat, parts[0].reason, parts[0].overlap], [null, null, true, 'no variance', 0]);
+    assert.ok(parts[1].lag != null && parts[2].lag != null);
+    const report = coherence(f);
+    assert.match(describePair(report.pairs[0]), / · 3 parts of 30: lag undefined \(no variance\), [+-]?\d+ \(r -?\d\.\d\d\), [+-]?\d+ \(r -?\d\.\d\d\)/);
+    assert.doesNotMatch(describePair(report.pairs[0]), /r 1\.00/);
   });
 });

@@ -40,13 +40,18 @@
 //
 // Pure: no DOM, no network, no audio, no canvas.
 
-import { shortAddress } from './mapping.js';
+import { shortAddress, RIPPLE_EPOCH_OFFSET } from './mapping.js';
 import { touchesOfLedger, touchesOfEntries, connections, describeConnections, connectionLines } from './record.js';
 import { uncovered, COVERAGE_REASONS } from './account-tx.js';
 
-export const COHERENCE_VERSION = 2;
+export const COHERENCE_VERSION = 3;
 export const MEASURES = Object.freeze(['count', 'volume', 'involved']);
 export const TIER = 'observation';
+/** The bins a frame can be read in: the seconds of one bin, 0 for the ledger itself (docs/coherence.md, phase 2). */
+export const BINS = Object.freeze({ ledger: 0, minute: 60, hour: 3600, day: 86400 });
+export const BIN_NAMES = Object.freeze(Object.keys(BINS));
+/** The close interval assumed when a window's dates cannot say (seconds per ledger). */
+export const ASSUMED_CLOSE_SECONDS = 4;
 
 /**
  * Defaults. maxLag 8: a 50-ledger case keeps at least 42 overlapping pairs at
@@ -57,7 +62,7 @@ export const TIER = 'observation';
  * maxOrder 0 means "up to L" for the AR fit. significance 0.95 is the
  * percentile at which a pair is counted among those "above the 95th".
  */
-export const DEFAULTS = Object.freeze({ measure: 'count', maxLag: 8, minLedgers: 12, minEvents: 10, topK: 5, shuffles: 200, seed: 1337, subWindows: 3, minSubOverlap: 6, maxOrder: 0, significance: 0.95, maxHashes: 8 });
+export const DEFAULTS = Object.freeze({ measure: 'count', maxLag: 8, minLedgers: 12, minEvents: 10, topK: 5, shuffles: 200, seed: 1337, subWindows: 3, minSubOverlap: 6, maxOrder: 0, significance: 0.95, maxHashes: 8, bin: 'ledger' });
 export const LIMITS = Object.freeze({ maxLag: [1, 25], minLedgers: [2, 50], minEvents: [1, 100000], topK: [2, 12], shuffles: [0, 5000], subWindows: [2, 6], maxOrder: [0, 25], maxHashes: [0, 200] });
 
 /**
@@ -89,6 +94,7 @@ export function normalizeOptions(input) {
   const o = { ...DEFAULTS };
   if (!input || typeof input !== 'object') return o;
   if (MEASURES.includes(input.measure)) o.measure = input.measure;
+  if (typeof input.bin === 'string' && BINS[input.bin] != null) o.bin = input.bin;
   for (const key of ['maxLag', 'minLedgers', 'minEvents', 'topK', 'shuffles', 'subWindows', 'maxOrder', 'maxHashes']) {
     const v = Number(input[key]);
     if (Number.isFinite(v)) o[key] = clamp(Math.round(v), LIMITS[key][0], LIMITS[key][1]);
@@ -128,7 +134,7 @@ export function accountsFor(cast, totals, { topK = DEFAULTS.topK } = {}) {
 }
 
 function emptyFrame(source) {
-  return { source, measure: DEFAULTS.measure, ledgers: [], accounts: [], series: new Map(), totals: new Map(), chosen: 'none', records: null, fetched: null };
+  return { source, measure: DEFAULTS.measure, unit: 'ledger', bin: null, ledgers: [], accounts: [], series: new Map(), totals: new Map(), chosen: 'none', records: null, fetched: null };
 }
 
 /**
@@ -145,7 +151,7 @@ export function frameFromScore(score, { cast = [], topK = DEFAULTS.topK, measure
   const frame = emptyFrame('score');
   frame.measure = measure === 'volume' ? 'volume' : DEFAULTS.measure;
   if (!score || !Array.isArray(score.ledgers)) return frame;
-  frame.ledgers = score.ledgers.map((l) => ({ index: Number(l.ledgerIndex), included: !l.missing, reason: l.missing ? 'missing' : null, hash: l.hash ?? null }));
+  frame.ledgers = score.ledgers.map((l) => ({ index: Number(l.ledgerIndex), included: !l.missing, reason: l.missing ? 'missing' : null, hash: l.hash ?? null, closeTime: isoSeconds(l.closeTimeIso) }));
   const row = new Map(frame.ledgers.map((l, i) => [l.index, i]));
   const counts = new Map(); // address → counts per row
   const volumes = new Map();
@@ -192,7 +198,7 @@ export function frameFromLive(window, { cast = [], topK = DEFAULTS.topK, measure
     const expected = l.txnCount == null ? null : Number(l.txnCount);
     const received = Number(l.received) || 0;
     const reason = expected == null ? 'unknown' : received < expected ? 'incomplete' : null;
-    return { index: Number(l.index), included: !reason, reason, hash: l.hash ?? null, received, expected };
+    return { index: Number(l.index), included: !reason, reason, hash: l.hash ?? null, received, expected, closeTime: Number.isFinite(Number(l.closeTime)) ? Number(l.closeTime) + RIPPLE_EPOCH_OFFSET : null };
   });
   const counts = new Map();
   const volumes = new Map();
@@ -244,7 +250,7 @@ export function frameFromAccountTx(fetched, { measure = DEFAULTS.measure, includ
     for (const [n, reason] of u.reasons) if (!reasons.has(n)) reasons.set(n, reason);
   }
   frame.ledgers = [];
-  for (let n = from; n <= to; n++) frame.ledgers.push({ index: n, included: !reasons.has(n), reason: reasons.get(n) ?? null, hash: null });
+  for (let n = from; n <= to; n++) frame.ledgers.push({ index: n, included: !reasons.has(n), reason: reasons.get(n) ?? null, hash: null, closeTime: null });
   const row = new Map(frame.ledgers.map((l, i) => [l.index, i]));
   frame.accounts = results.map((r) => ({ address: r.account, label: r.label || shortAddress(r.account) }));
   frame.chosen = 'named accounts';
@@ -256,6 +262,7 @@ export function frameFromAccountTx(fetched, { measure = DEFAULTS.measure, includ
     for (const e of r.entries ?? []) {
       const i = row.get(e.ledgerIndex);
       if (i == null || !frame.ledgers[i].included) continue;
+      if (frame.ledgers[i].closeTime == null && Number.isFinite(Number(e.tx?.date))) frame.ledgers[i].closeTime = Number(e.tx.date) + RIPPLE_EPOCH_OFFSET;
       all.push(e);
       if (!e.success && !includeFailed) continue;
       involved[i] += 1;
@@ -283,6 +290,90 @@ function xrpAmountOf(e) {
   const raw = typeof delivered === 'string' ? delivered : typeof e?.tx?.Amount === 'string' ? e.tx.Amount : typeof e?.tx?.DeliverMax === 'string' ? e.tx.DeliverMax : typeof e?.tx?.TakerGets === 'string' ? e.tx.TakerGets : null;
   if (raw == null || !/^\d+$/.test(raw)) return null;
   return { isXrp: true, value: Number(raw) / 1e6 };
+}
+
+/** Unix seconds of an ISO time, or null. */
+function isoSeconds(iso) {
+  const ms = typeof iso === 'string' ? Date.parse(iso) : NaN;
+  return Number.isFinite(ms) ? ms / 1000 : null;
+}
+
+/**
+ * A close time for every row: the known ones as they are; a row without one
+ * placed between its nearest dated neighbours in proportion to its ledger
+ * index; beyond the first or last dated row, at the dated span's mean close
+ * interval (ASSUMED_CLOSE_SECONDS when the span has one date or none).
+ * Null for every row when no row is dated.
+ * @param {(number|null)[]} times
+ * @param {number[]} indices  ledger indices of the rows
+ */
+export function interpolateCloseTimes(times, indices) {
+  const dated = [];
+  times.forEach((t, i) => {
+    if (Number.isFinite(t)) dated.push(i);
+  });
+  if (!dated.length) return times.map(() => null);
+  const first = dated[0];
+  const last = dated.at(-1);
+  const mean = last > first ? (times[last] - times[first]) / (indices[last] - indices[first]) : ASSUMED_CLOSE_SECONDS;
+  const out = times.slice();
+  let d = 0;
+  for (let i = 0; i < times.length; i++) {
+    if (Number.isFinite(times[i])) continue;
+    while (d < dated.length && dated[d] < i) d += 1;
+    const next = d < dated.length ? dated[d] : null;
+    const prev = d > 0 ? dated[d - 1] : null;
+    if (prev != null && next != null) out[i] = times[prev] + ((times[next] - times[prev]) * (indices[i] - indices[prev])) / (indices[next] - indices[prev]);
+    else if (prev != null) out[i] = times[prev] + (indices[i] - indices[prev]) * mean;
+    else out[i] = times[next] - (indices[next] - indices[i]) * mean;
+  }
+  return out;
+}
+
+/**
+ * The frame read in bins of one minute, hour or day (UTC) instead of one
+ * ledger: a bin is the run of ledgers whose close times fall in it, used only
+ * when every ledger in it is used (the first excluded ledger's reason is the
+ * bin's), and a bin with no ledger at all is absent, never zero, so a lag
+ * across it is still a distance in bins. The series are summed per bin, the
+ * totals recomputed over the bins used; the records are the ledgers' and are
+ * unchanged. A frame with no dated row cannot be binned and is returned as it
+ * is with `bin.error` set.
+ * @param {object} frame  from a frame builder, in ledgers
+ * @param {'ledger'|'minute'|'hour'|'day'} unit
+ */
+export function binFrame(frame, unit = 'ledger') {
+  const seconds = BINS[unit];
+  if (!frame || !seconds || (frame.unit ?? 'ledger') !== 'ledger') return frame;
+  const rows = frame.ledgers ?? [];
+  const times = interpolateCloseTimes(rows.map((l) => (Number.isFinite(l.closeTime) ? l.closeTime : null)), rows.map((l) => l.index));
+  if (!rows.length || times.every((t) => t == null)) return { ...frame, unit: 'ledger', bin: { unit, seconds, ledgers: rows.length, bins: 0, error: 'no close time is known for any ledger of the window' } };
+  const bins = [];
+  const byKey = new Map();
+  rows.forEach((l, i) => {
+    const key = Math.floor(times[i] / seconds);
+    let b = byKey.get(key);
+    if (!b) {
+      b = { key, rows: [], included: true, reason: null };
+      byKey.set(key, b);
+      bins.push(b);
+    }
+    b.rows.push(i);
+    if (!l.included && b.included) {
+      b.included = false;
+      b.reason = l.reason ?? 'missing';
+    }
+  });
+  bins.sort((x, y) => x.key - y.key);
+  const firstKey = bins[0].key;
+  const out = { ...frame, unit, bin: { unit, seconds, ledgers: rows.length, bins: bins.length, error: null }, series: new Map(), totals: new Map() };
+  out.ledgers = bins.map((b) => ({ index: b.key - firstKey, included: b.included, reason: b.reason, hash: null, from: rows[b.rows[0]].index, to: rows[b.rows.at(-1)].index, ledgers: b.rows.length, closeTime: b.key * seconds }));
+  for (const [address, series] of frame.series) {
+    const v = bins.map((b) => (b.included ? b.rows.reduce((sum, i) => sum + (rows[i].included ? Number(series[i]) || 0 : 0), 0) : 0));
+    out.series.set(address, v);
+    out.totals.set(address, v.reduce((a, c) => a + c, 0));
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -574,6 +665,20 @@ export function subWindowLags(a, b, maxLag, { positions = null, included = null,
     if (hi <= lo) continue;
     const mask = new Array(len).fill(false);
     for (let t = lo; t < hi; t++) mask[compact[t]] = true;
+    // a part in which either series does not vary has no correlation to report: undefined, not r 1.00
+    const flatIn = (s) => {
+      let first = null;
+      for (let t = lo; t < hi; t++) {
+        const v = Number(s[compact[t]]) || 0;
+        if (first == null) first = v;
+        else if (Math.abs(v - first) > 1e-12) return false;
+      }
+      return true;
+    };
+    if (flatIn(a) || flatIn(b)) {
+      out.push({ from: pos[compact[lo]], to: pos[compact[hi - 1]], r: null, lag: null, overlap: 0, ledgers: hi - lo, flat: true, reason: 'no variance' });
+      continue;
+    }
     const c = crossCorrelation(a, b, maxLag, { positions: pos, included: mask });
     const ok = c.overlap >= minOverlap;
     out.push({ from: pos[compact[lo]], to: pos[compact[hi - 1]], r: ok ? c.r : null, lag: ok ? c.lag : null, overlap: c.overlap, ledgers: hi - lo });
@@ -613,7 +718,7 @@ export function pairCoherence(frame, first, second, options = DEFAULTS) {
   const eventsA = frame.totals.get(first.address) ?? 0;
   const eventsB = frame.totals.get(second.address) ?? 0;
   const L = effectiveLag(o.maxLag, used);
-  const pair = { a: { ...first, events: eventsA }, b: { ...second, events: eventsB }, n: used, measure: frame.measure ?? o.measure, maxLag: L, judged: false, reason: null, flat: null, r: null, lag: null, overlap: null, shuffle: null, white: null, record: null, tested: null, subWindows: [], drift: null, cadence: null, beat: null, byLag: null };
+  const pair = { a: { ...first, events: eventsA }, b: { ...second, events: eventsB }, n: used, measure: frame.measure ?? o.measure, unit: frame.unit ?? 'ledger', maxLag: L, judged: false, reason: null, flat: null, r: null, lag: null, overlap: null, shuffle: null, white: null, record: null, tested: null, subWindows: [], drift: null, cadence: null, beat: null, byLag: null };
   if (used < o.minLedgers) {
     pair.reason = `${plural(used, 'ledger')} used (guard ≥ ${o.minLedgers})`;
     return pair;
@@ -706,8 +811,9 @@ export function significant(pair, significance = DEFAULTS.significance) {
  * how many stand above the significance percentile on each null, so the
  * readout can be checked.
  */
-export function coherence(frame, options = DEFAULTS) {
+export function coherence(input, options = DEFAULTS) {
   const o = normalizeOptions(options);
+  const frame = o.bin !== 'ledger' && input ? binFrame(input, o.bin) : input;
   const ledgers = frame?.ledgers ?? [];
   const accounts = frame?.accounts ?? [];
   const pairs = [];
@@ -744,12 +850,14 @@ export function coherence(frame, options = DEFAULTS) {
     version: COHERENCE_VERSION,
     tier: TIER,
     source: frame?.source ?? 'none',
+    unit: frame?.unit ?? 'ledger',
+    bin: frame?.bin ?? null,
     measure: frame?.measure ?? o.measure,
     chosen: frame?.chosen ?? 'none',
     options: o,
     maxLag: L,
     maxOrder: P,
-    window: { from: ledgers[0]?.index ?? null, to: ledgers.at(-1)?.index ?? null, ledgers: ledgers.length, used, excluded },
+    window: { from: ledgers[0]?.from ?? ledgers[0]?.index ?? null, to: ledgers.at(-1)?.to ?? ledgers.at(-1)?.index ?? null, ledgers: ledgers.length, used, excluded, ledgerCount: frame?.bin?.ledgers ?? ledgers.length },
     accounts: accounts.map((a) => ({ ...a, events: frame.totals.get(a.address) ?? 0, ...own(a.address) })),
     records: frame?.records ? frame.records.length : null,
     fetched: frame?.fetched ?? null,
@@ -765,8 +873,9 @@ export function coherence(frame, options = DEFAULTS) {
 
 /** "B follows A by 2 ledgers", "A follows B by 1 ledger", "in step", for a lag. */
 export function followText(pair, lag = pair?.lag) {
-  if (lag > 0) return `${pair.b.label} follows ${pair.a.label} by ${plural(lag, 'ledger')}`;
-  if (lag < 0) return `${pair.a.label} follows ${pair.b.label} by ${plural(-lag, 'ledger')}`;
+  const unit = pair?.unit ?? 'ledger';
+  if (lag > 0) return `${pair.b.label} follows ${pair.a.label} by ${plural(lag, unit)}`;
+  if (lag < 0) return `${pair.a.label} follows ${pair.b.label} by ${plural(-lag, unit)}`;
   return 'in step';
 }
 
@@ -779,31 +888,32 @@ function nullText(s, tested) {
 /** One line per pair, in the project's voice; every number in it is one the statistic produced. */
 export function describePair(pair, { significance = DEFAULTS.significance } = {}) {
   const head = `${pair.a.label} ↔ ${pair.b.label}`;
+  const unit = pair.unit ?? 'ledger';
   if (!pair.judged) return `${head}: not judged: ${pair.reason}`;
   if (pair.flat?.a || pair.flat?.b) {
-    const why = pair.measure === 'volume' ? 'the same XRP volume in every ledger used, which for an account that moves no XRP is none' : 'the same count in every ledger used';
-    return `${head}: no coherence: ${pair.reason} (${why}) · ${plural(pair.n, 'ledger')} · events ${pair.a.events}/${pair.b.events} · ${pair.record ? describeConnections(pair.record) : 'record not available'}`;
+    const why = pair.measure === 'volume' ? `the same XRP volume in every ${unit} used, which for an account that moves no XRP is none` : `the same count in every ${unit} used`;
+    return `${head}: no coherence: ${pair.reason} (${why}) · ${plural(pair.n, unit)} · events ${pair.a.events}/${pair.b.events} · ${pair.record ? describeConnections(pair.record) : 'record not available'}`;
   }
   const w = pair.white;
   const parts = [];
   if (w && w.r != null) {
     parts.push(`prewhitened r ${w.r.toFixed(2)} at lag ${fmtLag(w.lag)} (${followText(pair, w.lag)}) ${nullText(w.shuffle, pair.tested)}`);
     parts.push(`raw r ${pair.r.toFixed(2)} at lag ${fmtLag(pair.lag)} ${nullText(pair.shuffle, pair.tested)}`);
-    parts.push(`${plural(pair.n, 'ledger')} (overlap ${pair.overlap}; ${plural(w.n, 'residual row')} after AR(${w.ar.a})/AR(${w.ar.b}), overlap ${w.overlap})`);
+    parts.push(`${plural(pair.n, unit)} (overlap ${pair.overlap}; ${plural(w.n, 'residual row')} after AR(${w.ar.a})/AR(${w.ar.b}), overlap ${w.overlap})`);
   } else {
     parts.push(`raw r ${pair.r.toFixed(2)} at lag ${fmtLag(pair.lag)} (${followText(pair)}) ${nullText(pair.shuffle, pair.tested)}`);
     parts.push(`prewhitened: ${w ? w.reason : 'not computed'}`);
-    parts.push(`${plural(pair.n, 'ledger')} (overlap ${pair.overlap})`);
+    parts.push(`${plural(pair.n, unit)} (overlap ${pair.overlap})`);
   }
   parts.push(`events ${pair.a.events}/${pair.b.events}`);
   if (pair.record) {
     const text = describeConnections(pair.record);
     parts.push(!pair.record.count && significant(pair, significance) ? `co-activity, not a relation: ${text}` : text);
   } else parts.push('record not available');
-  const subs = pair.subWindows.filter((s) => s.lag != null);
-  if (subs.length >= 2) parts.push(`${subs.length} parts of ${subs[0].ledgers}: lag ${subs.map((s) => `${fmtLag(s.lag)} (r ${s.r.toFixed(2)})`).join(', ')}`);
+  const subs = pair.subWindows.filter((s) => s.lag != null || s.flat);
+  if (subs.length >= 2) parts.push(`${subs.length} parts of ${subs[0].ledgers}: lag ${subs.map((s) => (s.flat ? `undefined (${s.reason})` : `${fmtLag(s.lag)} (r ${s.r.toFixed(2)})`)).join(', ')}`);
   const beat = pair.beat;
-  if (beat) parts.push(beat.shared != null ? `shared cadence of ${plural(beat.shared, 'ledger')}` : `cadences of ${beat.periods[0]} and ${beat.periods[1]} ledgers: a mismatch, the alignment recurs every ${plural(beat.every, 'ledger')}`);
+  if (beat) parts.push(beat.shared != null ? `shared cadence of ${plural(beat.shared, unit)}` : `cadences of ${beat.periods[0]} and ${beat.periods[1]} ${unit}s: a mismatch, the alignment recurs every ${plural(beat.every, unit)}`);
   return `${head}: ${parts.join(' · ')}`;
 }
 
@@ -824,13 +934,15 @@ export function readout(report) {
   const lines = [];
   const excluded = Object.entries(w.excluded ?? {}).map(([k, n]) => `${n} ${EXCLUSIONS[k] ?? k}`);
   const span = w.from != null ? `#${w.from}–#${w.to}` : 'empty';
-  lines.push(`coherence v${report.version} · ${SOURCE_WORDS[report.source] ?? report.source} ${span} · ${w.used} of ${plural(w.ledgers, 'ledger')} used${excluded.length ? ` (excluded: ${excluded.join(', ')})` : ''}`);
-  const measure = report.measure === 'volume' ? 'log volume per ledger (sum of log10(1 + XRP) of the XRP-denominated amounts submitted)' : report.measure === 'involved' ? 'transactions involved in per ledger (the account anywhere in the transaction or its metadata)' : 'transactions submitted per ledger';
+  const unit = report.unit ?? 'ledger';
+  const binned = report.bin && !report.bin.error ? ` (${fmtN(report.bin.ledgers)} ledgers in bins of one ${unit}, UTC)` : report.bin?.error ? ` (bins of one ${o.bin}: ${report.bin.error}; read per ledger)` : '';
+  lines.push(`coherence v${report.version} · ${SOURCE_WORDS[report.source] ?? report.source} ${span} · ${w.used} of ${plural(w.ledgers, unit)} used${binned}${excluded.length ? ` (excluded: ${excluded.join(', ')})` : ''}`);
+  const measure = report.measure === 'volume' ? `log volume per ${unit} (sum of log10(1 + XRP) of the XRP-denominated amounts submitted)` : report.measure === 'involved' ? `transactions involved in per ${unit} (the account anywhere in the transaction or its metadata)` : `transactions submitted per ${unit}`;
   const origin = report.source === 'live' ? 'counted as the stream delivered them' : report.source === 'account_tx' ? `from account_tx (failed ${report.fetched?.includeFailed ? 'included' : 'excluded'})` : 'from the score (events selected by the listening settings)';
   const L = report.maxLag ?? o.maxLag;
   const P = report.maxOrder ?? L;
-  const lagText = L < o.maxLag ? `lags ±${L} ledgers (a quarter of the ${w.used} used; the option is ±${o.maxLag})` : `lags ±${L} ledgers`;
-  lines.push(`series: ${measure}, ${origin} · accounts: ${report.chosen} · ${lagText} · guard ≥${o.minLedgers} ledgers, ≥${o.minEvents} events each · null: up to ${o.shuffles} circular shifts beyond ±${L}, seed ${o.seed}, on the raw series and on the residuals · prewhitening: each series less its own AR fit (Burg, order by AICc up to ${P}); pairs ranked by the prewhitened r · parts of ≥${3 * L} ledgers for inspection`);
+  const lagText = L < o.maxLag ? `lags ±${L} ${unit}s (a quarter of the ${w.used} used; the option is ±${o.maxLag})` : `lags ±${L} ${unit}s`;
+  lines.push(`series: ${measure}, ${origin} · accounts: ${report.chosen} · ${lagText} · guard ≥${o.minLedgers} ${unit}s, ≥${o.minEvents} events each · null: up to ${o.shuffles} circular shifts beyond ±${L}, seed ${o.seed}, on the raw series and on the residuals · prewhitening: each series less its own AR fit (Burg, order by AICc up to ${P}); pairs ranked by the prewhitened r · parts of ≥${3 * L} ${unit}s for inspection`);
   if (report.fetched) {
     const f = report.fetched;
     const v = f.validatedLedger ? `validated ledger #${f.validatedLedger.index} at query time` : 'validated ledger at query time unknown';
@@ -842,7 +954,7 @@ export function readout(report) {
     });
     lines.push(`account_tx${f.host ? ` on ${f.host}` : ''} · ${v} · ${per.join('; ')}`);
   }
-  const ownText = (a) => `${a.cadence ? `, cadence ${plural(a.cadence.period, 'ledger')} (self-correlation ${a.cadence.r.toFixed(2)})` : ''}${a.ar != null ? `, AR(${a.ar})` : ''}`;
+  const ownText = (a) => `${a.cadence ? `, cadence ${plural(a.cadence.period, unit)} (self-correlation ${a.cadence.r.toFixed(2)})` : ''}${a.ar != null ? `, AR(${a.ar})` : ''}`;
   lines.push(`accounts: ${report.accounts.length ? report.accounts.map((a) => `${a.label} = ${a.address} (${plural(a.events, 'event')}${ownText(a)})`).join('; ') : 'none'}`);
   const recordText = report.records == null ? 'not available' : report.source === 'live' ? `${fmtN(report.records)} transactions heard in the ledgers used` : report.source === 'account_tx' ? `${fmtN(report.records)} transactions of the named accounts in the ledgers used` : `${fmtN(report.records)} transactions of the window’s ledgers (failed included)`;
   const pct = Math.round(o.significance * 100);

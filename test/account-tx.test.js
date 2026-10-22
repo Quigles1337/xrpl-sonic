@@ -182,7 +182,7 @@ describe('the frame from account_tx', () => {
     const fetched = await fetchAccountSeries(node.request, [{ address: A, label: 'Ay' }, { address: B, label: 'Bee' }], { from: 100, to: 129, ...FAST });
     const report = coherence(frameFromAccountTx(fetched, { host: 's2.ripple.com' }));
     const text = readout(report);
-    assert.match(text, /^coherence v2 · account_tx #100–#129 · 30 of 30 ledgers used\n/);
+    assert.match(text, /^coherence v3 · account_tx #100–#129 · 30 of 30 ledgers used\n/);
     assert.match(text, /series: transactions submitted per ledger, from account_tx \(failed excluded\) · accounts: named accounts · lags ±7 ledgers/);
     assert.match(text, /\naccount_tx on s2\.ripple\.com · validated ledger #140 at query time · Ay: bounds #100–#129, 2 pages in 2 requests, 41 entries; Bee: bounds #100–#129, 2 pages in 2 requests, 50 entries\n/);
     assert.match(text, /\nrecord: 81 transactions of the named accounts in the ledgers used · pairs tested: 1 · above the 95th of their shuffles: raw 0, prewhitened 0 · chance alone gives about 0\.0 of 0 · 1 pair with fewer than 20 shifts, where the 95th cannot be resolved\n/);
@@ -263,7 +263,7 @@ describe('the recorded 1000-ledger account_tx window', () => {
     assert.ok(report.pairs.every((p) => Math.abs(p.r) <= 0.11 && Math.abs(p.white.r) <= 0.11), 'the standard error at 1000 ledgers is about 0.03; the peak over 17 lags of noise about 0.08');
     assert.deepEqual(report.pairs[4].beat, { shared: 3 }, 'the two market makers share a three-ledger cadence');
     const lines = readout(report).split('\n');
-    assert.equal(lines[0], 'coherence v2 · account_tx #107821080–#107822079 · 1000 of 1000 ledgers used');
+    assert.equal(lines[0], 'coherence v3 · account_tx #107821080–#107822079 · 1000 of 1000 ledgers used');
     assert.match(lines[2], /^account_tx on s2\.ripple\.com · validated ledger #\d+ at query time · rBTw…jjah: bounds #107821080–#107822079, 81 pages in \d+ requests, 16133 entries; rMsX…xgfY: bounds #107821080–#107822079, 19 pages in \d+ requests, 3780 entries; /);
     assert.equal(lines[4], 'record: 44 transactions of the named accounts in the ledgers used · pairs tested: 10 · above the 95th of their shuffles: raw 1, prewhitened 1 · chance alone gives about 0.5 of 10', 'the fixture keeps the 44 connecting records of the 26,447');
     assert.equal(lines.length, 6 + 10 + 1, 'five header lines, the tier line, ten pairs and one line of hashes');

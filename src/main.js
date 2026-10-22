@@ -18,7 +18,8 @@ import { buildScore, scoreCaption, transcript, formatClock, clipRanges, ledgerAt
 import { Transport } from './transport.js';
 import { LiveWindow, momentFromLive, momentFromReplay, momentPosition, isMoment } from './moment.js';
 import { describeReport, factsForCase, importAnnotations } from './describe.js';
-import { frameFromScore, frameFromLive, coherence, readout as coherenceReadout, describePair } from './coherence.js';
+import { frameFromScore, frameFromLive, coherence, readout as coherenceReadout, describePair, BIN_NAMES, DEFAULTS as COHERENCE_DEFAULTS } from './coherence.js';
+import { fieldModel } from './field.js';
 import { fetchCaseLedgers } from './ledgers.js';
 import { speak, hush } from './speech.js';
 import { Geiger } from './geiger.js';
@@ -107,6 +108,7 @@ const ledgerState = {
 };
 const stats = { played: 0, dropped: 0 };
 const live = new LiveWindow(); // the last validated ledgers heard live, for "Save this moment" (src/moment.js)
+const field = { bin: COHERENCE_DEFAULTS.bin, model: null, lastSummary: '', lastLive: 0 }; // the interference field's bin (a per-case choice), model and bookkeeping (src/field.js)
 const recentTx = []; // timestamps for the tx/s readout
 const lastMinute = []; // timestamps for the snapshot overlay (60 s window)
 const capture = captureSupport(globalThis);
@@ -165,6 +167,17 @@ const ui = createUI({
     onPrev: (item) => inspectNeighbour(item, -1),
     onNext: (item) => inspectNeighbour(item, +1),
     onAnnotate: (event, item) => annotateEvent(event, item),
+  },
+  fieldActions: {
+    // the bin is a per-case choice, not a setting: it starts at the ledger and is printed on every line and on the picture
+    binNow: () => field.bin,
+    onChange: (patch) => {
+      if ('bin' in patch && BIN_NAMES.includes(patch.bin)) {
+        field.bin = patch.bin;
+        if (field.bin !== 'ledger') ui.logMessage(`Coherence reads the series per ${field.bin} now; the live window stays per ledger unless this is changed back.`);
+      }
+      refreshField({ announce: true });
+    },
   },
   midiActions: {
     onSave: () => saveMidi(),
@@ -229,6 +242,7 @@ const ui = createUI({
       geiger.detector?.setCast(settings.cast);
     }
     if ('exposure' in patch) viz.setExposure(settings.exposure);
+    if ('field' in patch || 'cast' in patch) refreshField({ announce: 'field' in patch });
     if ('network' in patch || 'explorer' in patch) ui.setCast(settings.cast);
     if (session.active && ['scale', 'key', 'enabled', 'includeFailed', 'quietMode', 'quietThreshold', 'cast', 'castMode'].some((k) => k in patch)) rebuildScore();
   },
@@ -576,6 +590,7 @@ function onMessage(msg) {
       geigerLiveLedger(Number(msg.ledger_index));
       onLedger(ledgerToEvent(msg));
       pollFee();
+      if (settings.field?.mode !== 'off' && ++field.lastLive % 5 === 0) refreshField();
       break;
     case 'transaction':
       if (session.active || session.loading) break;
@@ -849,6 +864,7 @@ async function runCase(theCase) {
   ui.setStatus('connected', caseStatusText(), undefined);
   applyDrone();
   renderHealth();
+  refreshField();
 }
 
 /** Settings changed while a case plays: rebuild the score from the cached ledgers, keeping the position. */
@@ -861,6 +877,7 @@ function rebuildScore() {
   s.transport.setScore(s.score);
   ui.transport.setScore(s.score, caseTitle(s.case));
   ui.casePanel.setCase(s.case, s.score);
+  refreshField();
   syncHash();
 }
 
@@ -1124,6 +1141,7 @@ function endSession({ quiet = false } = {}) {
   midiOut.allNotesOff();
   ui.casePanel.setCase(session.pending && !quiet ? session.pending : null, null);
   ui.inspector.hide();
+  refreshField();
   if (running && stream) {
     resetLedgerState();
     const host = stream.endpoint ? stream.endpoint.replace(/^wss:\/\//, '') : '';
@@ -1162,7 +1180,14 @@ canvas.addEventListener('click', (e) => {
   if (query.mode === 'overlay') return;
   if (viz.consumeDragClick()) return; // the click that ends a drag is not an inspect
   const p = viz.hitTest(e.clientX, e.clientY);
-  if (p?.event) inspect(p.event);
+  if (p?.event) {
+    inspect(p.event);
+    return;
+  }
+  // a fringe region of the field: the pair's full line (src/field.js); anywhere else closes it
+  const hit = viz.fieldHit(e.clientX, e.clientY);
+  if (hit) ui.showFieldLine({ label: hit.pair.label, line: hit.pair.line, detail: hit.pair.detail });
+  else ui.hideFieldLine();
 });
 
 // ---------------------------------------------------------------------------
@@ -1323,16 +1348,55 @@ async function describeNow(level = 'gist', { budget } = {}) {
  * playing case's score, else over the ledgers heard live; the cast, or with
  * none the top submitters.
  */
-function coherenceNow({ measure = 'count', topK, maxLag } = {}) {
+function coherenceNow({ measure = 'count', topK, maxLag, bin = field.bin } = {}) {
   const s = session.active;
   const frame = s ? frameFromScore(s.score, { cast: s.case.cast, topK, measure, ledgers: s.ledgers }) : frameFromLive(live, { cast: settings.cast ?? [], topK, measure });
-  return coherence(frame, { maxLag });
+  return coherence(frame, { maxLag, bin });
+}
+
+/**
+ * The interference field (src/field.js, docs/coherence.md phase 2): the
+ * model from the coherence report over the playing case or the live window,
+ * for the cast, in the field's mode; nothing when the field is off.
+ */
+function fieldNow() {
+  const mode = settings.field?.mode ?? 'off';
+  if (mode === 'off') return fieldModel(null, { mode: 'off', cast: settings.cast ?? [] });
+  const cast = session.active ? session.active.case.cast : settings.cast ?? [];
+  return fieldModel(coherenceNow(), { mode, pair: settings.field?.pair ?? null, cast });
+}
+
+/** Recompute the field and hand it to the plate; the sentence for the panel (and, when announced, the tape) says what is drawn or why nothing is. */
+function refreshField({ announce = false } = {}) {
+  const model = fieldNow();
+  field.model = model;
+  viz.setField(model.on ? model : null);
+  const text = model.on ? (model.summary ?? `field: ${model.pairs.length} of ${model.tested} pair${model.tested === 1 ? '' : 's'} drawn · ${model.pairs.map((p) => p.label).join('; ')} · ${model.caption}`) : 'Off. Interference between cast sigils, drawn only for pairs above the coherence bar; a click on a fringe shows the pair’s line.';
+  ui.fieldPanel.setSummary(text);
+  if (announce && text !== field.lastSummary) ui.logMessage(model.on ? text : 'Field off.', 'info');
+  field.lastSummary = text;
+  if (!model.on) ui.hideFieldLine();
+  return model;
+}
+
+/** A frame given as JSON (ledgers, accounts, series, totals, records) run through the statistic and the field, for checks on data the page cannot fetch. */
+function coherenceFromFrame(raw, { cast = null, mode = 'cast', pair = null, bin = field.bin } = {}) {
+  const frame = { source: raw.source ?? 'score', measure: raw.measure ?? 'count', unit: 'ledger', bin: null, ledgers: raw.ledgers ?? [], accounts: raw.accounts ?? [], series: new Map(Object.entries(raw.series ?? {})), totals: new Map(Object.entries(raw.totals ?? {})), chosen: raw.chosen ?? 'named accounts', records: raw.records ?? null, fetched: raw.fetched ?? null };
+  const report = coherence(frame, { bin });
+  const members = cast ?? normalizeCast(frame.accounts.map((a) => ({ address: a.address, label: a.label })));
+  const model = fieldModel(report, { mode, pair, cast: members });
+  field.model = model;
+  viz.setField(model.on ? model : null);
+  ui.fieldPanel.setSummary(model.summary ?? `field: ${model.pairs.length} of ${model.tested} pairs drawn`);
+  ui.casePanel.setCoherence(coherenceReadout(report));
+  return { report, model };
 }
 
 /** The readout into the case panel, and the top pair's line on the tape. */
 function showCoherence() {
   const report = coherenceNow();
   ui.casePanel.setCoherence(coherenceReadout(report));
+  refreshField();
   const first = report.pairs[0];
   ui.logMessage(first ? `Coherence · ${describePair(first)}` : report.window.ledgers ? 'Coherence: fewer than two accounts to compare.' : 'Coherence: no ledger heard yet.', 'info');
   return report;
@@ -1510,6 +1574,7 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.key === 'Escape') {
     ui.inspector.hide();
+    ui.hideFieldLine();
     return;
   }
   if ((e.key === 's' || e.key === 'S') && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -1579,6 +1644,10 @@ window.xrplSonic = {
   importNotes,
   coherenceNow,
   showCoherence,
+  fieldNow,
+  refreshField,
+  coherenceFromFrame,
+  field,
   openCase: (raw) => openCase(raw, 'case', 'the console'),
   playClip,
   setBlind,

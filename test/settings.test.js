@@ -2,6 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { DEFAULT_SETTINGS, sanitizeSettings, loadSettings, saveSettings, mappingOptions, migrateV1, STORAGE_KEY, LEGACY_STORAGE_KEY } from '../src/settings.js';
+import { sanitizeField, FIELD_MODES } from '../src/settings.js';
 
 describe('settings', () => {
   test('sanitize returns defaults for garbage and never shares the enabled object', () => {
@@ -134,5 +135,22 @@ describe('settings', () => {
     assert.equal(mappingOptions({ ...base, quietMode: true }).quietThreshold, 250);
     assert.equal(mappingOptions(base).scale, base.scale);
     assert.equal(mappingOptions(base).enabled, base.enabled);
+  });
+});
+
+describe('settings: the interference field (phase 2)', () => {
+  test('off by default; a known mode; pair mode needs two distinct valid addresses or falls back to cast', () => {
+    assert.deepEqual(FIELD_MODES, ['off', 'cast', 'pair']);
+    assert.deepEqual(sanitizeSettings(null).field, { mode: 'off', pair: null });
+    assert.deepEqual(sanitizeField({ mode: 'cast' }), { mode: 'cast', pair: null });
+    assert.deepEqual(sanitizeField({ mode: 'bogus' }), { mode: 'off', pair: null });
+    const a = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
+    const b = 'rKYdJJLAgxbJcn9Ria2X5jMMiqP91r4qy';
+    assert.deepEqual(sanitizeField({ mode: 'pair', pair: [a, b] }), { mode: 'pair', pair: [a, b] });
+    assert.deepEqual(sanitizeField({ mode: 'pair', pair: [a, a] }), { mode: 'cast', pair: null }, 'the same address twice is no pair');
+    assert.deepEqual(sanitizeField({ mode: 'pair', pair: [a, 'nope'] }), { mode: 'cast', pair: null });
+    assert.deepEqual(sanitizeField({ mode: 'pair' }), { mode: 'cast', pair: null });
+    assert.deepEqual(sanitizeSettings({ field: { mode: 'pair', pair: [a, b] } }).field, { mode: 'pair', pair: [a, b] });
+    assert.equal(sanitizeSettings({ field: 'cast' }).field.mode, 'off', 'not an object');
   });
 });
