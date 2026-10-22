@@ -833,6 +833,20 @@ input {
   box-shadow: 0 0 6px var(--c);
 }
 
+.constellation .legend span.currency::before {
+  border-radius: 2px;
+}
+
+.constellation .legend span.note {
+  flex-basis: 100%;
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.constellation .legend span.note::before {
+  display: none;
+}
+
 .constellation .empty {
   position: absolute;
   inset: 0;
@@ -868,6 +882,23 @@ input {
 
 .tip .tip-line {
   color: var(--text-dim);
+}
+
+.tip .tip-line.swatch {
+  padding-left: 14px;
+  position: relative;
+}
+
+.tip .tip-line.swatch::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.45em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 5px var(--c);
 }
 
 /* Type mix bars */

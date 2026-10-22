@@ -13,6 +13,7 @@ import { classify, parseRoute, formatRoute, routeFor, routeTitle } from './route
 import { sigilSvg } from './sigil.js';
 import { loadAccount, loadOlder, coverageOf } from './account.js';
 import { Constellation } from './constellation.js';
+import { describeEdge, describeStrand, hueCss } from './edges.js';
 import { renderHome, latestListItem, renderAccount, renderAccountMissing, renderTx, renderLedger, drawPlate, txRow, renderNotice } from './views.js';
 
 const query = new URLSearchParams(location.search);
@@ -252,10 +253,20 @@ async function renderAccountRoute(route, token) {
   let page = null;
   let constellation = null;
   const queued = [];
+  const caption = { tx: '', lines: '' };
+  const describeModel = () => {
+    const m = constellation.model;
+    const bits = [];
+    if (m.counts.strands.total) bits.push(m.counts.strands.drawn === m.counts.strands.total ? `${m.counts.strands.total} transaction strand${m.counts.strands.total === 1 ? '' : 's'}` : `${m.counts.strands.drawn} of ${m.counts.strands.total} transaction strands drawn (the newest)`);
+    if (m.counts.trust.total) bits.push(m.counts.trust.drawn === m.counts.trust.total ? `${m.counts.trust.total} trust line${m.counts.trust.total === 1 ? '' : 's'}` : `${m.counts.trust.drawn} of ${m.counts.trust.total} trust lines drawn (the largest)`);
+    page.setCoverage([caption.tx, caption.lines, bits.length ? `${bits.join(' · ')}.` : ''].filter(Boolean).join(' '));
+    page.setLegend(m);
+  };
   const stars = (f, part) => {
     const parties = f.counterparties.parties;
-    constellation.setData({ ...constellation.data, parties });
-    page.setCoverage(parties.length ? `Stars from ${coverageOf(f.counterparties.covers)}.` : part.state === 'unavailable' ? `The transactions could not be read (${part.error?.code ?? 'error'}), so there are no stars.` : 'No counterparties in the loaded transactions.');
+    constellation.setData({ ...constellation.data, parties, entries: f.parts.tx?.entries ?? [] });
+    caption.tx = parties.length ? `Stars from ${coverageOf(f.counterparties.covers)}.` : part.state === 'unavailable' ? `The transactions could not be read (${part.error?.code ?? 'error'}), so there are no stars.` : 'No counterparties in the loaded transactions.';
+    describeModel();
   };
   const applyPart = (name, part, f) => {
     if (!page) {
@@ -267,7 +278,11 @@ async function renderAccountRoute(route, token) {
       stars(f, part);
     } else if (name === 'lines') {
       page.fill({ lines: part });
-      if (part.items.length) constellation.setData({ ...constellation.data, lines: part.items.map((l) => ({ currency: decodeCurrency(l.currency).slice(0, 8), issuer: l.account, balance: l.balance })) });
+      if (part.items.length) {
+        constellation.setData({ ...constellation.data, lines: part.items });
+        caption.lines = part.state === 'partial' ? 'Trust lines from the first page the node returned.' : '';
+        describeModel();
+      }
     } else page.fill({ [name]: part });
   };
   // One validated ledger; every part at it; each fills in as it lands.
@@ -288,12 +303,12 @@ async function renderAccountRoute(route, token) {
       const canvas = page.constellationBox.querySelector('canvas');
       constellation = new Constellation(canvas, {
         reduced: reducedMotion,
-        onHover: (party, x, y) => showTip(party, x, y),
-        onClick: (party) => navigate({ name: 'account', address: party.address, tag: null }),
+        onHover: (star, x, y) => showTip(star, x, y),
+        onClick: (star) => navigate({ name: 'account', address: star.address, tag: null }),
       });
       state.constellation = constellation;
       const xrp = Number(part.result.account_data.Balance) / 1e6;
-      constellation.setData({ account: address, xrp, reserve: page.reserve.total, lines: [], parties: [] });
+      constellation.setData({ account: address, xrp, reserve: page.reserve.total, lines: [], parties: [], entries: [] });
       for (const [n, p, ff] of queued.splice(0)) applyPart(n, p, ff);
     },
   });
@@ -332,7 +347,7 @@ function fillTape(page, part, address, token, facts, { append = false, entries =
             if (token !== state.token || !more) return;
             fillTape(page, facts.parts.tx, address, token, facts, { append: true, entries: more.entries });
             const parties = facts.counterparties.parties;
-            state.constellation?.setData({ ...state.constellation.data, parties });
+            state.constellation?.setData({ ...state.constellation.data, parties, entries: f.parts.tx?.entries ?? [] });
             page.setCoverage(parties.length ? `Stars from ${coverageOf(facts.counterparties.covers)}.` : 'No counterparties in the loaded transactions.');
           } catch (err) {
             note(`Could not load older transactions: ${err?.message ?? err}`, 'err');
@@ -343,23 +358,32 @@ function fillTape(page, part, address, token, facts, { append = false, entries =
   );
 }
 
-function showTip(party, x, y) {
-  if (!party) {
+function showTip(star, x, y) {
+  if (!star) {
     tip.classList.add('hidden');
     return;
   }
-  const cats = Object.entries(party.categories ?? {})
+  const party = star.party;
+  const cats = Object.entries(party?.categories ?? {})
     .sort((a, b) => b[1] - a[1])
     .map(([k, v]) => `${k} ${v}`)
     .join(' · ');
-  const roles = Object.entries(party.roles ?? {})
+  const roles = Object.entries(party?.roles ?? {})
     .map(([k, v]) => `${k} ${v}`)
     .join(' · ');
+  const swatch = (text, colour) => el('div', { class: 'tip-line swatch', style: `--c: ${colour}`, text });
+  const strands = star.strands ?? [];
+  const shown = strands.slice(0, 6);
   tip.replaceChildren(
-    el('div', { class: 'tip-title' }, [svg(sigilSvg(party.address, 14)), el('span', { text: party.address })]),
-    el('div', { class: 'tip-line', text: `${party.count} transaction${party.count === 1 ? '' : 's'} together · ${roles}` }),
-    el('div', { class: 'tip-line', text: cats }),
-    party.xrpIn || party.xrpOut ? el('div', { class: 'tip-line', text: `XRP in ${party.xrpIn.toLocaleString('en-US', { maximumFractionDigits: 2 })} · out ${party.xrpOut.toLocaleString('en-US', { maximumFractionDigits: 2 })}` }) : '',
+    el('div', { class: 'tip-title' }, [svg(sigilSvg(star.address, 14)), el('span', { text: star.address })]),
+    party
+      ? el('div', { class: 'tip-line', text: `${party.count} transaction${party.count === 1 ? '' : 's'} together · ${roles}` })
+      : el('div', { class: 'tip-line', text: 'no transactions together in the loaded records' }),
+    cats ? el('div', { class: 'tip-line', text: cats }) : '',
+    party?.xrpIn || party?.xrpOut ? el('div', { class: 'tip-line', text: `XRP in ${party.xrpIn.toLocaleString('en-US', { maximumFractionDigits: 2 })} · out ${party.xrpOut.toLocaleString('en-US', { maximumFractionDigits: 2 })}` }) : '',
+    ...(star.trust ?? []).map((e) => swatch(describeEdge(e), hueCss(e.hue))),
+    ...shown.map((t) => swatch(`#${Number(t.ledgerIndex).toLocaleString('en-US')} ${describeStrand(t)}`, `rgb(${t.rgb.join(' ')})`)),
+    strands.length > shown.length ? el('div', { class: 'tip-line', text: `and ${strands.length - shown.length} more strand${strands.length - shown.length === 1 ? '' : 's'}` }) : '',
     el('div', { class: 'hint', text: 'click to open' }),
   );
   tip.classList.remove('hidden');

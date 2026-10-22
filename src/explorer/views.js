@@ -204,16 +204,17 @@ export function renderAccount({ address, tag = null, info, network, reserve, onH
     readout('Owned objects', data ? fmtInt(data.OwnerCount) : '—', '', 'trust lines, offers, escrows…'),
   ]);
   const hero = el('section', { class: 'card hero' }, [identity, readouts]);
-  const constellationBox = el('div', { class: 'constellation' }, [
-    el('canvas', { 'aria-label': 'Balances as orbits and counterparties as a constellation' }),
-    el('div', { class: 'legend' }, [
-      el('span', { style: '--c: #4cc9f0', text: 'XRP orbit' }),
-      el('span', { style: '--c: #f9c74f', text: 'reserve' }),
-      el('span', { style: '--c: #e8eefb', text: 'counterparties: nearer = more often' }),
-    ]),
-  ]);
+  const legend = el('div', { class: 'legend' });
+  const legendFixed = () => [el('span', { style: '--c: #4cc9f0', text: 'XRP orbit' }), el('span', { style: '--c: #f9c74f', text: 'reserve' }), el('span', { style: '--c: #e8eefb', text: 'stars: nearer = more often' })];
+  legend.replaceChildren(...legendFixed());
+  const constellationBox = el('div', { class: 'constellation' }, [el('canvas', { 'aria-label': 'Balances as orbits, counterparties as a constellation, trust lines and transactions as the lines between' }), legend]);
   const coverage = el('p', { class: 'hint coverage', text: 'Reading the recent transactions…' });
-  const constellationCard = el('section', { class: 'card' }, [el('h2', { text: 'Constellation' }), constellationBox, coverage, el('p', { class: 'hint', text: 'Stars are the accounts in the loaded transactions, placed on a sphere around the account, nearest the most frequent, coloured by what they mostly did together; a star’s ring is its sigil’s hue. Each held currency orbits on its own tilted plane with a bead travelling along it. Point at a star to name it, click to go there; drag to orbit the view, scroll to move closer, double-click to reset. Orbits are on a log scale.' })]);
+  const constellationCard = el('section', { class: 'card' }, [
+    el('h2', { text: 'Constellation' }),
+    constellationBox,
+    coverage,
+    el('p', { class: 'hint', text: 'Stars are the accounts in the loaded transactions and the counterparties of the trust lines, placed on a sphere around the account, nearest the most frequent (or the largest balance); a transaction counterparty is coloured by what they mostly did together, a trust-line counterparty by its currency; a star’s ring is its sigil’s hue. Each line from the centre is one record. A trust line is drawn in its currency’s colour, as wide as its balance, with an arrowhead on the trusted side: at the star when this account trusts it, at the centre when it trusts this account, both when both do; dashed when it holds no balance. A transaction is a strand in the colour of its type, as wide as its amount, with an arrowhead at the receiving end when value moved between the two, a bead near the star in the colour of its currency, dashed when it failed, dotted when it was a partial payment. Lines to the same star fan out side by side. Each held currency orbits on its own tilted plane with a bead travelling along it. Point at a star to read every line to it, click to go there; drag to orbit the view, scroll to move closer, double-click to reset. Widths and orbits are log scales in each amount’s own units; currencies are not converted.' }),
+  ]);
   const tape = el('ol', { class: 'tape', id: 'account-tape' }, [el('li', { class: 'skeleton', text: 'loading transactions…' })]);
   const foot = el('div', { class: 'tape-foot' });
   const tapeCard = el('section', { class: 'card' }, [el('h2', {}, [document.createTextNode('Recent transactions'), el('span', { class: 'count', id: 'tape-count' })]), tape, foot]);
@@ -288,7 +289,16 @@ export function renderAccount({ address, tag = null, info, network, reserve, onH
   function setCoverage(text) {
     coverage.textContent = text;
   }
-  return { nodes, tape, foot, constellationBox, fill, setCoverage, xrp, reserve: res };
+
+  /** The legend from the constellation's model: the types the strands are coloured by, then the currencies. */
+  function setLegend(model) {
+    const items = legendFixed();
+    for (const c of model?.categories ?? []) items.push(el('span', { style: `--c: rgb(${c.rgb.join(' ')})`, text: `${c.label} ×${c.count}` }));
+    for (const c of model?.currencies ?? []) items.push(el('span', { class: 'currency', style: `--c: rgb(${c.rgb.join(' ')})`, text: c.name }));
+    if (model?.counts?.trust?.total || model?.counts?.strands?.total) items.push(el('span', { class: 'note', text: 'arrow: who receives, who trusts · width: amount · dashed: failed or empty' }));
+    legend.replaceChildren(...items);
+  }
+  return { nodes, tape, foot, constellationBox, fill, setCoverage, setLegend, xrp, reserve: res };
 }
 
 function readout(label, value, cls = '', note = '') {
