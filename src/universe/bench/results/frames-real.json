@@ -1,0 +1,465 @@
+{
+  "at": "2026-10-23T00:40:59.940Z",
+  "note": "Brave (Chromium 155) on the user’s machine, 1536×741 CSS px at DPR 2, GPU string masked by the browser; through the page’s stats() with the extension; views sampled 4 s each after the sky reached its size; the two headless hour runs had finished",
+  "results": [
+    {
+      "renderer": "2d",
+      "actualRenderer": "2d",
+      "planets": 1000,
+      "views": {
+        "home": {
+          "meanMs": 4.78,
+          "p50": 4.68,
+          "p95": 5.63,
+          "maxMs": 6,
+          "lod": {
+            "far": 439,
+            "mid": 561,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 64,
+          "gpu": null,
+          "camera": 3.2
+        },
+        "closer": {
+          "meanMs": 4.87,
+          "p50": 4.84,
+          "p95": 5.55,
+          "maxMs": 5.9,
+          "lod": {
+            "far": 419,
+            "mid": 581,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 62,
+          "gpu": null,
+          "camera": 1.4
+        },
+        "inside": {
+          "meanMs": 4.97,
+          "p50": 4.92,
+          "p95": 5.53,
+          "maxMs": 6.2,
+          "lod": {
+            "far": 423,
+            "mid": 534,
+            "near": 2,
+            "culled": 41
+          },
+          "frames": 55,
+          "gpu": null,
+          "camera": 0.5
+        }
+      },
+      "stability": {
+        "steps": 32,
+        "meanMs": 1.0389062464237213,
+        "moved": 0.001325418352147788,
+        "maxMoved": 0.010137884172355323,
+        "movedShare": 0.009605169971671393,
+        "warm": 944,
+        "pairs": 49393
+      },
+      "memory": {
+        "records": 2650,
+        "planets": 1000,
+        "edges": 2616,
+        "layoutEdges": 2616,
+        "clusters": 28,
+        "hubSkips": 4,
+        "interned": 1000
+      },
+      "dpr": 2,
+      "size": [
+        1536,
+        741
+      ],
+      "ua": "Chrome/155.0.0.0",
+      "at": "2026-10-23T00:46:06.432Z"
+    },
+    {
+      "renderer": "2d",
+      "actualRenderer": "2d",
+      "planets": 5000,
+      "views": {
+        "home": {
+          "meanMs": 6.44,
+          "p50": 6.33,
+          "p95": 7.12,
+          "maxMs": 8.7,
+          "lod": {
+            "far": 2434,
+            "mid": 2566,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 240,
+          "gpu": null
+        },
+        "closer": {
+          "meanMs": 7.04,
+          "p50": 6.98,
+          "p95": 7.89,
+          "maxMs": 8.3,
+          "lod": {
+            "far": 2410,
+            "mid": 2590,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 241,
+          "gpu": null
+        },
+        "inside": {
+          "meanMs": 6.08,
+          "p50": 5.96,
+          "p95": 6.93,
+          "maxMs": 8.8,
+          "lod": {
+            "far": 2414,
+            "mid": 2586,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 240,
+          "gpu": null
+        }
+      },
+      "stability": {
+        "steps": 34,
+        "meanMs": 1.9552941111957325,
+        "moved": 0.0013436966971540846,
+        "maxMoved": 0.010239286858015671,
+        "movedShare": 0.008874892642427714,
+        "warm": 3782,
+        "pairs": 285165
+      },
+      "memory": {
+        "records": 6800,
+        "planets": 5000,
+        "edges": 6793,
+        "layoutEdges": 6793,
+        "clusters": 5,
+        "hubSkips": 2,
+        "interned": 5000
+      },
+      "dpr": 2,
+      "size": [
+        1536,
+        741
+      ],
+      "ua": "Chrome/155.0.0.0",
+      "at": "2026-10-23T00:40:59.941Z"
+    },
+    {
+      "renderer": "2d",
+      "actualRenderer": "2d",
+      "planets": 20000,
+      "views": {
+        "home": {
+          "meanMs": 42.16,
+          "p50": 39.72,
+          "p95": 50.53,
+          "maxMs": 50.5,
+          "lod": {
+            "far": 9592,
+            "mid": 10408,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 4,
+          "gpu": null,
+          "camera": 3.2
+        },
+        "closer": {
+          "meanMs": 48.07,
+          "p50": 44.49,
+          "p95": 69.39,
+          "maxMs": 69.4,
+          "lod": {
+            "far": 9458,
+            "mid": 10541,
+            "near": 0,
+            "culled": 1
+          },
+          "frames": 6,
+          "gpu": null,
+          "camera": 1.4
+        },
+        "inside": {
+          "meanMs": 33.19,
+          "p50": 31.81,
+          "p95": 40.15,
+          "maxMs": 43.2,
+          "lod": {
+            "far": 7886,
+            "mid": 5652,
+            "near": 152,
+            "culled": 6310
+          },
+          "frames": 56,
+          "gpu": null,
+          "camera": 0.5
+        }
+      },
+      "stability": {
+        "steps": 32,
+        "meanMs": 4.451718769967556,
+        "moved": 0.0013219388875858461,
+        "maxMoved": 0.011045248908860873,
+        "movedShare": 0.0054926764314247685,
+        "warm": 3303,
+        "pairs": 764226
+      },
+      "memory": {
+        "records": 25250,
+        "planets": 20000,
+        "edges": 25248,
+        "layoutEdges": 25248,
+        "clusters": 2,
+        "hubSkips": 0,
+        "interned": 20000
+      },
+      "dpr": 2,
+      "size": [
+        1536,
+        741
+      ],
+      "ua": "Chrome/155.0.0.0",
+      "at": "2026-10-23T00:42:52.064Z"
+    },
+    {
+      "renderer": "webgl",
+      "actualRenderer": "webgl",
+      "planets": 1000,
+      "views": {
+        "home": {
+          "meanMs": 0.71,
+          "p50": 0.66,
+          "p95": 1.26,
+          "maxMs": 1.3,
+          "lod": {
+            "far": 437,
+            "mid": 563,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 17,
+          "gpu": "Brave",
+          "camera": 3.2
+        },
+        "closer": {
+          "meanMs": 0.59,
+          "p50": 0.59,
+          "p95": 0.81,
+          "maxMs": 1,
+          "lod": {
+            "far": 418,
+            "mid": 582,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 69,
+          "gpu": "Brave",
+          "camera": 1.4
+        },
+        "inside": {
+          "meanMs": 0.69,
+          "p50": 0.69,
+          "p95": 0.97,
+          "maxMs": 1.1,
+          "lod": {
+            "far": 428,
+            "mid": 567,
+            "near": 5,
+            "culled": 0
+          },
+          "frames": 57,
+          "gpu": "Brave",
+          "camera": 0.5
+        }
+      },
+      "stability": {
+        "steps": 32,
+        "meanMs": 1.126093752682209,
+        "moved": 0.0013255387282975655,
+        "maxMoved": 0.009159453003503832,
+        "movedShare": 0.009693696883852694,
+        "warm": 944,
+        "pairs": 49625
+      },
+      "memory": {
+        "records": 2650,
+        "planets": 1000,
+        "edges": 2616,
+        "layoutEdges": 2616,
+        "clusters": 28,
+        "hubSkips": 4,
+        "interned": 1000
+      },
+      "dpr": 2,
+      "size": [
+        1536,
+        741
+      ],
+      "ua": "Chrome/155.0.0.0",
+      "at": "2026-10-23T00:46:06.329Z"
+    },
+    {
+      "renderer": "webgl",
+      "actualRenderer": "webgl",
+      "planets": 5000,
+      "views": {
+        "home": {
+          "meanMs": 1.11,
+          "p50": 1.09,
+          "p95": 1.67,
+          "maxMs": 1.9,
+          "lod": {
+            "far": 2448,
+            "mid": 2552,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 243,
+          "gpu": "Brave",
+          "camera": 3.2
+        },
+        "closer": {
+          "meanMs": 1.11,
+          "p50": 1.11,
+          "p95": 1.66,
+          "maxMs": 2.2,
+          "lod": {
+            "far": 2412,
+            "mid": 2588,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 243,
+          "gpu": "Brave",
+          "camera": 1.4
+        },
+        "inside": {
+          "meanMs": 1.04,
+          "p50": 1.04,
+          "p95": 1.58,
+          "maxMs": 1.7,
+          "lod": {
+            "far": 2447,
+            "mid": 2405,
+            "near": 124,
+            "culled": 24
+          },
+          "frames": 241,
+          "gpu": "Brave",
+          "camera": 0.5
+        }
+      },
+      "stability": {
+        "steps": 33,
+        "meanMs": 2.000757578647498,
+        "moved": 0.001377444171466738,
+        "maxMoved": 0.012,
+        "movedShare": 0.009426901702256407,
+        "warm": 4084,
+        "pairs": 289078
+      },
+      "memory": {
+        "records": 6650,
+        "planets": 5000,
+        "edges": 6644,
+        "layoutEdges": 6644,
+        "clusters": 4,
+        "hubSkips": 2,
+        "interned": 5000
+      },
+      "dpr": 2,
+      "size": [
+        1536,
+        741
+      ],
+      "ua": "Chrome/155.0.0.0",
+      "at": "2026-10-23T00:44:25.809Z"
+    },
+    {
+      "renderer": "webgl",
+      "actualRenderer": "webgl",
+      "planets": 20000,
+      "views": {
+        "home": {
+          "meanMs": 2.82,
+          "p50": 2.85,
+          "p95": 3.58,
+          "maxMs": 5.1,
+          "lod": {
+            "far": 9875,
+            "mid": 10125,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 242,
+          "gpu": "Brave",
+          "camera": 3.2
+        },
+        "closer": {
+          "meanMs": 2.59,
+          "p50": 2.59,
+          "p95": 3.12,
+          "maxMs": 3.4,
+          "lod": {
+            "far": 9898,
+            "mid": 10102,
+            "near": 0,
+            "culled": 0
+          },
+          "frames": 243,
+          "gpu": "Brave",
+          "camera": 1.4
+        },
+        "inside": {
+          "meanMs": 2.9,
+          "p50": 2.92,
+          "p95": 3.48,
+          "maxMs": 4,
+          "lod": {
+            "far": 9932,
+            "mid": 8718,
+            "near": 1052,
+            "culled": 298
+          },
+          "frames": 242,
+          "gpu": "Brave",
+          "camera": 0.5
+        }
+      },
+      "stability": {
+        "steps": 32,
+        "meanMs": 5.690624997019768,
+        "moved": 0.0013289830045547905,
+        "maxMoved": 0.012000000000000002,
+        "movedShare": 0.006988487853628537,
+        "warm": 13305,
+        "pairs": 1766773
+      },
+      "memory": {
+        "records": 21800,
+        "planets": 20000,
+        "edges": 21798,
+        "layoutEdges": 21798,
+        "clusters": 2,
+        "hubSkips": 0,
+        "interned": 20000
+      },
+      "dpr": 2,
+      "size": [
+        1536,
+        741
+      ],
+      "ua": "Chrome/155.0.0.0",
+      "at": "2026-10-23T00:43:37.018Z"
+    }
+  ]
+}

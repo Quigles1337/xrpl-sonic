@@ -78,12 +78,15 @@ for (const [name, label] of [
   if (!f) continue;
   line(`**Frame time, ${label}** (${f.note ?? `\`frames.mjs\`, ${f.seconds} s per view`}; the renderer's own time per frame, mean / p50 / p95 over the sampled frames, and how many planets fell in each pixel level at the home view):`);
   line();
-  line('| Renderer | Planets | Home view | Closer | Inside | Levels at home (splat / sprite / body / culled) | Layout step (worker) |');
+  const real = name === 'frames-real.json';
+  line(real ? '| Renderer | Planets | Home view (draw ms mean / p50 / p95 · fps) | Closer | Inside | Levels at home (splat / sprite / body / culled) | Layout step (worker) |' : '| Renderer | Planets | Home view | Closer | Inside | Levels at home (splat / sprite / body / culled) | Layout step (worker) |');
   line('| --- | --- | --- | --- | --- | --- | --- |');
   for (const r of f.results) {
     const v = (view) => {
       const x = r.views[view];
-      return x ? `${fmt(x.meanMs, 1)} / ${fmt(x.p50, 1)} / ${fmt(x.p95, 1)} ms` : '—';
+      if (!x) return '—';
+      const fps = real && x.frames != null ? ` · ${fmt(x.frames / (f.seconds ?? 4), 0)} fps` : '';
+      return `${fmt(x.meanMs, 1)} / ${fmt(x.p50, 1)} / ${fmt(x.p95, 1)} ms${fps}`;
     };
     const l = r.views.home?.lod ?? {};
     line(`| ${r.actualRenderer ?? r.renderer} | ${fmt(r.planets)} | ${v('home')} | ${v('closer')} | ${v('inside')} | ${fmt(l.far)} / ${fmt(l.mid)} / ${fmt(l.near)} / ${fmt(l.culled)} | ${r.stability ? `${fmt(r.stability.meanMs, 1)} ms, ${fmt(r.stability.warm)} warm` : '—'} |`);

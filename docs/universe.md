@@ -96,7 +96,102 @@ What was built on `feat/universe-spike`, what it measured, and what the numbers 
 
 ### Measured
 
-<!-- MEASUREMENTS -->
+All numbers below are read from the result files by `bench/report.mjs`; nothing is typed by hand. The machine: 24 logical cores, Windows 11, Brave (Chromium 155) as the real browser, which masks its GPU string. Two versions of the spike were measured: the two hour runs started before the renderer and the layout were retuned, so they ran the earlier code (base size 1.8 px, no splat level, repulsion scanned every neighbour); the frame-time matrices and the live checks ran the final code. The hour runs' memory and coverage numbers do not depend on that difference; their frame times and layout steps do, and the matrices below are the ones to read for those.
+
+#### What the stream delivers
+
+**The stream alone** (`stream-hour.mjs`, Node, mainnet, xrplcluster.com, 60.21 min from 2026-10-22T23:06:46.101Z):
+
+| Measure | Value |
+| --- | --- |
+| Ledgers closed | 925 (922 per hour) |
+| Transactions heard (distinct hashes) | 139,768 (139,285 per hour; 2,070 in the median minute, 19,162 in the busiest) |
+| Distinct accounts named (all parties, including the metadata's entry owners) | 12,696 (12,652 per hour; new accounts per minute fell from 945 in the first to 64 in the median later minute) |
+| Distinct submitters per minute (median) | 645 |
+| Coverage against txn_count | 100.00% (139,768 expected) |
+| Duplicate deliveries | 28,028 |
+| Failed (tec) among heard | 28,059 (20.1%) |
+| Raw JSON received | 482.2 MiB (3,013 bytes per transaction) |
+| Compact record (typed-array estimate) | 73 bytes per transaction (9.7 MiB for the hour) |
+| Transaction types, largest first | Batch 51,650 · OfferCreate 34,397 · Payment 34,323 · TicketCreate 7,573 · OfferCancel 4,159 · NFTokenCreateOffer 2,404 · AccountSet 2,203 · CheckCash 1,573 |
+
+What this says for the sky: at this hour's rate the sky gains about 12,700 planets in its first hour and the curve flattens (945 new accounts in the first minute, 64 in the median later minute, since most of a minute's accounts have been seen before), so 20,000 planets is roughly two hours of listening and the right size to test. A record costs 73 bytes in a typed-array store against 3,013 bytes of JSON on the wire, a ratio of 41; the JS objects the spike keeps cost about 310–330 bytes per record all in (the worker's heap growth over the hour divided by its records, planets, edges and the live window included), so a typed-array store would be about 4.5 times smaller than the spike. Batch was 37% of the hour's transactions (and 43% of the first minute's), ahead of OfferCreate and Payment; its inner transactions arrive as their own messages. One in five transactions failed with a tec code and is in the record. The cluster re-delivered 28,028 transactions in 12 of the 60 minutes, tracking volume (r 0.9 with transactions per minute, 0.17 with failures): deduplication by hash is not optional, and coverage against `txn_count` was exactly 100% after it.
+
+#### An hour of the live sky
+
+**An hour of the live sky in headless Chrome, 2D canvas** (`hour.mjs`, universe.html?autostart=1&gl=0, 60 samples):
+
+| Minute | Planets | Records | Edges | Heap (page) | Measured (page + worker + canvas) | Worker JS | Frame mean / p95 | Layout step | Coverage |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 299 | 1,326 | 202 | 6.7 MiB | 17.9 MiB | 3.9 MiB | 47.0 / 121.4 ms | 41.7 ms, 227 warm, moved 2.09‰ | 70.81% |
+| 5 | 5,589 | 22,845 | 4,220 | 6.8 MiB | 29.1 MiB | 13.3 MiB | 77.3 / 285.3 ms | 13.4 ms, 1,869 warm, moved 0.10‰ | 99.54% |
+| 10 | 6,473 | 39,589 | 5,850 | 10.3 MiB | 33.5 MiB | 17.4 MiB | 20.2 / 23.7 ms | 7.2 ms, 1,496 warm, moved 0.20‰ | 98.13% |
+| 20 | 7,805 | 68,296 | 8,521 | 24.9 MiB | 41.1 MiB | 24.6 MiB | 253.1 / 446.9 ms | 143.3 ms, 1,190 warm, moved 1.21‰ | 99.17% |
+| 30 | 8,701 | 86,639 | 10,006 | 30.3 MiB | 48.1 MiB | 30.9 MiB | 220.7 / 403.2 ms | 10.2 ms, 650 warm, moved 0.30‰ | 99.74% |
+| 45 | 11,229 | 133,077 | 13,764 | 35.5 MiB | 62.2 MiB | 44.5 MiB | 376.7 / 586.6 ms | 79.2 ms, 1,012 warm, moved 0.32‰ | 99.94% |
+| 60 | 12,773 | 180,217 | 17,679 | 23.1 MiB | 74.5 MiB | 56.6 MiB | 326.5 / 596.7 ms | 11.6 ms, 330 warm, moved 1.08‰ | 99.97% |
+
+Coherence over the live window at minute 60: 28 pairs tested among the top submitters, 4 above the 95th prewhitened (chance about 1.4), 58 ms per run in the worker.
+
+**An hour of the live sky in headless Chrome, WebGL** (`hour.mjs`, universe.html?autostart=1&gl=1, 60 samples):
+
+| Minute | Planets | Records | Edges | Heap (page) | Measured (page + worker + canvas) | Worker JS | Frame mean / p95 | Layout step | Coverage |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 279 | 1,215 | 176 | 6.1 MiB | 16.0 MiB | 2.7 MiB | 4.4 / 26.9 ms | 113.4 ms, 221 warm, moved 2.48‰ | 94.90% |
+| 5 | 5,589 | 22,845 | 4,220 | 16.9 MiB | 27.4 MiB | 13.3 MiB | 1.5 / 1.8 ms | 11.1 ms, 1,851 warm, moved 0.10‰ | 99.54% |
+| 10 | 6,473 | 39,589 | 5,850 | 27.7 MiB | 31.6 MiB | 17.3 MiB | 1.9 / 2.2 ms | 7.2 ms, 1,491 warm, moved 0.20‰ | 98.13% |
+| 20 | 7,712 | 65,563 | 8,342 | 34.2 MiB | 39.1 MiB | 24.8 MiB | 18.6 / 53.3 ms | 39.0 ms, 416 warm, moved 0.54‰ | 99.66% |
+| 30 | 8,653 | 85,140 | 9,899 | 5.5 MiB | 60.5 MiB | 30.2 MiB | 24.0 / 75.5 ms | 41.2 ms, 343 warm, moved 0.81‰ | 100.00% |
+| 45 | 11,110 | 129,205 | 13,615 | 30.7 MiB | 69.9 MiB | 43.6 MiB | 32.6 / 93.3 ms | 83.0 ms, 1,007 warm, moved 0.39‰ | 99.92% |
+| 60 | 12,739 | 178,590 | 17,521 | 37.2 MiB | 83.4 MiB | 56.6 MiB | 38.2 / 101.4 ms | 79.0 ms, 420 warm, moved 0.86‰ | 99.97% |
+
+Coherence over the live window at minute 60: 28 pairs tested among the top submitters, 8 above the 95th prewhitened (chance about 1.4), 1,282 ms per run in the worker.
+
+Memory after one hour: 74.5 MiB (2D) and 83.4 MiB (WebGL) measured in total by `performance.measureUserAgentSpecificMemory`, of which the worker's JavaScript is 56.6 MiB in both (the records, planets, edges, the layout's arrays and the 50-ledger live window for coherence), the canvas 10–12 MiB, and the page's own heap 23–37 MiB depending on when the garbage collector last ran. Growth is linear in records, about 330 bytes each, so the spike's cap of 250,000 records is about 80 MiB of worker heap: fine for a desktop, a reason for a smaller window or a typed-array store on a phone. Coverage settled at 99.7–100% from the third minute on (the first minute hears only part of the ledgers whose transactions began before the subscription); the lowest later sample was 93.3%, a minute in which the cluster was late with a ledger. Coherence over the live window (28 pairs among the top eight submitters) took 31 ms to 4.0 s per run every ten ledgers in the worker; at the hour's end 4 (2D run) and 8 (WebGL run) pairs were above the 95th prewhitened where chance gives 1.4, and the two runs disagree because they heard the stream a few seconds apart and judge different windows. That cost belongs in an idle slot, not on the ledger close.
+
+Layout stability on the live stream: the planets present before a ledger moved a median 0.5‰ of the sky radius per step (minimum 0.06‰, maximum 2.1‰ in the 2D run and 7.0‰ in one WebGL sample), and a median 3.2% of them moved more than 5‰ in a step; the warm set was 184–2,738 planets, median about 750. Cold planets never move, by construction. The step took 7–13 ms in the quiet minutes and 39–143 ms in the dense ones with the old repulsion; the retuned layout, which reads the crowd off 27 grid aggregates instead of every neighbour, takes 1.0–5.7 ms with 944–13,305 planets warm (the matrices below) and 8–15 ms in the browser with 20,000 warm, where the old code took 2.6–10 s on a dense synthetic sky.
+
+#### Frame time
+
+**Frame time, the user’s own browser (GPU)** (Brave (Chromium 155) on the user’s machine, 1536×741 CSS px at DPR 2, GPU string masked by the browser; through the page’s stats() with the extension; views sampled 4 s each after the sky reached its size; the two headless hour runs had finished; the renderer's own time per frame, mean / p50 / p95 over the sampled frames, and how many planets fell in each pixel level at the home view):
+
+| Renderer | Planets | Home view (draw ms mean / p50 / p95 · fps) | Closer | Inside | Levels at home (splat / sprite / body / culled) | Layout step (worker) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2d | 1,000 | 4.8 / 4.7 / 5.6 ms · 16 fps | 4.9 / 4.8 / 5.6 ms · 16 fps | 5.0 / 4.9 / 5.5 ms · 14 fps | 439 / 561 / 0 / 0 | 1.0 ms, 944 warm |
+| 2d | 5,000 | 6.4 / 6.3 / 7.1 ms · 60 fps | 7.0 / 7.0 / 7.9 ms · 60 fps | 6.1 / 6.0 / 6.9 ms · 60 fps | 2,434 / 2,566 / 0 / 0 | 2.0 ms, 3,782 warm |
+| 2d | 20,000 | 42.2 / 39.7 / 50.5 ms · 1 fps | 48.1 / 44.5 / 69.4 ms · 2 fps | 33.2 / 31.8 / 40.2 ms · 14 fps | 9,592 / 10,408 / 0 / 0 | 4.5 ms, 3,303 warm |
+| webgl | 1,000 | 0.7 / 0.7 / 1.3 ms · 4 fps | 0.6 / 0.6 / 0.8 ms · 17 fps | 0.7 / 0.7 / 1.0 ms · 14 fps | 437 / 563 / 0 / 0 | 1.1 ms, 944 warm |
+| webgl | 5,000 | 1.1 / 1.1 / 1.7 ms · 61 fps | 1.1 / 1.1 / 1.7 ms · 61 fps | 1.0 / 1.0 / 1.6 ms · 60 fps | 2,448 / 2,552 / 0 / 0 | 2.0 ms, 4,084 warm |
+| webgl | 20,000 | 2.8 / 2.9 / 3.6 ms · 61 fps | 2.6 / 2.6 / 3.1 ms · 61 fps | 2.9 / 2.9 / 3.5 ms · 61 fps | 9,875 / 10,125 / 0 / 0 | 5.7 ms, 13,305 warm |
+
+GPU string seen by the page: Brave.
+
+**Frame time, headless Chrome (SwiftShader, software)** (`frames.mjs`, 6 s per view; the renderer's own time per frame, mean / p50 / p95 over the sampled frames, and how many planets fell in each pixel level at the home view):
+
+| Renderer | Planets | Home view | Closer | Inside | Levels at home (splat / sprite / body / culled) | Layout step (worker) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2d | 1,000 | 38.4 / 35.7 / 94.9 ms | 40.9 / 37.1 / 138.4 ms | 40.0 / 38.7 / 90.5 ms | 438 / 562 / 0 / 0 | 7.0 ms, 924 warm |
+| 2d | 5,000 | 134.0 / 128.9 / 264.7 ms | 142.5 / 133.9 / 307.0 ms | 46.5 / 35.6 / 115.2 ms | 2,493 / 2,507 / 0 / 0 | 232.6 ms, 4,084 warm |
+| 2d | 20,000 | 453.0 / 407.5 / 766.2 ms | 421.8 / 408.5 / 687.6 ms | 150.5 / 131.2 / 280.0 ms | 10,022 / 9,978 / 0 / 0 | 352.9 ms, 15,122 warm |
+| webgl | 1,000 | 9.1 / 2.8 / 35.4 ms | 6.1 / 0.8 / 25.4 ms | 8.4 / 1.2 / 30.6 ms | 453 / 547 / 0 / 0 | 64.5 ms, 955 warm |
+| webgl | 5,000 | 27.8 / 28.7 / 55.4 ms | 28.0 / 31.0 / 58.7 ms | 24.1 / 22.7 / 56.4 ms | 2,505 / 2,495 / 0 / 0 | 305.1 ms, 4,084 warm |
+| webgl | 20,000 | 30.9 / 9.1 / 106.4 ms | 31.8 / 35.0 / 71.4 ms | 21.8 / 20.7 / 45.7 ms | 10,170 / 9,830 / 0 / 0 | 185.3 ms, 15,122 warm |
+
+GPU string seen by the page: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver).
+
+How to read the matrices. The headless numbers are a floor: SwiftShader rasterises in software and the 2D canvas there is far slower than on a GPU. The real-browser rows are the decision. The `fps` is the number of frames the page drew in the 4-second sample, which includes the GPU's own time outside `draw()`: at 20,000 planets the 2D canvas reports 42 ms of JavaScript per frame but draws one frame a second at the far views, because the sprite level's `drawImage` calls (about 10 µs each on the GPU canvas, measured by the renderer's phase timings) and the full-canvas `putImageData` upload at DPR 2 are paid on the GPU after `draw()` returns. The 1,000-planet rows were sampled while the browser throttled the tab (frame counts of 17–69 with sub-millisecond draws); their draw times stand, their fps do not.
+
+The 2D canvas holds at 5,000 planets at 60 fps (6–7 ms a frame, half of them splats) and does not hold at 20,000 (1–2 fps at the far views, 14 fps inside). WebGL holds at 20,000 at 60 fps with 2.6–2.9 ms a frame at every view, and at 1,000 draws in under a millisecond. An hour of mainnet is about 12,700 planets, between the two; the 2D path would be at a few frames a second there. The hand-written WebGL path is two shaders and the buffer code in `sky-gl.js`, still no dependencies; the 2D path stays as the fallback the page already takes when WebGL is unavailable. Whether WebGL is permitted is the owner's decision (below); the measurement says it is needed for the far view of a sky older than about half an hour.
+
+#### What the real data did that the design did not predict
+
+- Batch is the largest transaction type on mainnet tonight (37% of the hour), and the field guide has no glyph for it; the sky draws it as a flash and the owner's decision 6 asks what it should be.
+- The cluster re-delivers whole bursts (20% of the hour's messages were duplicates, in 12 minutes of 60). The listening page's hash deduplication was right; the sky deduplicates per ledger the same way.
+- Issuers' balances are not seen: a star is named by its holders' trust lines, whose RippleState nodes carry no AccountRoot of the issuer, so most stars are drawn hollow until the issuer itself submits something or phase 2 reads `account_info`. Within two minutes of listening, the live sky had 11 stars, 13 AMM binaries, 3 black hole candidates and 6 pulsars among 806 planets, and the pulsar with a cadence of three ledgers was the market maker [coherence.md](coherence.md) measured at a cadence of three (self-correlation 0.96).
+- A dense neighbourhood made the per-neighbour repulsion scan quadratic (seconds a step at 20,000 planets in the browser, 23 ms in Node on the same input before the input grew dense); aggregates per grid cell fixed it and are the layout now.
+- The 2D sprite level costs about 10 µs a planet on the GPU canvas, so the pixel levels were retuned to put most of a sky's planets through the splat level (a 1 px base size: the median planet, with a balance of about 3 XRP, is a 1.3 px splat; the 90th percentile, about 2,900 XRP, 2.6 px; the 99th, about 16 million XRP, 4.2 px).
+- The synthetic stream left one newborn without a record (an account paid by nobody) until the generator was told to pay every newborn; and the Claude in Chrome extension's parked pointer dragged the camera between measurements, so each view re-asserts its camera and disables pointer input while it samples.
+- The duplicate count (28,028) and the failed count (28,059) over the hour are within 31 of each other by coincidence; minute by minute they do not track.
 
 ## The owner's decisions
 

@@ -1,0 +1,1698 @@
+{
+  "at": "2026-10-22T23:54:14.082Z",
+  "site": "http://127.0.0.1:4181/",
+  "headless": true,
+  "seconds": 6,
+  "results": [
+    {
+      "renderer": "2d",
+      "planets": 1000,
+      "views": {
+        "home": {
+          "renderer": "2d",
+          "frames": 283,
+          "sampled": 111,
+          "meanMs": 38.40270269883646,
+          "p50": 35.730000019073486,
+          "p95": 94.86500000953674,
+          "p99": 133.06500005722046,
+          "phase": {
+            "project": 0.8450000286102295,
+            "putImageData": 0.6749999523162842,
+            "nebulae+pairs": 0.06500005722045898,
+            "sort": 0.1699998378753662,
+            "mid": 15.78000020980835,
+            "near": 0.004999876022338867,
+            "comets": 2.875,
+            "labels": 0.05500006675720215
+          },
+          "maxMs": 161.79499983787537,
+          "lod": {
+            "far": 438,
+            "mid": 562,
+            "near": 0,
+            "culled": 0
+          },
+          "planets": 1000,
+          "comets": 144,
+          "flashes": 0,
+          "camera": {
+            "distance": 3.2
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "ledger": 90000013,
+          "running": true,
+          "synthetic": 1000,
+          "coverage": {
+            "startedAt": 1792712944262,
+            "minutes": 0.15965,
+            "ledgersClosed": 14,
+            "ledgersWithCount": 14,
+            "firstLedger": 90000000,
+            "lastLedger": 90000013,
+            "expected": 1900,
+            "received": 1900,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 1900,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 1000,
+            "edges": 1885,
+            "records": 1900
+          },
+          "stability": {
+            "steps": 30,
+            "meanMs": 6.770166667302449,
+            "moved": 0.0015375583290185401,
+            "maxMoved": 0.012000000000000002,
+            "movedShare": 0.02222222222222222,
+            "warm": 1000,
+            "pairs": 29991
+          },
+          "memory": {
+            "records": 1900,
+            "planets": 1000,
+            "edges": 1885,
+            "layoutEdges": 1885,
+            "clusters": 14,
+            "hubSkips": 1,
+            "interned": 1000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 8.02999997138977,
+            "window": 10
+          }
+        },
+        "closer": {
+          "renderer": "2d",
+          "frames": 380,
+          "sampled": 96,
+          "meanMs": 40.92041666060686,
+          "p50": 37.109999895095825,
+          "p95": 138.44000005722046,
+          "p99": 185.03999996185303,
+          "phase": {
+            "project": 36.894999980926514,
+            "putImageData": 0.28999996185302734,
+            "nebulae+pairs": 0.009999990463256836,
+            "sort": 0.1700000762939453,
+            "mid": 1.3650000095367432,
+            "near": 0.004999876022338867,
+            "comets": 0.3600001335144043,
+            "labels": 0.04499983787536621
+          },
+          "maxMs": 185.03999996185303,
+          "lod": {
+            "far": 416,
+            "mid": 584,
+            "near": 0,
+            "culled": 0
+          },
+          "planets": 1000,
+          "comets": 131,
+          "flashes": 0,
+          "camera": {
+            "distance": 1.4
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "ledger": 90000016,
+          "running": true,
+          "synthetic": 1000,
+          "coverage": {
+            "startedAt": 1792712944262,
+            "minutes": 0.2624,
+            "ledgersClosed": 17,
+            "ledgersWithCount": 17,
+            "firstLedger": 90000000,
+            "lastLedger": 90000016,
+            "expected": 2350,
+            "received": 2350,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 2350,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 1000,
+            "edges": 2322,
+            "records": 2350
+          },
+          "stability": {
+            "steps": 30,
+            "meanMs": 4.935833342870077,
+            "moved": 0.0013020258453189369,
+            "maxMoved": 0.00831542601861571,
+            "movedShare": 0.008477585441633377,
+            "warm": 978,
+            "pairs": 42192
+          },
+          "memory": {
+            "records": 2350,
+            "planets": 1000,
+            "edges": 2322,
+            "layoutEdges": 2322,
+            "clusters": 23,
+            "hubSkips": 3,
+            "interned": 1000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 8.02999997138977,
+            "window": 10
+          }
+        },
+        "inside": {
+          "renderer": "2d",
+          "frames": 453,
+          "sampled": 73,
+          "meanMs": 39.99308220327717,
+          "p50": 38.66499996185303,
+          "p95": 90.48000001907349,
+          "p99": 162.87000012397766,
+          "phase": {
+            "project": 0.7000000476837158,
+            "putImageData": 0.3899998664855957,
+            "nebulae+pairs": 0.005000114440917969,
+            "sort": 0.1549999713897705,
+            "mid": 74.1949999332428,
+            "near": 0.06500005722045898,
+            "comets": 0.6749999523162842,
+            "labels": 0.08999991416931152
+          },
+          "maxMs": 162.87000012397766,
+          "lod": {
+            "far": 418,
+            "mid": 540,
+            "near": 1,
+            "culled": 41
+          },
+          "planets": 1000,
+          "comets": 136,
+          "flashes": 0,
+          "camera": {
+            "distance": 0.5
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "ledger": 90000019,
+          "running": true,
+          "synthetic": 1000,
+          "coverage": {
+            "startedAt": 1792712944262,
+            "minutes": 0.368,
+            "ledgersClosed": 20,
+            "ledgersWithCount": 20,
+            "firstLedger": 90000000,
+            "lastLedger": 90000019,
+            "expected": 2800,
+            "received": 2800,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 2800,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 1000,
+            "edges": 2762,
+            "records": 2800
+          },
+          "stability": {
+            "steps": 28,
+            "meanMs": 7.041428540434156,
+            "moved": 0.0014709321988247777,
+            "maxMoved": 0.008590076510315006,
+            "movedShare": 0.011939218523878433,
+            "warm": 924,
+            "pairs": 53627
+          },
+          "memory": {
+            "records": 2800,
+            "planets": 1000,
+            "edges": 2762,
+            "layoutEdges": 2762,
+            "clusters": 31,
+            "hubSkips": 5,
+            "interned": 1000
+          },
+          "coherence": {
+            "tested": 28,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 28,
+              "minShuffles": 20
+            },
+            "at": 90000019,
+            "ms": 242.21000003814697,
+            "window": 20
+          }
+        }
+      },
+      "stability": {
+        "steps": 28,
+        "meanMs": 7.041428540434156,
+        "moved": 0.0014709321988247777,
+        "maxMoved": 0.008590076510315006,
+        "movedShare": 0.011939218523878433,
+        "warm": 924,
+        "pairs": 53627
+      },
+      "memory": {
+        "records": 2800,
+        "planets": 1000,
+        "edges": 2762,
+        "layoutEdges": 2762,
+        "clusters": 31,
+        "hubSkips": 5,
+        "interned": 1000
+      },
+      "actualRenderer": "2d"
+    },
+    {
+      "renderer": "2d",
+      "planets": 5000,
+      "views": {
+        "home": {
+          "renderer": "2d",
+          "frames": 519,
+          "sampled": 30,
+          "meanMs": 133.9636666536331,
+          "p50": 128.8600001335144,
+          "p95": 264.72499990463257,
+          "p99": 302.0199999809265,
+          "phase": {
+            "project": 21.914999961853027,
+            "putImageData": 0.3299999237060547,
+            "nebulae+pairs": 0.009999990463256836,
+            "sort": 1.1549999713897705,
+            "mid": 93.30000019073486,
+            "near": 0.004999876022338867,
+            "comets": 14.805000066757202,
+            "labels": 5.194999933242798
+          },
+          "maxMs": 302.0199999809265,
+          "lod": {
+            "far": 2493,
+            "mid": 2507,
+            "near": 0,
+            "culled": 0
+          },
+          "planets": 5000,
+          "comets": 150,
+          "flashes": 0,
+          "camera": {
+            "distance": 3.2
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "ledger": 90000012,
+          "running": true,
+          "synthetic": 5000,
+          "coverage": {
+            "startedAt": 1792712975243,
+            "minutes": 0.3708666666666667,
+            "ledgersClosed": 13,
+            "ledgersWithCount": 13,
+            "firstLedger": 90000000,
+            "lastLedger": 90000012,
+            "expected": 5750,
+            "received": 5750,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 5750,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 5000,
+            "edges": 5745,
+            "records": 5750
+          },
+          "stability": {
+            "steps": 2,
+            "meanMs": 321.2925000190735,
+            "moved": 0.011957874677833172,
+            "maxMoved": 0.012000000000000005,
+            "movedShare": 0.9979860080559677,
+            "warm": 5000,
+            "pairs": 77485
+          },
+          "memory": {
+            "records": 5750,
+            "planets": 5000,
+            "edges": 5745,
+            "layoutEdges": 5745,
+            "clusters": 3,
+            "hubSkips": 2,
+            "interned": 5000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 1035.8099999427795,
+            "window": 10
+          }
+        },
+        "closer": {
+          "renderer": "2d",
+          "frames": 554,
+          "sampled": 33,
+          "meanMs": 142.53545453331688,
+          "p50": 133.9300000667572,
+          "p95": 306.9649999141693,
+          "p99": 389.1400001049042,
+          "phase": {
+            "project": 113.42499995231628,
+            "putImageData": 0.37999987602233887,
+            "nebulae+pairs": 0.010000228881835938,
+            "sort": 0.869999885559082,
+            "mid": 39.21499991416931,
+            "near": 0.009999990463256836,
+            "comets": 0.48000001907348633,
+            "labels": 0.039999961853027344
+          },
+          "maxMs": 389.1400001049042,
+          "lod": {
+            "far": 2477,
+            "mid": 2147,
+            "near": 0,
+            "culled": 376
+          },
+          "planets": 5000,
+          "comets": 192,
+          "flashes": 0,
+          "camera": {
+            "distance": 1.4
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "ledger": 90000015,
+          "running": true,
+          "synthetic": 5000,
+          "coverage": {
+            "startedAt": 1792712975243,
+            "minutes": 0.49145,
+            "ledgersClosed": 16,
+            "ledgersWithCount": 16,
+            "firstLedger": 90000000,
+            "lastLedger": 90000015,
+            "expected": 6200,
+            "received": 6200,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 6200,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 5000,
+            "edges": 6195,
+            "records": 6200
+          },
+          "stability": {
+            "steps": 1,
+            "meanMs": 693.5249998569489,
+            "moved": 0.011928106585807872,
+            "maxMoved": 0.012000000000000004,
+            "movedShare": 0.9980245829675154,
+            "warm": 4831,
+            "pairs": 72566
+          },
+          "memory": {
+            "records": 6200,
+            "planets": 5000,
+            "edges": 6195,
+            "layoutEdges": 6195,
+            "clusters": 3,
+            "hubSkips": 2,
+            "interned": 5000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 1035.8099999427795,
+            "window": 10
+          }
+        },
+        "inside": {
+          "renderer": "2d",
+          "frames": 660,
+          "sampled": 104,
+          "meanMs": 46.453269243240356,
+          "p50": 35.56500005722046,
+          "p95": 115.17499995231628,
+          "p99": 160.65000009536743,
+          "phase": {
+            "project": 29.740000009536743,
+            "putImageData": 0.3399999141693115,
+            "nebulae+pairs": 0.004999876022338867,
+            "sort": 0.020000219345092773,
+            "mid": 0.19999980926513672,
+            "near": 0.005000114440917969,
+            "comets": 0.440000057220459,
+            "labels": 0.034999847412109375
+          },
+          "maxMs": 199.16499996185303,
+          "lod": {
+            "far": 1584,
+            "mid": 39,
+            "near": 0,
+            "culled": 3377
+          },
+          "planets": 5000,
+          "comets": 210,
+          "flashes": 0,
+          "camera": {
+            "distance": 0.5
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "ledger": 90000018,
+          "running": true,
+          "synthetic": 5000,
+          "coverage": {
+            "startedAt": 1792712975243,
+            "minutes": 0.6091333333333333,
+            "ledgersClosed": 19,
+            "ledgersWithCount": 19,
+            "firstLedger": 90000000,
+            "lastLedger": 90000018,
+            "expected": 6650,
+            "received": 6650,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 6650,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 5000,
+            "edges": 6644,
+            "records": 6650
+          },
+          "stability": {
+            "steps": 2,
+            "meanMs": 232.6174999475479,
+            "moved": 0.011907704136328665,
+            "maxMoved": 0.012000000000000005,
+            "movedShare": 0.9981607987388335,
+            "warm": 4084,
+            "pairs": 62487
+          },
+          "memory": {
+            "records": 6650,
+            "planets": 5000,
+            "edges": 6644,
+            "layoutEdges": 6644,
+            "clusters": 4,
+            "hubSkips": 2,
+            "interned": 5000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 1035.8099999427795,
+            "window": 10
+          }
+        }
+      },
+      "stability": {
+        "steps": 2,
+        "meanMs": 232.6174999475479,
+        "moved": 0.011907704136328665,
+        "maxMoved": 0.012000000000000005,
+        "movedShare": 0.9981607987388335,
+        "warm": 4084,
+        "pairs": 62487
+      },
+      "memory": {
+        "records": 6650,
+        "planets": 5000,
+        "edges": 6644,
+        "layoutEdges": 6644,
+        "clusters": 4,
+        "hubSkips": 2,
+        "interned": 5000
+      },
+      "actualRenderer": "2d"
+    },
+    {
+      "renderer": "2d",
+      "planets": 20000,
+      "views": {
+        "home": {
+          "renderer": "2d",
+          "frames": 470,
+          "sampled": 12,
+          "meanMs": 453.0362499554952,
+          "p50": 407.45499992370605,
+          "p95": 766.2349998950958,
+          "p99": 766.2349998950958,
+          "phase": {
+            "project": 223.8199999332428,
+            "putImageData": 49.11500000953674,
+            "nebulae+pairs": 0.029999971389770508,
+            "sort": 36.4300000667572,
+            "mid": 183.66499996185303,
+            "near": 0.009999990463256836,
+            "comets": 0.9000000953674316,
+            "labels": 0.07999992370605469
+          },
+          "maxMs": 766.2349998950958,
+          "lod": {
+            "far": 10022,
+            "mid": 9978,
+            "near": 0,
+            "culled": 0
+          },
+          "planets": 20000,
+          "comets": 345,
+          "flashes": 0,
+          "camera": {
+            "distance": 3.2
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "ledger": 90000013,
+          "running": true,
+          "synthetic": 20000,
+          "coverage": {
+            "startedAt": 1792713022444,
+            "minutes": 0.7578333333333334,
+            "ledgersClosed": 14,
+            "ledgersWithCount": 14,
+            "firstLedger": 90000000,
+            "lastLedger": 90000013,
+            "expected": 20900,
+            "received": 20900,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 20900,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 20000,
+            "edges": 20898,
+            "records": 20900
+          },
+          "stability": {
+            "steps": 1,
+            "meanMs": 610.7349998950958,
+            "moved": 0.011971589474960506,
+            "maxMoved": 0.012000000000000004,
+            "movedShare": 0.9991880233443289,
+            "warm": 20000,
+            "pairs": 1072694
+          },
+          "memory": {
+            "records": 20900,
+            "planets": 20000,
+            "edges": 20898,
+            "layoutEdges": 20898,
+            "clusters": 2,
+            "hubSkips": 0,
+            "interned": 20000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 5589.8550000190735,
+            "window": 10
+          }
+        },
+        "closer": {
+          "renderer": "2d",
+          "frames": 485,
+          "sampled": 14,
+          "meanMs": 421.75285712310244,
+          "p50": 408.4849998950958,
+          "p95": 687.6099998950958,
+          "p99": 687.6099998950958,
+          "phase": {
+            "project": 212.28999996185303,
+            "putImageData": 5.335000038146973,
+            "nebulae+pairs": 0.1700000762939453,
+            "sort": 76.65000009536743,
+            "mid": 174.37999987602234,
+            "near": 0.36500000953674316,
+            "comets": 0.48000001907348633,
+            "labels": 0.17499995231628418
+          },
+          "maxMs": 687.6099998950958,
+          "lod": {
+            "far": 9638,
+            "mid": 7965,
+            "near": 28,
+            "culled": 2369
+          },
+          "planets": 20000,
+          "comets": 212,
+          "flashes": 0,
+          "camera": {
+            "distance": 1.4
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "ledger": 90000016,
+          "running": true,
+          "synthetic": 20000,
+          "coverage": {
+            "startedAt": 1792713022444,
+            "minutes": 0.86865,
+            "ledgersClosed": 17,
+            "ledgersWithCount": 17,
+            "firstLedger": 90000000,
+            "lastLedger": 90000016,
+            "expected": 21350,
+            "received": 21350,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 21350,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 20000,
+            "edges": 21348,
+            "records": 21350
+          },
+          "stability": {
+            "steps": 1,
+            "meanMs": 874.0750000476837,
+            "moved": 0.011976937890384124,
+            "maxMoved": 0.012000000000000005,
+            "movedShare": 0.9994370003377998,
+            "warm": 18060,
+            "pairs": 940773
+          },
+          "memory": {
+            "records": 21350,
+            "planets": 20000,
+            "edges": 21348,
+            "layoutEdges": 21348,
+            "clusters": 2,
+            "hubSkips": 0,
+            "interned": 20000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 5589.8550000190735,
+            "window": 10
+          }
+        },
+        "inside": {
+          "renderer": "2d",
+          "frames": 523,
+          "sampled": 37,
+          "meanMs": 150.47283787985106,
+          "p50": 131.2350001335144,
+          "p95": 279.99500012397766,
+          "p99": 339.04500007629395,
+          "phase": {
+            "project": 109.87999987602234,
+            "putImageData": 0.31999993324279785,
+            "nebulae+pairs": 0.009999990463256836,
+            "sort": 0.020000219345092773,
+            "mid": 0.20999979972839355,
+            "near": 0,
+            "comets": 0.39499998092651367,
+            "labels": 0.040000200271606445
+          },
+          "maxMs": 339.04500007629395,
+          "lod": {
+            "far": 5800,
+            "mid": 44,
+            "near": 0,
+            "culled": 14156
+          },
+          "planets": 20000,
+          "comets": 163,
+          "flashes": 0,
+          "camera": {
+            "distance": 0.5
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "ledger": 90000018,
+          "running": true,
+          "synthetic": 20000,
+          "coverage": {
+            "startedAt": 1792713022444,
+            "minutes": 0.96085,
+            "ledgersClosed": 19,
+            "ledgersWithCount": 19,
+            "firstLedger": 90000000,
+            "lastLedger": 90000018,
+            "expected": 21650,
+            "received": 21650,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 21650,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 20000,
+            "edges": 21648,
+            "records": 21650
+          },
+          "stability": {
+            "steps": 1,
+            "meanMs": 352.875,
+            "moved": 0.0119734707272703,
+            "maxMoved": 0.012000000000000004,
+            "movedShare": 0.9994602981852526,
+            "warm": 15122,
+            "pairs": 781807
+          },
+          "memory": {
+            "records": 21650,
+            "planets": 20000,
+            "edges": 21648,
+            "layoutEdges": 21648,
+            "clusters": 2,
+            "hubSkips": 0,
+            "interned": 20000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 5589.8550000190735,
+            "window": 10
+          }
+        }
+      },
+      "stability": {
+        "steps": 1,
+        "meanMs": 352.875,
+        "moved": 0.0119734707272703,
+        "maxMoved": 0.012000000000000004,
+        "movedShare": 0.9994602981852526,
+        "warm": 15122,
+        "pairs": 781807
+      },
+      "memory": {
+        "records": 21650,
+        "planets": 20000,
+        "edges": 21648,
+        "layoutEdges": 21648,
+        "clusters": 2,
+        "hubSkips": 0,
+        "interned": 20000
+      },
+      "actualRenderer": "2d"
+    },
+    {
+      "renderer": "webgl",
+      "planets": 1000,
+      "views": {
+        "home": {
+          "renderer": "webgl",
+          "frames": 1084,
+          "sampled": 278,
+          "meanMs": 9.05397482827413,
+          "p50": 2.809999942779541,
+          "p95": 35.36500000953674,
+          "p99": 46.894999980926514,
+          "maxMs": 68.77500009536743,
+          "lod": {
+            "far": 453,
+            "mid": 547,
+            "near": 0,
+            "culled": 0
+          },
+          "planets": 1000,
+          "comets": 125,
+          "flashes": 0,
+          "camera": {
+            "distance": 3.2
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "ledger": 90000012,
+          "running": true,
+          "synthetic": 1000,
+          "coverage": {
+            "startedAt": 1792713089984,
+            "minutes": 0.26695,
+            "ledgersClosed": 13,
+            "ledgersWithCount": 13,
+            "firstLedger": 90000000,
+            "lastLedger": 90000012,
+            "expected": 1750,
+            "received": 1750,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 1750,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 1000,
+            "edges": 1740,
+            "records": 1750
+          },
+          "stability": {
+            "steps": 3,
+            "meanMs": 98.84333332379659,
+            "moved": 0.011931258652361769,
+            "maxMoved": 0.012000000000000004,
+            "movedShare": 0.9960988296488947,
+            "warm": 1000,
+            "pairs": 3085
+          },
+          "memory": {
+            "records": 1750,
+            "planets": 1000,
+            "edges": 1740,
+            "layoutEdges": 1740,
+            "clusters": 9,
+            "hubSkips": 1,
+            "interned": 1000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 571.3650000095367,
+            "window": 10
+          }
+        },
+        "closer": {
+          "renderer": "webgl",
+          "frames": 1389,
+          "sampled": 289,
+          "meanMs": 6.077820072537063,
+          "p50": 0.8149998188018799,
+          "p95": 25.44000005722046,
+          "p99": 48.46499991416931,
+          "maxMs": 111.46000003814697,
+          "lod": {
+            "far": 476,
+            "mid": 524,
+            "near": 0,
+            "culled": 0
+          },
+          "planets": 1000,
+          "comets": 257,
+          "flashes": 0,
+          "camera": {
+            "distance": 1.4
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "ledger": 90000015,
+          "running": true,
+          "synthetic": 1000,
+          "coverage": {
+            "startedAt": 1792713089984,
+            "minutes": 0.40435,
+            "ledgersClosed": 16,
+            "ledgersWithCount": 16,
+            "firstLedger": 90000000,
+            "lastLedger": 90000015,
+            "expected": 2200,
+            "received": 2200,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 2200,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 1000,
+            "edges": 2177,
+            "records": 2200
+          },
+          "stability": {
+            "steps": 4,
+            "meanMs": 119.04499995708466,
+            "moved": 0.011876658702333715,
+            "maxMoved": 0.012000000000000004,
+            "movedShare": 0.9990053050397879,
+            "warm": 989,
+            "pairs": 4098
+          },
+          "memory": {
+            "records": 2200,
+            "planets": 1000,
+            "edges": 2177,
+            "layoutEdges": 2177,
+            "clusters": 21,
+            "hubSkips": 1,
+            "interned": 1000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 571.3650000095367,
+            "window": 10
+          }
+        },
+        "inside": {
+          "renderer": "webgl",
+          "frames": 1657,
+          "sampled": 261,
+          "meanMs": 8.41932950622734,
+          "p50": 1.1699998378753662,
+          "p95": 30.640000104904175,
+          "p99": 63.53999996185303,
+          "maxMs": 93.26999998092651,
+          "lod": {
+            "far": 477,
+            "mid": 484,
+            "near": 33,
+            "culled": 6
+          },
+          "planets": 1000,
+          "comets": 71,
+          "flashes": 0,
+          "camera": {
+            "distance": 0.5
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "ledger": 90000017,
+          "running": true,
+          "synthetic": 1000,
+          "coverage": {
+            "startedAt": 1792713089984,
+            "minutes": 0.4752166666666667,
+            "ledgersClosed": 18,
+            "ledgersWithCount": 18,
+            "firstLedger": 90000000,
+            "lastLedger": 90000017,
+            "expected": 2500,
+            "received": 2500,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 2500,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 1000,
+            "edges": 2468,
+            "records": 2500
+          },
+          "stability": {
+            "steps": 7,
+            "meanMs": 64.54499997411456,
+            "moved": 0.0117798052026695,
+            "maxMoved": 0.012000000000000004,
+            "movedShare": 0.9945578231292516,
+            "warm": 955,
+            "pairs": 5789
+          },
+          "memory": {
+            "records": 2500,
+            "planets": 1000,
+            "edges": 2468,
+            "layoutEdges": 2468,
+            "clusters": 27,
+            "hubSkips": 3,
+            "interned": 1000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 571.3650000095367,
+            "window": 10
+          }
+        }
+      },
+      "stability": {
+        "steps": 7,
+        "meanMs": 64.54499997411456,
+        "moved": 0.0117798052026695,
+        "maxMoved": 0.012000000000000004,
+        "movedShare": 0.9945578231292516,
+        "warm": 955,
+        "pairs": 5789
+      },
+      "memory": {
+        "records": 2500,
+        "planets": 1000,
+        "edges": 2468,
+        "layoutEdges": 2468,
+        "clusters": 27,
+        "hubSkips": 3,
+        "interned": 1000
+      },
+      "actualRenderer": "webgl"
+    },
+    {
+      "renderer": "webgl",
+      "planets": 5000,
+      "views": {
+        "home": {
+          "renderer": "webgl",
+          "frames": 1154,
+          "sampled": 171,
+          "meanMs": 27.8412573086588,
+          "p50": 28.71500015258789,
+          "p95": 55.375,
+          "p99": 80.41499996185303,
+          "maxMs": 95.1949999332428,
+          "lod": {
+            "far": 2505,
+            "mid": 2495,
+            "near": 0,
+            "culled": 0
+          },
+          "planets": 5000,
+          "comets": 129,
+          "flashes": 0,
+          "camera": {
+            "distance": 3.2
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "ledger": 90000012,
+          "running": true,
+          "synthetic": 5000,
+          "coverage": {
+            "startedAt": 1792713132421,
+            "minutes": 0.38903333333333334,
+            "ledgersClosed": 13,
+            "ledgersWithCount": 13,
+            "firstLedger": 90000000,
+            "lastLedger": 90000012,
+            "expected": 5750,
+            "received": 5750,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 5750,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 5000,
+            "edges": 5745,
+            "records": 5750
+          },
+          "stability": {
+            "steps": 2,
+            "meanMs": 390.64999997615814,
+            "moved": 0.011956013130294235,
+            "maxMoved": 0.012000000000000005,
+            "movedShare": 0.9979860080559678,
+            "warm": 5000,
+            "pairs": 68925
+          },
+          "memory": {
+            "records": 5750,
+            "planets": 5000,
+            "edges": 5745,
+            "layoutEdges": 5745,
+            "clusters": 3,
+            "hubSkips": 2,
+            "interned": 5000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 1730.460000038147,
+            "window": 10
+          }
+        },
+        "closer": {
+          "renderer": "webgl",
+          "frames": 1325,
+          "sampled": 166,
+          "meanMs": 28.019337355372418,
+          "p50": 30.99500012397766,
+          "p95": 58.6949999332428,
+          "p99": 93.02999997138977,
+          "maxMs": 111.92000007629395,
+          "lod": {
+            "far": 2591,
+            "mid": 2409,
+            "near": 0,
+            "culled": 0
+          },
+          "planets": 5000,
+          "comets": 168,
+          "flashes": 0,
+          "camera": {
+            "distance": 1.4
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "ledger": 90000015,
+          "running": true,
+          "synthetic": 5000,
+          "coverage": {
+            "startedAt": 1792713132421,
+            "minutes": 0.5047833333333334,
+            "ledgersClosed": 16,
+            "ledgersWithCount": 16,
+            "firstLedger": 90000000,
+            "lastLedger": 90000015,
+            "expected": 6200,
+            "received": 6200,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 6200,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 5000,
+            "edges": 6195,
+            "records": 6200
+          },
+          "stability": {
+            "steps": 2,
+            "meanMs": 239.70500004291534,
+            "moved": 0.011942352617040932,
+            "maxMoved": 0.012000000000000004,
+            "movedShare": 0.9979148375768219,
+            "warm": 4831,
+            "pairs": 66685
+          },
+          "memory": {
+            "records": 6200,
+            "planets": 5000,
+            "edges": 6195,
+            "layoutEdges": 6195,
+            "clusters": 3,
+            "hubSkips": 2,
+            "interned": 5000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 1730.460000038147,
+            "window": 10
+          }
+        },
+        "inside": {
+          "renderer": "webgl",
+          "frames": 1532,
+          "sampled": 202,
+          "meanMs": 24.140445542807626,
+          "p50": 22.694999933242798,
+          "p95": 56.375,
+          "p99": 84.74000000953674,
+          "maxMs": 98.28999996185303,
+          "lod": {
+            "far": 2570,
+            "mid": 1349,
+            "near": 389,
+            "culled": 692
+          },
+          "planets": 5000,
+          "comets": 178,
+          "flashes": 0,
+          "camera": {
+            "distance": 0.5
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "ledger": 90000018,
+          "running": true,
+          "synthetic": 5000,
+          "coverage": {
+            "startedAt": 1792713132421,
+            "minutes": 0.61675,
+            "ledgersClosed": 19,
+            "ledgersWithCount": 19,
+            "firstLedger": 90000000,
+            "lastLedger": 90000018,
+            "expected": 6650,
+            "received": 6650,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 6650,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 5000,
+            "edges": 6644,
+            "records": 6650
+          },
+          "stability": {
+            "steps": 2,
+            "meanMs": 305.0574998855591,
+            "moved": 0.011924245069523411,
+            "maxMoved": 0.012000000000000004,
+            "movedShare": 0.9982921702574882,
+            "warm": 4084,
+            "pairs": 58151
+          },
+          "memory": {
+            "records": 6650,
+            "planets": 5000,
+            "edges": 6644,
+            "layoutEdges": 6644,
+            "clusters": 4,
+            "hubSkips": 2,
+            "interned": 5000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 1730.460000038147,
+            "window": 10
+          }
+        }
+      },
+      "stability": {
+        "steps": 2,
+        "meanMs": 305.0574998855591,
+        "moved": 0.011924245069523411,
+        "maxMoved": 0.012000000000000004,
+        "movedShare": 0.9982921702574882,
+        "warm": 4084,
+        "pairs": 58151
+      },
+      "memory": {
+        "records": 6650,
+        "planets": 5000,
+        "edges": 6644,
+        "layoutEdges": 6644,
+        "clusters": 4,
+        "hubSkips": 2,
+        "interned": 5000
+      },
+      "actualRenderer": "webgl"
+    },
+    {
+      "renderer": "webgl",
+      "planets": 20000,
+      "views": {
+        "home": {
+          "renderer": "webgl",
+          "frames": 1285,
+          "sampled": 121,
+          "meanMs": 30.861404952924115,
+          "p50": 9.06499981880188,
+          "p95": 106.35999989509583,
+          "p99": 195.20499992370605,
+          "maxMs": 205.1050000190735,
+          "lod": {
+            "far": 10170,
+            "mid": 9830,
+            "near": 0,
+            "culled": 0
+          },
+          "planets": 20000,
+          "comets": 291,
+          "flashes": 0,
+          "camera": {
+            "distance": 3.2
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "ledger": 90000012,
+          "running": true,
+          "synthetic": 20000,
+          "coverage": {
+            "startedAt": 1792713182095,
+            "minutes": 0.9582666666666667,
+            "ledgersClosed": 13,
+            "ledgersWithCount": 13,
+            "firstLedger": 90000000,
+            "lastLedger": 90000012,
+            "expected": 20750,
+            "received": 20750,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 20750,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 20000,
+            "edges": 20748,
+            "records": 20750
+          },
+          "stability": {
+            "steps": 1,
+            "meanMs": 532.914999961853,
+            "moved": 0.011972050123510542,
+            "maxMoved": 0.012000000000000005,
+            "movedShare": 0.9990865726174769,
+            "warm": 20000,
+            "pairs": 1086022
+          },
+          "memory": {
+            "records": 20750,
+            "planets": 20000,
+            "edges": 20748,
+            "layoutEdges": 20748,
+            "clusters": 2,
+            "hubSkips": 0,
+            "interned": 20000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 6020.09500002861,
+            "window": 10
+          }
+        },
+        "closer": {
+          "renderer": "webgl",
+          "frames": 1431,
+          "sampled": 144,
+          "meanMs": 31.790381951464546,
+          "p50": 35.044999837875366,
+          "p95": 71.39499998092651,
+          "p99": 90.53500008583069,
+          "maxMs": 112.10500001907349,
+          "lod": {
+            "far": 10476,
+            "mid": 9511,
+            "near": 13,
+            "culled": 0
+          },
+          "planets": 20000,
+          "comets": 184,
+          "flashes": 0,
+          "camera": {
+            "distance": 1.4
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "ledger": 90000015,
+          "running": true,
+          "synthetic": 20000,
+          "coverage": {
+            "startedAt": 1792713182095,
+            "minutes": 1.0749666666666666,
+            "ledgersClosed": 16,
+            "ledgersWithCount": 16,
+            "firstLedger": 90000000,
+            "lastLedger": 90000015,
+            "expected": 21200,
+            "received": 21200,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 21200,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 20000,
+            "edges": 21198,
+            "records": 21200
+          },
+          "stability": {
+            "steps": 1,
+            "meanMs": 562.9349999427795,
+            "moved": 0.011975578187408562,
+            "maxMoved": 0.012000000000000004,
+            "movedShare": 0.9994672633317351,
+            "warm": 19068,
+            "pairs": 990057
+          },
+          "memory": {
+            "records": 21200,
+            "planets": 20000,
+            "edges": 21198,
+            "layoutEdges": 21198,
+            "clusters": 2,
+            "hubSkips": 0,
+            "interned": 20000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 6020.09500002861,
+            "window": 10
+          }
+        },
+        "inside": {
+          "renderer": "webgl",
+          "frames": 1654,
+          "sampled": 221,
+          "meanMs": 21.833054300886474,
+          "p50": 20.670000076293945,
+          "p95": 45.6800000667572,
+          "p99": 52.88000011444092,
+          "maxMs": 55.234999895095825,
+          "lod": {
+            "far": 10236,
+            "mid": 4917,
+            "near": 1560,
+            "culled": 3287
+          },
+          "planets": 20000,
+          "comets": 203,
+          "flashes": 0,
+          "camera": {
+            "distance": 0.5
+          },
+          "dpr": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "ledger": 90000018,
+          "running": true,
+          "synthetic": 20000,
+          "coverage": {
+            "startedAt": 1792713182095,
+            "minutes": 1.1859,
+            "ledgersClosed": 19,
+            "ledgersWithCount": 19,
+            "firstLedger": 90000000,
+            "lastLedger": 90000018,
+            "expected": 21650,
+            "received": 21650,
+            "share": 1,
+            "provisional": 0,
+            "transactions": 21650,
+            "dupes": 0,
+            "failed": 0,
+            "planets": 20000,
+            "edges": 21648,
+            "records": 21650
+          },
+          "stability": {
+            "steps": 2,
+            "meanMs": 185.29500007629395,
+            "moved": 0.011950070256096332,
+            "maxMoved": 0.012000000000000005,
+            "movedShare": 0.9988868650070837,
+            "warm": 15122,
+            "pairs": 779631
+          },
+          "memory": {
+            "records": 21650,
+            "planets": 20000,
+            "edges": 21648,
+            "layoutEdges": 21648,
+            "clusters": 2,
+            "hubSkips": 0,
+            "interned": 20000
+          },
+          "coherence": {
+            "tested": 0,
+            "above": {
+              "raw": 0,
+              "white": 0,
+              "expected": 0,
+              "resolved": 0,
+              "unresolved": 0,
+              "minShuffles": 20
+            },
+            "at": 90000009,
+            "ms": 6020.09500002861,
+            "window": 10
+          }
+        }
+      },
+      "stability": {
+        "steps": 2,
+        "meanMs": 185.29500007629395,
+        "moved": 0.011950070256096332,
+        "maxMoved": 0.012000000000000005,
+        "movedShare": 0.9988868650070837,
+        "warm": 15122,
+        "pairs": 779631
+      },
+      "memory": {
+        "records": 21650,
+        "planets": 20000,
+        "edges": 21648,
+        "layoutEdges": 21648,
+        "clusters": 2,
+        "hubSkips": 0,
+        "interned": 20000
+      },
+      "actualRenderer": "webgl"
+    }
+  ],
+  "exceptions": []
+}
