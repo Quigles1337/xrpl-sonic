@@ -32,7 +32,7 @@ The brief's vocabulary, row by row, with the rule that earns each body, the fiel
 | **Collapse** | A `DeletedNode` AccountRoot: an `AccountDelete` succeeded. | observed · `planet.collapse` | `AffectedNodes.DeletedNode` | A faint cross; the planet dims and stays as a remnant for the session. | **Kept.** Stream. |
 | **Flash** (new) | Any transaction that is not a payment or an escrow (offers, trust sets, NFT offers, account settings, tickets, checks, batches): it happened at the submitter's planet. | observed | the record | A ring expanding from the planet in the category's colour, dashed when it failed. | **Added.** Stream. |
 
-One finding of the spike's hour against mainnet belongs here: `Batch` transactions were 43% of the messages in the first minute and the largest single type over the hour (see the measurements); the field guide has no glyph for them yet (the listening page's owner has that on the list, [ux.md](ux.md)). In the sky they are flashes; a body of their own is an owner's decision.
+One finding of the spike's hour against mainnet belongs here: `Batch` transactions were 43% of the messages in the first minute and the largest single type over the hour (see the measurements). While the spike ran, the listening page gained a glyph of its own for them (#30: category `batch`, three motes under one bracket, colour `#d4a373`; `categorize` now returns `batch`, which the spike, written against the eight earlier categories, folds into `other`). In the sky they are flashes; whether they take the new colour or a body of their own is an owner's decision.
 
 ## Levels of detail
 
@@ -185,7 +185,7 @@ The 2D canvas holds at 5,000 planets at 60 fps (6–7 ms a frame, half of them s
 
 #### What the real data did that the design did not predict
 
-- Batch is the largest transaction type on mainnet tonight (37% of the hour), and the field guide has no glyph for it; the sky draws it as a flash and the owner's decision 6 asks what it should be.
+- Batch is the largest transaction type on mainnet tonight (37% of the hour). The field guide gained a glyph for it while the spike ran (#30); the sky still draws it as a flash in the "other" colour, and the owner's decision 6 asks what it should be.
 - The cluster re-delivers whole bursts (20% of the hour's messages were duplicates, in 12 minutes of 60). The listening page's hash deduplication was right; the sky deduplicates per ledger the same way.
 - Issuers' balances are not seen: a star is named by its holders' trust lines, whose RippleState nodes carry no AccountRoot of the issuer, so most stars are drawn hollow until the issuer itself submits something or phase 2 reads `account_info`. Within two minutes of listening, the live sky had 11 stars, 13 AMM binaries, 3 black hole candidates and 6 pulsars among 806 planets, and the pulsar with a cadence of three ledgers was the market maker [coherence.md](coherence.md) measured at a cadence of three (self-correlation 0.96).
 - A dense neighbourhood made the per-neighbour repulsion scan quadratic (seconds a step at 20,000 planets in the browser, 23 ms in Node on the same input before the input grew dense); aggregates per grid cell fixed it and are the layout now.
@@ -202,7 +202,7 @@ Listed, not made. Each changes phase 1.
 3. **Art direction references.** The spike takes the observatory's tokens and the field guide's category colours and nothing else; planets glow in their sigil hue. References for the sky (a star atlas, an orrery, the cloud chamber already on the listening page) would settle the look of nebulae, comets and the marks of the kinds.
 4. **Whether WebGL is permitted.** Still no dependencies: the WebGL path is two shaders and the buffer code in `sky-gl.js`. The measurements below say what each path costs at each size; the decision is the owner's. If WebGL is permitted, the 2D canvas stays as the fallback (the page falls back by itself when WebGL is unavailable) and the explorer's constellation could share the camera (request R1).
 5. **The thresholds that make bodies.** Three holders for a star, forty counterparties for a hub, two namings for a cluster edge, five planets for a nebula, twelve warm ledgers, eight submitters for coherence. The spike's values are stated; they are parameters.
-6. **Batch.** 43% of the first minute's messages and the largest type over the hour; a flash in the spike. A body of its own, or the field guide's glyph when it exists.
+6. **Batch.** 43% of the first minute's messages and the largest type over the hour; a flash in the spike. A flash in the field guide's new Batch colour (#30), or a body of its own (a bundle: the inner transactions' comets leaving one planet together).
 7. **Where the sky lives in the mode map.** A fourth door beside Listen, Watch and Learn; a page beside Explorer in every mode's top bar; or an entrance from Watch only. Request R12.
 8. **A `camera` anchor in annotations** for the tours of phase 4, which would be the first field a case gains for a page other than the listening page.
 9. **Whether the synthetic mode ships.** `?synthetic=N` is the measuring instrument; its coverage line says nothing here is the ledger. Keep it for the bench only, or keep it reachable.
