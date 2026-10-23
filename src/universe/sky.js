@@ -28,9 +28,10 @@
 import { project, referenceScale, ringPoints, clampCamera } from './projection.js';
 import { CATEGORIES, CATEGORY_NAMES } from '../mapping.js';
 import { drawOverlay, hexToRgb } from './overlay.js';
+import { primitivesOf, weatherPrimitives, rockAngle, beltRadius } from './motions.js';
 
-export const CAMERA_HOME = Object.freeze({ yaw: 0.35, pitch: 0.28, distance: 3.2, fov: 1.0, target: Object.freeze([0, 0, 0]) });
-export const CAMERA_LIMITS = Object.freeze({ yaw: [-Infinity, Infinity], pitch: [-1.2, 1.2], distance: [0.25, 7] });
+export const CAMERA_HOME = Object.freeze({ yaw: 0.35, pitch: 0.28, distance: 5.2, fov: 1.0, target: Object.freeze([0, 0, 0]) });
+export const CAMERA_LIMITS = Object.freeze({ yaw: [-Infinity, Infinity], pitch: [-1.2, 1.2], distance: [0.25, 11] });
 /** Pixel radius of a size-1 planet at the camera's reference depth: one pixel, so most of a sky is points. */
 export const BASE_PX = 1.0;
 export const LOD = Object.freeze({ far: 2.6, near: 8 });
@@ -130,6 +131,11 @@ export class SkyBase {
     this.bodies = () => ({ kind: 'planet' });
     this.born = new Map(); // id → ms, for the ignition
     this.pulse = null; // { start } the ledger pulse
+    this.motions = []; // the events in flight (src/universe/motions.js)
+    this.standing = null; // the standing objects of the last ledger: rocks, checks, beams, gates, guardians, moons, satellites
+    this.weather = null; // the last ledger's weather, drawn at far zoom
+    this.nebulaByRoot = new Map(); // cluster root → nebula, for the weather's flows
+    this.heads = []; // the motion heads of the last frame, for the hit test: [x, y, motion]
     this.intervalMs = 4000;
     this.screen = { x: new Float32Array(1), y: new Float32Array(1), r: new Float32Array(1), depth: new Float32Array(1) };
     this.frameTimes = [];
@@ -181,8 +187,143 @@ export class SkyBase {
     this.pulse = { start: performance.now() };
   }
 
+  /** The events of a ledger as motions, each with its start and life already set (src/universe/bodies.js flightOf with the object's life). */
+  addMotions(list) {
+    for (const m of list) this.motions.push(m);
+    if (this.motions.length > 2400) this.motions.splice(0, this.motions.length - 2400);
+  }
+
+  setStanding(standing) {
+    this.standing = standing ?? null;
+  }
+
+  setWeather(weather) {
+    this.weather = weather ?? null;
+  }
+
+  /** The motion whose head is nearest a point, within a few pixels, for the hover line. */
+  hitMotion(clientX, clientY) {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    let best = null;
+    let bd = 9;
+    for (const [hx, hy, m] of this.heads) {
+      const d = Math.hypot(hx - x, hy - y);
+      if (d < bd) {
+        bd = d;
+        best = m;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * The primitives of the frame: at far zoom the weather; closer the motions in flight; near, the standing objects too.
+   * Motions that have ended are dropped here.
+   */
+  livePrimitives(now, cam, vp) {
+    const s = this.screen;
+    const all = { lines: [], dots: [], rings: [], darts: [] };
+    const add = (p) => {
+      all.lines.push(...p.lines);
+      all.dots.push(...p.dots);
+      all.rings.push(...p.rings);
+      all.darts.push(...p.darts);
+    };
+    this.heads = [];
+    const far = cam.distance >= NEBULA_ZOOM;
+    if (far) {
+      if (this.weather) {
+        const pointOf = (key) => {
+          const nb = this.nebulaByRoot.get(key);
+          if (nb) {
+            const p = project([nb.x, nb.y, nb.z], cam, vp);
+            return p ? [p.x, p.y] : null;
+          }
+          return key > 0 && s.depth[key] > 0 ? [s.x[key], s.y[key]] : null;
+        };
+        add(weatherPrimitives(this.weather, pointOf, { rgbOf: (c) => CATEGORY_RGB[CATEGORY_NAMES.indexOf(c)] ?? CATEGORY_RGB[CATEGORY_RGB.length - 1], reduced: this.reduced, now }));
+      }
+      this.motions = this.motions.filter((m) => now < m.start + m.life);
+      return all;
+    }
+    const alive = [];
+    for (const m of this.motions) {
+      const t = (now - m.start) / m.life;
+      if (t >= 1) continue;
+      alive.push(m);
+      if (t < 0) continue;
+      if (this.layers[m.layer] === false) continue;
+      m.t = t;
+      const p = primitivesOf(m, s, { reduced: this.reduced, now });
+      const head = p.dots.find((d) => d.core) ?? p.darts[0] ?? null;
+      if (head) this.heads.push([head.x, head.y, m]);
+      add(p);
+    }
+    this.motions = alive;
+    if (this.standing && cam.distance < 1.6) add(this.standingPrimitives(now));
+    return all;
+  }
+
+  /** The standing objects at near zoom: rocks in their belts, waiting checks, beams, gates, guardian rings, moons, satellites. */
+  standingPrimitives(now) {
+    const s = this.screen;
+    const p = { lines: [], dots: [], rings: [], darts: [] };
+    const st = this.standing;
+    const on = (id) => id > 0 && id <= this.n && s.depth[id] > 0 && s.r[id] >= 2;
+    const rgbOf = (c) => CATEGORY_RGB[CATEGORY_NAMES.indexOf(c)];
+    for (const [host, owner, sequence, band] of st.rocks ?? []) {
+      if (!on(host)) continue;
+      const ang = rockAngle(owner, sequence);
+      const r = beltRadius(s.r[host], band);
+      p.dots.push({ x: s.x[host] + Math.cos(ang) * r, y: s.y[host] + Math.sin(ang) * r * 0.42, r: 1.3, rgb: rgbOf('offer'), a: 0.55, core: false, square: true });
+    }
+    for (const [from, to] of st.checks ?? []) {
+      if (!on(to)) continue;
+      const ang = rockAngle(String(from), to);
+      const r = Math.max(3, s.r[to]) * 1.5 + 6;
+      p.dots.push({ x: s.x[to] + Math.cos(ang) * r, y: s.y[to] + Math.sin(ang) * r * 0.42, r: 1.8, rgb: rgbOf('payment'), a: 0.7, core: false });
+    }
+    for (const [a, b, width] of st.beams ?? []) {
+      if (!on(a) || !on(b)) continue;
+      p.lines.push({ x0: s.x[a], y0: s.y[a], x1: s.x[b], y1: s.y[b], rgb: rgbOf('paychan'), a: 0.5, w: 1 + width });
+    }
+    for (const [a, b] of st.gates ?? []) {
+      if (!on(a) || !on(b)) continue;
+      p.lines.push({ x0: s.x[a], y0: s.y[a], x1: s.x[b], y1: s.y[b], rgb: rgbOf('trust'), a: 0.35, w: 0.8, dash: [2, 4] });
+    }
+    for (const [planet, count, quorum] of st.guardians ?? []) {
+      if (!on(planet)) continue;
+      const R = Math.max(3, s.r[planet]) * 1.5 + 8;
+      const k = Math.min(8, count);
+      for (let i = 0; i < k; i++) {
+        const ang = (i / k) * Math.PI * 2;
+        p.dots.push({ x: s.x[planet] + Math.cos(ang) * R, y: s.y[planet] + Math.sin(ang) * R * 0.5, r: 1.8, rgb: i < quorum ? [255, 255, 255] : rgbOf('trust'), a: i < quorum ? 0.9 : 0.5, core: i < quorum });
+      }
+    }
+    for (const [planet, count, beacons] of st.moons ?? []) {
+      if (!on(planet)) continue;
+      const R = Math.max(3, s.r[planet]) * 1.5 + 6;
+      const k = Math.min(6, count);
+      for (let i = 0; i < k; i++) {
+        const ang = rockAngle(String(planet), i) + (this.reduced ? 0 : now / 6000);
+        const blink = beacons > i && !this.reduced ? (Math.sin(now / 200 + i) + 1) / 2 : 1;
+        p.dots.push({ x: s.x[planet] + Math.cos(ang) * R, y: s.y[planet] + Math.sin(ang) * R * 0.42, r: 1.6, rgb: rgbOf('nft'), a: (0.5 + 0.4 * blink) * (beacons > i ? 1 : 0.7), core: beacons > i });
+      }
+    }
+    for (const [pool] of st.satellites ?? []) {
+      if (!on(pool)) continue;
+      const ang = this.reduced ? 1 : now / 2500;
+      const R = Math.max(3, s.r[pool]) * 1.5 + 10;
+      p.dots.push({ x: s.x[pool] + Math.cos(ang) * R, y: s.y[pool] + Math.sin(ang) * R * 0.42, r: 2, rgb: rgbOf('amm'), a: 0.9, core: false });
+    }
+    return p;
+  }
+
   setNebulae(list) {
     this.nebulae = list ?? [];
+    this.nebulaByRoot = new Map(this.nebulae.map((nb) => [nb.root, nb]));
   }
 
   setPairs(list) {
@@ -348,14 +489,29 @@ export class SkyBase {
     return glowFromAttrs(this.attrs, id, ledger);
   }
 
-  /** The nebulae projected to the screen for the frame: { sx, sy, sr, size }. */
+  /** The nebulae projected to the screen for the frame: { sx, sy, sr, size }, and for a galaxy its disc as a projected polygon. */
   projectNebulae(cam, vp) {
     if (cam.distance < NEBULA_ZOOM) return [];
     const out = [];
     for (const nb of this.nebulae) {
       const p = project([nb.x, nb.y, nb.z], cam, vp);
       if (!p) continue;
-      out.push({ ...nb, sx: p.x, sy: p.y, sr: Math.max(14, (nb.r + 0.04) * p.scale * 1.4) });
+      const entry = { ...nb, sx: p.x, sy: p.y, sr: Math.max(14, (nb.r + 0.04) * p.scale * 1.4) };
+      if (nb.core && nb.u && nb.v) {
+        const R = nb.r * 1.25;
+        const poly = [];
+        for (let i = 0; i < 24; i++) {
+          const a = (i / 24) * Math.PI * 2;
+          const q = project([nb.x + (nb.u[0] * Math.cos(a) + nb.v[0] * Math.sin(a)) * R, nb.y + (nb.u[1] * Math.cos(a) + nb.v[1] * Math.sin(a)) * R, nb.z + (nb.u[2] * Math.cos(a) + nb.v[2] * Math.sin(a)) * R], cam, vp);
+          if (!q) {
+            poly.length = 0;
+            break;
+          }
+          poly.push([q.x, q.y]);
+        }
+        if (poly.length) entry.poly = poly;
+      }
+      out.push(entry);
     }
     return out;
   }
@@ -492,7 +648,8 @@ export class Sky extends SkyBase {
           const rgb = HUE_TABLE[attrs.hue[id]];
           const glow = this.glowOf(id, ledger);
           const kind = attrs.kind[id];
-          const bright = (0.65 + 0.35 * glow) * (kind === 5 ? 0.3 : 1) * (attrs.known[id] ? 1 : 0.6);
+          const field = attrs.core ? (attrs.core[id] ? 1 : cam.distance >= NEBULA_ZOOM ? 0.2 : 0.7) : 1; // a field star, in no galaxy, is dimmer: dust at far zoom
+          const bright = (0.65 + 0.35 * glow) * (kind === 5 ? 0.3 : 1) * (attrs.known[id] ? 1 : 0.6) * field;
           const cr = rgb[0] * bright;
           const cg = rgb[1] * bright;
           const cb = rgb[2] * bright;
@@ -514,12 +671,16 @@ export class Sky extends SkyBase {
       for (const nb of nebulae) {
         const a = Math.min(0.28, 0.08 + 0.02 * Math.log2(nb.size));
         const g = ctx.createRadialGradient(nb.sx, nb.sy, 0, nb.sx, nb.sy, nb.sr);
-        g.addColorStop(0, rgba(NEBULA_RGB, a));
+        g.addColorStop(0, rgba(NEBULA_RGB, a * (nb.core ? 1.4 : 1)));
         g.addColorStop(0.5, rgba(NEBULA_RGB, a * 0.35));
         g.addColorStop(1, rgba(NEBULA_RGB, 0));
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(nb.sx, nb.sy, nb.sr, 0, Math.PI * 2);
+        if (nb.poly) {
+          // a galaxy: the cloud is its disc, seen at its tilt
+          nb.poly.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+          ctx.closePath();
+        } else ctx.arc(nb.sx, nb.sy, nb.sr, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
@@ -559,6 +720,7 @@ export class Sky extends SkyBase {
     ctx.globalCompositeOperation = 'source-over';
     lap('near');
     this.drawComets(ctx, now);
+    this.drawPrimitives(ctx, this.livePrimitives(now, cam, vp));
     ctx.restore();
     lap('comets');
     this.overlay(near, now, cam, vp, nebulae);
@@ -599,6 +761,69 @@ export class Sky extends SkyBase {
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalCompositeOperation = 'lighter';
+  }
+
+  /** Lines, dots, rings and darts from the motion grammar, on the 2D canvas. */
+  drawPrimitives(ctx, p) {
+    ctx.lineCap = 'round';
+    ctx.globalCompositeOperation = 'lighter';
+    for (const l of p.lines) {
+      ctx.strokeStyle = rgba(l.rgb, l.a);
+      ctx.lineWidth = l.w ?? 1;
+      ctx.setLineDash(l.dash ?? []);
+      ctx.beginPath();
+      ctx.moveTo(l.x0, l.y0);
+      ctx.lineTo(l.x1, l.y1);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    for (const r of p.rings) {
+      ctx.strokeStyle = rgba(r.rgb, r.a);
+      ctx.lineWidth = r.w ?? 1;
+      ctx.setLineDash(r.dash ?? []);
+      ctx.beginPath();
+      if (r.hex) {
+        for (let i = 0; i < 6; i++) {
+          const a = (Math.PI / 3) * i;
+          const px = r.x + r.r * Math.cos(a);
+          const py = r.y + r.r * Math.sin(a);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+      } else ctx.ellipse(r.x, r.y, r.r, r.r * (r.ry ?? 1), 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    for (const d of p.dots) {
+      ctx.fillStyle = rgba(d.rgb, d.a);
+      if (d.square) ctx.fillRect(d.x - d.r, d.y - d.r, d.r * 2, d.r * 2);
+      else {
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    for (const d of p.darts) {
+      // the spectral line's diamond, turned along its path
+      const c = Math.cos(d.angle);
+      const sn = Math.sin(d.angle);
+      const L = d.len;
+      const W = Math.max(1.5, L * 0.28);
+      ctx.fillStyle = rgba(d.rgb, d.a);
+      ctx.beginPath();
+      ctx.moveTo(d.x + c * L, d.y + sn * L);
+      ctx.lineTo(d.x - sn * W, d.y + c * W);
+      ctx.lineTo(d.x - c * L * 0.6, d.y - sn * L * 0.6);
+      ctx.lineTo(d.x + sn * W, d.y - c * W);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = `rgba(255, 255, 255, ${(d.a * 0.8).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(d.x + c * L * 0.3, d.y + sn * L * 0.3, 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   drawComets(ctx, now) {

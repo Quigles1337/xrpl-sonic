@@ -1,0 +1,71 @@
+{
+  "object": "tilt",
+  "verb": "happen",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107842353,
+  "hash": "C2A4E5F0CD760BCF7651A598EFDE4A2CF78C86C599A66B5F3FB8E16AB102EF32",
+  "message": {
+    "close_time_iso": "2026-10-23T05:01:00Z",
+    "ctid": "C66D8B3100110000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "7EE01B0557FBA8D7B3B006ACBB7EB0E151750CA6FC0C35DD77F3A895C73E1362",
+    "ledger_index": 107842353,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rQwtkrvQVGEky1AuPrk37rF4fVVbwKMu16",
+              "Balance": "1699988",
+              "Flags": 65536,
+              "OwnerCount": 0,
+              "RegularKey": "r9bXsNLGJzcATb3N7NYpbJtX6XR1xkVJup",
+              "Sequence": 107842352
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "D254F604AE50F232065F889476D7AF9295ED95D728A403083232942723ECE19F",
+            "PreviousFields": {
+              "Balance": "1700000",
+              "Flags": 0,
+              "Sequence": 107842351
+            },
+            "PreviousTxnID": "16D18DF6A7F063FAE56179849FD54D8D70AD15A78EA6798EC84FF1CAA53F6900",
+            "PreviousTxnLgrSeq": 107842351
+          }
+        }
+      ],
+      "TransactionIndex": 17,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rQwtkrvQVGEky1AuPrk37rF4fVVbwKMu16",
+      "Fee": "12",
+      "Flags": 0,
+      "LastLedgerSequence": 107842371,
+      "RegularKey": "r9bXsNLGJzcATb3N7NYpbJtX6XR1xkVJup",
+      "Sequence": 107842351,
+      "SigningPubKey": "ED840153A27968002B07280FFF9607090C431AD92660F01C920F38FBE736B9AE84",
+      "TransactionType": "SetRegularKey",
+      "TxnSignature": "D96B18978068116BCB66945C1AE3C1BB79E256C176025C7E417EF4AA818A23FC45C3734F3C72F96DA72DDA3779D8D576B349AA64918B5B6C606255EF09384E09",
+      "date": 846046860,
+      "hash": "C2A4E5F0CD760BCF7651A598EFDE4A2CF78C86C599A66B5F3FB8E16AB102EF32"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "happen",
+      "object": "tilt",
+      "rule": "happen.setregularkey",
+      "from": null,
+      "to": null,
+      "via": [],
+      "at": "rQwtkrvQVGEky1AuPrk37rF4fVVbwKMu16",
+      "label": "tilt: rQwt…Mu16 set a regular key, r9bX…VJup"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "object": "tick",
+  "verb": null,
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841942,
+  "hash": "31B6C7509EB666791859372CF765FE317D075038250C5BBFBFABE069430510B6",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:01Z",
+    "ctid": "C66D899600000000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "DDB3B8B3947D4F666CE88B95CFA4AB7BC0B37B6166A679118FD349A08FADD884",
+    "ledger_index": 107841942,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rHUdpZGKeyPt53mnNbbFnTibW3hFKds9M6",
+              "Balance": "1378657",
+              "Flags": 0,
+              "OwnerCount": 0,
+              "Sequence": 107779357
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "73EACC6150A584C22FDE48FAC717C496170A03C7BD92743A069C4512BE58EE8A",
+            "PreviousFields": {
+              "Balance": "1378707",
+              "Sequence": 107779356
+            },
+            "PreviousTxnID": "44E00B2A2B348AA879AA2C5D1A1F3F85DAA7DA08AD9D2C02FA2743007AD7ECD3",
+            "PreviousTxnLgrSeq": 107841903
+          }
+        }
+      ],
+      "TransactionIndex": 0,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rHUdpZGKeyPt53mnNbbFnTibW3hFKds9M6",
+      "BatchSigners": [
+        {
+          "BatchSigner": {
+            "Account": "raRBYswSuyUpH7h51UmWuNCw6Cj1TmpKD",
+            "SigningPubKey": "02B6737566DA4C49370546FAA520DE1B90C1E7CD9B6A8F02B919BF0CBFF64BAB1B",
+            "TxnSignature": "3045022100BC0D576270E44D6C0A89A9850EF3A309D729BD4D88429346A74F68656F3B9DE0022002EAF4E6A80DAB228A625E4A9FF1EDF99873742F5083C122C0AA09D3159C2193"
+          }
+        }
+      ],
+      "Fee": "50",
+      "Flags": 65536,
+      "LastLedgerSequence": 107841942,
+      "RawTransactions": [
+        {
+          "RawTransaction": {
+            "Account": "raRBYswSuyUpH7h51UmWuNCw6Cj1TmpKD",
+            "Amount": {
+              "currency": "5452495050520000000000000000000000000000",
+              "issuer": "r9QYoVFNFZV1rZtFZEypPPpka2iEVDgqY1",
+              "value": "9999999999999990e79"
+            },
+            "Destination": "raRBYswSuyUpH7h51UmWuNCw6Cj1TmpKD",
+            "Fee": "0",
+            "Flags": 1073938432,
+            "Paths": [
+              [
+                {
+                  "currency": "3352444559450000000000000000000000000000",
+                  "issuer": "rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ",
+                  "type": 48
+                },
+                {
+                  "currency": "46555A5A59000000000000000000000000000000",
+                  "issuer": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+                  "type": 48
+                },
+                {
+                  "currency": "5452495050520000000000000000000000000000",
+                  "issuer": "r9QYoVFNFZV1rZtFZEypPPpka2iEVDgqY1",
+                  "type": 48
+                }
+              ]
+            ],
+            "SendMax": "614320",
+            "Sequence": 0,
+            "SigningPubKey": "",
+            "TicketSequence": 101416609,
+            "TransactionType": "Payment"
+          }
+        },
+        {
+          "RawTransaction": {
+            "Account": "raRBYswSuyUpH7h51UmWuNCw6Cj1TmpKD",
+            "Amount": "999999999999999",
+            "DeliverMin": "614381",
+            "Destination": "raRBYswSuyUpH7h51UmWuNCw6Cj1TmpKD",
+            "Fee": "0",
+            "Flags": 1073872896,
+            "SendMax": {
+              "currency": "5452495050520000000000000000000000000000",
+              "issuer": "r9QYoVFNFZV1rZtFZEypPPpka2iEVDgqY1",
+              "value": "1000000000000000e15"
+            },
+            "Sequence": 0,
+            "SigningPubKey": "",
+            "TicketSequence": 101416610,
+            "TransactionType": "Payment"
+          }
+        }
+      ],
+      "Sequence": 107779356,
+      "SigningPubKey": "ED51DB0C7F501B246BF70279FB8537B6D899FD025C8FC090DF36B0C6C93A91BE9C",
+      "TransactionType": "Batch",
+      "TxnSignature": "CB773B2A28DEB35466F8CA85C21413E6C0D6F2627A56B893E0D0A8818D2BE515197FB5887D9C6DE67DD811538A55F1748693A6D000C50F87F2C1B0227561BE00",
+      "date": 846045241,
+      "hash": "31B6C7509EB666791859372CF765FE317D075038250C5BBFBFABE069430510B6"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": null,
+      "object": "tick",
+      "rule": "batch.wrapper",
+      "from": null,
+      "to": null,
+      "via": [],
+      "at": "rHUdpZGKeyPt53mnNbbFnTibW3hFKds9M6",
+      "label": "tick: rHUd…s9M6 submitted a Batch of 2 transactions"
+    }
+  ]
+}

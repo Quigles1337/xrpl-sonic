@@ -15,7 +15,7 @@ describe('layout', () => {
     const a = homeOf('rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah');
     assert.deepEqual(homeOf('rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah'), a);
     const r = Math.hypot(...a);
-    assert.ok(r <= 1 && r > 0.3, `${r}`);
+    assert.ok(r <= DEFAULTS.radius && r > 0.3 * DEFAULTS.radius, `${r}`);
     assert.notDeepEqual(homeOf('rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z'), a);
   });
 

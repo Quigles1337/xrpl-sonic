@@ -1,0 +1,161 @@
+{
+  "object": "moon-beacon-off",
+  "verb": "happen",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841944,
+  "hash": "CFB715C0DBA325592FA0A56BE39C256D7416BDB5175B983AF9A2413BBF991900",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:10Z",
+    "ctid": "C66D8998003B0000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "BCDEC7DF79E9760213B3BD4289D33C435912F33F97D0123D944797AA96265383",
+    "ledger_index": 107841944,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rf7Db55CXcWgqmHnb1Pjx1WVGNCqMNsyZ",
+              "Balance": "690224014",
+              "Flags": 0,
+              "OwnerCount": 1039,
+              "Sequence": 107739347
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "1E5B89FEF2312DDD82E940A7E7EFAB5270F04933D6EF639189C4DADEF1FA38EC",
+            "PreviousFields": {
+              "Balance": "690229071",
+              "OwnerCount": 1041,
+              "Sequence": 107739346
+            },
+            "PreviousTxnID": "137D85BCDCF84C2AE951B61A3514550735CA6748C1FBB0C9A6D55106534BEF43",
+            "PreviousTxnLgrSeq": 107841942
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 1,
+              "NFTokenID": "00081388EF7C422EF52CEB969960BEF4144D7BC3F862C4676E86F758059EBAC3",
+              "RootIndex": "224D1C40860F037882A379FA193C12B7894CB148303920FBBAF984339D329826"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "224D1C40860F037882A379FA193C12B7894CB148303920FBBAF984339D329826",
+            "PreviousTxnID": "03CE7902884A0E5380F6AE2E90C3BEC0D284CDB77599284BB956B5FD77D22946",
+            "PreviousTxnLgrSeq": 107841938
+          }
+        },
+        {
+          "ModifiedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "587E28972F3B63D2260C0671E59593EE6C4D27AB857D1AF230F5CAA959BB3EAC",
+            "PreviousTxnID": "137D85BCDCF84C2AE951B61A3514550735CA6748C1FBB0C9A6D55106534BEF43",
+            "PreviousTxnLgrSeq": 107841942
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexNext": "4b3",
+              "IndexPrevious": "4b1",
+              "Owner": "rf7Db55CXcWgqmHnb1Pjx1WVGNCqMNsyZ",
+              "RootIndex": "89D2366311D158F7F3624E0B6CCE6AF647518CC26F1436EB1D97B14DF8CA7699"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "76112457618EFC1AD71413745CBADE10C644665974A12B9EEF25E5862107A03F",
+            "PreviousTxnID": "4E980CBAEEA2EAB1AAF6E503269D11D4CD1EDCBCBA3EF4EA96B78EEE7A1E8B42",
+            "PreviousTxnLgrSeq": 107841935
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Amount": "5355000",
+              "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+              "Expiration": 846647553,
+              "Flags": 0,
+              "NFTokenID": "00081388EF7C422EF52CEB969960BEF4144D7BC3F862C4676E86F758059EBAC3",
+              "NFTokenOfferNode": "0",
+              "Owner": "rf7Db55CXcWgqmHnb1Pjx1WVGNCqMNsyZ",
+              "OwnerNode": "4b2",
+              "PreviousTxnID": "A89766D2D2085247A4FE88857930C9B32F1EE2B90677CC0BE44D7A3A94DE6807",
+              "PreviousTxnLgrSeq": 107841338
+            },
+            "LedgerEntryType": "NFTokenOffer",
+            "LedgerIndex": "A68C2178975D90051F78477D11A6E1D45CEE54BAE730B7BED25782DF92600653"
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Amount": "5355000",
+              "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+              "Expiration": 846647687,
+              "Flags": 0,
+              "NFTokenID": "00081388EF7C422EF52CEB969960BEF4144D7BC3F862C46778CDECD0059EB83B",
+              "NFTokenOfferNode": "0",
+              "Owner": "rf7Db55CXcWgqmHnb1Pjx1WVGNCqMNsyZ",
+              "OwnerNode": "4b2",
+              "PreviousTxnID": "F7D1F00B8F1C5CE504AC0F8F3099E0452DE75D29207E1636E056A8E9C39EE1F3",
+              "PreviousTxnLgrSeq": 107841344
+            },
+            "LedgerEntryType": "NFTokenOffer",
+            "LedgerIndex": "CF10572E29B5BC1354208537D710C6942CA3458A4EDA40039128CE1E5C9950CA"
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 1,
+              "NFTokenID": "00081388EF7C422EF52CEB969960BEF4144D7BC3F862C46778CDECD0059EB83B",
+              "RootIndex": "EA5E53B75E4A664B86CCC5D2BDB9A98256ECCB8E8778026F0BCD99F9B4F16A55"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "EA5E53B75E4A664B86CCC5D2BDB9A98256ECCB8E8778026F0BCD99F9B4F16A55",
+            "PreviousTxnID": "137D85BCDCF84C2AE951B61A3514550735CA6748C1FBB0C9A6D55106534BEF43",
+            "PreviousTxnLgrSeq": 107841942
+          }
+        }
+      ],
+      "TransactionIndex": 59,
+      "TransactionResult": "tesSUCCESS",
+      "nftoken_ids": [
+        "00081388EF7C422EF52CEB969960BEF4144D7BC3F862C4676E86F758059EBAC3",
+        "00081388EF7C422EF52CEB969960BEF4144D7BC3F862C46778CDECD0059EB83B"
+      ]
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rf7Db55CXcWgqmHnb1Pjx1WVGNCqMNsyZ",
+      "Fee": "5057",
+      "LastLedgerSequence": 107841962,
+      "NFTokenOffers": [
+        "A68C2178975D90051F78477D11A6E1D45CEE54BAE730B7BED25782DF92600653",
+        "CF10572E29B5BC1354208537D710C6942CA3458A4EDA40039128CE1E5C9950CA"
+      ],
+      "Sequence": 107739346,
+      "SigningPubKey": "ED8E175590CECAB0497AAEE361B2794ECDFF3FBC45D8AAF944A193DA8DC3AFFF42",
+      "TransactionType": "NFTokenCancelOffer",
+      "TxnSignature": "8C79A4A34CE47DD3B325DCA16BAF07DEEA36FAFFFD47A1A407E370E2465780902268239B2EABB162FB5A88BA23190D5644E870931088CF67E7CBFA075CD4940C",
+      "date": 846045250,
+      "hash": "CFB715C0DBA325592FA0A56BE39C256D7416BDB5175B983AF9A2413BBF991900"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "happen",
+      "object": "moon-beacon-off",
+      "rule": "happen.nft.offer.cancel",
+      "from": null,
+      "to": null,
+      "via": [],
+      "at": "rf7Db55CXcWgqmHnb1Pjx1WVGNCqMNsyZ",
+      "label": "moon-beacon-off: rf7D…NsyZ cancelled 2 NFT offers"
+    }
+  ]
+}

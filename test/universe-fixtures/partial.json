@@ -1,0 +1,198 @@
+{
+  "object": "partial",
+  "verb": "travel",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841953,
+  "hash": "313B227D49B78D358F5412A16F2053022A5D1B5384803D5BF66A37C6C88B4222",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:41Z",
+    "ctid": "C66D89A100490000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "2AC58A9933C8EA938BA054A857A55FE9F304D0423F01605E2DF47AD8D7280C41",
+    "ledger_index": 107841953,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Balance": {
+                "currency": "524C555344000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "2422721.945475285"
+              },
+              "Flags": 16842752,
+              "HighLimit": {
+                "currency": "524C555344000000000000000000000000000000",
+                "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+                "value": "0"
+              },
+              "HighNode": "619",
+              "LowLimit": {
+                "currency": "524C555344000000000000000000000000000000",
+                "issuer": "rhWTXC2m2gGGA9WozUaoMm6kLAVPb1tcS3",
+                "value": "0"
+              },
+              "LowNode": "0"
+            },
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "2BCFBCB6565955DC4360705C247A4235D695FBFE197F6E8386E00136F2BB7E27",
+            "PreviousFields": {
+              "Balance": {
+                "currency": "524C555344000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "2422721.999252159"
+              }
+            },
+            "PreviousTxnID": "7C2BDEF41E686F764D24C1B359A7D771E105E24EADEF4E7C6B942095B0763CC3",
+            "PreviousTxnLgrSeq": 107841950
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "AMMID": "160C6649399D6AF625ED94A66812944BDA1D8993445A503F6B5730DECC7D3767",
+              "Account": "rhWTXC2m2gGGA9WozUaoMm6kLAVPb1tcS3",
+              "Balance": "1837205216970",
+              "Flags": 26214400,
+              "OwnerCount": 1,
+              "Sequence": 93814277
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "95F777A378AF9428695717149DDE4EC563BE9EB0C9186CCFDED9542240B9B915",
+            "PreviousFields": {
+              "Balance": "1837205176106"
+            },
+            "PreviousTxnID": "7C2BDEF41E686F764D24C1B359A7D771E105E24EADEF4E7C6B942095B0763CC3",
+            "PreviousTxnLgrSeq": 107841950
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Balance": {
+                "currency": "524C555344000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "1155.780874827408"
+              },
+              "Flags": 1114112,
+              "HighLimit": {
+                "currency": "524C555344000000000000000000000000000000",
+                "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+                "value": "0"
+              },
+              "HighNode": "e1e",
+              "LowLimit": {
+                "currency": "524C555344000000000000000000000000000000",
+                "issuer": "rUUmpjtQXAMnX4xWvC9cq1FyWwVyubC2ad",
+                "value": "13300033"
+              },
+              "LowNode": "0"
+            },
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "A281340E193B5EBEB9DC994F2463A1ABC559C48F624FABC9A69DA2F2A39FBEF6",
+            "PreviousFields": {
+              "Balance": {
+                "currency": "524C555344000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "1155.727097953408"
+              }
+            },
+            "PreviousTxnID": "2972415B8C955AAE0F682AD56BC4E737A1859D0C0664BB0540AB20719DE6CD04",
+            "PreviousTxnLgrSeq": 107841856
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "r4PboXNDNese3YLhc8tgzzKNhjGeEaxqfc",
+              "Balance": "954530637",
+              "Flags": 0,
+              "OwnerCount": 169,
+              "Sequence": 104753516,
+              "TicketCount": 15
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "E88097467AF36044C2A6D920286D8484FDC455BCCE05971DC94AFA81ED6BCFEB",
+            "PreviousFields": {
+              "Balance": "954571511",
+              "Sequence": 104753515
+            },
+            "PreviousTxnID": "AACC2E8F0E0935B0DF6695BF9E6E41FD446FF2E730FF8F1510ACFBCEEEEF44B5",
+            "PreviousTxnLgrSeq": 107841951
+          }
+        }
+      ],
+      "DeliveredAmount": {
+        "currency": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "0.053776874"
+      },
+      "TransactionIndex": 73,
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": {
+        "currency": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "0.053776874"
+      }
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "r4PboXNDNese3YLhc8tgzzKNhjGeEaxqfc",
+      "Amount": {
+        "currency": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "1000000000000000"
+      },
+      "DeliverMax": {
+        "currency": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "1000000000000000"
+      },
+      "DeliverMin": {
+        "currency": "524C555344000000000000000000000000000000",
+        "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "value": "0.05350799178915"
+      },
+      "Destination": "rUUmpjtQXAMnX4xWvC9cq1FyWwVyubC2ad",
+      "Fee": "10",
+      "Flags": 131072,
+      "InvoiceID": "866F8B3B55811FBCC03E772B6418C60A471F193218845E2009190CDE98C9CBCE",
+      "LastLedgerSequence": 107841954,
+      "Paths": [
+        [
+          {
+            "currency": "524C555344000000000000000000000000000000",
+            "issuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+            "type": 48
+          }
+        ]
+      ],
+      "SendMax": "40864",
+      "Sequence": 104753515,
+      "SigningPubKey": "ED9F76048C00E74677FE18A2820C1F080589FCF3B51AF99C409242E08C512795F0",
+      "TransactionType": "Payment",
+      "TxnSignature": "75C0E54B8B056CBCFCBEE64C47CD54E6DC905422EC1F2123CB3628342BECEDEDBD0FCC2FCABD910B600C923227C2FE539359A32F5848AD7393C37B4C5AE5A20B",
+      "date": 846045281,
+      "hash": "313B227D49B78D358F5412A16F2053022A5D1B5384803D5BF66A37C6C88B4222"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "travel",
+      "object": "partial",
+      "rule": "travel.payment.partial",
+      "from": "r4PboXNDNese3YLhc8tgzzKNhjGeEaxqfc",
+      "to": "rUUmpjtQXAMnX4xWvC9cq1FyWwVyubC2ad",
+      "via": [
+        "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+        "rhWTXC2m2gGGA9WozUaoMm6kLAVPb1tcS3"
+      ],
+      "at": "r4PboXNDNese3YLhc8tgzzKNhjGeEaxqfc",
+      "label": "partial: r4Pb…xqfc paid rUUm…C2ad, delivered 0.053777 RLUSD of up to 1,000,000,000,000,000 RLUSD"
+    }
+  ]
+}

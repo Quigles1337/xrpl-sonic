@@ -113,8 +113,8 @@ export function drawOverlay(ctx, s, a, o) {
     }
     ctx.globalCompositeOperation = 'source-over';
   }
-  // --- the marks of the kinds, and the cast rings, on the near bodies -----------------------
-  const near = o.near ?? [];
+  // --- the marks of the kinds, and the cast rings, on the near bodies; a crowded near level keeps the largest 240 --
+  const near = (o.near ?? []).length > 240 ? [...o.near].sort((p, q) => s.r[q] - s.r[p]).slice(0, 240) : o.near ?? [];
   for (const id of near) {
     const x = s.x[id];
     const y = s.y[id];
@@ -223,12 +223,14 @@ export function drawOverlay(ctx, s, a, o) {
     ctx.fillStyle = rgba(INK, 0.8);
     ctx.textAlign = 'center';
     const placed = [];
+    const most = 12; // the twelve largest carry their label at far zoom; the rest have it on hover and focus
     for (const nb of [...o.nebulae].sort((p, q) => q.size - p.size)) {
+      if (placed.length >= most) break;
       if (!(nb.sr >= 24)) continue;
       const ly = nb.sy + nb.sr + 10;
       if (placed.some(([px, py]) => Math.abs(px - nb.sx) < 260 && Math.abs(py - ly) < 24)) continue;
       placed.push([nb.sx, ly]);
-      ctx.fillText(nebulaLabel(nb.size), nb.sx, ly);
+      ctx.fillText(nb.core ? `galaxy · ${nb.size} planets around ${o.names(nb.root).name}` : nebulaLabel(nb.size), nb.sx, ly);
     }
   }
   // --- pair labels ------------------------------------------------------------------------------

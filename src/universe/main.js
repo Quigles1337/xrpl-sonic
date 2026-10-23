@@ -1,24 +1,29 @@
 // UNIVERSE — the page.
 //
-// The worker (src/universe/worker.js) owns the stream, the records and the
-// layout; this module owns the canvas, the camera, the keyboard, the
-// coverage line and the focus line, the Watch cast (the listening page's
-// settings and the hash, read as it reads them), the name rule, and the
+// The worker (src/universe/worker.js) owns the stream, the records, the
+// layout and the events; this module owns the canvas, the camera, the
+// keyboard, the coverage line and the focus line, the Watch cast (the
+// listening page's settings and the hash, read as it reads them), the name
+// rule, the motions of each ledger's events on the flight clock, and the
 // sound through the listening page's engine (src/audio.js), scheduled at
-// each comet's arrival. WebGL is the first renderer and the 2D canvas the
+// each event's arrival. WebGL is the first renderer and the 2D canvas the
 // fallback the page takes by itself (docs/universe.md, decision 4).
 // Query: ?gl=0 for the canvas; ?synthetic=N for a made-up sky of N planets
-// (measuring, behind its flag and labelled); ?autostart=1 to start on load
-// (the bench harness); ?network=testnet; ?seed=N.
+// (measuring, behind its flag and labelled); ?replay=<url>&pace=<ms> to
+// feed a recording instead of the node (the acceptance check); ?autostart=1
+// to start on load (the bench harness); ?network=testnet; ?seed=N.
 
 import { AudioEngine } from '../audio.js';
 import { explorerUrl, SONIC_EXPLORER } from '../explorers.js';
 import { loadSettings } from '../settings.js';
 import { parseHash } from '../params.js';
 import { normalizeCast, parseCastSpec } from '../cast.js';
-import { Sky } from './sky.js';
+import { Sky, LAYER_OF } from './sky.js';
 import { SkyGL } from './sky-gl.js';
-import { nameOf, flightOf, KINDS } from './bodies.js';
+import { nameOf, KINDS } from './bodies.js';
+import { describeEvent, colourOf, OBJECTS } from './events.js';
+import { LIFE, LOUDNESS } from './motions.js';
+import { hexToRgb } from './overlay.js';
 
 const query = new URLSearchParams(location.search);
 const network = query.get('network') === 'testnet' ? 'testnet' : 'mainnet';
@@ -26,6 +31,14 @@ const synthetic = Math.max(0, Math.min(200000, Number(query.get('synthetic')) ||
 const seed = Number(query.get('seed')) || 1337;
 const wantCanvas = query.get('gl') === '0';
 const autostart = query.get('autostart') === '1';
+const replay = (() => {
+  const v = query.get('replay');
+  if (!v) return null;
+  // same-origin only: a path under the site, or the bench server's /data/ mount
+  if (/^[a-z][a-z0-9+.-]*:/i.test(v) || v.includes('..')) return null;
+  return v;
+})();
+const pace = Math.max(0, Number(query.get('pace')) || 300);
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const $ = (sel) => document.querySelector(sel);
@@ -65,6 +78,13 @@ const state = {
   cast: readCast(),
   domains: new Map(), // id → hex Domain
   keys: new Map(), // id → regular key of a black hole candidate (null when absent)
+  events: [], // the last ledger's events, for , and . and the hover line
+  eventIndex: -1,
+  counts: null, // the worker's cumulative counts of verbs and objects
+  verbsSeen: new Set(),
+  objectsSeen: new Set(),
+  ignitions: [], // { ledger, id, address, label }
+  replayDone: false,
 };
 const addresses = [null];
 
@@ -90,6 +110,7 @@ const bodies = (id) => {
   return { kind: KINDS[a.kind[id]] ?? 'planet', holders: a.holders[id], providers: a.providers[id], period: a.period[id], r: a.r100[id] / 100, regularKey: state.keys.get(id) ?? null };
 };
 sky.setResolvers({ names, bodies });
+const nameOfId = (id) => (id > 0 ? names(id).name : 'nobody');
 
 function applyCast() {
   const map = new Map();
@@ -119,7 +140,7 @@ worker.onmessage = (e) => {
       break;
     case 'status':
       $('#status-dot').dataset.state = m.state === 'connected' ? 'connected' : m.state === 'idle' ? 'idle' : 'connecting';
-      $('#status-text').textContent = m.state === 'connected' ? (synthetic ? 'Synthetic' : m.host || 'Connected') : m.state === 'idle' ? 'Ready' : `${m.state}…`;
+      $('#status-text').textContent = m.state === 'connected' ? (synthetic ? 'Synthetic' : replay ? 'Replay' : m.host || 'Connected') : m.state === 'idle' ? 'Ready' : `${m.state}…`;
       break;
     case 'frame':
       sky.setPositions(m.positions, m.n);
@@ -131,6 +152,9 @@ worker.onmessage = (e) => {
       if (m.hover && state.focus) break; // a focused planet keeps the line
       showFocus(m);
       break;
+    case 'replay-done':
+      state.replayDone = true;
+      break;
     case 'error':
       console.warn('[universe]', m.message);
       break;
@@ -139,10 +163,26 @@ worker.onmessage = (e) => {
   }
 };
 
+/** The flight of the i-th of k events of a ledger: staggered across 85% of the interval, a life from the object's LIFE in intervals (src/universe/motions.js). */
+function flight(e, i, k, intervalMs, now) {
+  const start = now + (i / Math.max(1, k)) * intervalMs * 0.85;
+  const life = (LIFE[e.object] ?? 0.9) * intervalMs;
+  const instant = e.verb === 'happen' || e.verb === 'place' || e.object === 'spark' || e.object === 'tick' || e.object === 'ignite';
+  return { start, life, arrival: instant ? start : start + life };
+}
+
+/** An event as a motion: the flight clock, the field guide's colour, its loudness, its width from the amount, its layer. */
+function motionOf(e, i, k, intervalMs, now) {
+  const f = flight(e, i, k, intervalMs, now);
+  const log = e.detail?.log;
+  return { ...e, ...f, rgb: hexToRgb(colourOf(e)), loud: LOUDNESS[e.object] ?? 1, width: 1 + Math.max(0, (Number.isFinite(log) ? log : 0) + 1) * 0.35, tail: 1 + (e.hops ?? 0), seed: (e.hash ? parseInt(e.hash.slice(0, 6), 16) / 0xffffff : 0.37) * Math.PI * 2, layer: LAYER_OF[e.category] ?? 'other', t: 0 };
+}
+
 function onLedger(m) {
   state.ledger = m.index;
   state.planets = m.attrs.n;
   state.last = m;
+  state.counts = m.counts ?? null;
   let castChanged = false;
   for (const [id, address] of m.added) {
     addresses[id] = address;
@@ -155,16 +195,25 @@ function onLedger(m) {
   sky.setAttributes(m.attrs, m.added, m.index);
   sky.setNebulae(m.nebulae);
   sky.setPairs(m.pairs);
+  sky.setStanding(m.standing);
+  sky.setWeather(m.weather);
   sky.ledgerClosed();
-  // the comets and flashes of the ledger, on one clock for the picture and the sound
+  // the events of the ledger as motions, on one clock for the picture and the sound
   const now = performance.now();
-  const k = m.comets.length;
-  const timed = m.comets.map((c, i) => ({ ...c, ...flightOf(c, i, k, m.intervalMs, now) }));
-  sky.addComets(timed, m.intervalMs);
+  const k = m.events.length;
+  const motions = m.events.map((e, i) => motionOf(e, i, k, m.intervalMs, now));
+  for (const e of m.events) {
+    if (e.verb) state.verbsSeen.add(e.verb);
+    state.objectsSeen.add(e.object);
+    if (e.object === 'ignite') state.ignitions.push({ ledger: m.index, id: e.at, address: addresses[e.at] ?? e.detail?.address ?? null, label: describeEvent(e, nameOfId) });
+  }
+  state.events = m.events;
+  state.eventIndex = -1;
+  sky.addMotions(motions);
   if (state.sound && engine.state === 'running') {
     engine.setLedgerInterval(m.intervalMs / 1000);
     engine.setExpectedCount(k);
-    for (const c of timed) if (c.event) engine.playAt(c.event, (c.arrival - now) / 1000);
+    for (const mo of motions) if (mo.sound) engine.playAt(mo.sound, (mo.arrival - now) / 1000);
   }
   $('#r-ledger').textContent = `#${Number(m.index).toLocaleString('en-US')}`;
   $('#r-planets').textContent = Number(m.attrs.n).toLocaleString('en-US');
@@ -172,12 +221,11 @@ function onLedger(m) {
   const strong = document.createElement('strong');
   strong.textContent = m.coverageLine;
   coverageEl.append(strong);
-  if (m.stability) {
-    const fine = document.createElement('span');
-    fine.className = 'fine';
-    fine.textContent = `layout: ${m.stability.warm} warm · moved ${(m.stability.moved * 1000).toFixed(2)}‰ of the sky per step · ${m.stability.meanMs.toFixed(1)} ms/step${m.nebulae.length ? ` · ${m.nebulae.length} nebulae` : ''}${m.pairs.length ? ` · ${m.pairs.length} pairs in step` : ''}`;
-    coverageEl.append(fine);
-  }
+  const fine = document.createElement('span');
+  fine.className = 'fine';
+  const v = m.counts?.verbs ?? {};
+  fine.textContent = `events: ${k} this ledger · travel ${v.travel ?? 0} · dock ${v.dock ?? 0} · place ${v.place ?? 0} · happen ${v.happen ?? 0} · sparks ${m.counts?.spark ?? 0} · ticks ${m.counts?.tick ?? 0}${m.stability ? ` · layout ${m.stability.meanMs.toFixed(1)} ms/step` : ''}${m.nebulae.length ? ` · ${m.nebulae.length} nebulae` : ''}`;
+  coverageEl.append(fine);
   // the travel order for [ and ]: by activity, then size
   const a = m.attrs;
   const ids = [];
@@ -206,9 +254,10 @@ async function start() {
   if (state.running) return;
   state.running = true;
   state.startedAt = Date.now();
+  state.replayDone = false;
   startBtn.textContent = 'Stop';
   startBtn.setAttribute('aria-pressed', 'true');
-  worker.postMessage({ type: 'start', network, synthetic, seed, sound: state.sound });
+  worker.postMessage({ type: 'start', network, synthetic, seed, sound: state.sound, replay, pace });
   if (state.sound) await engine.start();
 }
 
@@ -252,6 +301,12 @@ function onHover(id) {
   else focusLine.classList.add('hidden');
 }
 
+canvas.addEventListener('pointermove', (e) => {
+  if (state.focus || sky.drag) return;
+  const m = sky.hitMotion(e.clientX, e.clientY);
+  if (m) showEvent(m);
+});
+
 function focusOn(id, { look = true } = {}) {
   state.focus = id;
   sky.setFocus(id);
@@ -288,10 +343,43 @@ function showFocus(m) {
   }
 }
 
+/** An event in the focus line: its text by the name rule, then its rule and the record fields that earned it. */
+function showEvent(e) {
+  focusLine.classList.remove('hidden');
+  focusLine.innerHTML = '';
+  const kind = document.createElement('span');
+  kind.className = 'kind';
+  kind.textContent = e.verb ?? (e.object === 'tick' ? 'tick' : 'spark');
+  const text = document.createElement('span');
+  text.textContent = describeEvent(e, nameOfId);
+  const rule = document.createElement('span');
+  rule.className = 'fine';
+  rule.textContent = ` · ${e.rule} · ${(e.evidence ?? []).map((x) => `${x.field}: ${x.value}`).join(' · ')}`;
+  focusLine.append(kind, text, rule);
+  if (e.hash && !synthetic) {
+    const url = explorerUrl(SONIC_EXPLORER, network, 'tx', e.hash);
+    if (url) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.textContent = ' · open the transaction';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      focusLine.append(a);
+    }
+  }
+}
+
 function travel(step) {
   if (!state.focusList.length) return;
   state.focusIndex = (state.focusIndex + step + state.focusList.length) % state.focusList.length;
   focusOn(state.focusList[state.focusIndex]);
+}
+
+/** Step through the last ledger's events with , and . : each goes to the focus line as text. */
+function stepEvent(step) {
+  if (!state.events.length) return;
+  state.eventIndex = (state.eventIndex + step + state.events.length) % state.events.length;
+  showEvent(state.events[state.eventIndex]);
 }
 
 // --- keyboard ------------------------------------------------------------
@@ -346,6 +434,12 @@ window.addEventListener('keydown', (e) => {
       break;
     case '[':
       travel(-1);
+      break;
+    case '.':
+      stepEvent(1);
+      break;
+    case ',':
+      stepEvent(-1);
       break;
     case 'Enter':
       if (state.focus && addresses[state.focus] && !synthetic) {
@@ -413,12 +507,15 @@ window.xrplUniverse = {
   addresses,
   names,
   bodies,
-  stats: () => ({ ...sky.stats(), renderer: state.renderer, ledger: state.ledger, planets: state.planets, running: state.running, synthetic, coverage: state.last?.coverage ?? null, stability: state.last?.stability ?? null, memory: state.last?.memory ?? null, coherence: state.last?.coherence ?? null }),
+  objects: OBJECTS,
+  describeEvent: (e) => describeEvent(e, nameOfId),
+  stats: () => ({ ...sky.stats(), renderer: state.renderer, ledger: state.ledger, planets: state.planets, running: state.running, synthetic, replay, coverage: state.last?.coverage ?? null, stability: state.last?.stability ?? null, memory: state.last?.memory ?? null, coherence: state.last?.coherence ?? null, counts: state.counts, verbsSeen: [...state.verbsSeen], objectsSeen: [...state.objectsSeen], ignitions: state.ignitions.length, motions: sky.motions.length, replayDone: state.replayDone }),
   memory,
   start,
   stop,
   focusOn,
   travel,
+  stepEvent,
   worker,
   engine,
 };

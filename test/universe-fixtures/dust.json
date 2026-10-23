@@ -1,0 +1,89 @@
+{
+  "object": "dust",
+  "verb": "travel",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841943,
+  "hash": "201E7F8429FFD3DAE49355B7795EF715049B944F881EE989ECB98A814C1F64C9",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:02Z",
+    "ctid": "C66D899700E50000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "E900E166266B86B4B13E851FA4F7BDB67F823BA4543C36C80C03617CE8799FCA",
+    "ledger_index": 107841943,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rEAkb8T3U6zJXJZ5M53Zifi367zeqmdQB",
+              "Balance": "2557318",
+              "Flags": 0,
+              "OwnerCount": 3,
+              "Sequence": 107545275
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "6B1EBA6AE99DF8B13886336479C9FC4E20FF70D77961BB41216C98DAD9F02C88",
+            "PreviousFields": {
+              "Balance": "2657328",
+              "Sequence": 107545274
+            },
+            "PreviousTxnID": "AAB899A014399388AEBE335C4333F3A7096E8128E85E54F0DF78D7E0EE449BDC",
+            "PreviousTxnLgrSeq": 107841941
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rHzykWRVdAfEHk6c5fQxyYYHF9waQXN5Dz",
+              "Balance": "369470487",
+              "Flags": 0,
+              "OwnerCount": 3,
+              "Sequence": 92502587
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "D159D22FCAA2813D7B401F8161E4996055AB70D8DE33197A6DA73482AB8F7305",
+            "PreviousFields": {
+              "Balance": "369370487"
+            },
+            "PreviousTxnID": "4357EE414655D8C9F0CAFE9B9C2FF43720EEC1962CFC319889E4A7D02C398F96",
+            "PreviousTxnLgrSeq": 107841909
+          }
+        }
+      ],
+      "TransactionIndex": 229,
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": "100000"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rEAkb8T3U6zJXJZ5M53Zifi367zeqmdQB",
+      "Amount": "100000",
+      "DeliverMax": "100000",
+      "Destination": "rHzykWRVdAfEHk6c5fQxyYYHF9waQXN5Dz",
+      "Fee": "10",
+      "LastLedgerSequence": 107841961,
+      "Sequence": 107545274,
+      "SigningPubKey": "02DABB838BCA65264D4F0DBB9D9295D0AA33958FD83FB633F87BCBC3398BE08F93",
+      "TransactionType": "Payment",
+      "TxnSignature": "3045022100EDDCD1BD77E1C22EF69B9EDC038DAD20A1B74088969561826C8ECF32AE23F6D002206BC1DCB29AD47218C1990E6FE1A1778031E8AA802D1E5BB26C5565A182EFEDE2",
+      "date": 846045242,
+      "hash": "201E7F8429FFD3DAE49355B7795EF715049B944F881EE989ECB98A814C1F64C9"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "travel",
+      "object": "dust",
+      "rule": "travel.payment.dust",
+      "from": "rEAkb8T3U6zJXJZ5M53Zifi367zeqmdQB",
+      "to": "rHzykWRVdAfEHk6c5fQxyYYHF9waQXN5Dz",
+      "via": [],
+      "at": "rEAkb8T3U6zJXJZ5M53Zifi367zeqmdQB",
+      "label": "dust: rEAk…mdQB sent rHzy…N5Dz 0.1 XRP"
+    }
+  ]
+}

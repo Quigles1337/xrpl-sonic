@@ -1,0 +1,148 @@
+{
+  "object": "deorbit",
+  "verb": "dock",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841969,
+  "hash": "687CBC52C48BDCDB5C9D56415613ADA2EFC1816349453AA71F5734FB42BF3897",
+  "message": {
+    "close_time_iso": "2026-10-23T04:35:42Z",
+    "ctid": "C66D89B1001C0000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "51CD8FA5DD1B08B6FA4DC2AE96E5767F4BD646458F9A92134A51963719C1824C",
+    "ledger_index": 107841969,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rBBMtEopKdLVxNc2gFGAepJyGPG8517Kkv",
+              "Balance": "189347442",
+              "Flags": 0,
+              "OwnerCount": 337,
+              "Sequence": 102433751,
+              "TicketCount": 40
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "479AEA9E8A708A36ED584F717371E3F904204CD2097557DDF4E335D80BCDAF69",
+            "PreviousFields": {
+              "Balance": "189347454",
+              "OwnerCount": 338,
+              "Sequence": 102433750
+            },
+            "PreviousTxnID": "92827D597561FF8F4A98C98E116AEE33B62B5A626CB3EC04280A43C911418A09",
+            "PreviousTxnLgrSeq": 107841936
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Balance": {
+                "currency": "5852504C00000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "0"
+              },
+              "Flags": 1048576,
+              "HighLimit": {
+                "currency": "5852504C00000000000000000000000000000000",
+                "issuer": "rEjsPmHqGn7pEKBST6fqyEaNfx6ZcrRcCE",
+                "value": "0"
+              },
+              "HighNode": "5",
+              "LowLimit": {
+                "currency": "5852504C00000000000000000000000000000000",
+                "issuer": "rBBMtEopKdLVxNc2gFGAepJyGPG8517Kkv",
+                "value": "0"
+              },
+              "LowNode": "b4",
+              "PreviousTxnID": "27F615D0E1D3D120A95CB6D52147E4E118CEA799CC5865E0064172F839B5C76E",
+              "PreviousTxnLgrSeq": 107838251
+            },
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "9439F5DF0BD2C22DCBE4F146558626288A377CD1A2C0904E42F80239B642AB1F",
+            "PreviousFields": {
+              "Flags": 1114112,
+              "LowLimit": {
+                "currency": "5852504C00000000000000000000000000000000",
+                "issuer": "rBBMtEopKdLVxNc2gFGAepJyGPG8517Kkv",
+                "value": "9999999999999990e-1"
+              }
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexNext": "b5",
+              "IndexPrevious": "b3",
+              "Owner": "rBBMtEopKdLVxNc2gFGAepJyGPG8517Kkv",
+              "RootIndex": "D9C944A80DABD5D512A94DCDFB0F0A5962B030CD9A1803F6BAB0022565E9E63E"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "A712F490B4BD1C5478F84521BDF756898662F2D67D6732132D167BE39EA78BDF",
+            "PreviousTxnID": "47C140972371F59B07738563E3928A8CE76442E51863044550EC1498553B2960",
+            "PreviousTxnLgrSeq": 107841045
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexPrevious": "4",
+              "Owner": "rEjsPmHqGn7pEKBST6fqyEaNfx6ZcrRcCE",
+              "RootIndex": "17513832699AD6375C5FA9802C87BCD77F057A4367546417D84524070F64D596"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "DAE5AC8D969B67C3B1A7E8EB0B8530ED2227BF59941451844A61720390EFC13A",
+            "PreviousTxnID": "3DDA7C02020D7F42929AE5C959A846C1BB18B98FDB632230805B5F2A4DA7E83D",
+            "PreviousTxnLgrSeq": 107839111
+          }
+        },
+        {
+          "ModifiedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "FF104D8FB55D1B7083DEFE67E138E9855EBC8CC28F26E35FFAC92F9FC38CC682",
+            "PreviousTxnID": "3DDA7C02020D7F42929AE5C959A846C1BB18B98FDB632230805B5F2A4DA7E83D",
+            "PreviousTxnLgrSeq": 107839111
+          }
+        }
+      ],
+      "TransactionIndex": 28,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rBBMtEopKdLVxNc2gFGAepJyGPG8517Kkv",
+      "Fee": "12",
+      "Flags": 131072,
+      "LastLedgerSequence": 107841987,
+      "LimitAmount": {
+        "currency": "5852504C00000000000000000000000000000000",
+        "issuer": "rEjsPmHqGn7pEKBST6fqyEaNfx6ZcrRcCE",
+        "value": "0"
+      },
+      "Sequence": 102433750,
+      "SigningPubKey": "EDAF9B2AC990487F6D62E7E9594CFF58FD28C916DF95FD0F82EDCB4F2EDA139D4D",
+      "TransactionType": "TrustSet",
+      "TxnSignature": "FCB85A4BC627BBAD781E251863CB2992EF05CC63A8E236C0566E070EB96CA6E9E96DCE08D0AF53A5A4014977A72AECCE5E8A87B20B56B891601FF62C6333EF01",
+      "date": 846045342,
+      "hash": "687CBC52C48BDCDB5C9D56415613ADA2EFC1816349453AA71F5734FB42BF3897"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "dock",
+      "object": "deorbit",
+      "rule": "dock.trustset.zero",
+      "from": "rBBMtEopKdLVxNc2gFGAepJyGPG8517Kkv",
+      "to": "rEjsPmHqGn7pEKBST6fqyEaNfx6ZcrRcCE",
+      "via": [],
+      "at": "rBBMtEopKdLVxNc2gFGAepJyGPG8517Kkv",
+      "label": "deorbit: rBBM…7Kkv set its trust line to rEjs…RcCE to zero and the line is gone"
+    }
+  ]
+}

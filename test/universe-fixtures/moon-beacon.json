@@ -1,0 +1,161 @@
+{
+  "object": "moon-beacon",
+  "verb": "happen",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841942,
+  "hash": "B70ED022AA33D713043E31C2BA59626D6F3FA41B616696661A8C4C90B5817678",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:01Z",
+    "ctid": "C66D899600220000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "DDB3B8B3947D4F666CE88B95CFA4AB7BC0B37B6166A679118FD349A08FADD884",
+    "ledger_index": 107841942,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexPrevious": "5f4d",
+              "Owner": "rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq",
+              "RootIndex": "0B42748AFBC575F10C132083022B647DA53D92B964A037557BD24A23A6F97C11"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "05D042968B6400AC9714949AD774668A23C1575540B14970B3525E573C926C7C",
+            "PreviousTxnID": "045951D1A4496C8734713500D6CF32EB1F9AE1FD30B042A4C02A4AEE4C500C77",
+            "PreviousTxnLgrSeq": 107841940
+          }
+        },
+        {
+          "ModifiedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "587E28972F3B63D2260C0671E59593EE6C4D27AB857D1AF230F5CAA959BB3EAC",
+            "PreviousTxnID": "AA394CEFB582CD306A35D9CF27ADBE523153F78DEB2584CCA5E4119FA7BAE817",
+            "PreviousTxnLgrSeq": 107841941
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "NFTokenOffer",
+            "LedgerIndex": "61B377D2FE5B6883256281DBCD49D8EDCC8A0EF53C12A0C7B25D60CA112AE21E",
+            "NewFields": {
+              "Amount": "5460000",
+              "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+              "Expiration": 846059635,
+              "NFTokenID": "00081388EF7C422EF52CEB969960BEF4144D7BC3F862C46778CDECD0059EB83B",
+              "Owner": "rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq",
+              "OwnerNode": "5f4e"
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq",
+              "Balance": "410962860",
+              "Flags": 0,
+              "OwnerCount": 652,
+              "Sequence": 104355985,
+              "TicketCount": 15
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "6557E0E953C841E4F06135CE9FBB6765D3E92302846CA3CE7F7DA71692FEBD89",
+            "PreviousFields": {
+              "Balance": "410962872",
+              "TicketCount": 16
+            },
+            "PreviousTxnID": "9CF536BB8E77694D7C78FCFAB48F40C307A9E198A6022F98445D04559E2AD67F",
+            "PreviousTxnLgrSeq": 107841940
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexNext": "5f4e",
+              "IndexPrevious": "5f4c",
+              "Owner": "rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq",
+              "RootIndex": "0B42748AFBC575F10C132083022B647DA53D92B964A037557BD24A23A6F97C11"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "709634B70597FC79148A825D0AB55ECE0037E896A2AB804497092A9EB83D7232",
+            "PreviousTxnID": "9CF536BB8E77694D7C78FCFAB48F40C307A9E198A6022F98445D04559E2AD67F",
+            "PreviousTxnLgrSeq": 107841940
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Account": "rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq",
+              "Flags": 0,
+              "OwnerNode": "5f4d",
+              "PreviousTxnID": "04A0C29B971787C898634AB6CB09018445273356A72AC70D352922D23F0B3F99",
+              "PreviousTxnLgrSeq": 107841923,
+              "TicketSequence": 104355968
+            },
+            "LedgerEntryType": "Ticket",
+            "LedgerIndex": "E685C301879F8739F332B835101CEEBCC1736E94EAFA80B2A45A0585DCAB9A07"
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 1,
+              "NFTokenID": "00081388EF7C422EF52CEB969960BEF4144D7BC3F862C46778CDECD0059EB83B",
+              "RootIndex": "EA5E53B75E4A664B86CCC5D2BDB9A98256ECCB8E8778026F0BCD99F9B4F16A55"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "EA5E53B75E4A664B86CCC5D2BDB9A98256ECCB8E8778026F0BCD99F9B4F16A55",
+            "PreviousTxnID": "9CF536BB8E77694D7C78FCFAB48F40C307A9E198A6022F98445D04559E2AD67F",
+            "PreviousTxnLgrSeq": 107841940
+          }
+        }
+      ],
+      "TransactionIndex": 34,
+      "TransactionResult": "tesSUCCESS",
+      "offer_id": "61B377D2FE5B6883256281DBCD49D8EDCC8A0EF53C12A0C7B25D60CA112AE21E"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq",
+      "Amount": "5460000",
+      "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+      "Expiration": 846059635,
+      "Fee": "12",
+      "LastLedgerSequence": 107841948,
+      "Memos": [
+        {
+          "Memo": {
+            "MemoData": "427579206F66666572206279207872702E63616665"
+          }
+        }
+      ],
+      "NFTokenID": "00081388EF7C422EF52CEB969960BEF4144D7BC3F862C46778CDECD0059EB83B",
+      "Owner": "rf6LbcP4sjiRuM4KBv5VrMAFgS2Tq9VB6K",
+      "Sequence": 0,
+      "SigningPubKey": "022B7DFADA75A213723C57EAB6110DFE36FD031078A7823833283A89F5FEFFA94B",
+      "SourceTag": 101102979,
+      "TicketSequence": 104355968,
+      "TransactionType": "NFTokenCreateOffer",
+      "TxnSignature": "304402207DB897DA589F20C52DA92847B9C3744FD811F8EADF973E7BB3298325BB53FA9F0220037E8988C82819372CE43F4E0B3585DF773AF8960610ADD5138D5577EA3043C3",
+      "date": 846045241,
+      "hash": "B70ED022AA33D713043E31C2BA59626D6F3FA41B616696661A8C4C90B5817678"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "happen",
+      "object": "moon-beacon",
+      "rule": "happen.nft.offer",
+      "from": null,
+      "to": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+      "via": [],
+      "at": "rMTaAGVd77vAbzDv8qhoMgnZR1T5R3w6Wq",
+      "label": "moon-beacon: rMTa…w6Wq offered to buy an NFT for 5.46 XRP"
+    }
+  ]
+}

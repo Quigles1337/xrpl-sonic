@@ -1,0 +1,146 @@
+{
+  "object": "freeze",
+  "verb": "dock",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841945,
+  "hash": "5000CDE9AACA655F11173B09FC27E3886A15D627A2598D0D105EE41010C93D82",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:11Z",
+    "ctid": "C66D899900A20000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "EA69065BB518230EA70B44234B7AFA8F143CC55286C6EAF52FDD5BD9DB007A09",
+    "ledger_index": 107841945,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Balance": {
+                "currency": "4C49485541000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "0"
+              },
+              "Flags": 2097152,
+              "HighLimit": {
+                "currency": "4C49485541000000000000000000000000000000",
+                "issuer": "r3z5DXFZAVA1rgrimtkiJ22QSje7EkuaXf",
+                "value": "0"
+              },
+              "HighNode": "0",
+              "LowLimit": {
+                "currency": "4C49485541000000000000000000000000000000",
+                "issuer": "rnhtvpHsAgigmVemgtzt7pujj4gv6LVL2a",
+                "value": "0"
+              },
+              "LowNode": "10e",
+              "PreviousTxnID": "73315FA6886DFDF6C8C70CFF005D611A6DC1CA3A103F15AEE5DE230D7A62BBBC",
+              "PreviousTxnLgrSeq": 107841905
+            },
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "3858BCF6C7809D5044A09513E6E66E199331F41CA8286C0F60EF888C36C256B2",
+            "PreviousFields": {
+              "Flags": 2228224,
+              "HighLimit": {
+                "currency": "4C49485541000000000000000000000000000000",
+                "issuer": "r3z5DXFZAVA1rgrimtkiJ22QSje7EkuaXf",
+                "value": "1000000000000000e-2"
+              }
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexNext": "10f",
+              "IndexPrevious": "10d",
+              "Owner": "rnhtvpHsAgigmVemgtzt7pujj4gv6LVL2a",
+              "RootIndex": "7B3CCC32E1413D8ED05B092A09278CE9BC781BED70933355F348A48CF0283EC1"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "AD6C55580FF2698CBB6B8319DC6C1099542824DEE0DEDF94FBB971CE7772F442",
+            "PreviousTxnID": "5BAF04569DED3087E082E45D4A3247530289C2A022810CA481D4B76025EAF4AA",
+            "PreviousTxnLgrSeq": 103669397
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "Owner": "r3z5DXFZAVA1rgrimtkiJ22QSje7EkuaXf",
+              "RootIndex": "CEB6E984729471FE6BFEE03CA9B7E4AAE39A0976CE9FF91A6D10C90060E78850"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "CEB6E984729471FE6BFEE03CA9B7E4AAE39A0976CE9FF91A6D10C90060E78850",
+            "PreviousTxnID": "A91B9D6BD66EF9EF7E801E4DD3A02F6E4A36D46CA5757D1CF4CBEAB09C9B9769",
+            "PreviousTxnLgrSeq": 107841939
+          }
+        },
+        {
+          "ModifiedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "D2FA17C1E09CD54B4DFF84FC9EF963EA1CCBE8CF2884A170BE89BAEAFB82838A",
+            "PreviousTxnID": "17A1A1D63153CCA04F67568F672F47F9DC2A4429D9F5B44FF117604011A96077",
+            "PreviousTxnLgrSeq": 107840128
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "r3z5DXFZAVA1rgrimtkiJ22QSje7EkuaXf",
+              "Balance": "3362641",
+              "Flags": 0,
+              "OwnerCount": 9,
+              "Sequence": 92473097
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "DD92C5A98539B21EDAB4B7113C84187BB683AB2374CBDACA142CF1859215C893",
+            "PreviousFields": {
+              "Balance": "3362653",
+              "OwnerCount": 10,
+              "Sequence": 92473096
+            },
+            "PreviousTxnID": "A91B9D6BD66EF9EF7E801E4DD3A02F6E4A36D46CA5757D1CF4CBEAB09C9B9769",
+            "PreviousTxnLgrSeq": 107841939
+          }
+        }
+      ],
+      "TransactionIndex": 162,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "r3z5DXFZAVA1rgrimtkiJ22QSje7EkuaXf",
+      "Fee": "12",
+      "Flags": 2228224,
+      "LastLedgerSequence": 107841962,
+      "LimitAmount": {
+        "currency": "4C49485541000000000000000000000000000000",
+        "issuer": "rnhtvpHsAgigmVemgtzt7pujj4gv6LVL2a",
+        "value": "0"
+      },
+      "Sequence": 92473096,
+      "SigningPubKey": "EDCC3FCF0D504A5825C5411FF3844AAD0119B79973E031F81FA73E92AD76D74881",
+      "TransactionType": "TrustSet",
+      "TxnSignature": "D42AEDD2EA923479ED806C71C24B6ABFDCDDC36971DF6F2F4A45380924A8E411C694B46FA06FAC6C96302C8B5A1177FC1CB2E4B8FEEFDA6C59F8835C96C8A80E",
+      "date": 846045251,
+      "hash": "5000CDE9AACA655F11173B09FC27E3886A15D627A2598D0D105EE41010C93D82"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "dock",
+      "object": "freeze",
+      "rule": "dock.trustset.freeze",
+      "from": "r3z5DXFZAVA1rgrimtkiJ22QSje7EkuaXf",
+      "to": "rnhtvpHsAgigmVemgtzt7pujj4gv6LVL2a",
+      "via": [],
+      "at": "r3z5DXFZAVA1rgrimtkiJ22QSje7EkuaXf",
+      "label": "freeze: r3z5…uaXf unfroze its trust line to rnht…VL2a (LIHUA)"
+    }
+  ]
+}

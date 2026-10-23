@@ -1,0 +1,90 @@
+{
+  "object": "collapse",
+  "verb": "travel",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107842159,
+  "hash": "DC7C6D5679DCB1020CDAED17787F9AAC7236D0E6FDCFB1144B42C60ED9059836",
+  "message": {
+    "close_time_iso": "2026-10-23T04:48:40Z",
+    "ctid": "C66D8A6F00040000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "A924BFE46ECEC6B9295CA0D9731AB2351B9D59C9B0EDBAB1A9EF1CAAE0C440AA",
+    "ledger_index": 107842159,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rErSW3gyRyCuzbvAQkQUaCYskSYBdZ1MqM",
+              "Balance": "1185501210",
+              "Flags": 0,
+              "OwnerCount": 249,
+              "Sequence": 107386060,
+              "TicketCount": 198
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "4F063E24819E274486471C9852F48EA53C33225AD0554C5F0229C711145D4988",
+            "PreviousFields": {
+              "Balance": "1183701110"
+            },
+            "PreviousTxnID": "F899382413D8B618A89FC96A81D151F7918E270CEDBCA7E629AD3419A533D59A",
+            "PreviousTxnLgrSeq": 107842089
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Account": "rD7bo68VPFnQGXUxNqtoHeoBBE1vKygNBW",
+              "Balance": "0",
+              "Flags": 0,
+              "OwnerCount": 0,
+              "PreviousTxnID": "35AB8C1E361C33CE0AA290C0E705D232971D54736834AAA07372436AD41276A3",
+              "PreviousTxnLgrSeq": 107841901,
+              "Sequence": 107841902
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "84A05B4E541516407C59B2D64E6C305E726351A977C60EB5C2DD057A30688E90",
+            "PreviousFields": {
+              "Balance": "2000100",
+              "Sequence": 107841901
+            }
+          }
+        }
+      ],
+      "DeliveredAmount": "1800100",
+      "TransactionIndex": 4,
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": "1800100"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rD7bo68VPFnQGXUxNqtoHeoBBE1vKygNBW",
+      "Destination": "rErSW3gyRyCuzbvAQkQUaCYskSYBdZ1MqM",
+      "Fee": "200000",
+      "Flags": 0,
+      "LastLedgerSequence": 107842162,
+      "Sequence": 107841901,
+      "SigningPubKey": "EDD3113EBBAA066F201E8558E2565E95E95E4661F1376E767E70EE5835D8B54273",
+      "TransactionType": "AccountDelete",
+      "TxnSignature": "53692FCC0C9F27B0991E2F22321513854AAC07D5A5F81E25FE04D59A20E6E794EBC9958E2E6CBEEE17A07B23E82D320EBE5B17DA3F25B8B71FD081C4C7DB8B0C",
+      "date": 846046120,
+      "hash": "DC7C6D5679DCB1020CDAED17787F9AAC7236D0E6FDCFB1144B42C60ED9059836"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "travel",
+      "object": "collapse",
+      "rule": "travel.account.delete",
+      "from": "rD7bo68VPFnQGXUxNqtoHeoBBE1vKygNBW",
+      "to": "rErSW3gyRyCuzbvAQkQUaCYskSYBdZ1MqM",
+      "via": [],
+      "at": "rD7bo68VPFnQGXUxNqtoHeoBBE1vKygNBW",
+      "label": "collapse: rD7b…gNBW deleted its account, sending 0 XRP to rErS…1MqM"
+    }
+  ]
+}

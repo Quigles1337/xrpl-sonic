@@ -13,6 +13,7 @@
 //   node src/universe/bench/check-a11y.mjs [--gl 0|1]
 
 import { launch, openPage, waitFor, sleep } from './cdp.mjs';
+import { CAMERA_HOME } from '../sky.js';
 
 const args = process.argv.slice(2);
 const gl = args.includes('--gl') ? args[args.indexOf('--gl') + 1] : '0';
@@ -49,7 +50,7 @@ const yaw0 = await page.evaluate('window.xrplUniverse.sky.camera.yaw');
 await sleep(1200);
 check('the camera does not turn on its own', (await page.evaluate('window.xrplUniverse.sky.camera.yaw')) === yaw0);
 check('the sky canvas has a role and a label', await page.evaluate(`(() => { const c = document.getElementById('sky'); return c.getAttribute('role') === 'img' && c.getAttribute('aria-label').length > 40 && c.tabIndex === 0; })()`));
-check('the coverage line is a status region and names the synthetic sky', await page.evaluate(`(() => { const c = document.getElementById('coverage'); return c.getAttribute('role') === 'status' && c.getAttribute('aria-live') === 'polite' && /^Synthetic sky: .* Nothing here is the ledger\\.$/.test(c.textContent.split('layout:')[0].trim()); })()`), await page.evaluate(`document.getElementById('coverage').textContent.slice(0, 120)`));
+check('the coverage line is a status region and names the synthetic sky', await page.evaluate(`(() => { const c = document.getElementById('coverage'); return c.getAttribute('role') === 'status' && c.getAttribute('aria-live') === 'polite' && /^Synthetic sky: .* Nothing here is the ledger\\.$/.test(c.querySelector('strong').textContent.trim()); })()`), await page.evaluate(`document.getElementById('coverage').textContent.slice(0, 120)`));
 check('the focus line starts hidden', await page.evaluate(`document.getElementById('focus-line').classList.contains('hidden')`));
 
 await key(']', ']', 'BracketRight');
@@ -91,7 +92,7 @@ check('Space starts again', await page.evaluate(`window.xrplUniverse.state.runni
 await key('ArrowLeft', 'ArrowLeft', 'ArrowLeft');
 check('the arrow keys orbit', (await page.evaluate('window.xrplUniverse.sky.camera.yaw')) !== yaw0);
 await key('0', '0', 'Digit0');
-check('0 resets the camera', (await page.evaluate('window.xrplUniverse.sky.camera.distance')) === 3.2);
+check('0 resets the camera', (await page.evaluate('window.xrplUniverse.sky.camera.distance')) === CAMERA_HOME.distance);
 
 // sound: S turns the engine on from a key press, the worker posts events, the engine plays them
 await key('s');

@@ -1,0 +1,151 @@
+{
+  "object": "check-cash",
+  "verb": "travel",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841943,
+  "hash": "EEDD705798AC0C2048540C209FC3F9561EB5B3601E7B2E036DD42F4521427608",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:02Z",
+    "ctid": "C66D899700010000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "E900E166266B86B4B13E851FA4F7BDB67F823BA4543C36C80C03617CE8799FCA",
+    "ledger_index": 107841943,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rJQQbfdD5tKvitt9JAuvA16qWB8NZ8SrUF",
+              "Balance": "2989774273",
+              "Flags": 0,
+              "OwnerCount": 409,
+              "Sequence": 107656558
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "3FDB4E46B1488C056010874B257473BE2F4DDE66864F5B397115DA7F593789C3",
+            "PreviousFields": {
+              "Balance": "3001209747",
+              "OwnerCount": 410
+            },
+            "PreviousTxnID": "141B9B7E2AAD18B650CF9B59387E2E5321BEE0142D6C2042B1B2C6C3028B3D4A",
+            "PreviousTxnLgrSeq": 107841940
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "Owner": "rNPVNH5yHtjruRLqeY5yVxeiNf7ka2du9u",
+              "RootIndex": "48B118D8006322476E992A3AAFDCB51E843CBDABBC36CAEDEC11E9720D27A247"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "48B118D8006322476E992A3AAFDCB51E843CBDABBC36CAEDEC11E9720D27A247",
+            "PreviousTxnID": "9E6A50396F2514AC4532A79260C55664D0FBAF16A3E85D376140EA753EB2CF1C",
+            "PreviousTxnLgrSeq": 107841943
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Account": "rJQQbfdD5tKvitt9JAuvA16qWB8NZ8SrUF",
+              "Destination": "rNPVNH5yHtjruRLqeY5yVxeiNf7ka2du9u",
+              "DestinationNode": "0",
+              "Flags": 0,
+              "OwnerNode": "52",
+              "PreviousTxnID": "3427AE2C658DFDAA5DAA1992D82506E6B5B06ED7138FAF7F13F471810C2BB72C",
+              "PreviousTxnLgrSeq": 107807237,
+              "SendMax": "1000000000",
+              "Sequence": 107653521
+            },
+            "LedgerEntryType": "Check",
+            "LedgerIndex": "559BE02D15C9A3DF85D09159F3F1AC544B7A9CD92A98849337E3564EB0FBB052"
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rNPVNH5yHtjruRLqeY5yVxeiNf7ka2du9u",
+              "Balance": "17300166",
+              "Flags": 0,
+              "OwnerCount": 9,
+              "Sequence": 105272714,
+              "TicketCount": 9
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "8279EBC3FCA30F641D15DE519CF30F00E8E04CFF1A798F8B66A48434174F8880",
+            "PreviousFields": {
+              "Balance": "5864692",
+              "OwnerCount": 10,
+              "TicketCount": 10
+            },
+            "PreviousTxnID": "9E6A50396F2514AC4532A79260C55664D0FBAF16A3E85D376140EA753EB2CF1C",
+            "PreviousTxnLgrSeq": 107841943
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexNext": "53",
+              "IndexPrevious": "50",
+              "Owner": "rJQQbfdD5tKvitt9JAuvA16qWB8NZ8SrUF",
+              "RootIndex": "783520841B1D742B2E0D12D426587250FAA0DCDDF5BEE67767DF6E8E403CED37"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "869F0F404326B3B1BA224F82098690A39649C30CE767EA02B22CFA03A357B784",
+            "PreviousTxnID": "AB003E8B48DFC8A102F7A667BBF66E6B330E9F7EFDBEDD61C8CD336D7D59A760",
+            "PreviousTxnLgrSeq": 107841935
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Account": "rNPVNH5yHtjruRLqeY5yVxeiNf7ka2du9u",
+              "Flags": 0,
+              "OwnerNode": "0",
+              "PreviousTxnID": "D52A9F98A184A88D69F3BF03D1FDFB9BB8094C9E959038CB85871D309EFB851E",
+              "PreviousTxnLgrSeq": 107841442,
+              "TicketSequence": 105272698
+            },
+            "LedgerEntryType": "Ticket",
+            "LedgerIndex": "DF84F102E6127E67DBFE7CE69D9D6E2BA2809BBAF5CCA5CFFFD5DDC9BCA9031B"
+          }
+        }
+      ],
+      "ParentBatchID": "9E6A50396F2514AC4532A79260C55664D0FBAF16A3E85D376140EA753EB2CF1C",
+      "TransactionIndex": 1,
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": "11435474"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rNPVNH5yHtjruRLqeY5yVxeiNf7ka2du9u",
+      "Amount": "11435474",
+      "CheckID": "559BE02D15C9A3DF85D09159F3F1AC544B7A9CD92A98849337E3564EB0FBB052",
+      "Fee": "0",
+      "Flags": 1073741824,
+      "Sequence": 0,
+      "SigningPubKey": "",
+      "TicketSequence": 105272698,
+      "TransactionType": "CheckCash",
+      "date": 846045242,
+      "hash": "EEDD705798AC0C2048540C209FC3F9561EB5B3601E7B2E036DD42F4521427608"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "travel",
+      "object": "check-cash",
+      "rule": "travel.check.cash",
+      "from": "rJQQbfdD5tKvitt9JAuvA16qWB8NZ8SrUF",
+      "to": "rNPVNH5yHtjruRLqeY5yVxeiNf7ka2du9u",
+      "via": [],
+      "at": "rNPVNH5yHtjruRLqeY5yVxeiNf7ka2du9u",
+      "label": "check-cash: rNPV…du9u cashed a check from rJQQ…SrUF for 11.44 XRP"
+    }
+  ]
+}

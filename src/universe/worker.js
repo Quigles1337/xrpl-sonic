@@ -1,34 +1,41 @@
-// UNIVERSE — the worker: the stream, the records, the layout.
+// UNIVERSE — the worker: the stream, the records, the layout, the events.
 //
 // Everything that is not drawing happens here, off the page's thread: the
 // WebSocket to the public node (src/ws.js, the same client as the pages),
 // the compact records and planets (src/universe/universe.js), the
 // incremental layout (src/universe/layout.js), the clustering
-// (src/universe/cluster.js), and every ten ledgers the coherence of the
-// busiest submitters (src/coherence.js over a LiveWindow from src/moment.js)
-// for pulsars and pairs in step. The page receives positions as a
-// transferable Float32Array whenever the layout moved, and at every ledger
-// close the planet attributes, the comets and flashes of that ledger (each
-// with its sound event when sound is on), the nebulae, the pairs, the
-// domains and keys the labels need, and the coverage. In synthetic mode
-// (for measuring, behind its flag) a seeded generator stands in for the
-// node and the coverage line says so.
+// (src/universe/cluster.js), every transaction's events in the four-verb
+// vocabulary (src/universe/events.js) with the standing objects they make
+// (rocks in belts, waiting checks, beams, gates, guardian rings, moons,
+// satellites), the weather of each ledger at far zoom, and every ten
+// ledgers the coherence of the busiest submitters (src/coherence.js over a
+// LiveWindow from src/moment.js) for pulsars and pairs in step. The page
+// receives positions as a transferable Float32Array whenever the layout
+// moved, and at every ledger close the planet attributes, the events of
+// that ledger (each with its sound event when sound is on), the standing
+// objects, the weather, the nebulae, the pairs, the domains and keys the
+// labels need, and the coverage. In synthetic mode (for measuring, behind
+// its flag) a seeded generator stands in for the node; in replay mode a
+// recording (bench/record-stream.mjs) is fed at a chosen pace; the coverage
+// line says so in both.
 
 import { XrplStream, NETWORKS } from '../ws.js';
-import { classifyMessage, txToEvent, ledgerToEvent } from '../mapping.js';
+import { classifyMessage, txToEvent, ledgerToEvent, unwrapTransactionMessage } from '../mapping.js';
 import { LiveWindow } from '../moment.js';
 import { frameFromLive, coherence, significant, DEFAULTS as COHERENCE_DEFAULTS } from '../coherence.js';
 import { Universe, coverageLine } from './universe.js';
 import { Layout } from './layout.js';
 import { Clusters } from './cluster.js';
 import { SyntheticStream } from './synthetic.js';
-import { bodyOf, cometOf, describeBody, KIND_CODES, THRESHOLDS } from './bodies.js';
+import { bodyOf, describeBody, KIND_CODES, THRESHOLDS } from './bodies.js';
+import { eventsOf, collapseShowers, weatherOf, describeEvent, OBJECTS } from './events.js';
 
 const STEP_MS = 50; // layout relaxation cadence
 const FRAME_MS = 120; // at most this often, positions to the page
-const MAX_COMETS_PER_LEDGER = 400;
+const MAX_EVENTS_PER_LEDGER = 600;
 const COHERENCE_EVERY = 10; // closed ledgers
 const COHERENCE_TOP = 8;
+const SATELLITE_MS = 24 * 3600 * 1000; // an auction slot lasts a day
 
 let universe = new Universe();
 let layout = new Layout({ capacity: 4096 });
@@ -37,6 +44,7 @@ let live = new LiveWindow();
 
 let stream = null;
 let synthetic = null;
+let replay = null; // { url, pace, abort }
 let syntheticTimer = 0;
 let stepTimer = 0;
 let soundOn = false;
@@ -46,13 +54,28 @@ let lastFramePost = 0;
 let moved = false;
 let addedSinceLedger = [];
 let domainsSinceLedger = [];
-let comets = [];
+let events = []; // the events of the ledger being heard
 let closedCount = 0;
 let lastCloseAt = 0;
 let intervalMs = 4000;
 const stepStats = { steps: 0, ms: 0, moved: 0, maxMoved: 0, movedShare: 0, warm: 0, pairs: 0 };
 let coherenceState = { pulsars: [], pairs: [], tested: 0, above: 0, at: null, ms: 0, window: null };
 const domainsSent = new Set();
+const oracleLast = new Map(); // address → ms of its last OracleSet, for the lighthouse's measured cadence
+let kinds = new Uint8Array(1); // the kind of every planet at the last ledger, for ignitions
+const counts = { verbs: { travel: 0, dock: 0, place: 0, happen: 0 }, objects: {}, spark: 0, tick: 0, transactions: 0 };
+
+/** The standing objects: what persists from the event that made it until the event that removes it. */
+const standing = {
+  rocks: new Map(), // `${owner}:${sequence}` → { host, owner, sequence, book, price, logPrice }
+  books: new Map(), // book key → { min, max } of log prices among standing rocks
+  checks: new Map(), // check entry index → { from, to }
+  beams: new Map(), // channel id → { a, b, width }
+  gates: new Map(), // `${a}:${b}` → { a, b }
+  guardians: new Map(), // planet id → { n, quorum }
+  moons: new Map(), // planet id → { n, beacons }
+  satellites: new Map(), // pool id → until (ms)
+};
 
 const post = (msg, transfer) => self.postMessage(msg, transfer ?? []);
 
@@ -65,15 +88,135 @@ function resetAll() {
   addedSinceLedger = [];
   domainsSinceLedger = [];
   domainsSent.clear();
-  comets = [];
+  events = [];
   closedCount = 0;
   lastCloseAt = 0;
   coherenceState = { pulsars: [], pairs: [], tested: 0, above: 0, at: null, ms: 0, window: null };
+  kinds = new Uint8Array(1);
+  for (const k of Object.keys(counts.verbs)) counts.verbs[k] = 0;
+  counts.objects = {};
+  counts.spark = counts.tick = counts.transactions = 0;
+  for (const m of Object.values(standing)) m.clear();
+  oracleLast.clear();
 }
 
 /** The minimal event the engine plays (R9: the fields src/audio.js reads). */
 function minimalEvent(ev) {
   return { category: ev.category, sound: ev.sound, variant: ev.variant, pitch: ev.pitch, freq: ev.freq, notes: ev.notes, velocity: ev.velocity, duration: ev.duration, sub: ev.sub, timbre: ev.timbre, amountXrp: ev.amountXrp, hash: ev.hash };
+}
+
+const idOf = (address) => (address ? universe.addresses.id(address) : 0);
+
+/** A standing object's bookkeeping for an event; returns nothing, mutates `standing`. */
+function stand(e, ledger) {
+  const d = e.detail ?? {};
+  switch (e.object) {
+    case 'rock': {
+      if (!d.owner || d.sequence == null || !(d.price > 0)) return;
+      const key = `${d.owner}:${d.sequence}`;
+      const logPrice = Math.log10(d.price);
+      standing.rocks.set(key, { host: idOf(d.hosts?.[0]) || idOf(e.to), owner: d.owner, sequence: d.sequence, book: d.book, price: d.price, logPrice, ledger });
+      const b = standing.books.get(d.book) ?? { min: logPrice, max: logPrice };
+      b.min = Math.min(b.min, logPrice);
+      b.max = Math.max(b.max, logPrice);
+      standing.books.set(d.book, b);
+      return;
+    }
+    case 'flare':
+    case 'blink':
+    case 'crumble':
+      if (d.owner && d.sequence != null) standing.rocks.delete(`${d.owner}:${d.sequence}`);
+      return;
+    case 'check-drift':
+      if (e.hash) standing.checks.set(e.hash, { from: idOf(e.from), to: idOf(e.to), ledger });
+      return;
+    case 'check-cash':
+    case 'check-cancel': {
+      // the check is keyed by the hash of the CheckCreate; the stream names it by its entry id, so the one waiting between the same two planets lands
+      for (const [k, c] of standing.checks) if (c.from === idOf(e.from) && c.to === idOf(e.to)) standing.checks.delete(k);
+      return;
+    }
+    case 'beam':
+      if (e.hash) standing.beams.set(e.hash, { a: idOf(e.from), b: idOf(e.to), width: 1 });
+      return;
+    case 'beam-fund':
+      for (const b of standing.beams.values()) if (b.a === idOf(e.from) && b.b === idOf(e.to)) b.width = Math.min(4, b.width + 0.6);
+      return;
+    case 'beam-pulse':
+      if (d.closed) for (const [k, b] of standing.beams) if (b.a === idOf(e.from) && b.b === idOf(e.to)) standing.beams.delete(k);
+      return;
+    case 'gate':
+      if (d.open) standing.gates.set(`${e.from}:${e.to}`, { a: idOf(e.from), b: idOf(e.to) });
+      else standing.gates.delete(`${e.from}:${e.to}`);
+      return;
+    case 'guardians':
+      if (d.removed) standing.guardians.delete(idOf(e.at));
+      else standing.guardians.set(idOf(e.at), { n: d.signers?.length ?? 0, quorum: d.quorum ?? 0 });
+      return;
+    case 'moon-form': {
+      const m = standing.moons.get(idOf(e.at)) ?? { n: 0, beacons: 0 };
+      m.n += 1;
+      standing.moons.set(idOf(e.at), m);
+      return;
+    }
+    case 'moon-crumble': {
+      const m = standing.moons.get(idOf(e.at));
+      if (m) m.n = Math.max(0, m.n - 1);
+      return;
+    }
+    case 'moon-beacon': {
+      const m = standing.moons.get(idOf(e.at)) ?? { n: 0, beacons: 0 };
+      m.beacons += 1;
+      standing.moons.set(idOf(e.at), m);
+      return;
+    }
+    case 'moon-beacon-off': {
+      const m = standing.moons.get(idOf(e.at));
+      if (m) m.beacons = Math.max(0, m.beacons - (d.offers ?? 1));
+      return;
+    }
+    case 'moon-capture': {
+      const from = standing.moons.get(idOf(e.from));
+      if (from) from.n = Math.max(0, from.n - 1);
+      const to = standing.moons.get(idOf(e.to)) ?? { n: 0, beacons: 0 };
+      to.n += 1;
+      standing.moons.set(idOf(e.to), to);
+      return;
+    }
+    case 'satellite':
+      standing.satellites.set(idOf(e.to), performance.now() + SATELLITE_MS);
+      return;
+    case 'binary-collapse':
+      standing.satellites.delete(idOf(e.to));
+      return;
+    default:
+  }
+}
+
+/** The standing objects as compact arrays of ids for the page. */
+function standingOut() {
+  const now = performance.now();
+  for (const [pool, until] of standing.satellites) if (until < now) standing.satellites.delete(pool);
+  const rocks = [];
+  for (const r of standing.rocks.values()) {
+    const b = standing.books.get(r.book);
+    const band = b && b.max > b.min ? (r.logPrice - b.min) / (b.max - b.min) : 0.5;
+    rocks.push([r.host, r.owner, r.sequence, Number(band.toFixed(3)), r.price]);
+  }
+  return {
+    rocks: rocks.slice(0, 4000),
+    checks: [...standing.checks.values()].map((c) => [c.from, c.to]),
+    beams: [...standing.beams.values()].map((b) => [b.a, b.b, b.width]),
+    gates: [...standing.gates.values()].map((g) => [g.a, g.b]),
+    guardians: [...standing.guardians].map(([planet, g]) => [planet, g.n, g.quorum]),
+    moons: [...standing.moons].map(([planet, m]) => [planet, m.n, m.beacons]).filter((m) => m[1] > 0 || m[2] > 0),
+    satellites: [...standing.satellites].map(([pool, until]) => [pool, until]),
+  };
+}
+
+/** An event with its planets as ids, for the page; the label is left to the page, which has the name rule. */
+function toIds(e) {
+  return { ...e, from: idOf(e.from), to: idOf(e.to), via: (e.via ?? []).map(idOf), at: idOf(e.at), hops: e.detail?.hops ?? 0 };
 }
 
 function onTransaction(msg) {
@@ -99,14 +242,39 @@ function onTransaction(msg) {
       domainsSinceLedger.push([id, root.domain]);
     }
   }
-  const c = cometOf(r.record);
-  if (c && comets.length < MAX_COMETS_PER_LEDGER) {
-    const entry = { ...c, ledger, hash: r.record.hash };
-    if (soundOn) {
-      const ev = txToEvent(msg);
-      if (ev) entry.event = minimalEvent(ev);
+  // the events of the transaction, in the four-verb vocabulary
+  const u = unwrapTransactionMessage(msg);
+  const list = eventsOf(u.tx, u.meta, { hash: u.hash, ledgerIndex: ledger, result: u.result });
+  counts.transactions += 1;
+  let sound = null;
+  if (soundOn) {
+    const ev = txToEvent(msg);
+    if (ev) sound = minimalEvent(ev);
+  }
+  for (const e of list) {
+    // planets the event names that the record did not (an escrow's destination, a check's creator) are made here so the motion has both ends
+    for (const a of [e.from, e.to, e.at, ...(e.via ?? [])]) if (a && !universe.addresses.has(a)) {
+      const p = universe.planet(a, ledger);
+      layout.add(p.id, a, ledger);
+      clusters.add(p.id);
+      addedSinceLedger.push([p.id, a]);
     }
-    comets.push(entry);
+    if (e.object === 'lighthouse' && e.at) {
+      const last = oracleLast.get(e.at);
+      const nowMs = performance.now();
+      e.detail.cadenceMs = last != null ? Math.round(nowMs - last) : null;
+      oracleLast.set(e.at, nowMs);
+    }
+    stand(e, ledger);
+    if (e.verb) counts.verbs[e.verb] += 1;
+    else if (e.object === 'tick') counts.tick += 1;
+    else counts.spark += 1;
+    counts.objects[e.object] = (counts.objects[e.object] ?? 0) + 1;
+    if (events.length < MAX_EVENTS_PER_LEDGER) {
+      const out = toIds(e);
+      if (sound && e === list[0]) out.sound = sound;
+      events.push(out);
+    }
   }
   live.noteTransaction(msg);
   moved = true;
@@ -160,8 +328,47 @@ function runCoherence() {
   coherenceState = { pulsars, pairs, tested: report.tested ?? 0, above: report.above ?? 0, at: universe.latestClosed, ms: performance.now() - t0, window: report.window?.used ?? null };
 }
 
-/** The per-planet attributes the page draws and labels from, as typed arrays indexed by id. */
-function attributes() {
+/**
+ * Galaxies: every planet that is not a hub belongs to the hub it dealt with
+ * most (its core), ranked among that hub's satellites by how often; a hub
+ * with five or more satellites is a galaxy. Sets the layout's cores and
+ * returns the galaxies with their centroid (the core) and disc radius.
+ */
+function galaxies() {
+  const hub = THRESHOLDS.hubDegree;
+  const best = new Map(); // satellite id → { core, count }
+  for (const e of universe.edges.values()) {
+    const pa = universe.planets[e.a];
+    const pb = universe.planets[e.b];
+    if (!pa || !pb) continue;
+    const aHub = pa.degree > hub;
+    const bHub = pb.degree > hub;
+    if (aHub === bHub) continue;
+    const sat = aHub ? e.b : e.a;
+    const core = aHub ? e.a : e.b;
+    const cur = best.get(sat);
+    if (!cur || e.count > cur.count) best.set(sat, { core, count: e.count });
+  }
+  const members = new Map(); // core → [[sat, count]]
+  for (const [sat, { core, count }] of best) (members.get(core) ?? members.set(core, []).get(core)).push([sat, count]);
+  const out = [];
+  for (const [core, list] of members) {
+    list.sort((x, y) => y[1] - x[1]);
+    list.forEach(([sat], rank) => layout.setCore(sat, core, rank));
+    if (list.length >= THRESHOLDS.nebulaSize) {
+      layout.promote(core, universe.currentLedger ?? 0);
+      for (const [sat] of list) layout.touch(sat, universe.currentLedger ?? 0);
+      const [x, y, z] = layout.position(core);
+      const disc = layout.discs.get(core);
+      out.push({ root: core, core: true, size: list.length + 1, x, y, z, r: layout.o.discBase * (0.6 + 0.55 * Math.sqrt(list.length)), normal: disc?.normal ?? [0, 1, 0], u: disc?.u ?? [1, 0, 0], v: disc?.v ?? [0, 0, 1] });
+    }
+  }
+  for (let id = 1; id <= universe.planetCount; id++) if (layout.core[id] && !best.has(id)) layout.setCore(id, 0, 0);
+  return { galaxies: out, coreOf: (id) => best.get(id)?.core ?? (members.has(id) ? id : 0) };
+}
+
+/** The per-planet attributes the page draws and labels from, as typed arrays indexed by id; and the ignitions: planets whose kind became star since the last ledger. */
+function attributes(ledgerIndex) {
   const n = universe.planetCount;
   const size = new Float32Array(n + 1);
   const hue = new Uint16Array(n + 1);
@@ -174,8 +381,15 @@ function attributes() {
   const providers = new Uint8Array(n + 1);
   const period = new Uint8Array(n + 1);
   const r100 = new Uint8Array(n + 1);
+  const core = new Int32Array(n + 1);
   const keys = [];
+  const ignitions = [];
   const ledger = universe.currentLedger ?? 0;
+  if (kinds.length < n + 1) {
+    const next = new Uint8Array(n + 1);
+    next.set(kinds);
+    kinds = next;
+  }
   for (let id = 1; id <= n; id++) {
     const p = universe.planets[id];
     if (!p) continue;
@@ -191,18 +405,40 @@ function attributes() {
     providers[id] = Math.min(255, b.providers ?? 0);
     period[id] = Math.min(255, b.period ?? 0);
     r100[id] = Math.min(255, Math.round((b.r ?? 0) * 100));
+    core[id] = layout.core[id] || (layout.promoted[id] ? id : 0); // a satellite's core, or a core itself: in a galaxy either way
     if (b.kind === 'blackhole') keys.push([id, b.regularKey ?? null]);
+    if (b.kind === 'star' && kinds[id] !== KIND_CODES.star && p.firstLedger != null && p.firstLedger < ledgerIndex) {
+      const e = { verb: 'dock', object: 'ignite', category: 'trust', rule: OBJECTS.ignite.rule, hash: null, ledgerIndex, success: true, from: 0, to: id, via: [], at: id, evidence: [{ field: 'RippleState sides', value: `${b.holders} holders` }, { field: 'threshold', value: THRESHOLDS.starHolders }], detail: { holders: b.holders, threshold: THRESHOLDS.starHolders, address: p.address } };
+      e.label = describeEvent({ ...e, at: p.address });
+      ignitions.push(e);
+      counts.verbs.dock += 1;
+      counts.objects.ignite = (counts.objects.ignite ?? 0) + 1;
+    }
+    kinds[id] = kind[id];
   }
-  return { n, size, hue, kind, known, rings, activity, lastLedger, holders, providers, period, r100, keys };
+  return { attrs: { n, size, hue, kind, known, rings, activity, lastLedger, holders, providers, period, r100, core }, keys, ignitions };
 }
 
 function postLedger(l, event) {
   const cov = universe.coverage();
-  const attrs = attributes();
-  const nebulae = clusters.nebulae(layout).slice(0, 200).map(({ members, ...rest }) => rest);
+  const { attrs, keys, ignitions } = attributes(l.index);
+  const g = galaxies();
+  const galaxyRoots = new Set(g.galaxies.map((x) => x.root));
+  const nebulae = [...g.galaxies, ...clusters.nebulae(layout).filter((nb) => !nb.members.some((id) => galaxyRoots.has(id) || g.coreOf(id))).map(({ members, ...rest }) => rest)].slice(0, 200);
+  const nebulaRoots = new Set(nebulae.map((nb) => nb.root));
   const stability = stepStats.steps ? { steps: stepStats.steps, meanMs: stepStats.ms / stepStats.steps, moved: stepStats.moved / stepStats.steps, maxMoved: stepStats.maxMoved, movedShare: stepStats.movedShare / stepStats.steps, warm: Math.round(stepStats.warm / stepStats.steps), pairs: Math.round(stepStats.pairs / stepStats.steps) } : null;
   stepStats.steps = stepStats.ms = stepStats.moved = stepStats.maxMoved = stepStats.movedShare = stepStats.warm = stepStats.pairs = 0;
-  const { keys, ...typed } = attrs;
+  // the ledger's events: showers collapsed, the ignitions added, the weather aggregated by cluster
+  const ledgerEvents = [...collapseShowers(events), ...ignitions];
+  // a planet's galaxy for the weather: its core's, else its union-find nebula's, else none (its events glow on it instead of flowing)
+  const clusterOf = (id) => {
+    if (!(id > 0)) return null;
+    const core = g.coreOf(id);
+    if (core && galaxyRoots.has(core)) return core;
+    const root = clusters.find(id);
+    return nebulaRoots.has(root) ? root : null;
+  };
+  const weather = weatherOf(ledgerEvents, { clusterOf, kindOf: (id) => (id > 0 && universe.planets[id] ? bodyOf(universe.planets[id]).kind : 'planet') });
   post(
     {
       type: 'ledger',
@@ -214,23 +450,26 @@ function postLedger(l, event) {
       added: addedSinceLedger,
       domains: domainsSinceLedger,
       keys,
-      attrs: typed,
+      attrs,
       positions: layout.snapshot(),
       nebulae,
       pairs: coherenceState.pairs,
       pulsars: coherenceState.pulsars,
       coherence: { tested: coherenceState.tested, above: coherenceState.above, at: coherenceState.at, ms: coherenceState.ms, window: coherenceState.window },
-      comets,
+      events: ledgerEvents,
+      weather,
+      standing: standingOut(),
+      counts: { verbs: { ...counts.verbs }, objects: { ...counts.objects }, spark: counts.spark, tick: counts.tick, transactions: counts.transactions },
       coverage: cov,
-      coverageLine: coverageLine(cov, { host, synthetic: Boolean(synthetic), state }),
+      coverageLine: coverageLine(cov, { host, synthetic: Boolean(synthetic), state }) + (replay ? ' (a recording replayed, not the live stream)' : ''),
       stability,
-      memory: { records: universe.records.length, planets: universe.planetCount, edges: universe.edges.size, layoutEdges: layout.ea.length, clusters: clusters.unions, hubSkips: clusters.skippedHub, interned: universe.addresses.size },
+      memory: { records: universe.records.length, planets: universe.planetCount, edges: universe.edges.size, layoutEdges: layout.ea.length, clusters: clusters.unions, hubSkips: clusters.skippedHub, interned: universe.addresses.size, rocks: standing.rocks.size, checks: standing.checks.size },
     },
-    [typed.size.buffer, typed.hue.buffer, typed.kind.buffer, typed.known.buffer, typed.rings.buffer, typed.activity.buffer, typed.lastLedger.buffer, typed.holders.buffer, typed.providers.buffer, typed.period.buffer, typed.r100.buffer],
+    [attrs.size.buffer, attrs.hue.buffer, attrs.kind.buffer, attrs.known.buffer, attrs.rings.buffer, attrs.activity.buffer, attrs.lastLedger.buffer, attrs.holders.buffer, attrs.providers.buffer, attrs.period.buffer, attrs.r100.buffer, attrs.core.buffer],
   );
   addedSinceLedger = [];
   domainsSinceLedger = [];
-  comets = [];
+  events = [];
   lastFramePost = performance.now();
 }
 
@@ -263,11 +502,61 @@ function setState(s, endpoint) {
   post({ type: 'status', state, endpoint: endpoint ?? null, host });
 }
 
-function start({ network = 'mainnet', synthetic: count = 0, seed = 1337, sound = false, perLedger = 150 } = {}) {
+/** Feed a recording (one raw message per line) at `pace` ms per ledger close, the transactions of a ledger at once. */
+async function feedReplay(url, pace, abort) {
+  let res;
+  try {
+    res = await fetch(url, { signal: abort.signal });
+    if (!res.ok || !res.body) throw new Error(`${res.status}`);
+  } catch (err) {
+    post({ type: 'error', message: `replay: ${err?.message ?? err}` });
+    setState('idle', null);
+    return;
+  }
+  setState('connected', `replay:${url.split('/').pop()}`);
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (abort.signal.aborted) return;
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let nl;
+    while ((nl = buffer.indexOf('\n')) >= 0) {
+      const line = buffer.slice(0, nl);
+      buffer = buffer.slice(nl + 1);
+      if (!line.trim()) continue;
+      let msg;
+      try {
+        msg = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      const kind = classifyMessage(msg);
+      if (kind === 'ledger') {
+        onLedger(msg);
+        await sleep(pace);
+        if (abort.signal.aborted) return;
+      } else if (kind === 'transaction') onTransaction(msg);
+    }
+  }
+  post({ type: 'replay-done', ledgers: closedCount });
+  setState('idle', null);
+}
+
+function start({ network = 'mainnet', synthetic: count = 0, seed = 1337, sound = false, perLedger = 150, replay: replayUrl = null, pace = 300 } = {}) {
   stop();
   resetAll();
   soundOn = Boolean(sound);
   stepTimer = setTimeout(stepLayout, STEP_MS);
+  if (replayUrl) {
+    replay = { url: replayUrl, pace, abort: new AbortController() };
+    host = 'replay';
+    feedReplay(replayUrl, Math.max(0, Number(pace) || 0), replay.abort);
+    return;
+  }
   if (count > 0) {
     synthetic = new SyntheticStream({ planets: count, seed, perLedger });
     host = 'synthetic';
@@ -277,7 +566,6 @@ function start({ network = 'mainnet', synthetic: count = 0, seed = 1337, sound =
         if (msg.type === 'ledgerClosed') onLedger(msg);
         else onTransaction(msg);
       }
-      // build quickly, then settle to a ledger every two seconds
       syntheticTimer = setTimeout(feed, synthetic.accounts.length < synthetic.target ? 120 : 2000);
     };
     feed();
@@ -305,6 +593,10 @@ function stop() {
     stream.close();
     stream = null;
   }
+  if (replay) {
+    replay.abort.abort();
+    replay = null;
+  }
   synthetic = null;
   setState('idle', null);
 }
@@ -331,7 +623,7 @@ self.onmessage = (e) => {
       post({ type: 'coverage', coverage: universe.coverage(), line: coverageLine(universe.coverage(), { host, synthetic: Boolean(synthetic), state }) });
       break;
     case 'memory':
-      post({ type: 'memory', records: universe.records.length, planets: universe.planetCount, edges: universe.edges.size, layoutEdges: layout.ea.length, interned: universe.addresses.size, ledgers: universe.ledgers.size, liveLedgers: live.entries.length });
+      post({ type: 'memory', records: universe.records.length, planets: universe.planetCount, edges: universe.edges.size, layoutEdges: layout.ea.length, interned: universe.addresses.size, ledgers: universe.ledgers.size, liveLedgers: live.entries.length, rocks: standing.rocks.size });
       break;
     default:
       break;

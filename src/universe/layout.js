@@ -25,13 +25,38 @@
 
 import { hashString } from '../mapping.js';
 
-export const DEFAULTS = Object.freeze({ warmLedgers: 12, restLength: 0.06, edgeStiffness: 0.08, homeStiffness: 0.02, repelRadius: 0.05, repelStrength: 0.0025, damping: 0.72, maxStep: 0.012, radius: 1 });
+export const DEFAULTS = Object.freeze({ warmLedgers: 12, restLength: 0.06, edgeStiffness: 0.08, homeStiffness: 0.02, repelRadius: 0.06, repelStrength: 0.0025, damping: 0.72, maxStep: 0.012, radius: 2, discStiffness: 0.06, discBase: 0.045, discTwist: 1.6, shell: 1.8, coreStiffness: 0.3, coreRepel: 0.03, galaxyEdge: 0.25 });
 
 const u32 = (s) => hashString(s) / 4294967296;
 
 /** The rest length of an edge whose busier end has `degree` counterparties: the shell they share grows with the square root of their number, so they keep their spacing. */
 export function restLengthFor(base, degree) {
   return base * (1 + 0.14 * Math.sqrt(Math.max(1, degree) - 1));
+}
+
+/**
+ * The galactic disc of a core: a plane through it whose normal is fixed by
+ * its address, with two unit vectors in the plane. A satellite of the core
+ * sits on that plane at a radius that grows with its rank among the core's
+ * satellites (the busiest nearest) and at an angle that turns with the
+ * radius, so the disc reads as a spiral at far zoom (the owner's art
+ * direction of 2026-10-23: the cosmos, with galaxies).
+ */
+export function discOf(address) {
+  const key = String(address ?? '');
+  const u = u32(`${key}:n1`);
+  const v = u32(`${key}:n2`);
+  const z = 1 - 2 * u;
+  const rxy = Math.sqrt(Math.max(0, 1 - z * z));
+  const theta = 2 * Math.PI * v;
+  const n = [rxy * Math.cos(theta), z, rxy * Math.sin(theta)];
+  // two vectors in the plane: n × up (or n × right when n is up)
+  const up = Math.abs(n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+  const a = [n[1] * up[2] - n[2] * up[1], n[2] * up[0] - n[0] * up[2], n[0] * up[1] - n[1] * up[0]];
+  const la = Math.hypot(...a) || 1;
+  const ua = a.map((x) => x / la);
+  const b = [n[1] * ua[2] - n[2] * ua[1], n[2] * ua[0] - n[0] * ua[2], n[0] * ua[1] - n[1] * ua[0]];
+  return { normal: n, u: ua, v: b };
 }
 
 /** The home of an address: a point in the unit ball, uniform in volume, fixed by the address alone. */
@@ -57,6 +82,12 @@ export class Layout {
     this.home = new Float32Array(3 * (this.capacity + 1));
     this.lastTouched = new Int32Array(this.capacity + 1).fill(-1);
     this.present = new Uint8Array(this.capacity + 1);
+    this.core = new Int32Array(this.capacity + 1); // the galaxy a planet belongs to: its core's id, 0 for none
+    this.rank = new Float32Array(this.capacity + 1); // its rank among the core's satellites, the busiest 0
+    this.discs = new Map(); // core id → { u, v, normal } (Float64 triples)
+    this.promoted = new Uint8Array(this.capacity + 1); // 1 for a core that has moved out to the shell
+    this.cores = []; // the promoted cores, in the order they were promoted
+    this.addresses = [];
     this.ea = [];
     this.eb = [];
     this.ew = [];
@@ -66,7 +97,7 @@ export class Layout {
     this.ledger = 0;
     this.stepsRun = 0;
     // the grid: cells of repelRadius over the ball, with room to drift outside it
-    this.span = 2 * this.o.radius + 0.6;
+    this.span = 2 * Math.max(this.o.shell, this.o.radius) + 1.2;
     this.g = Math.ceil(this.span / this.o.repelRadius);
     const cells = this.g ** 3;
     this.cellCount = new Int32Array(cells);
@@ -89,6 +120,9 @@ export class Layout {
       this.lastTouched = grow(this.lastTouched, 1, -1);
       this.present = grow(this.present, 1);
       this.cellOf = grow(this.cellOf, 1);
+      this.core = grow(this.core, 1);
+      this.rank = grow(this.rank, 1);
+      this.promoted = grow(this.promoted, 1);
       this.capacity = cap;
     }
   }
@@ -105,8 +139,56 @@ export class Layout {
     this.vel[i] = this.vel[i + 1] = this.vel[i + 2] = 0;
     this.present[id] = 1;
     this.lastTouched[id] = ledger;
+    this.addresses[id] = address;
     this.count = Math.max(this.count, id);
     return true;
+  }
+
+  /** Put a planet in a core's galaxy at a rank; core 0 takes it out. The core's disc is made on first use. */
+  setCore(id, core, rank = 0) {
+    if (!this.has(id)) return;
+    this._grow(Math.max(id, core));
+    this.core[id] = core > 0 && core !== id ? core : 0;
+    this.rank[id] = rank;
+    if (core > 0 && !this.discs.has(core)) this.discs.set(core, discOf(this.addresses[core] ?? String(core)));
+  }
+
+  /**
+   * A planet that has become the core of a galaxy moves out, once, to the
+   * galactic shell: its home goes to the shell's radius along its own home
+   * direction and it is warmed so it travels there; its satellites follow
+   * on the disc. The one time a sky reshuffles, and only for a new core
+   * (the owner's art direction of 2026-10-23: galaxies stand apart).
+   */
+  promote(core, ledger = this.ledger) {
+    if (!this.has(core) || this.discs.get(core)?.promoted) return false;
+    const d = this.discs.get(core) ?? discOf(this.addresses[core] ?? String(core));
+    d.promoted = true;
+    this.discs.set(core, d);
+    this.promoted[core] = 1;
+    this.cores.push(core);
+    const i = 3 * core;
+    const len = Math.hypot(this.home[i], this.home[i + 1], this.home[i + 2]) || 1;
+    const k = this.o.shell / len;
+    this.home[i] *= k;
+    this.home[i + 1] *= k;
+    this.home[i + 2] *= k;
+    this.lastTouched[core] = Math.max(this.lastTouched[core], ledger);
+    return true;
+  }
+
+  /** The disc target of a satellite: on its core's plane, at a radius from its rank, turned with the radius. */
+  discTarget(id) {
+    const core = this.core[id];
+    if (!core || !this.present[core]) return null;
+    const d = this.discs.get(core);
+    if (!d) return null;
+    const o = this.o;
+    const r = o.discBase * (0.6 + 0.55 * Math.sqrt(this.rank[id] + 1));
+    const base = (hashString(this.addresses[id] ?? String(id)) / 4294967296) * Math.PI * 2;
+    const ang = base + o.discTwist * r * 8;
+    const c = 3 * core;
+    return [this.pos[c] + (d.u[0] * Math.cos(ang) + d.v[0] * Math.sin(ang)) * r, this.pos[c + 1] + (d.u[1] * Math.cos(ang) + d.v[1] * Math.sin(ang)) * r, this.pos[c + 2] + (d.u[2] * Math.cos(ang) + d.v[2] * Math.sin(ang)) * r];
   }
 
   has(id) {
@@ -209,29 +291,90 @@ export class Layout {
           dz = home[ib + 2] - home[ia + 2];
           d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-3;
         }
-        const k = o.edgeStiffness * Math.min(4, this.ew[ei]);
+        // the disc holds a galaxy and the shell holds it apart: an edge between two galaxy members moves neither;
+        // an edge between a galaxy member and a field star draws the field star, at a fraction, never the member
+        const ga = this.core[a] || this.promoted[a];
+        const gb = this.core[b] || this.promoted[b];
+        if (ga && gb) continue;
+        const k = o.edgeStiffness * Math.min(4, this.ew[ei]) * (ga || gb ? o.galaxyEdge : 1);
         const f = k * (d - this.er[ei]);
         const fx = (f * dx) / d;
         const fy = (f * dy) / d;
         const fz = (f * dz) / d;
-        if (warmMask[a]) {
+        if (warmMask[a] && !ga) {
           force[ia] += fx;
           force[ia + 1] += fy;
           force[ia + 2] += fz;
         }
-        if (warmMask[b]) {
+        if (warmMask[b] && !gb) {
           force[ib] -= fx;
           force[ib + 1] -= fy;
           force[ib + 2] -= fz;
         }
       }
     }
-    // the home spring
+    // the home spring, or for a satellite the spring to its place on its core's disc, or for a promoted core the
+    // radial spring that holds it on the galactic shell (its home, already on the shell, is a weak preference)
     for (const id of warm) {
       const i = 3 * id;
-      force[i] += o.homeStiffness * (home[i] - pos[i]);
-      force[i + 1] += o.homeStiffness * (home[i + 1] - pos[i + 1]);
-      force[i + 2] += o.homeStiffness * (home[i + 2] - pos[i + 2]);
+      const t = this.core[id] ? this.discTarget(id) : null;
+      if (t) {
+        force[i] += o.discStiffness * (t[0] - pos[i]);
+        force[i + 1] += o.discStiffness * (t[1] - pos[i + 1]);
+        force[i + 2] += o.discStiffness * (t[2] - pos[i + 2]);
+      } else if (this.promoted[id]) {
+        const len = Math.sqrt(pos[i] * pos[i] + pos[i + 1] * pos[i + 1] + pos[i + 2] * pos[i + 2]) || 1e-3;
+        const radial = (o.coreStiffness * (o.shell - len)) / len;
+        force[i] += radial * pos[i] + o.homeStiffness * (home[i] - pos[i]);
+        force[i + 1] += radial * pos[i + 1] + o.homeStiffness * (home[i + 1] - pos[i + 1]);
+        force[i + 2] += radial * pos[i + 2] + o.homeStiffness * (home[i + 2] - pos[i + 2]);
+      } else {
+        force[i] += o.homeStiffness * (home[i] - pos[i]);
+        force[i + 1] += o.homeStiffness * (home[i + 1] - pos[i + 1]);
+        force[i + 2] += o.homeStiffness * (home[i + 2] - pos[i + 2]);
+      }
+    }
+    // galaxies keep their distance: two promoted cores closer than their discs allow push each other along the shell
+    if (this.cores.length > 1) {
+      const sats = new Int32Array(n + 1);
+      for (let id = 1; id <= n; id++) if (this.present[id] && this.core[id]) sats[this.core[id]] += 1;
+      const discR = (c) => o.discBase * (0.6 + 0.55 * Math.sqrt(sats[c]));
+      // a push on a core, less its radial part: the shell holds the radius, the push slides the galaxy along it
+      const tangent = (i, fx, fy, fz) => {
+        const px = pos[i];
+        const py = pos[i + 1];
+        const pz = pos[i + 2];
+        const dot = (fx * px + fy * py + fz * pz) / (px * px + py * py + pz * pz || 1e-6);
+        force[i] += fx - dot * px;
+        force[i + 1] += fy - dot * py;
+        force[i + 2] += fz - dot * pz;
+      };
+      for (let x = 0; x < this.cores.length; x++) {
+        const a = this.cores[x];
+        if (!this.present[a]) continue;
+        const ra = discR(a);
+        for (let y = x + 1; y < this.cores.length; y++) {
+          const b = this.cores[y];
+          if (!this.present[b] || (!warmMask[a] && !warmMask[b])) continue;
+          const ia = 3 * a;
+          const ib = 3 * b;
+          let dx = pos[ia] - pos[ib];
+          let dy = pos[ia + 1] - pos[ib + 1];
+          let dz = pos[ia + 2] - pos[ib + 2];
+          let d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          if (d < 1e-5) {
+            dx = home[ia] - home[ib] || 1e-3;
+            dy = home[ia + 1] - home[ib + 1];
+            dz = home[ia + 2] - home[ib + 2];
+            d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-3;
+          }
+          const minSep = 1.1 * (ra + discR(b)) + 0.08;
+          if (d >= minSep) continue;
+          const s = (o.coreRepel * (minSep - d)) / d;
+          if (warmMask[a]) tangent(ia, dx * s, dy * s, dz * s);
+          if (warmMask[b]) tangent(ib, -dx * s, -dy * s, -dz * s);
+        }
+      }
     }
     // the crowd: every present planet into its cell; each warm planet reads the 27 cells around it as aggregates
     const g = this.g;
