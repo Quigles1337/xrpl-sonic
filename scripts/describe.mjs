@@ -12,14 +12,16 @@
 //                                                                        # the coherence readout (docs/coherence.md) instead of the text; --bin reads the series per minute, hour or day
 //   node scripts/describe.mjs --coherence --accounts rA[~Label],rB,... --ledgers FROM-TO [--series count|involved|volume] [--include-failed]
 //                                                                        # the same readout over series fetched with account_tx for the named accounts (no case file)
-//   ... [--network mainnet|testnet] [--endpoint wss://s2.ripple.com]      # the node: the network's endpoints in order, or one given endpoint first
+//   ... [--network mainnet|testnet] [--endpoint wss://s2.ripple.com] [--live]  # the node: the network's history endpoints in order (docs/loader.md), or one given endpoint first;
+//                                                                        # a case's ledgers come from the bundle that ships with the page when it has them, unless --live
 //
 // The text goes to stdout; the size and the events-shown ratio go to stderr.
 
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { XrplStream, NETWORKS } from '../src/ws.js';
 import { validateCase, encodeCase } from '../src/case.js';
-import { fetchCaseLedgers } from '../src/ledgers.js';
+import { LedgerLoader, createBundle, endpointsFor, caseHashes, describeSources } from '../src/loader.js';
 import { describeReport, factsForCase, DEFAULT_BUDGET } from '../src/describe.js';
 import { buildScore } from '../src/score.js';
 import { frameFromScore, frameFromAccountTx, coherence, readout, DEFAULTS as COHERENCE_DEFAULTS, BIN_NAMES } from '../src/coherence.js';
@@ -99,29 +101,39 @@ if (byAccounts) {
   theCase = validated;
 }
 
-const network = NETWORKS[theCase?.network ?? named.network];
+const networkName = theCase?.network ?? named.network;
+if (!NETWORKS[networkName]) {
+  console.error(`unknown network ${networkName}`);
+  process.exit(2);
+}
 const endpoint = opt('endpoint', '');
-const endpoints = endpoint ? [endpoint, ...network.endpoints.filter((e) => e !== endpoint)] : network.endpoints;
-const stream = new XrplStream({ endpoints, onMessage: () => {} });
-await new Promise((resolve, reject) => {
-  const timer = setTimeout(() => reject(new Error('no connection to a node within 20 s')), 20000);
-  stream.onStatus = (s) => {
-    if (s.state === 'connected') {
-      clearTimeout(timer);
-      resolve();
-    }
-  };
-  stream.connect();
-}).catch((err) => {
-  console.error(err.message);
-  process.exit(1);
-});
-await stream.request({ command: 'unsubscribe', streams: ['ledger', 'transactions'] }).catch(() => {});
+const historyEndpoints = endpointsFor(networkName, 'history'); // docs/loader.md: s2.ripple.com first on mainnet
+const endpoints = endpoint ? [endpoint, ...historyEndpoints.filter((e) => e !== endpoint)] : historyEndpoints;
+const stream = new XrplStream({ endpoints, streams: [], onMessage: () => {} });
+let connecting = null;
+/** Connect on first need, so a case whose ledgers ship with the page needs no node at all. */
+const connected = () => {
+  connecting ??= new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(Object.assign(new Error('no connection to a node within 20 s'), { code: 'noNode' })), 20000);
+    stream.onStatus = (s) => {
+      if (s.state === 'connected') {
+        clearTimeout(timer);
+        resolve();
+      }
+    };
+    stream.connect();
+  });
+  return connecting;
+};
+const request = async (cmd, opts) => {
+  await connected();
+  return stream.request(cmd, opts);
+};
 
 const t0 = Date.now();
 if (named) {
   // series from account_tx (docs/coherence.md, phase 1.5): one account at a time, the pages reported as they arrive
-  const fetched = await fetchAccountSeries((cmd) => stream.request(cmd), named.accounts, {
+  const fetched = await fetchAccountSeries((cmd) => request(cmd), named.accounts, {
     from: named.from,
     to: named.to,
     onPage: (p) => process.stderr.write(`\r${p.address}: page ${p.page}, ${p.entries} entries`),
@@ -135,15 +147,35 @@ if (named) {
   stream.close();
   process.exit(0);
 }
-const { ledgers, failures } = await fetchCaseLedgers((cmd) => stream.request(cmd), theCase, { onProgress: (d, t) => process.stderr.write(`\rfetching ledgers ${d}/${t}`) });
-process.stderr.write('\n');
+const bundle = createBundle({
+  baseUrl: 'docs/cases/ledgers/',
+  read: async (url) => {
+    try {
+      return JSON.parse(readFileSync(fileURLToPath(new URL(`../${url}`, import.meta.url)), 'utf8'));
+    } catch {
+      return null;
+    }
+  },
+});
+const loader = new LedgerLoader({
+  network: networkName,
+  request: (cmd) => request(cmd, { timeoutMs: 60000 }),
+  endpoint: () => stream.endpoint,
+  rotate: () => stream.rotate(),
+  bundle,
+  onEvent: (e) => process.stderr.write(`\n${e.type === 'slow-down' ? `${e.host} asked to slow down (${e.code}); waiting ${(e.delayMs / 1000).toFixed(1)} s` : e.type === 'rotate' ? `moving history requests to ${e.host}` : 'no node answered'}\n`),
+});
+const { ledgers, failures, sources } = await loader.case(theCase, { live: args.includes('--live'), hashes: caseHashes(theCase), onProgress: (d, t) => process.stderr.write(`\rfetching ledgers ${d}/${t}`) });
+process.stderr.write(`\n${describeSources({ sources })}\n`);
 for (const f of failures) console.error(`ledger #${f.index} could not be fetched: ${f.error}`);
+/** The trailer's source: the node when it was asked, else the bundle that ships with the page. */
+const via = sources.node || sources.failed ? stream.endpoint.replace(/^wss:\/\//, '') : 'the bundled ledgers';
 if (coherenceOnly) {
   const score = buildScore(theCase, ledgers);
   const frame = frameFromScore(score, { cast: theCase.cast, topK: Number(opt('top', COHERENCE_DEFAULTS.topK)) || COHERENCE_DEFAULTS.topK, measure: opt('series', COHERENCE_DEFAULTS.measure), ledgers });
   const report = coherence(frame, coherenceOptions);
   process.stdout.write(`${readout(report)}\n`);
-  console.error(`${ledgers.size} ledgers, ${score.counts.events} events, ${report.pairs.length} pair${report.pairs.length === 1 ? '' : 's'}, ${((Date.now() - t0) / 1000).toFixed(1)} s via ${stream.endpoint.replace(/^wss:\/\//, '')}`);
+  console.error(`${ledgers.size} ledgers, ${score.counts.events} events, ${report.pairs.length} pair${report.pairs.length === 1 ? '' : 's'}, ${((Date.now() - t0) / 1000).toFixed(1)} s via ${via}`);
   stream.close();
   process.exit(0);
 }
@@ -162,6 +194,6 @@ if (measureOnly) {
   process.stdout.write(r.text);
   console.error(sizeLine(r));
 }
-console.error(`${ledgers.size} ledgers, ${facts.size} transactions, ${((Date.now() - t0) / 1000).toFixed(1)} s via ${stream.endpoint.replace(/^wss:\/\//, '')}`);
+console.error(`${ledgers.size} ledgers, ${facts.size} transactions, ${((Date.now() - t0) / 1000).toFixed(1)} s via ${via}`);
 stream.close();
 process.exit(0);

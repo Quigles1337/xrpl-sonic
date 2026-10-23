@@ -21,7 +21,8 @@ import { describeReport, factsForCase, importAnnotations } from './describe.js';
 import { frameFromScore, frameFromLive, coherence, readout as coherenceReadout, describePair, BIN_NAMES, DEFAULTS as COHERENCE_DEFAULTS } from './coherence.js';
 import { fieldModel } from './field.js';
 import { TOURS, tourById, tourSteps, stepText } from './tours.js';
-import { fetchCaseLedgers } from './ledgers.js';
+import { LedgerLoader, createBundle, endpointsFor, caseHashes, describeSources } from './loader.js';
+import { openLedgerCache } from './ledger-cache.js';
 import { speak, hush } from './speech.js';
 import { Geiger } from './geiger.js';
 import { FEE_COMMAND, SERVER_SUBSCRIBE, parseFee, parseServerStatus, pressureTone, isFresh } from './health.js';
@@ -80,7 +81,7 @@ const session = {
   pending: null, // validated case; `source` is 'replay' (from #replay=), 'case' (from #case=) or 'file'
   active: null, // { case, ledgers, score, transport, failures }
   loading: false,
-  armed: false, // start() arms it; the next 'connected' status runs it
+  liveFetch: false, // a tour's choice: the case's ledgers live from the node rather than the bundle and the cache
   speed: 1,
   loop: null,
   abort: null,
@@ -109,6 +110,9 @@ const ledgerState = {
 };
 const stats = { played: 0, dropped: 0 };
 const live = new LiveWindow(); // the last validated ledgers heard live, for "Save this moment" (src/moment.js)
+let historySocket = null; // the history socket (docs/loader.md): a case's ledgers go to the history endpoints, s2.ripple.com first on mainnet; opened on demand, closed with Stop
+const bundle = createBundle({ baseUrl: 'docs/cases/ledgers/' }); // the ledgers that ship with the page
+const ledgerCache = openLedgerCache(); // a promise: this browser's store of fetched ledgers, or null without IndexedDB
 const field = { bin: COHERENCE_DEFAULTS.bin, model: null, lastSummary: '', lastLive: 0 }; // the interference field's bin (a per-case choice), model and bookkeeping (src/field.js)
 const recentTx = []; // timestamps for the tx/s readout
 const lastMinute = []; // timestamps for the snapshot overlay (60 s window)
@@ -173,7 +177,7 @@ const ui = createUI({
   onView: (view) => setView(view, { fromUi: true }),
   onDoor: (view) => enterDoor(view),
   learnActions: {
-    onRun: (id) => runTour(id),
+    onRun: (id, opts) => runTour(id, opts),
     onNext: () => tourMove(+1),
     onBack: () => tourMove(-1),
     onExit: () => exitTour(),
@@ -195,6 +199,17 @@ const ui = createUI({
     onSelect: (id) => selectMidi(id),
   },
   healthActions: {
+    onCacheChange: (on) => {
+      settings.cacheLedgers = Boolean(on);
+      saveSettings(settings);
+      refreshCacheCount();
+    },
+    onCacheClear: async () => {
+      const c = await ledgerCache;
+      await c?.clear(settings.network);
+      ui.logMessage(`Forgot the ledgers kept for ${NETWORKS[settings.network].label}.`);
+      refreshCacheCount();
+    },
     onChange: (patch) => {
       settings.health = { ...settings.health, ...patch };
       saveSettings(settings);
@@ -246,6 +261,11 @@ const ui = createUI({
       if (session.active) endSession();
       stream.setEndpoints(NETWORKS[settings.network].endpoints);
     }
+    if ('network' in patch) {
+      historySocket?.close(); // the history socket follows the network, on its next need
+      historySocket = null;
+      refreshCacheCount();
+    }
     if ('cast' in patch || 'castMode' in patch) {
       syncHash();
       applyCast();
@@ -283,7 +303,7 @@ function enterDoor(view) {
   if (!running) start();
 }
 
-const tour = { id: null, steps: null, index: 0, ctx: {}, item: null };
+const tour = { id: null, steps: null, index: 0, ctx: {}, item: null, live: false };
 
 async function fetchCase(url) {
   const r = await fetch(url, { cache: 'no-cache' });
@@ -311,10 +331,8 @@ async function tourAct(step) {
   const t = activeTransport();
   switch (a.kind) {
     case 'case': {
-      const current = session.active?.case ?? session.pending;
-      if (!current || !String(current.id).startsWith(a.url.includes('cadence') ? 'cadence' : 'busiest')) {
-        openCase(await fetchCase(a.url), 'file', 'the tour');
-      }
+      // afresh every time: from the bundle in a moment, or live from the node when the card's option says so (docs/loader.md)
+      openCase(await fetchCase(a.url), 'file', 'the tour', { live: tour.live });
       if (!running) await start();
       const ok = await whenActive();
       if (ok) {
@@ -322,6 +340,7 @@ async function tourAct(step) {
         tour.ctx.firstNote = s.case.annotations.find((n) => n.anchor?.ledger != null)?.text ?? null;
         tour.ctx.caseDescription = s.case.description || s.case.title || null;
         tour.ctx.accountsLine = null;
+        tour.ctx.sourcesLine = describeSources(s);
       }
       break;
     }
@@ -384,9 +403,10 @@ async function tourGo(index) {
   ui.transport.caption({ kind: 'info', text, sticky: true });
 }
 
-function runTour(id) {
+function runTour(id, { live = false } = {}) {
   if (!tourById(id)) return;
   tour.id = id;
+  tour.live = Boolean(live);
   tour.steps = tourSteps(id);
   tour.ctx = {};
   tour.item = null;
@@ -790,10 +810,6 @@ function onStatus(s) {
       health.serverStream = 'unknown';
       health.load = null;
       pollFee();
-      if (session.armed && session.pending) {
-        session.armed = false;
-        runCase(session.pending);
-      }
       break;
     case 'subscribed':
       ui.setNode(s.hostid ? `${host} (${s.hostid})` : host); // the node's own name, from the subscribe result
@@ -819,18 +835,19 @@ async function start() {
     ui.logMessage('Web Audio is unavailable in this browser; running visuals only.', 'error');
   }
   viz.start();
-  session.armed = Boolean(session.pending);
   stream = new XrplStream({ endpoints: NETWORKS[settings.network].endpoints, onMessage, onStatus });
   stream.connect();
+  if (session.pending) runCase(session.pending, { live: session.liveFetch }); // the loader opens the history socket itself; a bundled case needs no node at all
 }
 
 async function stop() {
   if (!running) return;
   running = false;
-  session.armed = false;
   endSession({ quiet: true });
   stream?.close();
   stream = null;
+  historySocket?.close();
+  historySocket = null;
   clearPending();
   engine.setDrone(null);
   health.fee = null;
@@ -887,7 +904,7 @@ function armReplayFromUrl(spec) {
 }
 
 /** Validate a raw case object and make it the pending (or playing) case. */
-function openCase(raw, source, sourceText) {
+function openCase(raw, source, sourceText, { live = false } = {}) {
   const { case: c, errors, warnings } = validateCase(raw);
   for (const e of errors) ui.logMessage(`Case: ${e}`, 'error');
   for (const w of warnings) ui.logMessage(`Case: ${w}`, 'error');
@@ -905,8 +922,9 @@ function openCase(raw, source, sourceText) {
   if (sourceText !== 'the tour') setView('watch'); // a case opens in Watch, where it is in view; a tour keeps Learn
   ui.casePanel.setCase(c, null, warnings);
   syncHash();
-  if (running && stream) {
-    runCase(c);
+  session.liveFetch = Boolean(live);
+  if (running) {
+    runCase(c, { live });
   } else {
     ui.logMessage(`Loaded ${caseTitle(c)} — press Start to play it.`);
   }
@@ -955,18 +973,63 @@ function currentCase() {
   };
 }
 
-async function runCase(theCase) {
-  if (!stream) return;
+/** The history socket (docs/loader.md): to the network's history endpoints, s2.ripple.com first on mainnet, no subscription; opened on first need, closed with Stop or a network change. */
+function historyClient() {
+  if (historySocket && historySocket.network === settings.network && !historySocket.closedByUser) return historySocket;
+  historySocket?.close();
+  const client = new XrplStream({
+    endpoints: endpointsFor(settings.network, 'history'),
+    streams: [],
+    onMessage: () => {},
+    onStatus: (s) => {
+      if (s.state === 'reconnecting' && s.error) ui.logMessage(`History node ${s.endpoint ? s.endpoint.replace(/^wss:\/\//, '') : ''}: ${s.error}; retrying in ${Math.round((s.delayMs ?? 0) / 1000)} s…`, 'error');
+    },
+  });
+  client.network = settings.network;
+  client.connect();
+  historySocket = client;
+  return client;
+}
+
+/** One request on the history socket once it is connected (within 20 s); rejects with code `noNode` when no history node answers, which ends the load's node fetches. */
+function historyRequest(command, { timeoutMs = 20000 } = {}) {
+  const client = historyClient();
+  if (client.state === 'connected') return client.request(command, { timeoutMs });
+  return new Promise((resolve, reject) => {
+    const prev = client.onStatus;
+    const timer = setTimeout(() => {
+      client.onStatus = prev;
+      reject(Object.assign(new Error('no history node answered within 20 s'), { code: 'noNode' }));
+    }, 20000);
+    client.onStatus = (s) => {
+      prev(s);
+      if (s.state === 'connected') {
+        clearTimeout(timer);
+        client.onStatus = prev;
+        client.request(command, { timeoutMs }).then(resolve, reject);
+      }
+    };
+  });
+}
+
+/** The Node group's cache line: how many ledgers this browser keeps for the network, and which node history goes to. */
+async function refreshCacheCount() {
+  const store = await ledgerCache;
+  const c = settings.cacheLedgers ? store : null;
+  ui.healthPanel.renderCache({ on: settings.cacheLedgers !== false, available: Boolean(store), count: c ? await c.count(settings.network) : null, network: NETWORKS[settings.network].label, history: endpointsFor(settings.network, 'history')[0].replace(/^wss:\/\//, '') });
+}
+
+async function runCase(theCase, { live = false } = {}) {
+  if (!running) return;
   if (theCase.network !== settings.network) {
     settings.network = theCase.network;
     saveSettings(settings);
     ui.applySettings();
     resetLedgerState();
     ui.logMessage(`Switching to ${NETWORKS[settings.network].label} for this case…`);
-    session.pending = theCase;
-    session.armed = true;
-    stream.setEndpoints(NETWORKS[settings.network].endpoints);
-    return;
+    stream?.setEndpoints(NETWORKS[settings.network].endpoints);
+    historySocket?.close();
+    historySocket = null;
   }
   session.loading = true;
   session.abort = { aborted: false };
@@ -981,7 +1044,17 @@ async function runCase(theCase) {
   ui.logMessage(`Loading ${caseLedgerCount(theCase)} ledgers for ${caseTitle(theCase)}…`);
   let result;
   try {
-    result = await fetchCaseLedgers((cmd) => stream.request(cmd), theCase, { onProgress: (d, t) => ui.transport.setLoading(d, t), signal: abort });
+    // the loader (docs/loader.md): the bundle, then this browser's store, then the history node, paced and backing off
+    const loader = new LedgerLoader({
+      network: settings.network,
+      request: historyRequest,
+      endpoint: () => historySocket?.endpoint ?? null,
+      rotate: () => historySocket?.rotate(),
+      cache: settings.cacheLedgers !== false ? await ledgerCache : null,
+      bundle,
+      onEvent: (e) => ui.logMessage(e.type === 'slow-down' ? `${e.host} asked to slow down (${e.code}); waiting ${(e.delayMs / 1000).toFixed(1)} s…` : e.type === 'rotate' ? `Moving history requests to ${e.host} after repeated slow-downs.` : 'No history node answered; the ledgers not bundled or kept here are unavailable.', 'error'),
+    });
+    result = await loader.case(theCase, { onProgress: (d, t) => ui.transport.setLoading(d, t), signal: abort, live, hashes: caseHashes(theCase) });
   } catch (err) {
     ui.casePanel.setBusy(false);
     session.loading = false;
@@ -1007,7 +1080,8 @@ async function runCase(theCase) {
   });
   transport.setSpeed(session.speed);
   if (geiger.detector) startGeiger(); // replayed ledgers form (or are judged against) their own baseline
-  session.active = { case: theCase, ledgers: result.ledgers, score, transport, failures: result.failures };
+  session.active = { case: theCase, ledgers: result.ledgers, score, transport, failures: result.failures, sources: result.sources };
+  refreshCacheCount();
   session.loop = null;
   ui.setMomentNote(isMoment(theCase) ? theCase.annotations.find((n) => n.question)?.text ?? '' : '');
   ui.transport.setScore(score, caseTitle(theCase));
@@ -1015,6 +1089,7 @@ async function runCase(theCase) {
   ui.midiPanel.setScoreAvailable(true);
   ui.casePanel.setCase(theCase, score, result.failures.length ? [`${result.failures.length} ledger${result.failures.length === 1 ? '' : 's'} could not be fetched: ${result.failures.map((f) => `${fmt(f.index)} (${f.error})`).join(', ')}`] : []);
   for (const f of result.failures) ui.logMessage(`Ledger ${fmt(f.index)} could not be fetched: ${f.error}`, 'error');
+  ui.logMessage(describeSources(result));
   for (const w of score.warnings) ui.logMessage(w, 'error');
   ui.logMessage(`${caseTitle(theCase)}: ${score.counts.events} events over ${formatClock(score.totalMs)} at ${session.speed}× — K pauses, . steps, L loops, click a line or a track to inspect it.`);
   // A saved moment: the loop restored, the transport at the anchor, the question shown there.
@@ -1816,6 +1891,8 @@ viz.start();
 if (query.autostart || query.mode === 'overlay') start();
 
 // Exposed for debugging and smoke checks in the browser console.
+refreshCacheCount();
+
 window.xrplSonic = {
   engine,
   viz,
@@ -1854,6 +1931,10 @@ window.xrplSonic = {
   get stream() {
     return stream;
   },
+  get historySocket() {
+    return historySocket;
+  },
+  loader: { endpointsFor, bundle, cache: () => ledgerCache },
   get running() {
     return running;
   },

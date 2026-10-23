@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   cast: Object.freeze([]), // followed accounts (src/cast.js); solo and mute are live controls and are not persisted
   castMode: 'all', // transactions that involve nobody in the cast: 'all' (play) | 'mute' (dim, silent) | 'hide'
   explorer: DEFAULT_EXPLORER,
+  cacheLedgers: true, // keep fetched ledgers in this browser by network, index and hash (src/ledger-cache.js, docs/loader.md)
 });
 
 /** @deprecated The cast replaced the single watched account; CAST_MODES in src/cast.js is the source. */
@@ -82,6 +83,7 @@ export function sanitizeSettings(input) {
   if (typeof mode === 'string' && CAST_MODES[mode]) s.castMode = mode;
   s.cast = normalizeCast(input.cast).map((m) => ({ ...m, solo: false, muted: false }));
   if (typeof input.explorer === 'string' && EXPLORERS[input.explorer]) s.explorer = input.explorer;
+  if (typeof input.cacheLedgers === 'boolean') s.cacheLedgers = input.cacheLedgers;
   // `account` (the single watched address of older builds) is not persisted; the cast lives here and in the URL hash.
   return s;
 }

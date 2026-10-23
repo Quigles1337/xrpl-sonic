@@ -1,0 +1,126 @@
+{
+  "network": "mainnet",
+  "fetchedVia": "s2.ripple.com",
+  "fetchedAt": "2026-10-23T01:53:36.847Z",
+  "ledgers": [
+    {
+      "index": 107777802,
+      "hash": "2DEAA80476EC0F950998C755D0F351DE12161E7B63789A129EA8611DAEBCE907",
+      "closeTime": 845791060,
+      "txnCount": 63,
+      "full": true
+    },
+    {
+      "index": 107777803,
+      "hash": "D2C7A7DF708749D4E054BE72807AB816D81D4F60119B1728B7483CC66D05CC8C",
+      "closeTime": 845791061,
+      "txnCount": 53,
+      "full": true
+    },
+    {
+      "index": 107777804,
+      "hash": "764A1EB4A75D6A75A213AF7B3B89BF057D910AFA41D138F72A8ADA9373C4D943",
+      "closeTime": 845791062,
+      "txnCount": 60,
+      "full": true
+    },
+    {
+      "index": 107777805,
+      "hash": "4192020E6C3754EF7258FE684479CC5EC1B5B1DC45F946846C817177574F4AF3",
+      "closeTime": 845791070,
+      "txnCount": 59,
+      "full": true
+    },
+    {
+      "index": 107777806,
+      "hash": "4BF93AE41FAF522BCD86B756EE1FFB8B5F40ADBA5E67544BF17FFD5ADA594308",
+      "closeTime": 845791071,
+      "txnCount": 75,
+      "full": true
+    },
+    {
+      "index": 107777807,
+      "hash": "9CFD135414417C572CAE34DF6975166A147C35D242D952329D459B03E3F75CC5",
+      "closeTime": 845791080,
+      "txnCount": 37,
+      "full": true
+    },
+    {
+      "index": 107777808,
+      "hash": "B19F211C74C1F2C9563B5A25850FB36CFA7154EEA836574D1EE04F966226A9FD",
+      "closeTime": 845791081,
+      "txnCount": 57,
+      "full": true
+    },
+    {
+      "index": 107777809,
+      "hash": "C134131572A060B3AB9A82938FE3169B3B38E3B25961015607A709562BF4FDB6",
+      "closeTime": 845791082,
+      "txnCount": 84,
+      "full": true
+    },
+    {
+      "index": 107777810,
+      "hash": "68C9231D0DD37CC2896BF334B28D81F2E9B9FFAB8D7E44D49AC01AF1EB8D73F5",
+      "closeTime": 845791090,
+      "txnCount": 33,
+      "full": true
+    },
+    {
+      "index": 107777811,
+      "hash": "8FBBB27BF8E67078B1DEA799A1E2583B8F50E3DED16B392A32C229B6A6AE2054",
+      "closeTime": 845791091,
+      "txnCount": 99,
+      "full": true
+    },
+    {
+      "index": 107777812,
+      "hash": "0C68AC6E7602FA1F5B885D466F26C27DB7F0291D0D8285498615E36059BC46FF",
+      "closeTime": 845791100,
+      "txnCount": 78,
+      "full": true
+    },
+    {
+      "index": 107777813,
+      "hash": "B1D615803707E3821114B4F69E7DEFE80EC5609626B24D067C9A4494100D930C",
+      "closeTime": 845791101,
+      "txnCount": 59,
+      "full": true
+    },
+    {
+      "index": 107777814,
+      "hash": "0AE5F219CA0E7A5873DDE3A14F9C4B30523EC19740E55B2B1D24FA707CC8D222",
+      "closeTime": 845791102,
+      "txnCount": 47,
+      "full": true
+    },
+    {
+      "index": 107777815,
+      "hash": "DB7AB2444BA452026EE28C8F154C86C9291A9A4D51580BDCBA39D8CDEEFD4085",
+      "closeTime": 845791110,
+      "txnCount": 68,
+      "full": true
+    },
+    {
+      "index": 107777816,
+      "hash": "6BD6046E95B0CB8B60169915E1957D429A638C6360BB16C3C548345FF244B1F8",
+      "closeTime": 845791111,
+      "txnCount": 36,
+      "full": true
+    },
+    {
+      "index": 107777817,
+      "hash": "4EEA845D925DBC481F92F88A272642CBE9E7F397BA7022A0279EA90D6BDC60F9",
+      "closeTime": 845791120,
+      "txnCount": 77,
+      "full": true
+    },
+    {
+      "index": 107777818,
+      "hash": "11EB74A299341224F7ADD93A9C245542AAF1AE548652F4362CBE7DF2EDAFB389",
+      "closeTime": 845791121,
+      "txnCount": null,
+      "full": false
+    }
+  ]
+}

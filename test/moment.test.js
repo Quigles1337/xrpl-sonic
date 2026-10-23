@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import { LiveWindow, LIVE_WINDOW_LEDGERS, momentFromLive, momentFromReplay, momentFromTransaction, momentPosition, isMoment, MOMENT_VERSION } from '../src/moment.js';
 import { unwrapTransactionMessage, extractAmount } from '../src/mapping.js';
-import { logVolume } from '../src/coherence.js';
+import { logVolume, frameFromLive } from '../src/coherence.js';
 import { touchOf } from '../src/record.js';
 import { validateCase, caseFromState, serializeCase, encodeCase, decodeCase, updateAnnotation, addAnnotation, caseFilename, MAX_CASE_LEDGERS } from '../src/case.js';
 import { buildScore, GAP_MS } from '../src/score.js';
@@ -355,5 +355,46 @@ describe('the moment block in validateCase', () => {
     assert.equal(loose.moment.anchor, null, 'a bad anchor is dropped');
     assert.equal(loose.moment.loop, null);
     assert.deepEqual(loose.moment.ledgers, [{ index: INDEX, hash: null, received: 3, expected: 7 }]);
+  });
+});
+
+describe('LiveWindow for readers that do not save a case (universe-requests.md R2)', () => {
+  test('max above the case cap keeps that many closed ledgers; a moment saved from the wider window keeps its last 50 and stays a valid case', () => {
+    const w = new LiveWindow({ max: 120 });
+    for (let i = 0; i < 120; i++) w.noteLedger(closedAt(LIVE + i));
+    assert.equal(w.ledgers.length, 120);
+    assert.equal(w.latest.index, LIVE + 119);
+    w.noteLedger(closedAt(LIVE + 120));
+    assert.equal(w.ledgers.length, 120, 'the oldest goes when the window is full');
+    assert.equal(w.ledgers[0].index, LIVE + 1);
+    const m = momentFromLive({ base: liveBase(), window: w });
+    assert.deepEqual(m.clips, [{ from: LIVE + 71, to: LIVE + 120 }]);
+    assert.equal(m.moment.ledgers.length, MAX_CASE_LEDGERS);
+    assert.deepEqual(validateCase(m).errors, []);
+    assert.equal(new LiveWindow().max, LIVE_WINDOW_LEDGERS, 'the default is the case cap');
+  });
+
+  test('peek() gives the closed ledgers without copying: the live Map and array each time; frameFromLive reads it as it reads the copies', () => {
+    const w = new LiveWindow();
+    w.noteLedger(closed);
+    w.noteTransaction(txA);
+    w.noteTransaction(txB);
+    const a = w.peek();
+    const b = w.peek();
+    assert.equal(a.length, 1);
+    assert.ok(a[0].accounts instanceof Map);
+    assert.equal(a[0].accounts, b[0].accounts, 'the same Map');
+    assert.equal(a[0].touches, b[0].touches, 'the same array');
+    assert.equal(a[0].received, 2);
+    assert.deepEqual(Object.fromEntries([...a[0].accounts].map(([k, v]) => [k, { ...v }])), w.ledgers[0].accounts);
+    assert.deepEqual(a[0].touches.map((t) => ({ ...t })), w.ledgers[0].touches);
+    const copied = frameFromLive(w);
+    const peeked = frameFromLive(w.peek());
+    assert.deepEqual([...peeked.series], [...copied.series]);
+    assert.deepEqual([...peeked.totals], [...copied.totals]);
+    assert.deepEqual(peeked.ledgers, copied.ledgers);
+    assert.equal(peeked.records.length, copied.records.length);
+    w.noteTransaction({ ...txB, ledger_index: undefined, hash: 'C'.repeat(64) });
+    assert.equal(a[0].touches.length, 3, 'live: the window’s later arrivals show through');
   });
 });
