@@ -362,8 +362,8 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
     ]),
   );
 
-  // Watch: the workbench beside the plate; Learn: the tours
-  workbenchGroups?.append(castPanel.root, fieldPanel.root, momentsGroup, casePanel.root, geigerPanel.root);
+  // Watch: the workbench beside the plate, the Field under Coherence (the Case group's readout) so the picture sits below its numbers; Learn: the tours
+  workbenchGroups?.append(castPanel.root, momentsGroup, casePanel.root, fieldPanel.root, geigerPanel.root);
   learnGroups?.append(learnPanel.root);
   setView(settings.view ?? 'listen', { announce: false });
 
