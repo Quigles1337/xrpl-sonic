@@ -204,7 +204,7 @@ export function frameFromLive(window, { cast = [], topK = DEFAULTS.topK, measure
   const volumes = new Map();
   heard.forEach((l, i) => {
     if (!frame.ledgers[i].included) return;
-    for (const [address, rec] of Object.entries(l.accounts ?? {})) {
+    for (const [address, rec] of l.accounts instanceof Map ? l.accounts : Object.entries(l.accounts ?? {})) { // a window copied (ledgers) or not (peek(), R2)
       if (!counts.has(address)) {
         counts.set(address, new Array(heard.length).fill(0));
         volumes.set(address, new Array(heard.length).fill(0));

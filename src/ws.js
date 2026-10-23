@@ -34,13 +34,15 @@ export class XrplStream {
    *   subscribe result, carrying the node's `hostid` (see _named); every status object carries the hostid once it is known (null before)
    * @param {(json: string) => void} [opts.onRaw]  raw text (optional, for debugging)
    * @param {typeof WebSocket} [opts.WebSocketImpl]  override for tests
+   * @param {string[]} [opts.streams]  the streams subscribed on open (ledger and transactions); [] for a socket that only makes requests (the history socket, docs/loader.md)
    */
-  constructor({ endpoints, onMessage, onStatus, onRaw, WebSocketImpl } = {}) {
+  constructor({ endpoints, onMessage, onStatus, onRaw, WebSocketImpl, streams = SUBSCRIBE_COMMAND.streams } = {}) {
     if (!Array.isArray(endpoints) || endpoints.length === 0) throw new Error('XrplStream: endpoints required');
     this.endpoints = [...endpoints];
     this.onMessage = onMessage ?? (() => {});
     this.onStatus = onStatus ?? (() => {});
     this.onRaw = onRaw ?? null;
+    this.streams = Array.isArray(streams) ? [...streams] : [];
     this.WebSocketImpl = WebSocketImpl ?? globalThis.WebSocket;
     if (!this.WebSocketImpl) throw new Error('XrplStream: no WebSocket implementation available');
     this.index = 0;
@@ -92,6 +94,31 @@ export class XrplStream {
       this.close();
       this.connect();
     }
+  }
+
+  /**
+   * The next endpoint now, for a refusal at the request level (the loader's
+   * repeated slow-downs, docs/loader.md): no failure backoff, the pending
+   * requests rejected as `rotated`. False when closed or there is nowhere to go.
+   */
+  rotate() {
+    if (this.closedByUser || this.endpoints.length < 2) return false;
+    this._clearTimers();
+    this._rejectPending('rotated');
+    const ws = this.ws;
+    this.ws = null;
+    if (ws) {
+      ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null;
+      try {
+        ws.close();
+      } catch {
+        /* ignore */
+      }
+    }
+    this.index = (this.index + 1) % this.endpoints.length;
+    this.attempt = 0;
+    this._open();
+    return true;
   }
 
   send(obj) {
@@ -171,7 +198,7 @@ export class XrplStream {
       this.attempt = 0;
       this.hostid = null;
       this.lastMessageAt = Date.now();
-      ws.send(JSON.stringify(SUBSCRIBE_COMMAND));
+      if (this.streams.length) ws.send(JSON.stringify({ ...SUBSCRIBE_COMMAND, streams: this.streams }));
       this._setState('connected');
       this._armWatchdog();
     };

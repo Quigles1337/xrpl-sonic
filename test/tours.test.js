@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { TOURS, tourById, tourSteps, stepText, SAMPLE_CASE_URL, COHERENCE_CASE_URL } from '../src/tours.js';
+import { TOURS, tourById, tourSteps, stepText, SAMPLE_CASE_URL, COHERENCE_CASE_URL, LIVE_OPTION } from '../src/tours.js';
 import { fieldGuide } from '../src/glyphs.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -69,5 +69,23 @@ describe('tours', () => {
       assert.doesNotMatch(t.line, /coordinat/i);
       for (const s of tourSteps(t.id)) assert.doesNotMatch(stepText(s, { caption: 'x', firstNote: 'y', accountsLine: 'z' }), /coordinat/i);
     }
+  });
+});
+
+describe('the tours open offline (docs/loader.md)', () => {
+  test('the first step of each case tour ends with the sources line when the page gives one, and reads as before without it', () => {
+    const payment = tourSteps('payment')[0];
+    assert.match(stepText(payment, {}), /^A sample case built from real mainnet ledgers ships with the page/);
+    assert.match(stepText(payment, { sourcesLine: '3 ledgers: 3 bundled with the page.' }), /counts taken from the ledgers\. 3 ledgers: 3 bundled with the page\.$/);
+    const cadence = tourSteps('cadence')[0];
+    assert.equal(stepText(cadence, { caseDescription: 'Sixteen ledgers.', sourcesLine: '16 ledgers: 16 from s2.ripple.com.' }), 'Sixteen ledgers. 16 ledgers: 16 from s2.ripple.com.');
+    assert.equal(stepText(cadence, {}), 'The case is loading.');
+  });
+
+  test('the live option is one label and one hint, and names no node by name', () => {
+    assert.equal(LIVE_OPTION.label, 'Fetch the ledgers live from the node');
+    assert.match(LIVE_OPTION.hint, /^Off: the tour’s ledgers ship with the page and open without a node\. On: /);
+    assert.doesNotMatch(LIVE_OPTION.hint, /ripple\.com|xrplcluster/);
+    assert.ok(TOURS.filter((t) => t.needsCase).length === 2, 'two tours load a case; the legend does not');
   });
 });

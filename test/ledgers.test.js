@@ -98,3 +98,24 @@ describe('fetchCaseLedgers', () => {
     assert.ok(ledgers.get(100).ledger === null);
   });
 });
+
+describe('fetchCaseLedgers for the loader (src/loader.js)', () => {
+  test('attempts bounds the tries per ledger, and a response’s source is carried into the Map', async () => {
+    const calls = [];
+    const request = async (cmd) => {
+      calls.push(cmd.ledger_index);
+      if (cmd.ledger_index === 101) throw new Error('slowDown');
+      return { result: { ledger: { ledger_index: cmd.ledger_index, close_time: 1000 + cmd.ledger_index, transactions: cmd.transactions ? [] : undefined } }, source: cmd.ledger_index === 100 ? 'bundle' : 'node' };
+    };
+    const c = validateCase({ clips: [{ from: 100, to: 101 }] }).case;
+    const { ledgers, failures } = await fetchCaseLedgers(request, c, { ...FAST, attempts: 1, concurrency: 1 });
+    assert.deepEqual(calls, [100, 101, 102], 'each once');
+    assert.deepEqual(failures, [{ index: 101, error: 'slowDown' }]);
+    assert.equal(ledgers.get(100).source, 'bundle');
+    assert.equal(ledgers.get(101).source, null);
+    assert.equal(ledgers.get(101).ledger, null);
+    const again = await fetchCaseLedgers(request, c, { ...FAST, concurrency: 1 });
+    assert.equal(calls.length, 3 + 4, 'the default tries a failing ledger twice');
+    assert.equal(again.ledgers.get(100).source, 'bundle');
+  });
+});

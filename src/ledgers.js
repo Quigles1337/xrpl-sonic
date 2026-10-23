@@ -53,28 +53,29 @@ async function pool(items, concurrency, worker) {
 /**
  * @param {(command: object) => Promise<object>} request
  * @param {object} theCase
- * A request that fails is retried once after `retryDelayMs`; a ledger that fails twice is marked unavailable.
- * @param {{ concurrency?: number, retryDelayMs?: number, onProgress?: (done: number, total: number) => void, signal?: { aborted: boolean } }} [opts]
- * @returns {Promise<{ ledgers: Map<number, { ledger: object|null, nextCloseTime: number|null }>, failures: { index: number, error: string }[] }>}
+ * A request that fails is retried after `retryDelayMs` until `attempts` (2) are used; a ledger that fails every time is marked unavailable.
+ * A response's `source` (bundle, cache or node: the loader, src/loader.js) is carried into the Map beside the ledger.
+ * @param {{ concurrency?: number, retryDelayMs?: number, attempts?: number, onProgress?: (done: number, total: number) => void, signal?: { aborted: boolean } }} [opts]
+ * @returns {Promise<{ ledgers: Map<number, { ledger: object|null, nextCloseTime: number|null, source: string|null }>, failures: { index: number, error: string }[] }>}
  */
-export async function fetchCaseLedgers(request, theCase, { concurrency = DEFAULT_CONCURRENCY, retryDelayMs = RETRY_DELAY_MS, onProgress, signal } = {}) {
+export async function fetchCaseLedgers(request, theCase, { concurrency = DEFAULT_CONCURRENCY, retryDelayMs = RETRY_DELAY_MS, attempts = 2, onProgress, signal } = {}) {
   const fullIndices = caseLedgerIndices(theCase);
   const headerIndices = caseHeaderIndices(theCase);
   const total = fullIndices.length + headerIndices.length;
-  const got = new Map(); // index → ledger object (full or header) or null
+  const got = new Map(); // index → { ledger, source } (full or header) or null
   const failures = [];
   let done = 0;
   const fetchOne = async ({ index, full }) => {
     if (signal?.aborted) return;
     let lastError = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < Math.max(1, attempts); attempt++) {
       if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
       if (signal?.aborted) break;
       try {
         const res = await request(ledgerCommand(index, { full }));
         const ledger = res?.result?.ledger;
         if (!ledger || typeof ledger !== 'object') throw new Error(res?.result?.error_message ?? res?.error_message ?? res?.error ?? 'malformed ledger response');
-        got.set(index, ledger);
+        got.set(index, { ledger, source: typeof res?.source === 'string' ? res.source : null });
         lastError = null;
         break;
       } catch (err) {
@@ -92,10 +93,9 @@ export async function fetchCaseLedgers(request, theCase, { concurrency = DEFAULT
   await pool(jobs, concurrency, fetchOne);
   const ledgers = new Map();
   for (const index of fullIndices) {
-    const ledger = got.get(index) ?? null;
-    const nextRaw = got.get(index + 1);
-    const nextClose = Number(nextRaw?.close_time);
-    ledgers.set(index, { ledger, nextCloseTime: Number.isFinite(nextClose) ? nextClose : null });
+    const entry = got.get(index) ?? null;
+    const nextClose = Number(got.get(index + 1)?.ledger?.close_time);
+    ledgers.set(index, { ledger: entry?.ledger ?? null, nextCloseTime: Number.isFinite(nextClose) ? nextClose : null, source: entry?.source ?? null });
   }
   return { ledgers, failures: failures.sort((a, b) => a.index - b.index) };
 }

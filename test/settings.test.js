@@ -163,3 +163,12 @@ describe('settings: the view (docs/ux.md, PR 2)', () => {
     assert.equal(sanitizeSettings({ view: 'overlay' }).view, 'listen');
   });
 });
+
+describe('settings: the ledger cache switch (docs/loader.md)', () => {
+  test('on by default; a boolean is kept; anything else is ignored', () => {
+    assert.equal(DEFAULT_SETTINGS.cacheLedgers, true);
+    assert.equal(sanitizeSettings(null).cacheLedgers, true);
+    assert.equal(sanitizeSettings({ cacheLedgers: false }).cacheLedgers, false);
+    assert.equal(sanitizeSettings({ cacheLedgers: 'no' }).cacheLedgers, true);
+  });
+});

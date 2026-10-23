@@ -10,8 +10,14 @@
 // or docs/coherence.md; the one-line card descriptions are the project's
 // own sentences from src/vocabulary.js. Nothing here says "coordinated".
 //
+// The two tours that load a case load it from the ledgers that ship with
+// the page (docs/loader.md), so they open without a node; each card offers
+// to fetch the ledgers live from the node instead, and the first step says
+// where they came from.
+//
 // Pure: no DOM, no network. A step's text may be a function of a context
-// the page fills (the loaded case, a caption, a coherence report).
+// the page fills (the loaded case, a caption, a coherence report, the
+// sources line of the load).
 
 import { fieldGuide, PULSE } from './glyphs.js';
 import { TERMS } from './vocabulary.js';
@@ -30,6 +36,9 @@ const KEYS_SENTENCE = 'K pauses, . steps, L loops, click a line or a track to in
 const CADENCE_SENTENCE = 'The market maker has a three-ledger cadence. Its series matches itself at lag 3 with self-correlation 0.96 around the sample case; its lag profile against any other account alternates in sign every three lags. That is its own rhythm, not a relation, and the readout names it so the alternation is not misread.';
 /** The transport's own caption at the end of a case (src/ui-transport.js). */
 const END_SENTENCE = 'End of the case. ▶ plays it again; Go live returns to the stream.';
+
+/** The option on each card that loads a case (docs/loader.md, "The tours open offline"). */
+export const LIVE_OPTION = Object.freeze({ label: 'Fetch the ledgers live from the node', hint: 'Off: the tour’s ledgers ship with the page and open without a node. On: they are fetched from the history node, paced; the first step says where they came from.' });
 
 export const TOURS = Object.freeze([
   Object.freeze({ id: 'legend', name: 'The legend', line: TERMS.transactionTypes.sentence, needsCase: null }),
@@ -56,7 +65,7 @@ export function tourSteps(id) {
   }
   if (id === 'payment') {
     return [
-      { text: SAMPLE_CASE_SENTENCE, action: { kind: 'case', url: SAMPLE_CASE_URL } },
+      { text: (ctx) => [SAMPLE_CASE_SENTENCE, ctx.sourcesLine].filter(Boolean).join(' '), action: { kind: 'case', url: SAMPLE_CASE_URL } },
       { text: (ctx) => ctx.firstNote ?? 'The case has started.', action: { kind: 'seek', ms: 0 } },
       { text: (ctx) => (ctx.caption ? `The first payment of the window: ${ctx.caption}` : 'No payment in this window.'), action: { kind: 'seekEvent', category: 'payment' } },
       { text: INSPECTOR_SENTENCE, action: { kind: 'inspect' } },
@@ -66,7 +75,7 @@ export function tourSteps(id) {
   }
   if (id === 'cadence') {
     return [
-      { text: (ctx) => ctx.caseDescription ?? 'The case is loading.', action: { kind: 'case', url: COHERENCE_CASE_URL } },
+      { text: (ctx) => [ctx.caseDescription ?? 'The case is loading.', ctx.sourcesLine].filter(Boolean).join(' '), action: { kind: 'case', url: COHERENCE_CASE_URL } },
       { text: (ctx) => `${CADENCE_SENTENCE}${ctx.accountsLine ? ` This window: ${ctx.accountsLine}` : ''}`, action: { kind: 'coherence' } },
       { text: TERMS.field.sentence, action: { kind: 'field' } },
       { text: END_SENTENCE, action: { kind: 'end' } },

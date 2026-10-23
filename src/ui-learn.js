@@ -3,17 +3,20 @@
 // to the caption strip, so the text equivalent is where every other caption
 // is; here it is in a live region a screen reader follows.
 
-import { TOURS } from './tours.js';
+import { TOURS, LIVE_OPTION } from './tours.js';
 import { categoryIcon, eventIcon } from './glyphs.js';
 import { el, svg } from './dom.js';
 
 export function createLearnPanel({ onRun, onNext, onBack, onExit }) {
   const list = el('div', { class: 'tours', role: 'list' });
   for (const t of TOURS) {
+    // a tour that loads a case opens it from the bundled ledgers; the option fetches them live from the node instead (docs/loader.md)
+    const live = t.needsCase ? el('input', { type: 'checkbox', id: `tour-live-${t.id}`, 'data-live': t.id }) : null;
     list.append(
       el('div', { class: 'tour', role: 'listitem', 'data-tour': t.id }, [
-        el('div', { class: 'tour-head' }, [el('span', { class: 'tour-name', text: t.name }), el('button', { type: 'button', class: 'btn small', 'data-run': t.id, text: 'Start', title: `Start the tour: ${t.name}`, onclick: () => onRun?.(t.id) })]),
+        el('div', { class: 'tour-head' }, [el('span', { class: 'tour-name', text: t.name }), el('button', { type: 'button', class: 'btn small', 'data-run': t.id, text: 'Start', title: `Start the tour: ${t.name}`, onclick: () => onRun?.(t.id, { live: Boolean(live?.checked) }) })]),
         el('p', { class: 'tour-line', text: t.line }),
+        live ? el('label', { class: 'row check tour-live' }, [live, el('span', { class: 'row-label', text: LIVE_OPTION.label }), el('span', { class: 'hint', text: LIVE_OPTION.hint })]) : '',
       ]),
     );
   }

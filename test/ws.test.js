@@ -301,3 +301,46 @@ describe('XrplStream subscribe result (universe-requests.md R11)', () => {
     s2.close();
   });
 });
+
+describe('XrplStream for history (docs/loader.md)', () => {
+  test('streams: [] opens a socket that subscribes to nothing and is connected at open; rotate() moves to the next endpoint now, rejecting what was pending', async () => {
+    const { FakeWebSocket, sockets } = makeFakeWebSocket((ws) => ws.open());
+    const statuses = [];
+    const stream = new XrplStream({ endpoints: ['wss://s2.example', 'wss://s1.example', 'wss://c.example'], streams: [], WebSocketImpl: FakeWebSocket, onStatus: (s) => statuses.push(s), onMessage: () => {} });
+    stream.connect();
+    await flush();
+    assert.equal(stream.state, 'connected');
+    assert.deepEqual(sockets[0].sent, [], 'no subscribe');
+    assert.equal(stream.endpoint, 'wss://s2.example');
+    const pending = stream.request({ command: 'ledger', ledger_index: 5 });
+    assert.equal(stream.rotate(), true);
+    await assert.rejects(pending, /rotated/);
+    await flush();
+    assert.equal(stream.endpoint, 'wss://s1.example');
+    assert.equal(sockets.length, 2);
+    assert.ok(sockets[0].closed);
+    assert.equal(stream.state, 'connected');
+    assert.deepEqual(statuses.map((s) => s.state), ['connecting', 'connected', 'connecting', 'connected'], 'no failure backoff: a plain connect to the next');
+    stream.rotate();
+    await flush();
+    stream.rotate();
+    await flush();
+    assert.equal(stream.endpoint, 'wss://s2.example', 'round the list');
+    stream.close();
+    assert.equal(stream.rotate(), false, 'closed: nowhere to go');
+    const single = new XrplStream({ endpoints: ['wss://only.example'], streams: [], WebSocketImpl: FakeWebSocket, onMessage: () => {} });
+    single.connect();
+    await flush();
+    assert.equal(single.rotate(), false, 'one endpoint: nothing to rotate to');
+    single.close();
+  });
+
+  test('the default still subscribes to ledger and transactions', async () => {
+    const { FakeWebSocket, sockets } = makeFakeWebSocket((ws) => ws.open());
+    const stream = new XrplStream({ endpoints: ['wss://a.example'], WebSocketImpl: FakeWebSocket, onMessage: () => {} });
+    stream.connect();
+    await flush();
+    assert.deepEqual(sockets[0].sent, [SUBSCRIBE_COMMAND]);
+    stream.close();
+  });
+});

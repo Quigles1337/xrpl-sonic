@@ -52,6 +52,7 @@ const titleFor = (index) => `Moment at ledger #${Number(index).toLocaleString('e
  * over.
  */
 export class LiveWindow {
+  /** @param {{ max?: number }} [opts]  `max` is how many closed ledgers are kept: the case cap by default; a reader that does not save a case (the sky, docs/universe-requests.md R2) may keep more. A moment saved from a wider window keeps its last 50. */
   constructor({ max = LIVE_WINDOW_LEDGERS } = {}) {
     this.max = max;
     this.entries = [];
@@ -134,6 +135,16 @@ export class LiveWindow {
     return this.entries.filter((e) => e.closed).map((e) => ({ index: e.index, hash: e.hash, closeTime: e.closeTime, txnCount: e.txnCount, received: e.hashes.size + e.anonymous, accounts: Object.fromEntries([...e.accounts].map(([a, r]) => [a, { ...r }])), touches: e.touches.map((t) => ({ ...t })) }));
   }
 
+  /**
+   * The closed ledgers without copying (docs/universe-requests.md, R2): the
+   * fields of `ledgers`, with `accounts` the live Map (address → { count,
+   * volume }) and `touches` the live array of each entry. For a reader that
+   * reads every few ledgers and never writes; nothing it returns is a copy.
+   */
+  peek() {
+    return this.entries.filter((e) => e.closed).map((e) => ({ index: e.index, hash: e.hash, closeTime: e.closeTime, txnCount: e.txnCount, received: e.hashes.size + e.anonymous, accounts: e.accounts, touches: e.touches }));
+  }
+
   get latest() {
     return this.ledgers.at(-1) ?? null;
   }
@@ -157,7 +168,8 @@ function questionAnnotation(anchor, question) {
  * @returns {object|null} a raw case for validateCase, or null when nothing has been heard yet
  */
 export function momentFromLive({ base, window, selectedHash = null, question = '', host = '', savedAt = null, speed = null } = {}) {
-  const heard = window instanceof LiveWindow ? window.ledgers : Array.isArray(window) ? window : [];
+  const all = window instanceof LiveWindow ? window.ledgers : Array.isArray(window) ? window : [];
+  const heard = all.slice(-MAX_REPLAY_LEDGERS); // a window wider than the case cap (R2) saves its last 50
   if (!heard.length) return null;
   const first = heard[0];
   const last = heard.at(-1);
