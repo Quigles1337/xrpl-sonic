@@ -349,6 +349,53 @@ Branch `feat/universe-four-verbs`, on phase 1 (`feat/universe-live-sky`, PR #36)
 
 Copies still in place: as phase 1's, plus the layer table now also in `src/universe/sky.js` (`LAYER_OF`, R10) until the requests PR lands.
 
+## Phase 2: exploration, with the probe
+
+The agreed specification, written before the build, on the owner's brief of 2026-10-23. Same boundaries, same ground rules; a fresh branch from main once phase 1.5 has merged (`feat/universe-probe`, stacked on phase 1.5 until then). Everything the probe reads is public live data; no forensic case identity appears anywhere in the page, the tests or this document.
+
+### The UFO cursor
+
+The cursor over the sky is a UFO: a toggle, default on here, absent on every other page. It is toggled by a **double right-click on the sky** (two secondary-button presses within the browser's double-click interval, read from the two `pointerdown` events' timestamps; the context menu is suppressed over the sky canvas only, never elsewhere on the page), by a **visible switch in the sky's settings** so it can be found, by a **key** (`U`) so keyboard users have it, and on touch by a **two-finger double-tap** (two touches starting together, twice within the same interval). Its vocabulary sentence names the gesture: "The UFO is the probe's cursor over the sky: double right-click the sky, press U, or double-tap with two fingers to put it away or bring it back." The first time the sky opens in a browser one caption says it, once (a flag in the page's own storage, under its own key, never the listening page's).
+
+With the UFO on, hovering a planet shows a **soft beam** from the UFO to the planet; holding (the primary button, a touch, or the probe key on a focused planet) **locks** the beam and **probes** that account; releasing retracts it. The beam pulls by evidence only: nothing in the sky moves toward it without a number; hovering moves nothing (a headless check asserts it).
+
+### The probe, in order
+
+On a hold, in this order, each step on screen as it lands:
+
+1. **History.** The account's recent history through the loader and the cache (R2, the other session's `LedgerLoader` and `ledger-cache`; `account_tx` bounded to a stated number of ledgers back from the validated ledger at the hold, the coverage said in the readout: "ledgers #A–#B, N records, M of them in the window"). Until the loader lands, the explorer's `ExplorerApi.accountTx` with the same bound, paced as `docs/loader.md` measured.
+2. **First-degree record connections, lit with counts.** Every counterparty the record names (`src/record.js` `touchOf` over the history and the window, `connections()` per pair) becomes a planet if it is not one and is lit with its count: "connected in the record: 12 transactions (7 destination, 5 entry)".
+3. **Measures, in the worker**, each with its label in the readout's own words:
+   - **Record proximity**: a random walk with restart over the touch graph of the window (restart probability 0.15, the walk from the probed planet, the stationary distribution over the planets it reaches; label "record proximity 0.031, rank 3 of 240"), tier calculated: it is arithmetic over the record.
+   - **Flow conservation** from exact balance changes (`balanceFacts` of the facts layer, exact strings through `src/decimal.js`): over a window of W ledgers, inflow and outflow per currency, the lag at which cumulative inflow best matches cumulative outflow ("inflow 1,204.5 USD, outflow 1,198.0 USD, within 0.5% at a lag of 2 ledgers"), tier calculated; a pass-through is said as a number, never as a role.
+   - **Cadence**: `cadenceOf` on the account's own series (R3's `cadences(frame)` when it lands), the pulsar rule's words.
+   - **Coherence** from this account against its counterparties and the nearest active accounts: `frameFromLive` (or the account_tx frame) with an explicit account list (R4, copied until it lands), the full phase 1.5 readout per pair: prewhitened r and lag, the null, pairs tested and the percentile, the record check; the labels are "in step at lag L · connected in the record: N" or "· not touching", never "coordinated".
+4. **The catch.** The lit planets with one label per measure, the beam's sheaf to each; the readout drawer (as the listening page's) with the full lines, pairs tested and percentile on each. The catch is kept for the session and goes into Save this moment (a case with the probed account as the cast, the catch's hashes as evidence) and into Copy for AI (the catch's lines after the events, under their own heading). Release retracts the beam; the catch stays lit until the next hold or Escape.
+
+Keyboard: `[` `]` focus a planet, `U` the UFO, the probe key `Space` on a focused planet holds (and `Space` again releases; Start/Stop moves to `Shift+Space` when the UFO is on — a decision to propose below); the text equivalent reads the catch in the readout's words, one line per lit planet, through the focus line's status region.
+
+### Exploration proper
+
+Opening a planet (Enter, or the hold) loads it as the explorer does (R7): the account root and its trust lines first (the rings become the full set, the size the balance at the validated ledger), the rest later: `account_objects` (a black hole candidate becomes a rule only when no SignerList is among them; a SignerList makes it a planet with guardians), `account_nfts` (moons), `account_tx` (counterparties become planets, arranged by time as phase 1's spec said). Belts around books follow the phase 1.5 decision on XRP's place (the sun at the origin, proposed), reading `book_offers` for the book the planet's rocks are on.
+
+### Phase 3, placed, not built
+
+Directed influence (transfer entropy from one account's series to another's, with the circular-shift null) and temporal motifs (the recurring orderings of the touch graph within a ledger) are phase 3. Their place in the catch is designed now: each lit planet's label has a fifth and sixth slot, "influence →" and "motif", that read "not measured (phase 3)" until then, so the readout's shape does not change when they land; the readout drawer has the same two rows.
+
+### Requests
+
+R4 (an explicit account list for `frameFromLive`), R5 (`rootsOf`/`linesOf` in `record.js`), R6 (the issuer-side rule in the facts catalogue), R7 (partial `loadAccount`, the SignerList filter), and new: R13 `balanceFacts` over a list of transactions as one call with per-currency sums (flow conservation), R14 the loader's `account_tx` with a stated bound and pacing (the loader PR's seam), R15 a `touchGraph(touches)` in `record.js` (the adjacency the random walk needs), R16 the explorer's readout drawer as a shared component (`src/ui-drawer.js`) usable from the sky. All in `docs/universe-requests.md`.
+
+### Tests and acceptance
+
+Real fixtures for each measure with expected catches: a recorded window of transactions (the phase 1.5 recording) for the proximity walk, the conservation sums and the cadence, each with the expected numbers beside it; the coherence fixtures of `test/fixtures/coherence/` for the pair readout. The AMM ground-truth windows run locally through the probe on a sniper planet must light the other snipers as "in step, not touching" and the pool as "connected, flat"; a control planet lights only what chance gives; those inputs stay with the owner's run folder and never enter the repository. Acceptance adds the beauty-gate line, and a headless check that nothing in the sky moves on hover: the positions of every planet before and after the pointer crosses the sky are the same arrays.
+
+### Decisions to propose, not make
+
+1. **The probe key.** Proposed: `Space` holds and releases when the UFO is on and a planet is focused, with Start/Stop on `Shift+Space`; recommended, because the hold is the sky's main act and deserves the biggest key, and the listening page's `Space` is Start/Stop by habit, which the shift keeps.
+2. **The history bound.** Proposed: 2,000 ledgers back (about two hours), one `account_tx` page at a time through the loader's pacing; recommended as the longest bound the public nodes answered within a probe's patience in `docs/loader.md`'s measurements.
+3. **The UFO's look.** Proposed: the plate's spectral diamond as a saucer (two diamonds, one flat), the beam a cone of the pulse colour at low alpha; recommended, in the ignition language and nothing new.
+
 ## The spike
 
 What was built on `feat/universe-spike`, what it measured, and what the numbers say. The harness is `src/universe/bench/`: `stream-hour.mjs` (the stream alone, in Node), `serve.mjs` (a static server with the two cross-origin-isolation headers that `performance.measureUserAgentSpecificMemory` needs), `cdp.mjs` and `frames.mjs` (frame time per renderer and size in headless Chrome), `hour.mjs` (an hour of the live sky in headless Chrome, memory and frame time each minute). Results are JSON under `bench/results/`. Real-GPU frame times were taken in the user's own Chrome through the same page's `window.xrplUniverse.stats()`.
