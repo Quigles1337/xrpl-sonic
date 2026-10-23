@@ -84,6 +84,14 @@ check('the arrow keys orbit', (await page.evaluate('window.xrplUniverse.sky.came
 await key('0', '0', 'Digit0');
 check('0 resets the camera', (await page.evaluate('window.xrplUniverse.sky.camera.distance')) === 3.2);
 
+// sound: S turns the engine on from a key press, the worker posts events, the engine plays them
+await key('s');
+await sleep(5000);
+const sound = JSON.parse(await page.evaluate(`JSON.stringify({ on: window.xrplUniverse.state.sound, pressed: document.getElementById('sound').getAttribute('aria-pressed'), state: window.xrplUniverse.engine.state, played: window.xrplUniverse.engine.stats.played, dropped: window.xrplUniverse.engine.stats.dropped })`));
+check("S turns sound on and the engine plays the worker’s events", sound.on && sound.pressed === 'true' && sound.state === 'running' && sound.played > 0, JSON.stringify(sound));
+await key('s');
+check('S turns it off', await page.evaluate(`window.xrplUniverse.state.sound === false`));
+
 const comets = await page.evaluate(`window.xrplUniverse.sky.comets.length`);
 check('comets exist under reduced motion (drawn still, fading)', comets >= 0, `${comets} in flight`);
 const errors = page.logs.filter((l) => l.startsWith('EXCEPTION') || l.startsWith('ERROR'));

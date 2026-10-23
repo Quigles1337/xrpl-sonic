@@ -353,4 +353,5 @@ window.xrplUniverse = {
   focusOn,
   travel,
   worker,
+  engine,
 };

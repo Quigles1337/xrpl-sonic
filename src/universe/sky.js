@@ -386,7 +386,7 @@ export class Sky {
           const rgb = HUE_TABLE[attrs.hue[id]];
           const glow = this.glowOf(id, ledger);
           const kind = attrs.kind[id];
-          const bright = (0.5 + 0.5 * glow) * (kind === 5 ? 0.3 : 1) * (attrs.known[id] ? 1 : 0.6);
+          const bright = (0.65 + 0.35 * glow) * (kind === 5 ? 0.3 : 1) * (attrs.known[id] ? 1 : 0.6);
           const cr = rgb[0] * bright;
           const cg = rgb[1] * bright;
           const cb = rgb[2] * bright;
