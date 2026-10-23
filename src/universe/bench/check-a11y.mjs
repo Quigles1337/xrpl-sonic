@@ -13,6 +13,7 @@
 //   node src/universe/bench/check-a11y.mjs [--gl 0|1]
 
 import { launch, openPage, waitFor, sleep } from './cdp.mjs';
+import { CAMERA_HOME } from '../sky.js';
 
 const args = process.argv.slice(2);
 const gl = args.includes('--gl') ? args[args.indexOf('--gl') + 1] : '0';
@@ -91,7 +92,7 @@ check('Space starts again', await page.evaluate(`window.xrplUniverse.state.runni
 await key('ArrowLeft', 'ArrowLeft', 'ArrowLeft');
 check('the arrow keys orbit', (await page.evaluate('window.xrplUniverse.sky.camera.yaw')) !== yaw0);
 await key('0', '0', 'Digit0');
-check('0 resets the camera', (await page.evaluate('window.xrplUniverse.sky.camera.distance')) === 3.2);
+check('0 resets the camera', (await page.evaluate('window.xrplUniverse.sky.camera.distance')) === CAMERA_HOME.distance);
 
 // sound: S turns the engine on from a key press, the worker posts events, the engine plays them
 await key('s');

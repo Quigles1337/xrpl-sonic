@@ -31,7 +31,7 @@ const TAU = Math.PI * 2;
 export const LIFE = Object.freeze({ comet: 0.9, 'bent-comet': 1.1, partial: 0.9, burn: 1.0, dust: 0.5, shower: 0.9, 'long-period': 1.6, 'long-period-arrive': 1.2, 'long-period-return': 1.2, 'check-drift': 1.2, 'check-cash': 0.8, 'check-cancel': 0.3, 'moon-capture': 1.2, 'reverse-comet': 0.9, collapse: 1.2, beam: 1.5, 'beam-fund': 1.0, 'beam-pulse': 0.8, rocket: 1.0, deorbit: 0.8, freeze: 1.0, beacon: 1.0, gate: 1.5, ignite: 1.5, rock: 0.6, fill: 0.9, flare: 0.4, blink: 0.3, crumble: 0.6, 'binary-form': 1.5, 'binary-brighten': 0.8, 'binary-dim': 0.8, satellite: 1.5, 'binary-collapse': 1.0, ring: 0.7, nameplate: 1.0, darken: 1.2, tilt: 1.2, guardians: 1.5, shimmer: 0.5, 'moon-form': 1.0, 'moon-crumble': 0.8, 'moon-beacon': 0.7, 'moon-beacon-off': 0.3, lighthouse: 1.5, badge: 0.7, tick: 0.15, spark: 0.25 });
 
 /** How loud an object is: the size scale and the alpha, by frequency (payments, offers and wrappers small and quiet; control changes noticed). */
-export const LOUDNESS = Object.freeze({ comet: 1, 'bent-comet': 1.1, partial: 1, burn: 0.9, dust: 0.45, shower: 0.6, 'long-period': 1, 'long-period-arrive': 1, 'long-period-return': 1, 'check-drift': 0.9, 'check-cash': 0.9, 'check-cancel': 0.6, 'moon-capture': 1.1, 'reverse-comet': 1.3, collapse: 1.6, beam: 1.2, 'beam-fund': 1.1, 'beam-pulse': 1, rocket: 1.1, deorbit: 1, freeze: 1.2, beacon: 1.1, gate: 1.2, ignite: 2, rock: 0.5, fill: 0.8, flare: 0.7, blink: 0.4, crumble: 0.45, 'binary-form': 1.6, 'binary-brighten': 0.9, 'binary-dim': 0.8, satellite: 1.1, 'binary-collapse': 1.5, ring: 0.8, nameplate: 1.2, darken: 1.8, tilt: 1.8, guardians: 1.8, shimmer: 0.35, 'moon-form': 1, 'moon-crumble': 0.9, 'moon-beacon': 0.6, 'moon-beacon-off': 0.4, lighthouse: 1.2, badge: 0.9, tick: 0.2, spark: 0.5 });
+export const LOUDNESS = Object.freeze({ comet: 1, 'bent-comet': 1.1, partial: 1, burn: 0.9, dust: 0.45, shower: 0.6, 'long-period': 1, 'long-period-arrive': 1, 'long-period-return': 1, 'check-drift': 0.9, 'check-cash': 0.9, 'check-cancel': 0.6, 'moon-capture': 1.1, 'reverse-comet': 1.3, collapse: 1.6, beam: 1.2, 'beam-fund': 1.1, 'beam-pulse': 1, rocket: 1.1, deorbit: 1, freeze: 1.2, beacon: 1.1, gate: 1.2, ignite: 2, rock: 0.5, fill: 0.8, flare: 0.7, blink: 0.4, crumble: 0.45, 'binary-form': 1.6, 'binary-brighten': 0.9, 'binary-dim': 0.8, satellite: 1.1, 'binary-collapse': 1.5, ring: 0.8, nameplate: 1.2, darken: 1.8, tilt: 1.8, guardians: 1.8, shimmer: 0.2, 'moon-form': 1, 'moon-crumble': 0.9, 'moon-beacon': 0.6, 'moon-beacon-off': 0.4, lighthouse: 1.2, badge: 0.9, tick: 0.08, spark: 0.3 });
 
 /** A stable angle for an owner's rock in a belt (so a rock stays where it was set). */
 export function rockAngle(owner, sequence) {
@@ -145,8 +145,8 @@ function pulse(m, s, p, id, { rgb = m.rgb, grow = 10, w = 1, dash = null, still 
 function spark(m, s, p, id, { rgb = m.rgb } = {}) {
   if (!(id > 0) || !(s.depth[id] > 0)) return p;
   const a = (1 - m.t) * 0.9 * m.loud;
-  p.dots.push({ x: s.x[id], y: s.y[id], r: 1.5 + 2.5 * (1 - m.t), rgb: WHITE, a, core: true });
-  p.dots.push({ x: s.x[id], y: s.y[id], r: 3 + 4 * (1 - m.t), rgb, a: a * 0.5, core: false });
+  p.dots.push({ x: s.x[id], y: s.y[id], r: 1 + 1.5 * (1 - m.t), rgb: WHITE, a, core: true });
+  p.dots.push({ x: s.x[id], y: s.y[id], r: 2 + 2.5 * (1 - m.t), rgb, a: a * 0.4, core: false });
   return p;
 }
 
@@ -427,7 +427,7 @@ export function primitivesOf(m, s, { reduced = false, now = 0 } = {}) {
       return p;
     }
     case 'tick': {
-      if (!on(at)) return p;
+      if (!on(at) || s.r[at] < 2.6) return p; // a wrapper's tick is for the near level only
       p.dots.push({ x: s.x[at], y: s.y[at] - Math.max(3, s.r[at]) - 3, r: 0.8, rgb: m.rgb, a: 0.6 * (1 - m.t) * m.loud, core: false, square: true });
       return p;
     }

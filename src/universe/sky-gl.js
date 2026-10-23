@@ -50,7 +50,7 @@ void main() {
   gl_Position = vec4(x1 * uFocal * 2.0 / uViewport.x, y2 * uFocal * 2.0 / uViewport.y, 0.0, depth);
   float radius = aSize * uBasePx * uDistance / max(depth, 0.001);
   vRadius = radius;
-  float halo = 2.4 + 2.0 * aGlow;
+  float halo = 2.4 + 2.0 * max(aGlow, 0.0);
   gl_PointSize = clamp(radius * halo * 2.0 * uDpr, 1.0, 128.0);
   vHue = aHue; vGlow = aGlow; vKind = aKind;
 }`;
@@ -73,16 +73,19 @@ void main() {
   float d = length(p);
   if (d > 1.0) discard;
   vec3 rgb = hsl(vHue, 0.7, 0.68);
-  float halo = 2.4 + 2.0 * vGlow;
+  float dim = vGlow < 0.0 ? -vGlow : 1.0; // a negative glow is dust: the attribute carries its alpha
+  float vg = max(vGlow, 0.0);
+  float halo = 2.4 + 2.0 * vg;
   float core = 1.0 / halo;           // the disc's radius in point units
   // the plate's core sprite: white at the centre, the colour just outside it, a soft halo
   float white = smoothstep(core * 0.6, 0.0, d);
   float disc = smoothstep(core, core * 0.7, d);
-  float glow = exp(-d * d * 3.5) * (0.35 + 0.5 * vGlow) * (1.0 - disc);
+  float glow = exp(-d * d * 3.5) * (0.35 + 0.5 * vg) * (1.0 - disc);
   float a = disc * 0.95 + glow;
   vec3 colour = mix(rgb, vec3(1.0), white * 0.95);
   if (vKind > 4.5) { a *= 0.3; } // collapsed
-  if (vRadius < 1.1) { a *= 0.6 + 0.4 * vGlow; }
+  if (vRadius < 1.1) { a *= 0.6 + 0.4 * vg; }
+  a *= dim;
   gl_FragColor = vec4(colour * a, a);
 }`;
 
@@ -265,6 +268,7 @@ export class SkyGL extends SkyBase {
       s.r[id] = r;
       s.depth[id] = p.depth;
       this.glow[id] = this.glowOf(id, this.ledger);
+      if (a.core && !a.core[id] && r < LOD.far) this.glow[id] = cam.distance >= NEBULA_ZOOM ? -0.18 : -0.5; // a field star, in no galaxy, is dust: negative glow carries its alpha to the shader
       if (r < LOD.far) far += 1;
       else if (r < LOD.near) mid += 1;
       else near.push(id);

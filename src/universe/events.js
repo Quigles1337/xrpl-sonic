@@ -543,7 +543,7 @@ export function weatherOf(events, { clusterOf = (a) => a, kindOf = () => 'planet
     if (e.verb === 'travel' && e.from && e.to && e.from !== e.to) {
       const a = clusterOf(e.from);
       const b = clusterOf(e.to);
-      if (a !== b) bump(flows, a < b ? `${a}|${b}` : `${b}|${a}`);
+      if (a && b && a !== b) bump(flows, a < b ? `${a}|${b}` : `${b}|${a}`);
       else bump(glow, e.from);
     } else if (e.verb === 'dock' && e.to) bump(streams, e.to);
     else if (e.verb === 'place') for (const h of e.detail?.hosts ?? (e.to ? [e.to] : [])) bump(haze, h);

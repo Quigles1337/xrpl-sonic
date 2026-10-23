@@ -328,6 +328,45 @@ function runCoherence() {
   coherenceState = { pulsars, pairs, tested: report.tested ?? 0, above: report.above ?? 0, at: universe.latestClosed, ms: performance.now() - t0, window: report.window?.used ?? null };
 }
 
+/**
+ * Galaxies: every planet that is not a hub belongs to the hub it dealt with
+ * most (its core), ranked among that hub's satellites by how often; a hub
+ * with five or more satellites is a galaxy. Sets the layout's cores and
+ * returns the galaxies with their centroid (the core) and disc radius.
+ */
+function galaxies() {
+  const hub = THRESHOLDS.hubDegree;
+  const best = new Map(); // satellite id → { core, count }
+  for (const e of universe.edges.values()) {
+    const pa = universe.planets[e.a];
+    const pb = universe.planets[e.b];
+    if (!pa || !pb) continue;
+    const aHub = pa.degree > hub;
+    const bHub = pb.degree > hub;
+    if (aHub === bHub) continue;
+    const sat = aHub ? e.b : e.a;
+    const core = aHub ? e.a : e.b;
+    const cur = best.get(sat);
+    if (!cur || e.count > cur.count) best.set(sat, { core, count: e.count });
+  }
+  const members = new Map(); // core → [[sat, count]]
+  for (const [sat, { core, count }] of best) (members.get(core) ?? members.set(core, []).get(core)).push([sat, count]);
+  const out = [];
+  for (const [core, list] of members) {
+    list.sort((x, y) => y[1] - x[1]);
+    list.forEach(([sat], rank) => layout.setCore(sat, core, rank));
+    if (list.length >= THRESHOLDS.nebulaSize) {
+      layout.promote(core, universe.currentLedger ?? 0);
+      for (const [sat] of list) layout.touch(sat, universe.currentLedger ?? 0);
+      const [x, y, z] = layout.position(core);
+      const disc = layout.discs.get(core);
+      out.push({ root: core, core: true, size: list.length + 1, x, y, z, r: layout.o.discBase * (0.6 + 0.55 * Math.sqrt(list.length)), normal: disc?.normal ?? [0, 1, 0], u: disc?.u ?? [1, 0, 0], v: disc?.v ?? [0, 0, 1] });
+    }
+  }
+  for (let id = 1; id <= universe.planetCount; id++) if (layout.core[id] && !best.has(id)) layout.setCore(id, 0, 0);
+  return { galaxies: out, coreOf: (id) => best.get(id)?.core ?? (members.has(id) ? id : 0) };
+}
+
 /** The per-planet attributes the page draws and labels from, as typed arrays indexed by id; and the ignitions: planets whose kind became star since the last ledger. */
 function attributes(ledgerIndex) {
   const n = universe.planetCount;
@@ -342,6 +381,7 @@ function attributes(ledgerIndex) {
   const providers = new Uint8Array(n + 1);
   const period = new Uint8Array(n + 1);
   const r100 = new Uint8Array(n + 1);
+  const core = new Int32Array(n + 1);
   const keys = [];
   const ignitions = [];
   const ledger = universe.currentLedger ?? 0;
@@ -365,6 +405,7 @@ function attributes(ledgerIndex) {
     providers[id] = Math.min(255, b.providers ?? 0);
     period[id] = Math.min(255, b.period ?? 0);
     r100[id] = Math.min(255, Math.round((b.r ?? 0) * 100));
+    core[id] = layout.core[id] || (layout.promoted[id] ? id : 0); // a satellite's core, or a core itself: in a galaxy either way
     if (b.kind === 'blackhole') keys.push([id, b.regularKey ?? null]);
     if (b.kind === 'star' && kinds[id] !== KIND_CODES.star && p.firstLedger != null && p.firstLedger < ledgerIndex) {
       const e = { verb: 'dock', object: 'ignite', category: 'trust', rule: OBJECTS.ignite.rule, hash: null, ledgerIndex, success: true, from: 0, to: id, via: [], at: id, evidence: [{ field: 'RippleState sides', value: `${b.holders} holders` }, { field: 'threshold', value: THRESHOLDS.starHolders }], detail: { holders: b.holders, threshold: THRESHOLDS.starHolders, address: p.address } };
@@ -375,22 +416,27 @@ function attributes(ledgerIndex) {
     }
     kinds[id] = kind[id];
   }
-  return { attrs: { n, size, hue, kind, known, rings, activity, lastLedger, holders, providers, period, r100 }, keys, ignitions };
+  return { attrs: { n, size, hue, kind, known, rings, activity, lastLedger, holders, providers, period, r100, core }, keys, ignitions };
 }
 
 function postLedger(l, event) {
   const cov = universe.coverage();
   const { attrs, keys, ignitions } = attributes(l.index);
-  const nebulae = clusters.nebulae(layout).slice(0, 200).map(({ members, ...rest }) => rest);
+  const g = galaxies();
+  const galaxyRoots = new Set(g.galaxies.map((x) => x.root));
+  const nebulae = [...g.galaxies, ...clusters.nebulae(layout).filter((nb) => !nb.members.some((id) => galaxyRoots.has(id) || g.coreOf(id))).map(({ members, ...rest }) => rest)].slice(0, 200);
   const nebulaRoots = new Set(nebulae.map((nb) => nb.root));
   const stability = stepStats.steps ? { steps: stepStats.steps, meanMs: stepStats.ms / stepStats.steps, moved: stepStats.moved / stepStats.steps, maxMoved: stepStats.maxMoved, movedShare: stepStats.movedShare / stepStats.steps, warm: Math.round(stepStats.warm / stepStats.steps), pairs: Math.round(stepStats.pairs / stepStats.steps) } : null;
   stepStats.steps = stepStats.ms = stepStats.moved = stepStats.maxMoved = stepStats.movedShare = stepStats.warm = stepStats.pairs = 0;
   // the ledger's events: showers collapsed, the ignitions added, the weather aggregated by cluster
   const ledgerEvents = [...collapseShowers(events), ...ignitions];
+  // a planet's galaxy for the weather: its core's, else its union-find nebula's, else none (its events glow on it instead of flowing)
   const clusterOf = (id) => {
-    if (!(id > 0)) return id;
+    if (!(id > 0)) return null;
+    const core = g.coreOf(id);
+    if (core && galaxyRoots.has(core)) return core;
     const root = clusters.find(id);
-    return nebulaRoots.has(root) ? root : id;
+    return nebulaRoots.has(root) ? root : null;
   };
   const weather = weatherOf(ledgerEvents, { clusterOf, kindOf: (id) => (id > 0 && universe.planets[id] ? bodyOf(universe.planets[id]).kind : 'planet') });
   post(
@@ -419,7 +465,7 @@ function postLedger(l, event) {
       stability,
       memory: { records: universe.records.length, planets: universe.planetCount, edges: universe.edges.size, layoutEdges: layout.ea.length, clusters: clusters.unions, hubSkips: clusters.skippedHub, interned: universe.addresses.size, rocks: standing.rocks.size, checks: standing.checks.size },
     },
-    [attrs.size.buffer, attrs.hue.buffer, attrs.kind.buffer, attrs.known.buffer, attrs.rings.buffer, attrs.activity.buffer, attrs.lastLedger.buffer, attrs.holders.buffer, attrs.providers.buffer, attrs.period.buffer, attrs.r100.buffer],
+    [attrs.size.buffer, attrs.hue.buffer, attrs.kind.buffer, attrs.known.buffer, attrs.rings.buffer, attrs.activity.buffer, attrs.lastLedger.buffer, attrs.holders.buffer, attrs.providers.buffer, attrs.period.buffer, attrs.r100.buffer, attrs.core.buffer],
   );
   addedSinceLedger = [];
   domainsSinceLedger = [];

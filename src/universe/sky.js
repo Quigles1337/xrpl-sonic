@@ -30,8 +30,8 @@ import { CATEGORIES, CATEGORY_NAMES } from '../mapping.js';
 import { drawOverlay, hexToRgb } from './overlay.js';
 import { primitivesOf, weatherPrimitives, rockAngle, beltRadius } from './motions.js';
 
-export const CAMERA_HOME = Object.freeze({ yaw: 0.35, pitch: 0.28, distance: 3.2, fov: 1.0, target: Object.freeze([0, 0, 0]) });
-export const CAMERA_LIMITS = Object.freeze({ yaw: [-Infinity, Infinity], pitch: [-1.2, 1.2], distance: [0.25, 7] });
+export const CAMERA_HOME = Object.freeze({ yaw: 0.35, pitch: 0.28, distance: 5.2, fov: 1.0, target: Object.freeze([0, 0, 0]) });
+export const CAMERA_LIMITS = Object.freeze({ yaw: [-Infinity, Infinity], pitch: [-1.2, 1.2], distance: [0.25, 11] });
 /** Pixel radius of a size-1 planet at the camera's reference depth: one pixel, so most of a sky is points. */
 export const BASE_PX = 1.0;
 export const LOD = Object.freeze({ far: 2.6, near: 8 });
@@ -489,14 +489,29 @@ export class SkyBase {
     return glowFromAttrs(this.attrs, id, ledger);
   }
 
-  /** The nebulae projected to the screen for the frame: { sx, sy, sr, size }. */
+  /** The nebulae projected to the screen for the frame: { sx, sy, sr, size }, and for a galaxy its disc as a projected polygon. */
   projectNebulae(cam, vp) {
     if (cam.distance < NEBULA_ZOOM) return [];
     const out = [];
     for (const nb of this.nebulae) {
       const p = project([nb.x, nb.y, nb.z], cam, vp);
       if (!p) continue;
-      out.push({ ...nb, sx: p.x, sy: p.y, sr: Math.max(14, (nb.r + 0.04) * p.scale * 1.4) });
+      const entry = { ...nb, sx: p.x, sy: p.y, sr: Math.max(14, (nb.r + 0.04) * p.scale * 1.4) };
+      if (nb.core && nb.u && nb.v) {
+        const R = nb.r * 1.25;
+        const poly = [];
+        for (let i = 0; i < 24; i++) {
+          const a = (i / 24) * Math.PI * 2;
+          const q = project([nb.x + (nb.u[0] * Math.cos(a) + nb.v[0] * Math.sin(a)) * R, nb.y + (nb.u[1] * Math.cos(a) + nb.v[1] * Math.sin(a)) * R, nb.z + (nb.u[2] * Math.cos(a) + nb.v[2] * Math.sin(a)) * R], cam, vp);
+          if (!q) {
+            poly.length = 0;
+            break;
+          }
+          poly.push([q.x, q.y]);
+        }
+        if (poly.length) entry.poly = poly;
+      }
+      out.push(entry);
     }
     return out;
   }
@@ -633,7 +648,8 @@ export class Sky extends SkyBase {
           const rgb = HUE_TABLE[attrs.hue[id]];
           const glow = this.glowOf(id, ledger);
           const kind = attrs.kind[id];
-          const bright = (0.65 + 0.35 * glow) * (kind === 5 ? 0.3 : 1) * (attrs.known[id] ? 1 : 0.6);
+          const field = attrs.core ? (attrs.core[id] ? 1 : cam.distance >= NEBULA_ZOOM ? 0.2 : 0.7) : 1; // a field star, in no galaxy, is dimmer: dust at far zoom
+          const bright = (0.65 + 0.35 * glow) * (kind === 5 ? 0.3 : 1) * (attrs.known[id] ? 1 : 0.6) * field;
           const cr = rgb[0] * bright;
           const cg = rgb[1] * bright;
           const cb = rgb[2] * bright;
@@ -655,12 +671,16 @@ export class Sky extends SkyBase {
       for (const nb of nebulae) {
         const a = Math.min(0.28, 0.08 + 0.02 * Math.log2(nb.size));
         const g = ctx.createRadialGradient(nb.sx, nb.sy, 0, nb.sx, nb.sy, nb.sr);
-        g.addColorStop(0, rgba(NEBULA_RGB, a));
+        g.addColorStop(0, rgba(NEBULA_RGB, a * (nb.core ? 1.4 : 1)));
         g.addColorStop(0.5, rgba(NEBULA_RGB, a * 0.35));
         g.addColorStop(1, rgba(NEBULA_RGB, 0));
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(nb.sx, nb.sy, nb.sr, 0, Math.PI * 2);
+        if (nb.poly) {
+          // a galaxy: the cloud is its disc, seen at its tilt
+          nb.poly.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+          ctx.closePath();
+        } else ctx.arc(nb.sx, nb.sy, nb.sr, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
