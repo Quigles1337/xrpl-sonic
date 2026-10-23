@@ -5,6 +5,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { validateCase } from '../src/case.js';
+import { transcriptRows } from '../src/score.js';
 import { buildScore, GAP_MS, SCORE_VERSION, formatClock, scoreCaption, transcript, clipRanges, ledgerAtPosition } from '../src/score.js';
 import { replayIntervalMs, DEFAULT_CLOSE_INTERVAL_MS } from '../src/replay.js';
 import { MAPPING_VERSION } from '../src/mapping.js';
@@ -231,5 +232,20 @@ describe('clipRanges', () => {
     ]);
     assert.deepEqual(clipRanges({ ledgers: [] }), []);
     assert.deepEqual(clipRanges(null), []);
+  });
+});
+
+describe('the transcript read back as rows (docs/ux.md)', () => {
+  test('header lines until the blank line, then one row per stamped line with its kind, the text unchanged', () => {
+    const text = ['xrpl-sonic transcript · T', 'network mainnet · mapping 1.1.0 · scale pentatonicMajor C · speed 1×', '3 ledgers · 4 events (4 selected to sound, 0 silent) · 0:12.000 at 1×', '', '0:00.000 ledger #100 · 2 tx · closed 2026-01-01T00:00:00.000Z', '0:00.120   Payment · 1 XRP · a → b · ABCDEF12…', '0:04.000 — gap: 3 ledgers omitted between #100 and #104 —', '0:05.500   >> The first fill. [notes] (reviewed)', 'not a row'].join('\n');
+    const { header, rows } = transcriptRows(text);
+    assert.deepEqual(header, ['xrpl-sonic transcript · T', 'network mainnet · mapping 1.1.0 · scale pentatonicMajor C · speed 1×', '3 ledgers · 4 events (4 selected to sound, 0 silent) · 0:12.000 at 1×']);
+    assert.deepEqual(rows, [
+      { time: '0:00.000', kind: 'ledger', text: 'ledger #100 · 2 tx · closed 2026-01-01T00:00:00.000Z' },
+      { time: '0:00.120', kind: 'event', text: 'Payment · 1 XRP · a → b · ABCDEF12…' },
+      { time: '0:04.000', kind: 'gap', text: '— gap: 3 ledgers omitted between #100 and #104 —' },
+      { time: '0:05.500', kind: 'note', text: '>> The first fill. [notes] (reviewed)' },
+    ]);
+    assert.deepEqual(transcriptRows(''), { header: [], rows: [] });
   });
 });

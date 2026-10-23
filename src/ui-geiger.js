@@ -4,6 +4,7 @@
 
 import { GEIGER_LIMITS, totalBand } from './geiger.js';
 import { el } from './dom.js';
+import { TERMS } from './vocabulary.js';
 
 const STATE_TEXT = { off: 'Off', forming: 'Baseline forming', nominal: 'Nominal', crossing: 'Crossing', stale: 'Stale' };
 
@@ -29,6 +30,7 @@ export function createGeigerPanel({ settings, onChange, onPin, onUnpin }) {
 
   const root = el('section', { class: 'group geiger-group' }, [
     el('h2', { text: 'Geiger' }),
+    el('p', { class: 'group-hint', text: TERMS.geiger.sentence }),
     el('label', { class: 'row check' }, [enabled, el('span', { class: 'row-label', text: 'Detector on' }), el('span', { class: 'hint', text: 'experimental: counts per ledger against a baseline, and crackles on a crossing' })]),
     el('div', { class: 'geiger-status' }, [led, stateText]),
     detail,

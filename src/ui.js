@@ -9,7 +9,10 @@ import { CATEGORIES, CATEGORY_NAMES, SCALES, KEYS } from './mapping.js';
 import { NETWORKS } from './ws.js';
 import { EXPLORERS, explorerUrl } from './explorers.js';
 import { GLYPHS, PULSE, categoryIcon, eventIcon, fieldGuide } from './glyphs.js';
-import { el, option, svg } from './dom.js';
+import { el, option, svg, setGuard, reasonStrip, guarded } from './dom.js';
+import { TERMS, REASONS } from './vocabulary.js';
+import { isExampleCast } from './cast.js';
+import { createDrawer } from './ui-drawer.js';
 import { createCastPanel } from './ui-cast.js';
 import { createCasePanel } from './ui-case.js';
 import { createTransportUI } from './ui-transport.js';
@@ -241,15 +244,10 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
   const fieldPanel = createFieldPanel({ settings, onChange: (patch) => ('field' in patch ? update(patch) : fieldActions?.onChange?.(patch)), binNow: fieldActions?.binNow });
 
   const snapshotBtn = el('button', { type: 'button', class: 'btn', id: 'snapshot', text: 'Snapshot', title: 'Save the scene as a PNG with a stats overlay', onclick: () => onSnapshot?.() });
-  const recordBtn = el('button', {
-    type: 'button',
-    class: 'btn',
-    id: 'record',
-    text: 'Record 30 s',
-    disabled: !capture?.recording,
-    title: capture?.recording ? `Record 30 seconds of video and audio (${capture.mimeType})` : 'Recording needs MediaRecorder and canvas.captureStream, which this browser does not provide',
-    onclick: () => onRecord?.(),
-  });
+  const recordBtn = el('button', { type: 'button', class: 'btn', id: 'record', text: 'Record 30 s', title: `Record 30 seconds of video and audio${capture?.mimeType ? ` (${capture.mimeType})` : ''}` });
+  recordBtn.addEventListener('click', guarded(recordBtn, () => onRecord?.()));
+  if (!capture?.recording) setGuard(recordBtn, REASONS.cannotRecord);
+  const captureReasons = reasonStrip([snapshotBtn, recordBtn], 'capture-reasons');
 
   const row = (labelText, control, extra) =>
     el('label', { class: 'row' }, [el('span', { class: 'row-label', text: labelText }), control, ...(extra ? [extra] : [])]);
@@ -274,6 +272,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
   controls.append(
     el('section', { class: 'group' }, [
       el('h2', { text: 'Sound' }),
+      el('p', { class: 'group-hint', text: TERMS.sound.sentence }),
       row('Volume', volume),
       check('Mute', mute),
       row('Scale', scale),
@@ -281,15 +280,16 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
     ]),
     el('section', { class: 'group' }, [
       el('h2', { text: 'Stream' }),
+      el('p', { class: 'group-hint', text: TERMS.stream.sentence }),
       row('Network', network),
-      check('Quiet mode', quietMode, 'only transactions at or above'),
+      check('Quiet mode', quietMode, TERMS.quietMode.sentence),
       row('Threshold (XRP)', quietThreshold),
       check('Include failed transactions', includeFailed),
       check('Show log', showLog),
-      check('Long exposure', exposure, 'keep a fading trace of where tracks land'),
+      check('Long exposure', exposure, TERMS.longExposure.sentence),
       row('Explorer links', explorer),
     ]),
-    el('section', { class: 'group' }, [el('h2', { text: 'Transaction types' }), el('div', { class: 'chips' }, categoryToggles)]),
+    el('section', { class: 'group' }, [el('h2', { text: 'Transaction types' }), el('p', { class: 'group-hint', text: TERMS.transactionTypes.sentence }), el('div', { class: 'chips' }, categoryToggles)]),
     castPanel.root,
     fieldPanel.root,
     casePanel.root,
@@ -298,11 +298,14 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
     midiPanel.root,
     el('section', { class: 'group' }, [
       el('h2', { text: 'Capture' }),
+      el('p', { class: 'group-hint', text: TERMS.capture.sentence }),
       el('div', { class: 'buttons' }, [snapshotBtn, recordBtn]),
+      captureReasons,
       el('p', { class: 'hint capture-hint', text: capture?.recording ? 'PNG with ledger, rate and time; WebM with the audio mix.' : 'Snapshot only: this browser cannot record.' }),
     ]),
     el('section', { class: 'group stats' }, [
       el('h2', { text: 'Session' }),
+      el('p', { class: 'group-hint', text: TERMS.session.sentence }),
       el('dl', {}, [
         el('dt', { text: 'Played' }),
         el('dd', { id: 'stat-played', text: '0' }),
@@ -324,10 +327,23 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
   const applyLogVisibility = () => logWrap.classList.toggle('hidden', !settings.showLog);
   applyLogVisibility();
 
+  // the tape before anything has played: what it is and what to do next (docs/ux.md)
+  const emptyLine = el('li', { class: 'log-empty', text: 'Nothing yet: press Start to listen; every transaction then appears here as a line you can click.' });
+  logList.append(emptyLine);
+
   function pushLine(line) {
+    emptyLine.remove();
     logList.prepend(line);
     while (logList.children.length > MAX_LOG_LINES) logList.lastChild.remove();
   }
+
+  // the readout drawer (src/ui-drawer.js): coherence and the transcript, structured, with Copy raw
+  const drawer = createDrawer({ onMessage: (text, cls = 'info') => pushLine(el('li', { class: `log-${cls}` }, [stamp(), el('span', { class: 'glyph' }), el('span', { class: 'line', text })])) });
+
+  // the project terms on the command strip's buttons, from the documents
+  if (momentBtn) momentBtn.title = TERMS.moment.sentence;
+  if (aiBtn) aiBtn.title = TERMS.copyForAi.sentence;
+  if (shareBtn) shareBtn.title = TERMS.share.sentence;
 
   // --- Public API ------------------------------------------------------------
   return {
@@ -338,6 +354,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
     healthPanel,
     midiPanel,
     fieldPanel,
+    drawer,
 
     /** The pair under the pointer (src/field.js): its full readout line and its hashes, until closed. */
     showFieldLine({ label, line, detail = [] }) {
@@ -418,7 +435,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
       const active = remainingSeconds != null;
       recordBtn.textContent = active ? `Recording… ${remainingSeconds} s` : 'Record 30 s';
       recordBtn.classList.toggle('recording', active);
-      recordBtn.disabled = active || !capture?.recording;
+      setGuard(recordBtn, active ? 'Recording…' : capture?.recording ? null : REASONS.cannotRecord);
       document.body.classList.toggle('recording', active);
     },
 
@@ -467,11 +484,12 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
       const members = Array.isArray(cast) ? cast : [];
       castStrip.classList.toggle('hidden', members.length === 0);
       document.body.classList.toggle('watching', members.length > 0);
+      const example = isExampleCast(members);
       castStrip.replaceChildren(
         ...members.map((m) => {
           const href = explorerUrl(settings.explorer, settings.network, 'account', m.address);
           const chip = el(href ? 'a' : 'span', {
-            class: `cast-chip${m.muted ? ' muted' : ''}${m.solo ? ' solo' : ''}`,
+            class: `cast-chip${m.muted ? ' muted' : ''}${m.solo ? ' solo' : ''}${example ? ' example' : ''}`,
             style: `--cast: ${m.colour}`,
             text: m.label,
             title: `${m.address} · ${m.voice}${m.solo ? ' · solo' : ''}${m.muted ? ' · muted' : ''}`,

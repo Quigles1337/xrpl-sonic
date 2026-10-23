@@ -144,7 +144,8 @@ const ui = createUI({
     onLoadFile: (file) => loadCaseFile(file),
     onSave: () => saveCase(),
     onCopyLink: () => copyCaseLink(),
-    onTranscript: () => saveTranscript(),
+    onTranscript: () => showTranscript(),
+    onLoadSample: () => loadSample(),
     onAi: () => openAi(),
     onImport: (text, source) => importNotes(text, source),
     onCoherence: () => showCoherence(),
@@ -1235,6 +1236,24 @@ function saveTranscript() {
   ui.logMessage(`Saved ${name}.`);
 }
 
+/** The transcript in the readout drawer, structured, with Copy raw and Save file; the text is transcript()'s, unchanged. */
+function showTranscript() {
+  const s = session.active;
+  if (!s) return;
+  ui.drawer.showTranscript(transcript(s.score, s.case), { title: caseTitle(s.case), onSave: () => saveTranscript() });
+}
+
+/** The sample case that ships with the page (README, "Cases"), as the easiest way to a case after Moment. */
+async function loadSample() {
+  try {
+    const r = await fetch('docs/cases/busiest-senders-107777809.sonic-case.json', { cache: 'no-cache' });
+    if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    openCase(await r.json(), 'file', 'the sample case');
+  } catch (err) {
+    ui.logMessage(`Could not load the sample case: ${err?.message ?? err}`, 'error');
+  }
+}
+
 /** What Share copies: a loaded case whole, otherwise network + cast + the ledger playing now. */
 async function shareUrl() {
   const c = session.active?.case ?? session.pending;
@@ -1388,14 +1407,14 @@ function coherenceFromFrame(raw, { cast = null, mode = 'cast', pair = null, bin 
   field.model = model;
   viz.setField(model.on ? model : null);
   ui.fieldPanel.setSummary(model.summary ?? `field: ${model.pairs.length} of ${model.tested} pairs drawn`);
-  ui.casePanel.setCoherence(coherenceReadout(report));
+  ui.drawer.showCoherence(report);
   return { report, model };
 }
 
 /** The readout into the case panel, and the top pair's line on the tape. */
 function showCoherence() {
   const report = coherenceNow();
-  ui.casePanel.setCoherence(coherenceReadout(report));
+  ui.drawer.showCoherence(report);
   refreshField();
   const first = report.pairs[0];
   ui.logMessage(first ? `Coherence · ${describePair(first)}` : report.window.ledgers ? 'Coherence: fewer than two accounts to compare.' : 'Coherence: no ledger heard yet.', 'info');
@@ -1575,6 +1594,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     ui.inspector.hide();
     ui.hideFieldLine();
+    ui.drawer.hide();
     return;
   }
   if ((e.key === 's' || e.key === 'S') && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -1644,6 +1664,8 @@ window.xrplSonic = {
   importNotes,
   coherenceNow,
   showCoherence,
+  showTranscript,
+  loadSample,
   fieldNow,
   refreshField,
   coherenceFromFrame,

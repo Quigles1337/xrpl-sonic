@@ -73,6 +73,22 @@ export function normalizeCast(list) {
   return out;
 }
 
+/**
+ * The example cast: the README's cast link, the market maker as the brass on
+ * the left and the issuer as the glass in the centre (README, "Follow a cast").
+ * A cast equal to it (the same addresses in the same order) is labelled
+ * "Example cast" on the page, with Clear beside it (docs/ux.md).
+ */
+export const EXAMPLE_CAST = Object.freeze([
+  Object.freeze({ address: 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah', label: 'Maker', voice: 'brass', pan: -0.6 }),
+  Object.freeze({ address: 'rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z', label: 'Issuer', voice: 'glass', pan: 0 }),
+]);
+
+export function isExampleCast(cast) {
+  if (!Array.isArray(cast) || cast.length !== EXAMPLE_CAST.length) return false;
+  return EXAMPLE_CAST.every((m, i) => cast[i]?.address === m.address);
+}
+
 /** Look a member up by id or address. */
 export function castMember(cast, idOrAddress) {
   if (!Array.isArray(cast)) return null;

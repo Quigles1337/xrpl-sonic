@@ -47,6 +47,7 @@ import {
   ASSUMED_CLOSE_SECONDS,
   interpolateCloseTimes,
   binFrame,
+  guardText,
   DEFAULTS,
   EXCLUSIONS,
   COHERENCE_VERSION,
@@ -729,5 +730,23 @@ describe('coherence: bins and the two defects (phase 2)', () => {
     const report = coherence(f);
     assert.match(describePair(report.pairs[0]), / · 3 parts of 30: lag undefined \(no variance\), [+-]?\d+ \(r -?\d\.\d\d\), [+-]?\d+ \(r -?\d\.\d\d\)/);
     assert.doesNotMatch(describePair(report.pairs[0]), /r 1\.00/);
+  });
+});
+
+describe('coherence: the guard, said (docs/ux.md)', () => {
+  test('no ledger, one account, too few ledgers, an account short of events with the ledgers it would take, and null once a pair is judged', () => {
+    assert.match(guardText(coherence(frameOf({ [A]: [], [B]: [] }))), /^No ledger heard yet: press Start and listen; the readout needs at least 12 ledgers\.$/);
+    assert.match(guardText(coherence(frameOf({ [A]: train(30, 1) }))), /^Fewer than two accounts to compare/);
+    const short = coherence(frameOf({ [A]: train(5, 2), [B]: train(5, 3) }, { labels: { [A]: 'A', [B]: 'B' } }));
+    assert.equal(guardText(short), 'Not judged: 5 ledgers used; the guard needs 12: a case with 12 or more ledgers.');
+    const live = coherence({ ...frameOf({ [A]: train(5, 2), [B]: train(5, 3) }, { labels: { [A]: 'A', [B]: 'B' } }), source: 'live' });
+    assert.equal(guardText(live), 'Not judged: 5 ledgers used; the guard needs 12: listen for 7 more ledgers.');
+    const quiet = coherence(frameOf({ [A]: train(50, 4), [B]: Array.from({ length: 50 }, (_, i) => (i % 17 === 0 ? 1 : 0)) }, { labels: { [A]: 'A', [B]: 'B' } }));
+    assert.equal(quiet.accounts[1].events, 3);
+    assert.equal(guardText(quiet), 'Not judged: B has 3 events over 50 ledgers; the guard needs 10 per account: at its rate so far it would need about 117 more ledgers.');
+    const silent = coherence(frameOf({ [A]: train(50, 4), [B]: new Array(50).fill(0) }, { labels: { [A]: 'A', [B]: 'B' } }));
+    assert.equal(guardText(silent), 'Not judged: B has 0 events over 50 ledgers; the guard needs 10 per account.');
+    assert.equal(guardText(coherence(frameOf({ [A]: train(50, 5), [B]: train(50, 6) }))), null, 'judged: nothing to say');
+    assert.equal(guardText(null), null);
   });
 });
