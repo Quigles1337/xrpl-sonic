@@ -25,6 +25,7 @@ export const GLYPHS = Object.freeze({
   escrow: Object.freeze({ shape: 'vault', motion: 'hover', lifeScale: 1.2, track: 'A dial that winds shut when funds are locked and springs open on finish.' }),
   paychan: Object.freeze({ shape: 'ladder', motion: 'rise', lifeScale: 2, track: 'Four bars that light in sequence with the arpeggio, climbing to the right.' }),
   amm: Object.freeze({ shape: 'pool', motion: 'hover', lifeScale: 1.1, track: 'Three overlapping rings, breathing together: a pool.' }),
+  batch: Object.freeze({ shape: 'bundle', motion: 'rise', lifeScale: 1.15, track: 'Three motes under one bracket: several transactions applied as one.' }),
   other: Object.freeze({ shape: 'mote', motion: 'rise', lifeScale: 1, track: 'A single bright mote. Background radiation.' }),
 });
 
@@ -116,6 +117,12 @@ const ICONS = Object.freeze({
     '<circle cx="8.4" cy="14.5" r="5.2" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.5"/>' +
     '<circle cx="15.6" cy="14.5" r="5.2" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.5"/>',
   mote: '<rect x="9.2" y="9.2" width="5.6" height="5.6" rx=".8" fill="currentColor"/><rect x="11" y="11" width="2" height="2" fill="#fff" fill-opacity=".8"/>',
+  bundle:
+    '<rect x="3.5" y="8" width="4.4" height="4.4" rx=".7" fill="currentColor"/>' +
+    '<rect x="9.8" y="8" width="4.4" height="4.4" rx=".7" fill="currentColor"/>' +
+    '<rect x="16.1" y="8" width="4.4" height="4.4" rx=".7" fill="currentColor"/>' +
+    '<path d="M3.5 15.5v2.5h17v-2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="M12 18v2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
   pulse:
     '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-opacity=".45" stroke-width="1.2"/>' +
     '<circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
