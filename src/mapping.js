@@ -29,6 +29,7 @@ export const CATEGORIES = Object.freeze({
   escrow: Object.freeze({ label: 'Escrow', colour: '#a78bfa', sound: 'swell' }),
   paychan: Object.freeze({ label: 'Payment channel', colour: '#ff8c42', sound: 'arp' }),
   amm: Object.freeze({ label: 'AMM', colour: '#2ee6c5', sound: 'chord' }),
+  batch: Object.freeze({ label: 'Batch', colour: '#d4a373', sound: 'click' }),
   other: Object.freeze({ label: 'Other', colour: '#8d99ae', sound: 'click' }),
 });
 
@@ -233,6 +234,7 @@ export function categorize(txType) {
   if (txType.startsWith('Escrow')) return 'escrow';
   if (txType.startsWith('PaymentChannel')) return 'paychan';
   if (txType.startsWith('AMM')) return 'amm';
+  if (txType === 'Batch') return 'batch';
   return 'other';
 }
 
@@ -359,7 +361,9 @@ function mergeOptions(options) {
  */
 function describe(tx, category, amount) {
   const type = tx.TransactionType;
-  const head = amount ? `${type} · ${formatAmount(amount)}` : type;
+  // a Batch carries its inner transactions as RawTransactions; the tape says how many were applied as one
+  const inner = category === 'batch' && Array.isArray(tx.RawTransactions) ? tx.RawTransactions.length : null;
+  const head = amount ? `${type} · ${formatAmount(amount)}` : inner != null ? `${type} · ${inner} inner` : type;
   const parties = [];
   const party = (address, role, separator) => {
     if (typeof address === 'string' && address) parties.push({ address, short: shortAddress(address), role, separator });

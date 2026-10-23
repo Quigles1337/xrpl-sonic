@@ -22,7 +22,7 @@ Cases are plain JSON. They can be saved as `<id>.sonic-case.json`, loaded from *
     { "address": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah", "label": "Maker", "voice": "brass", "pan": -0.6, "colour": "#ffb3c6" }
   ],
   "filters": {
-    "enabled": { "payment": true, "offer": true, "trust": true, "nft": true, "escrow": true, "paychan": true, "amm": true, "other": true },
+    "enabled": { "payment": true, "offer": true, "trust": true, "nft": true, "escrow": true, "paychan": true, "amm": true, "batch": true, "other": true },
     "includeFailed": false,
     "quietThreshold": 0,
     "castMode": "all"

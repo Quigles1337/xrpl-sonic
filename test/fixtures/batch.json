@@ -1,0 +1,169 @@
+{
+  "type": "transaction",
+  "engine_result": "tesSUCCESS",
+  "engine_result_code": 0,
+  "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+  "ledger_hash": null,
+  "ledger_index": 107837699,
+  "close_time_iso": null,
+  "meta": {
+    "AffectedNodes": [
+      {
+        "ModifiedNode": {
+          "FinalFields": {
+            "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+            "Balance": "2595119382",
+            "Flags": 0,
+            "OwnerCount": 1358,
+            "Sequence": 106224581,
+            "TicketCount": 40
+          },
+          "LedgerEntryType": "AccountRoot",
+          "LedgerIndex": "B59D7178A915314337B21DABB938D25B9403886F3973AD0E94ED17072A9C903B",
+          "PreviousFields": {
+            "Balance": "2595119482",
+            "Sequence": 106224580
+          },
+          "PreviousTxnID": "228C664882FE9D9DFED41B49EEB365ED8366B788B6C7A9D63772322D6FFAA36D",
+          "PreviousTxnLgrSeq": 107837693
+        }
+      }
+    ],
+    "TransactionIndex": 1,
+    "TransactionResult": "tesSUCCESS"
+  },
+  "transaction": {
+    "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+    "Fee": "100",
+    "Flags": 524288,
+    "LastLedgerSequence": 107837738,
+    "RawTransactions": [
+      {
+        "RawTransaction": {
+          "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+          "Amount": "389391000",
+          "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+          "Fee": "0",
+          "Flags": 1073741824,
+          "NFTokenID": "00080BB86C429EE66CE731CAA492445DFF564F9CB8A46A30627EAD0705A8486B",
+          "Owner": "rPA2owAiW7YeUYKtRFfdzELV2VKsAW7oba",
+          "Sequence": 0,
+          "SigningPubKey": "",
+          "TicketSequence": 106224512,
+          "TransactionType": "NFTokenCreateOffer"
+        }
+      },
+      {
+        "RawTransaction": {
+          "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+          "Amount": "389391000",
+          "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+          "Fee": "0",
+          "Flags": 1073741824,
+          "NFTokenID": "00080BB86C429EE66CE731CAA492445DFF564F9CB8A46A3098A4C9EB05A8414F",
+          "Owner": "rY1rxpT2QjRw5v8qYaZK4m3K4se1ueSZu",
+          "Sequence": 0,
+          "SigningPubKey": "",
+          "TicketSequence": 106224513,
+          "TransactionType": "NFTokenCreateOffer"
+        }
+      },
+      {
+        "RawTransaction": {
+          "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+          "Amount": "389391000",
+          "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+          "Fee": "0",
+          "Flags": 1073741824,
+          "NFTokenID": "00080BB86C429EE66CE731CAA492445DFF564F9CB8A46A3097E020CC05A84532",
+          "Owner": "r4Zd4BKqYNXyx9AK1ungs4kYM9WQhYLXm1",
+          "Sequence": 0,
+          "SigningPubKey": "",
+          "TicketSequence": 106224514,
+          "TransactionType": "NFTokenCreateOffer"
+        }
+      },
+      {
+        "RawTransaction": {
+          "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+          "Amount": "409391000",
+          "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+          "Fee": "0",
+          "Flags": 1073741824,
+          "NFTokenID": "00080BB86C429EE66CE731CAA492445DFF564F9CB8A46A302CDE6C9405A848FA",
+          "Owner": "rEGpQTVfv14yqMKHQagrrXesrfm5FJbfkJ",
+          "Sequence": 0,
+          "SigningPubKey": "",
+          "TicketSequence": 106224515,
+          "TransactionType": "NFTokenCreateOffer"
+        }
+      },
+      {
+        "RawTransaction": {
+          "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+          "Amount": "389391000",
+          "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+          "Fee": "0",
+          "Flags": 1073741824,
+          "NFTokenID": "00080BB86C429EE66CE731CAA492445DFF564F9CB8A46A300A9C027D05A847E1",
+          "Owner": "rwJWSfMcik1NCVGWHutTaBSYxhbVHCQQqB",
+          "Sequence": 0,
+          "SigningPubKey": "",
+          "TicketSequence": 106224516,
+          "TransactionType": "NFTokenCreateOffer"
+        }
+      },
+      {
+        "RawTransaction": {
+          "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+          "Amount": "389391000",
+          "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+          "Fee": "0",
+          "Flags": 1073741824,
+          "NFTokenID": "00080BB86C429EE66CE731CAA492445DFF564F9CB8A46A3019D9D3DE05A84644",
+          "Owner": "rQ9WqhFBPK1Abkb98m8WqBzebYpuBwatsg",
+          "Sequence": 0,
+          "SigningPubKey": "",
+          "TicketSequence": 106224517,
+          "TransactionType": "NFTokenCreateOffer"
+        }
+      },
+      {
+        "RawTransaction": {
+          "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+          "Amount": "300000000",
+          "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+          "Fee": "0",
+          "Flags": 1073741824,
+          "NFTokenID": "00080BB86C429EE66CE731CAA492445DFF564F9CB8A46A3064CCA85C05A83CC2",
+          "Owner": "rBVm71EmupMGFpGZGqzAKCbfrLLeQ7xoXf",
+          "Sequence": 0,
+          "SigningPubKey": "",
+          "TicketSequence": 106224518,
+          "TransactionType": "NFTokenCreateOffer"
+        }
+      },
+      {
+        "RawTransaction": {
+          "Account": "rSHEKzMpMajiG6sS4nLL3pFzZa4Q886z4",
+          "Amount": "389391000",
+          "Destination": "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC",
+          "Fee": "0",
+          "Flags": 1073741824,
+          "NFTokenID": "00080BB86C429EE66CE731CAA492445DFF564F9CB8A46A302A1B1B0805A8436E",
+          "Owner": "rs9UuW8U7AbW6pjB5zoW4SYNmZchhzm4DQ",
+          "Sequence": 0,
+          "SigningPubKey": "",
+          "TicketSequence": 106224519,
+          "TransactionType": "NFTokenCreateOffer"
+        }
+      }
+    ],
+    "Sequence": 106224580,
+    "SigningPubKey": "ED87F93B075E6CDEC0C0500AF5E124E201BE9C8AEC7A2BE27E56E8DC879DC90ECE",
+    "TransactionType": "Batch",
+    "TxnSignature": "9FAC65FAD4AD40C79B62D5F61C9E9B3F048F0619490CBAFC289B8FD20B7EE0FA23513156AE94130C91407E852D130A6CA2EF69E56D2B774388C0E30BAE90D000",
+    "hash": "3A275733AFCF872884CA3788F2A8C7C7158A348910504DA61C55F4EFB2945B44"
+  },
+  "validated": true
+}

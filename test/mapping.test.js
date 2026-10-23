@@ -151,6 +151,7 @@ describe('categorisation', () => {
       AMMDeposit: 'amm',
       AMMWithdraw: 'amm',
       AMMVote: 'amm',
+      Batch: 'batch',
       AccountSet: 'other',
       TicketCreate: 'other',
       CheckCreate: 'other',
@@ -360,6 +361,17 @@ describe('txToEvent', () => {
       assert.equal(ev.notes.length, 3);
       assert.ok(ev.notes[0] < ev.notes[1] && ev.notes[1] < ev.notes[2]);
     }
+  });
+
+  test('a Batch: its own category, colour and glyph; the tape says how many inner transactions it applied as one; the click is unchanged', () => {
+    const ev = txToEvent(fixture('batch'));
+    assert.equal(ev.category, 'batch');
+    assert.equal(ev.colour, '#d4a373');
+    assert.equal(ev.sound, 'click');
+    assert.equal(ev.head, 'Batch · 8 inner');
+    assert.equal(ev.parties[0].address, fixture('batch').transaction.Account);
+    assert.ok(ev.velocity <= 0.15 && ev.duration <= 0.1, 'the same quiet click as everything else');
+    assert.equal(CATEGORIES.batch.label, 'Batch');
   });
 
   test('everything else → quiet click', () => {

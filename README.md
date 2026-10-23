@@ -23,7 +23,8 @@ xrpl-sonic is a single page with no dependencies and no build step. It opens a W
 | `EscrowCreate` / `EscrowFinish` / `EscrowCancel` | Reverse-cymbal swell | `EscrowFinish` resolves into a chime; pitch from the escrowed amount. | A dial that winds shut on create, springs open on finish and is struck through on cancel. |
 | `PaymentChannel*` | Four-note ascending arpeggio | Keyed on the channel. | Four bars that light in step with the arpeggio, climbing to the right. |
 | `AMM*` | Soft triad | Keyed on the pool's asset. | Three overlapping rings, breathing together. |
-| Everything else (`AccountSet`, `TicketCreate`, `Batch`, `Check*`, ...) | Quiet click | Stage position per account. | A single bright mote. |
+| `Batch` | Quiet click | Stage position per account; the tape says how many inner transactions it carried. | Three motes under one bracket that draws in at ignition: several transactions applied as one. |
+| Everything else (`AccountSet`, `TicketCreate`, `Check*`, ...) | Quiet click | Stage position per account. | A single bright mote. |
 | Ledger close | Low tick with a pitch drop | The inter-close interval (usually 3–5 s) runs as a segmented metronome in the command strip. | A ring from the centre of the plate; the grid lights up and the ledger number is stamped faintly behind it. |
 
 Only validated, successful transactions sound by default; there is a toggle for failed ones. Eight scales (major and minor pentatonic, major, Dorian, Lydian, blues, Hirajoshi, whole tone) and twelve keys are available.

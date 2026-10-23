@@ -1165,6 +1165,37 @@ export class Visualizer {
     ctx.fill();
   }
 
+  /** Batch: three motes under one bracket, several transactions applied as one; the bracket draws in at ignition. */
+  draw_bundle(ctx, p, k) {
+    const { x, y, r, a, s, t, flash } = k;
+    const sz = (2.2 + r * 0.14) * s;
+    const gap = sz * 1.9;
+    const prog = this.reduced ? 1 : Math.min(1, t / 320);
+    this.blit('halo', p.colour, x, y, sz * 5, a * 0.3);
+    for (let i = -1; i <= 1; i++) {
+      const cx = x + i * gap;
+      ctx.fillStyle = rgba(p.rgb, a);
+      ctx.fillRect(cx - sz / 2, y - sz / 2, sz, sz);
+      ctx.fillStyle = `rgba(255, 255, 255, ${(a * 0.7).toFixed(3)})`;
+      ctx.fillRect(cx - 0.5, y - 0.5, 1, 1);
+    }
+    const half = gap + sz / 2;
+    const drop = sz * 1.3;
+    const reach = half * prog;
+    ctx.strokeStyle = rgba(p.rgb, a * 0.9);
+    ctx.lineWidth = Math.max(1, sz * 0.3);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - reach, y + sz);
+    ctx.lineTo(x - reach, y + sz + drop);
+    ctx.lineTo(x + reach, y + sz + drop);
+    ctx.lineTo(x + reach, y + sz);
+    ctx.moveTo(x, y + sz + drop);
+    ctx.lineTo(x, y + sz + drop * 1.8);
+    ctx.stroke();
+    if (flash > 0) this.blit('core', p.colour, x, y, sz * 4 * flash, flash * 0.6);
+  }
+
   /** Everything else: a single bright mote. */
   draw_mote(ctx, p, k) {
     const { x, y, r, a, s, flash } = k;

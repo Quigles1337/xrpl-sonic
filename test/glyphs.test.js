@@ -9,6 +9,7 @@ import offerCancel from './fixtures/offercancel.json' with { type: 'json' };
 import escrowCreate from './fixtures/escrowcreate.json' with { type: 'json' };
 import escrowFinish from './fixtures/escrowfinish.json' with { type: 'json' };
 import paymentXrp from './fixtures/payment-xrp-drops.json' with { type: 'json' };
+import batch from './fixtures/batch.json' with { type: 'json' };
 
 describe('field guide', () => {
   test('every category has a glyph with a shape, a motion, a lifetime scale and a description', () => {
@@ -58,6 +59,9 @@ describe('shapeFor', () => {
     assert.equal(shapeFor(txToEvent(paymentXrp)), 'photon');
     assert.equal(shapeFor(txToEvent(offerCreate)), 'spectral');
     assert.equal(shapeFor(txToEvent(escrowCreate)), 'vault');
+    assert.equal(shapeFor(txToEvent(batch)), 'bundle', 'a Batch has a glyph of its own');
+    assert.match(categoryIcon('batch'), /glyph-bundle/);
+    assert.match(eventIcon(txToEvent(batch)), /glyph-bundle/);
   });
 
   test('variants pick the cancelled and opened forms', () => {
