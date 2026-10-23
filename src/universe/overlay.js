@@ -222,9 +222,13 @@ export function drawOverlay(ctx, s, a, o) {
   if (o.nebulae?.length) {
     ctx.fillStyle = rgba(INK, 0.8);
     ctx.textAlign = 'center';
-    for (const nb of o.nebulae) {
-      if (!(nb.sr > 0)) continue;
-      ctx.fillText(nebulaLabel(nb.size), nb.sx, nb.sy + nb.sr + 10);
+    const placed = [];
+    for (const nb of [...o.nebulae].sort((p, q) => q.size - p.size)) {
+      if (!(nb.sr >= 24)) continue;
+      const ly = nb.sy + nb.sr + 10;
+      if (placed.some(([px, py]) => Math.abs(px - nb.sx) < 260 && Math.abs(py - ly) < 24)) continue;
+      placed.push([nb.sx, ly]);
+      ctx.fillText(nebulaLabel(nb.size), nb.sx, ly);
     }
   }
   // --- pair labels ------------------------------------------------------------------------------
