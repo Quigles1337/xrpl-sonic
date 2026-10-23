@@ -11,7 +11,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { touchGraph, randomWalk, conservation, flowsOf, seriesOf, cadence, catchOf, describeCatch, historyLabel, proximityLabel, connectionLabel, conservationLabel, cadenceLabel, coherenceLabel, coherenceAgainst, PHASE3, DEFAULTS } from '../src/universe/probe.js';
+import { touchGraph, randomWalk, conservation, flowsOf, seriesOf, cadence, catchOf, describeCatch, historyLabel, proximityLabel, connectionLabel, conservationLabel, cadenceLabel, coherenceLabel, coherenceAgainst, frameFromWindow, PHASE3, DEFAULTS } from '../src/universe/probe.js';
 import { UfoGestures, loadUfoState, saveUfoState, STORAGE_KEY, UFO_SENTENCE, DOUBLE_MS } from '../src/universe/ufo.js';
 import { frameFromLive, DEFAULTS as COHERENCE_DEFAULTS } from '../src/coherence.js';
 import { LiveWindow } from '../src/moment.js';
@@ -156,6 +156,23 @@ describe('coherence against a named list', () => {
       else assert.match(label, /^not judged: /);
     }
   });
+  test('the window’s frame: an account that submits little is read as involved, without the probed account’s own transactions', () => {
+    const rows = live.ledgers;
+    const probed = f.account;
+    const other = others[0];
+    const withOwn = frameFromWindow(rows, [probed, other]);
+    const without = frameFromWindow(rows, [probed, other], { except: probed });
+    assert.equal(withOwn.measureOf.get(probed), 'submitted');
+    const sum = (fr, a) => fr.series.get(a).reduce((x, y) => x + y, 0);
+    assert.ok(sum(withOwn, probed) >= 10);
+    if (withOwn.measureOf.get(other) === 'involved') {
+      assert.ok(sum(withOwn, other) >= sum(without, other), 'leaving out the probed account’s own transactions cannot add involvement');
+      assert.ok(sum(withOwn, other) > sum(without, other), 'the probed account’s own transactions involved its counterparty');
+    }
+    assert.equal(withOwn.ledgers.length, rows.length);
+    assert.ok(withOwn.records.length > 0);
+  });
+
   test('an account the frame does not carry measures nothing', () => {
     const frame = frameFromLive(live, { cast: others.map((address) => ({ address, label: address })) });
     assert.deepEqual(coherenceAgainst(frame, f.account, others), { pairs: [], tested: 0, significant: 0 });
@@ -222,7 +239,8 @@ describe('the catch and its words', () => {
     assert.equal(connectionLabel(null, names), 'not connected in the record');
     assert.equal(conservationLabel({ currency: 'USD', issuer: 'rIss', inflow: '5', outflow: '5', difference: '0', within: 0, lag: 0, ledgers: 1, transactions: 2, feesIncluded: false }), 'inflow 5 USD, outflow 5 USD, equal at a lag of 0 ledgers, over 1 ledger and 2 transactions · issuer rIss');
     assert.equal(conservationLabel({ currency: 'USD', issuer: null, inflow: '0', outflow: '0', difference: '0', within: null, lag: null, ledgers: 0, transactions: 0, feesIncluded: false }), 'inflow 0 USD, outflow 0 USD, nothing moved, over 0 ledgers and 0 transactions');
-    assert.equal(coherenceLabel({ judged: false, reason: 'fewer than 12 ledgers' }), 'not judged: fewer than 12 ledgers');
+    assert.equal(coherenceLabel({ judged: false, reason: 'fewer than 12 ledgers' }), 'not judged: fewer than 12 ledgers · record not available');
+    assert.equal(coherenceLabel({ judged: false, reason: 'events 0/3 (guard ≥ 10 each)', record: { count: 4 }, b: { address: 'rB' } }, new Map([['rB', 'involved']])), 'not judged: events 0/3 (guard ≥ 10 each) · the other read as involved: it submits little in the window · connected in the record: 4');
     assert.equal(DEFAULTS.restart, 0.15);
   });
 });

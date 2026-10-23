@@ -16,6 +16,7 @@
 
 import { CATEGORIES } from '../mapping.js';
 import { KINDS, labelOf, nebulaLabel } from './bodies.js';
+import { drawUfo, drawBeam, drawSheaf } from './ufo.js';
 
 export const MONO = '"JetBrains Mono", "Cascadia Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace';
 export const PULSE_COLOUR = '#c8dcff';
@@ -242,4 +243,47 @@ export function drawOverlay(ctx, s, a, o) {
       ctx.fillText(pr.label.split(' · ')[0], (s.x[pr.a] + s.x[pr.b]) / 2, (s.y[pr.a] + s.y[pr.b]) / 2 - 8);
     }
   }
+}
+
+/**
+ * The probe's layer, drawn after everything else so the saucer is on top:
+ * the catch (the sheaf from the probed planet to each lit planet, a short
+ * label on each in the readout's words, the head's line on the probed
+ * planet), then the beam from the UFO to the held planet while locked or to
+ * the hovered one, then the saucer at the pointer. Nothing here moves a
+ * planet: it reads the screen positions it is given.
+ * @param {object} o  { ufo: { on, over, x, y, locked, since } | null, catch: { account: {id}, short, lit: [{ id, inStep, touching, short }] } | null, hover, now, reduced }
+ */
+export function drawProbe(ctx, s, o) {
+  const now = o.now ?? performance.now();
+  const reduced = Boolean(o.reduced);
+  const c = o.catch;
+  if (c && s.depth[c.account.id] > 0) {
+    const from = { x: s.x[c.account.id], y: s.y[c.account.id] };
+    const targets = [];
+    for (const l of c.lit) if (s.depth[l.id] > 0) targets.push({ x: s.x[l.id], y: s.y[l.id], inStep: l.inStep, touching: l.touching });
+    drawSheaf(ctx, from, targets, { rgb: PULSE_RGB, strength: 1 });
+    ctx.font = `10px ${MONO}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    let n = 0;
+    for (const l of c.lit) {
+      if (!(s.depth[l.id] > 0) || n >= 24 || !l.short) continue;
+      n += 1;
+      ctx.fillStyle = rgba(PULSE_RGB, l.inStep ? 0.95 : 0.7);
+      ctx.fillText(l.short, s.x[l.id] + Math.max(6, s.r[l.id] + 4), s.y[l.id] - 6);
+    }
+    if (c.short) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+      ctx.fillText(c.short, from.x + Math.max(8, s.r[c.account.id] + 6), from.y + 14);
+    }
+  }
+  const u = o.ufo;
+  if (!u?.on || !u.over) return;
+  const target = u.locked || o.hover || 0;
+  if (target > 0 && s.depth[target] > 0) {
+    const strength = reduced ? 1 : Math.min(1, (now - (u.since ?? now)) / 200);
+    drawBeam(ctx, { x: u.x, y: u.y - 8 }, { x: s.x[target], y: s.y[target] }, { strength, locked: Boolean(u.locked), reduced, rgb: PULSE_RGB, targetRadius: s.r[target] || 3 });
+  }
+  drawUfo(ctx, u.x, u.y, { t: now, reduced, rgb: PULSE_RGB });
 }

@@ -50,6 +50,7 @@
           <button class="btn layer" type="button" data-layer="nft" aria-pressed="true" title="NFTs: flashes at the planet (N)" style="color:#f72585"><span class="swatch" aria-hidden="true"></span>NFT</button>
         </span>
         <button id="sound" class="btn" type="button" aria-pressed="false" title="Sound from the listening page's engine (S)">Sound</button>
+        <button id="ufo" class="btn" type="button" aria-pressed="true" title="The UFO, the probe's cursor over the sky: double right-click the sky, press U, or double-tap with two fingers (U)">UFO</button>
         <a class="btn" href="explorer.html" title="Read the ledger: accounts, transactions, ledgers">Explorer</a>
         <button id="help-btn" class="btn" type="button" title="Keys (?)" aria-haspopup="dialog">?</button>
         <button id="start" class="btn primary" type="button" aria-pressed="false">Start</button>
@@ -57,27 +58,45 @@
     </header>
 
     <div id="focus-line" class="focus-line hidden" role="status" aria-live="polite"></div>
-    <p class="footer-keys" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>orbit <kbd>+</kbd><kbd>−</kbd>closer <kbd>[</kbd><kbd>]</kbd>planets <kbd>,</kbd><kbd>.</kbd>events <kbd>Enter</kbd>open <kbd>?</kbd>keys</p>
+    <p id="caption" class="caption hidden" role="status"></p>
+    <aside id="probe" class="probe hidden" role="region" aria-label="The probe's readout">
+      <div class="probe-head">
+        <h2 id="probe-title">The probe</h2>
+        <span id="probe-status" class="fine"></span>
+        <button id="probe-close" class="btn" type="button" title="Close the readout (Esc)">Close</button>
+      </div>
+      <ol id="probe-lines" class="probe-lines"></ol>
+      <div class="probe-actions">
+        <button id="probe-save" class="btn" type="button" title="Save this moment: a case with the probed account as the cast and the catch as its notes">Save this moment</button>
+        <button id="probe-copy-ai" class="btn" type="button" title="Copy for AI: the sky's coverage, the last ledger's events and the catch, as text">Copy for AI</button>
+        <button id="probe-copy" class="btn" type="button" title="Copy the readout's lines">Copy readout</button>
+      </div>
+    </aside>
+    <p class="footer-keys" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>orbit <kbd>+</kbd><kbd>−</kbd>closer <kbd>[</kbd><kbd>]</kbd>planets <kbd>,</kbd><kbd>.</kbd>events <kbd>Space</kbd>probe <kbd>U</kbd>UFO <kbd>Enter</kbd>explore <kbd>?</kbd>keys</p>
     <div id="coverage" class="coverage" role="status" aria-live="polite">Press Start. The sky shows only what this page hears from a public node, for as long as it listens; it never claims to be the whole ledger.</div>
 
     <div id="help" class="help hidden" role="dialog" aria-label="Keys" aria-modal="true">
       <div class="help-card">
         <h2>Keys</h2>
         <dl class="keys">
-          <dt><kbd>Space</kbd></dt><dd>Start and stop listening</dd>
+          <dt><kbd>Space</kbd></dt><dd>With the UFO on and a planet focused: hold the probe on it, and release it; otherwise start and stop listening</dd>
+          <dt><kbd>Shift</kbd> <kbd>Space</kbd></dt><dd>Start and stop listening, always</dd>
+          <dt><kbd>U</kbd></dt><dd>The UFO on and off (a double right-click on the sky and a two-finger double-tap do the same)</dd>
           <dt><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Orbit the sky (drag does the same)</dd>
           <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Move closer and further (scroll does the same)</dd>
           <dt><kbd>0</kbd></dt><dd>Reset the camera</dd>
           <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Travel from planet to planet, brightest first; the line above the coverage reads each one</dd>
           <dt><kbd>,</kbd> <kbd>.</kbd></dt><dd>Step through the last ledger's events; the line reads each one with its verb, its rule and the record fields that earned it</dd>
-          <dt><kbd>Enter</kbd></dt><dd>Open the focused planet in the explorer</dd>
-          <dt><kbd>Esc</kbd></dt><dd>Leave the planet, close this help</dd>
+          <dt><kbd>Enter</kbd></dt><dd>Explore the focused planet in place: its root and trust lines first, then its objects and NFTs, from the node</dd>
+          <dt><kbd>Shift</kbd> <kbd>Enter</kbd></dt><dd>Open the focused planet in the explorer</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Put the catch out, leave the planet, close this help</dd>
           <dt><kbd>P</kbd> <kbd>T</kbd> <kbd>D</kbd> <kbd>N</kbd></dt><dd>Toggle the payment, trust, DEX and NFT layers</dd>
           <dt><kbd>S</kbd></dt><dd>Sound on and off</dd>
           <dt><kbd>?</kbd></dt><dd>This help</dd>
         </dl>
         <p>Every event has one of four verbs: travel (something moved between planets: a comet), dock (a standing relationship: a dart into orbit), place (something on or off a book: a rock in a belt), happen (the account itself changed: a ring of light); a failed transaction is a spark that never leaves its planet, a Batch a tick. Every body is earned by data: a planet is an account that appeared in a validated transaction the page heard; a star issues a currency to at least three holders in those records; a black hole candidate has its master key disabled and an unusable regular key in its account root; a pulsar has a measured cadence. Every body's label prints the threshold that made it. A planet is named by its on-ledger Domain, else by the label the listening page's cast gives it (a cast member wears a ring in its cast colour), else by its short address. The coverage line says how much was heard. Nothing is stored; reloading starts an empty sky.</p>
-        <p>With <code>prefers-reduced-motion</code> the sky stands still: no slow turn, comets as still lines that fade.</p>
+        <p>The UFO is the probe’s cursor over the sky: double right-click the sky, press U, or double-tap with two fingers to put it away or bring it back. Hovering a planet with it shows a soft beam; holding (the button, a touch, or Space on a focused planet) locks the beam and probes the account: its recent history through the node with the ledgers stated, the planets the record connects it to lit with their counts, and four measures with their labels in the readout’s own words: record proximity (a random walk with restart over the window’s touch graph), flow conservation (exact inflow and outflow per currency and the lag at which they match), its own cadence, and coherence against its counterparties and the nearest active planets (the prewhitened statistic with its null, pairs tested and the percentile, and whether the record connects the pair). Releasing retracts the beam; the catch stays lit until the next hold or Esc. The beam pulls by evidence only: nothing in the sky moves toward it without a number.</p>
+        <p>With <code>prefers-reduced-motion</code> the sky stands still: no slow turn, comets as still lines that fade, a beam that is on or off, a saucer that does not bob.</p>
         <button id="help-close" class="btn" type="button">Close</button>
       </div>
     </div>

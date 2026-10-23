@@ -429,3 +429,18 @@ kbd {
     transition: none;
   }
 }
+
+/* --- phase 2: the UFO and the probe --------------------------------------------------------- */
+#sky.ufo { cursor: none; }
+.caption { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); max-width: min(92vw, 640px); margin: 0; padding: 8px 14px; border: 1px solid rgba(200, 220, 255, 0.25); border-radius: 8px; background: rgba(6, 10, 18, 0.9); color: #c8dcff; font: 12px/1.5 var(--mono, ui-monospace, monospace); z-index: 6; }
+.probe { position: fixed; right: 12px; top: 64px; bottom: 88px; width: min(92vw, 460px); display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid rgba(200, 220, 255, 0.22); border-radius: 10px; background: rgba(6, 10, 18, 0.92); color: #dbe6ff; font: 12px/1.45 var(--mono, ui-monospace, monospace); z-index: 5; }
+.probe-head { display: flex; align-items: baseline; gap: 10px; }
+.probe-head h2 { margin: 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #c8dcff; }
+.probe-head .fine { flex: 1; color: rgba(200, 220, 255, 0.6); }
+.probe-lines { flex: 1; margin: 0; padding: 0 0 0 18px; overflow: auto; }
+.probe-lines li { margin: 0 0 6px; word-break: break-word; }
+.probe-lines li.head { color: #fff; }
+.probe-lines li.step { color: #c8dcff; }
+.probe-lines li .fine { color: rgba(200, 220, 255, 0.6); }
+.probe-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 720px) { .probe { left: 12px; right: 12px; width: auto; top: auto; bottom: 88px; max-height: 50vh; } }

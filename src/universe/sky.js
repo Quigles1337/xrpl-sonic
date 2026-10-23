@@ -27,7 +27,7 @@
 
 import { project, referenceScale, ringPoints, clampCamera } from './projection.js';
 import { CATEGORIES, CATEGORY_NAMES } from '../mapping.js';
-import { drawOverlay, hexToRgb } from './overlay.js';
+import { drawOverlay, drawProbe, hexToRgb } from './overlay.js';
 import { primitivesOf, weatherPrimitives, rockAngle, beltRadius } from './motions.js';
 
 export const CAMERA_HOME = Object.freeze({ yaw: 0.35, pitch: 0.28, distance: 5.2, fov: 1.0, target: Object.freeze([0, 0, 0]) });
@@ -195,6 +195,16 @@ export class SkyBase {
 
   setStanding(standing) {
     this.standing = standing ?? null;
+  }
+
+  /** The UFO's state for the overlay: on, over the sky, where, the held planet while locked, when the target changed. */
+  setUfo(patch) {
+    this.ufo = { ...(this.ufo ?? { on: false, over: false, x: -1, y: -1, locked: 0, since: 0 }), ...patch };
+  }
+
+  /** The catch of the last probe, lit until the next hold or Escape (null clears). */
+  setCatch(c) {
+    this.catch = c ?? null;
   }
 
   setWeather(weather) {
@@ -540,6 +550,7 @@ export class SkyBase {
         return pts.some((p) => !p) ? null : pts;
       },
     });
+    drawProbe(l, this.screen, { ufo: this.ufo ?? null, catch: this.catch ?? null, hover: this.hover, now, reduced: this.reduced });
   }
 
   record(ms, far, mid, near, culled) {

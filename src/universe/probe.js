@@ -22,6 +22,7 @@ import { balanceFacts } from '../explorer/facts.js';
 import { add, sub, abs, cmp, isZero, isNegative } from '../decimal.js';
 import { normalise, cadenceOf, pairCoherence, significant, DEFAULTS as COHERENCE_DEFAULTS } from '../coherence.js';
 import { unwrapEntry } from '../account-tx.js';
+import { RIPPLE_EPOCH_OFFSET } from '../mapping.js';
 
 export const PROBE_VERSION = 1;
 export const TIER = Object.freeze({ calculated: 'calculated', observation: 'observation' });
@@ -195,6 +196,120 @@ export function cadence(values, { maxLag = DEFAULTS.maxLag, least = 0.3 } = {}) 
   return { period: c?.period ?? null, r: c?.r ?? null, events, ledgers: values.length, reason: c ? null : `no lag of two or more reaches r ≥ ${least}` };
 }
 
+// --- the history, newest first ----------------------------------------------------------------
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * The account's recent history, newest first, bounded: account_tx between
+ * two ledgers with forward: false, paged by marker, one page after the
+ * other, a failed page retried once after a pause (a public node's tooBusy
+ * is waited out longer), the rest of the bound marked missing when a page
+ * fails twice. A copy of the loader's seam (R14 in docs/universe-requests.md):
+ * src/account-tx.js pages forward only, and a busy account's recent ledgers
+ * are what the probe needs. Entries come back oldest first.
+ * @param {(cmd: object) => Promise<{ result?: object }>} request
+ * @returns {Promise<{ entries: object[], pages: number, requests: number, more: boolean, missing: { from: number, to: number, reason: string }[], error: string|null, oldest: number|null, newest: number|null }>}
+ */
+export async function fetchRecentHistory(request, account, { from, to, limit = 200, maxPages = 5, retries = 1, retryDelayMs = 800, busyDelayMs = 3000, onPage = null } = {}) {
+  const out = { entries: [], pages: 0, requests: 0, more: false, missing: [], error: null, oldest: null, newest: null };
+  if (!Number.isInteger(from) || !Number.isInteger(to) || from <= 0 || to < from) {
+    out.error = 'a range needs two ledger indices, from ≤ to';
+    return out;
+  }
+  let marker = null;
+  for (let page = 0; page < maxPages; page++) {
+    const cmd = { command: 'account_tx', account, ledger_index_min: from, ledger_index_max: to, forward: false, limit, ...(marker ? { marker } : {}) };
+    let res = null;
+    let lastError = null;
+    for (let attempt = 0; attempt <= retries && !res; attempt++) {
+      out.requests += 1;
+      try {
+        res = await request(cmd);
+      } catch (err) {
+        lastError = err;
+        if (attempt < retries) await sleep(err?.code === 'tooBusy' || err?.code === 'slowDown' ? busyDelayMs : retryDelayMs);
+      }
+    }
+    if (!res) {
+      const reached = out.oldest ?? to + 1;
+      out.missing.push({ from, to: reached - 1, reason: lastError?.code ?? lastError?.message ?? 'failed' });
+      out.error = lastError?.message ?? 'failed';
+      break;
+    }
+    out.pages += 1;
+    const list = res.result?.transactions ?? [];
+    for (const e of list) {
+      const u = unwrapEntry(e);
+      if (!u) continue;
+      out.entries.push(e);
+      if (u.ledgerIndex != null) {
+        out.oldest = out.oldest == null ? u.ledgerIndex : Math.min(out.oldest, u.ledgerIndex);
+        out.newest = out.newest == null ? u.ledgerIndex : Math.max(out.newest, u.ledgerIndex);
+      }
+    }
+    onPage?.({ pages: out.pages, entries: out.entries.length });
+    marker = res.result?.marker ?? null;
+    if (!marker) break;
+    if (page === maxPages - 1) out.more = true;
+  }
+  out.entries.sort((a, b) => (unwrapEntry(a)?.ledgerIndex ?? 0) - (unwrapEntry(b)?.ledgerIndex ?? 0) || (Number(a.meta?.TransactionIndex ?? 0) - Number(b.meta?.TransactionIndex ?? 0)));
+  return out;
+}
+
+// --- the window's frame for a named list ----------------------------------------------------------------
+
+/**
+ * The coherence frame of the live window for a named list of accounts
+ * (src/moment.js LiveWindow.ledgers rows), as frameFromLive makes it
+ * (included when the ledger's txn_count was heard in full), with one
+ * difference the ground-truth run taught: an account that submitted fewer
+ * than `minEvents` transactions in the window is read as the transactions
+ * it was involved in per ledger (its address in a touch record's
+ * destination, entries, lines or crossed), because a pool, a destination
+ * or an issuer submits nothing; `measureOf` says which reading each
+ * account got, for the labels. The involved reading leaves out the
+ * transactions `except` submitted (the probed account): what it did to a
+ * counterparty is its own series already, and counting it on the other
+ * side would make every counterparty in step with it at lag 0. A copy of
+ * R4's territory.
+ */
+export function frameFromWindow(ledgers, accounts, { minEvents = COHERENCE_DEFAULTS.minEvents, except = null } = {}) {
+  const heard = Array.isArray(ledgers) ? ledgers : [];
+  const frame = { source: 'live', measure: 'count', unit: 'ledger', bin: null, ledgers: [], accounts: [], series: new Map(), totals: new Map(), chosen: 'the probe', records: [], fetched: null, measureOf: new Map() };
+  if (!heard.length) return frame;
+  frame.ledgers = heard.map((l) => {
+    const expected = l.txnCount == null ? null : Number(l.txnCount);
+    const received = Number(l.received) || 0;
+    const reason = expected == null ? 'unknown' : received < expected ? 'incomplete' : null;
+    return { index: Number(l.index), included: !reason, reason, hash: l.hash ?? null, received, expected, closeTime: Number.isFinite(Number(l.closeTime)) ? Number(l.closeTime) + RIPPLE_EPOCH_OFFSET : null };
+  });
+  const list = accounts.map((a) => (typeof a === 'string' ? { address: a, label: a } : a)).filter((a) => a && typeof a.address === 'string');
+  const submitted = new Map(list.map((a) => [a.address, new Array(heard.length).fill(0)]));
+  const involved = new Map(list.map((a) => [a.address, new Array(heard.length).fill(0)]));
+  heard.forEach((l, i) => {
+    if (!frame.ledgers[i].included) return;
+    for (const a of list) submitted.get(a.address)[i] += Number(l.accounts?.[a.address]?.count) || 0;
+    for (const t of l.touches ?? []) {
+      frame.records.push(t);
+      const names = new Set([t.destination, ...(t.entries ?? []), ...(t.lines ?? []), ...(t.crossed ?? [])].filter(Boolean));
+      if (except && t.submitter === except) continue; // the probed account's own transactions are its own series, not the other's
+      for (const a of list) if (names.has(a.address) && t.submitter !== a.address) involved.get(a.address)[i] += 1;
+    }
+  });
+  frame.accounts = list.map((a) => ({ address: a.address, label: a.label ?? a.address }));
+  for (const a of frame.accounts) {
+    const s = submitted.get(a.address);
+    const total = s.reduce((x, y) => x + y, 0);
+    const read = total >= minEvents ? 'submitted' : 'involved';
+    const series = read === 'submitted' ? s : involved.get(a.address);
+    frame.series.set(a.address, series);
+    frame.totals.set(a.address, series.reduce((x, y) => x + y, 0));
+    frame.measureOf.set(a.address, read);
+  }
+  return frame;
+}
+
 // --- coherence against a named list ----------------------------------------------------------------
 
 /**
@@ -217,7 +332,7 @@ export function coherenceAgainst(frame, address, others, options = COHERENCE_DEF
   const tested = pairs.filter((p) => p.shuffle?.count || p.white?.shuffle?.count).length;
   for (const p of pairs) p.tested = tested;
   pairs.sort((x, y) => Math.abs(y.white?.r ?? 0) - Math.abs(x.white?.r ?? 0) || (y.white?.shuffle?.percentile ?? 0) - (x.white?.shuffle?.percentile ?? 0));
-  return { pairs, tested, significant: pairs.filter((p) => p.judged && significant(p, options.significance)).length };
+  return { pairs, tested, significant: pairs.filter((p) => p.judged && significant(p, options.significance)).length, measureOf: frame.measureOf ?? null };
 }
 
 // --- the words ----------------------------------------------------------------
@@ -260,8 +375,10 @@ export function cadenceLabel(c) {
  * The pair line, the phase 1.5 readout's words: "in step at lag +1 · r 0.62 prewhitened (raw 0.71) · above 97% of 200 shuffles · 6 pairs tested ·
  * connected in the record: 3" or "· not touching"; a pair not judged says why. Never "coordinated".
  */
-export function coherenceLabel(pair) {
-  if (!pair.judged) return `not judged: ${pair.reason ?? 'too little to measure'}`;
+export function coherenceLabel(pair, measureOf = null) {
+  const recOf = (p) => (p.record == null ? 'record not available' : p.record.count ? `connected in the record: ${num(p.record.count)}` : 'not touching');
+  const other = measureOf?.get?.(pair.b?.address) === 'involved' ? ' · the other read as involved: it submits little in the window' : '';
+  if (!pair.judged) return `not judged: ${pair.reason ?? 'too little to measure'}${other} · ${recOf(pair)}`;
   const w = pair.white ?? {};
   const s = w.shuffle ?? pair.shuffle ?? null;
   const inStep = significant(pair);
@@ -269,8 +386,7 @@ export function coherenceLabel(pair) {
   const r = w.r == null ? `r ${pair.r?.toFixed(2) ?? '—'} raw` : `r ${w.r.toFixed(2)} prewhitened (raw ${pair.r?.toFixed(2) ?? '—'})`;
   const nul = s?.count ? `above ${Math.round(100 * (s.percentile ?? 0))}% of ${num(s.count)} shuffles` : 'no null (too few shifts)';
   const tested = `${num(pair.tested ?? 0)} pair${pair.tested === 1 ? '' : 's'} tested`;
-  const rec = pair.record == null ? 'record not available' : pair.record.count ? `connected in the record: ${num(pair.record.count)}` : 'not touching';
-  return `${head} · ${r} · ${nul} · ${tested} · ${rec}`;
+  return `${head} · ${r} · ${nul} · ${tested}${other} · ${recOf(pair)}`;
 }
 
 // --- the catch ----------------------------------------------------------------
@@ -298,12 +414,13 @@ export function catchOf({ id, address, history, walk, edgesOf, categoryNames, co
       labels: {
         connection: connectionLabel(edge, categoryNames),
         proximity: proximityLabel(walk, pid),
-        coherence: pair ? coherenceLabel(pair) : 'coherence not measured: not in the window',
+        coherence: pair ? coherenceLabel(pair, coh?.measureOf ?? null) : 'coherence not measured: not in the window',
         influence: PHASE3,
         motif: PHASE3,
       },
       inStep: Boolean(pair && pair.judged && significant(pair)),
       touching: Boolean(edge && edge.count > 0),
+      evidence: (pair?.record?.transactions ?? []).map((t) => t.hash).filter((h) => typeof h === 'string').slice(0, 8),
       proximity: walk.scores.get(pid) ?? 0,
       rank: walk.ranked.indexOf(pid) + 1 || null,
     });

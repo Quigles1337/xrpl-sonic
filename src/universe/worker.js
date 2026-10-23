@@ -21,7 +21,8 @@
 
 import { XrplStream, NETWORKS } from '../ws.js';
 import { classifyMessage, txToEvent, ledgerToEvent, unwrapTransactionMessage } from '../mapping.js';
-import { LiveWindow } from '../moment.js';
+import { LiveWindow, momentFromLive } from '../moment.js';
+import { caseFromState } from '../case.js';
 import { frameFromLive, coherence, significant, DEFAULTS as COHERENCE_DEFAULTS } from '../coherence.js';
 import { Universe, coverageLine } from './universe.js';
 import { Layout } from './layout.js';
@@ -31,7 +32,7 @@ import { bodyOf, describeBody, KIND_CODES, THRESHOLDS } from './bodies.js';
 import { eventsOf, collapseShowers, weatherOf, describeEvent, OBJECTS } from './events.js';
 import { fetchAccountTx } from '../account-tx.js';
 import { CATEGORY_BY_CODE } from './records.js';
-import { touchGraph, randomWalk, conservation, seriesOf, cadence, coherenceAgainst, catchOf, historyLabel, DEFAULTS as PROBE_DEFAULTS } from './probe.js';
+import { touchGraph, randomWalk, conservation, seriesOf, cadence, coherenceAgainst, catchOf, historyLabel, fetchRecentHistory, frameFromWindow, DEFAULTS as PROBE_DEFAULTS } from './probe.js';
 
 const STEP_MS = 50; // layout relaxation cadence
 const FRAME_MS = 120; // at most this often, positions to the page
@@ -39,6 +40,8 @@ const MAX_EVENTS_PER_LEDGER = 600;
 const COHERENCE_EVERY = 10; // closed ledgers
 const PROBE_PAGES = 5; // the history's pages at most, 200 entries each, one after the other
 const PROBE_COUNTERPARTIES = 10; // the busiest counterparties in the coherence list
+const PROBE_MATES = 8; // the busiest galaxy-mates in the coherence list
+const PROBE_WALKED = 10; // the walk's nearest in the coherence list: the record's neighbourhood through the hubs
 const PROBE_SHUFFLES = 100; // the null per pair in a probe: enough for the 95th, half the listening page's
 const EXPLORE_PACE_MS = 250; // between an exploration's requests
 const COHERENCE_TOP = 8;
@@ -47,7 +50,9 @@ const SATELLITE_MS = 24 * 3600 * 1000; // an auction slot lasts a day
 let universe = new Universe();
 let layout = new Layout({ capacity: 4096 });
 let clusters = new Clusters();
-let live = new LiveWindow();
+const WINDOW_LEDGERS = 300; // the sky's live window: longer than the listening page's 50, for the probe's statistic
+let windowLedgers = WINDOW_LEDGERS; // the window asked for at start (?window=N), 50..4000
+let live = new LiveWindow({ max: windowLedgers });
 
 let stream = null;
 let synthetic = null;
@@ -91,7 +96,7 @@ function resetAll() {
   universe = new Universe();
   layout = new Layout({ capacity: 4096 });
   clusters = new Clusters();
-  live = new LiveWindow();
+  live = new LiveWindow({ max: windowLedgers });
   addedSinceLedger = [];
   domainsSinceLedger = [];
   domainsSent.clear();
@@ -555,8 +560,9 @@ async function feedReplay(url, pace, abort) {
   setState('idle', null);
 }
 
-function start({ network = 'mainnet', synthetic: count = 0, seed = 1337, sound = false, perLedger = 150, replay: replayUrl = null, pace = 300 } = {}) {
+function start({ network = 'mainnet', synthetic: count = 0, seed = 1337, sound = false, perLedger = 150, replay: replayUrl = null, pace = 300, window: windowAsked = WINDOW_LEDGERS } = {}) {
   stop();
+  windowLedgers = Math.min(4000, Math.max(50, Number(windowAsked) || WINDOW_LEDGERS));
   resetAll();
   soundOn = Boolean(sound);
   stepTimer = setTimeout(stepLayout, STEP_MS);
@@ -629,14 +635,14 @@ function ensurePlanet(address, ledger) {
 }
 
 /** The planets nearest a planet in the layout among those touched in the last `within` ledgers, by address. */
-function nearestActive(id, count, within = 12) {
+function nearestActive(id, count, within = 120) {
   const ledger = universe.currentLedger ?? 0;
   const [x, y, z] = layout.position(id);
   const out = [];
   for (let other = 1; other <= universe.planetCount; other++) {
     if (other === id || !layout.has(other)) continue;
     const p = universe.planets[other];
-    if (!p || (p.lastLedger ?? 0) < ledger - within) continue;
+    if (!p || (p.lastLedger ?? 0) < ledger - within || (p.involved ?? 0) < 3) continue; // active: seen lately, and more than a passer-by
     const [px, py, pz] = layout.position(other);
     out.push([Math.hypot(px - x, py - y, pz - z), other]);
   }
@@ -665,10 +671,11 @@ async function probe({ id, seq = 0 }) {
   let history;
   let entries = [];
   if (stream && !replay && !synthetic && to > 0) {
-    const r = await fetchAccountTx((cmd) => stream.request(cmd), address, { from, to, limit: 200, maxPages: PROBE_PAGES, onPage: (page) => post({ type: 'probe-page', seq, id, pages: page?.pages ?? 0, entries: page?.entries?.length ?? page?.entries ?? 0 }) });
-    entries = r.entries ?? [];
+    // newest first, so a busy account's recent ledgers come before the bound runs out (src/universe/probe.js fetchRecentHistory, R14's seam copied)
+    const r = await fetchRecentHistory((cmd) => stream.request(cmd), address, { from, to, limit: 200, maxPages: PROBE_PAGES, onPage: (page) => post({ type: 'probe-page', seq, id, pages: page.pages, entries: page.entries }) });
+    entries = r.entries;
     const inWindow = entries.filter((e) => universe.ledgers.has(Number(e.ledger_index ?? e.tx?.ledger_index ?? e.tx_json?.ledger_index))).length;
-    history = { from, to, records: entries.length, inWindow, more: r.pages >= PROBE_PAGES && Boolean(r.marker), missing: r.missing ?? [], host, pages: r.pages, error: r.error ?? null, source: 'account_tx' };
+    history = { from: r.oldest ?? from, to: r.newest ?? to, bound: { from, to }, records: entries.length, inWindow, more: r.more, missing: r.missing, host, pages: r.pages, requests: r.requests, error: r.error, source: 'account_tx' };
   } else {
     history = { from: null, to: null, records: 0, inWindow: null, more: false, missing: [], host: null, pages: 0, error: replay ? 'no history in a replay: the window is the record' : synthetic ? 'no history in a synthetic sky' : 'not connected: the window is the record', source: 'window' };
   }
@@ -689,12 +696,22 @@ async function probe({ id, seq = 0 }) {
   const walk = randomWalk(adj, id, { restart: PROBE_DEFAULTS.restart, iterations: PROBE_DEFAULTS.iterations });
   const cons = history.source === 'account_tx' ? conservation(entries, address) : [];
   const liveLedgers = live.ledgers;
-  const series = history.source === 'account_tx' ? seriesOf(entries, address, { from, to }) : liveLedgers.map((l) => l.accounts?.[address]?.count ?? 0);
+  const series = history.source === 'account_tx' ? seriesOf(entries, address, { from: history.from, to: history.to }) : liveLedgers.map((l) => l.accounts?.[address]?.count ?? 0);
   const cad = { ...cadence(series), source: history.source === 'account_tx' ? 'its history' : 'the window' };
   const counterparties = edges.slice(0, PROBE_COUNTERPARTIES).map(([other]) => universe.addresses.string(other));
-  const nearest = nearestActive(id, PROBE_DEFAULTS.nearest).filter((a) => !counterparties.includes(a));
-  const list = [address, ...counterparties, ...nearest];
-  const frame = frameFromLive(liveLedgers, { cast: list.map((a) => ({ address: a, label: short(a) })) });
+  // galaxy-mates: the busiest satellites of the probed planet's core (or of the planet itself when it is a core), a burst that touched the same hub
+  const core = layout.core[id] || (layout.promoted[id] ? id : 0);
+  const mates = [];
+  if (core) {
+    for (let other = 1; other <= universe.planetCount && mates.length < 40; other++) if (other !== id && layout.core[other] === core) mates.push([layout.rank[other], other]);
+    mates.sort((a, b) => a[0] - b[0]);
+  }
+  const galaxyMates = mates.slice(0, PROBE_MATES).map(([, other]) => universe.addresses.string(other)).filter((a) => !counterparties.includes(a));
+  // the record's neighbourhood beyond the first degree: the walk's nearest, through the hubs (a burst that touched the same pool)
+  const walked = walk.ranked.slice(0, PROBE_WALKED).map((other) => universe.addresses.string(other)).filter((a) => a && !counterparties.includes(a));
+  const nearest = nearestActive(id, PROBE_DEFAULTS.nearest).filter((a) => !counterparties.includes(a) && !galaxyMates.includes(a) && !walked.includes(a));
+  const list = [address, ...counterparties, ...walked, ...galaxyMates.filter((a) => !walked.includes(a)), ...nearest];
+  const frame = frameFromWindow(liveLedgers, list.map((a) => ({ address: a, label: short(a) })), { except: address });
   const coh = coherenceAgainst(frame, address, list.slice(1), { ...COHERENCE_DEFAULTS, shuffles: PROBE_SHUFFLES });
   const c = catchOf({
     id,
@@ -708,7 +725,7 @@ async function probe({ id, seq = 0 }) {
     cadence: cad,
     idOf: (a) => (universe.addresses.has(a) ? universe.addresses.id(a) : 0),
     addressOf: (other) => universe.addresses.string(other),
-    nearest,
+    nearest: [...walked, ...galaxyMates, ...nearest],
   });
   c.window = { ledgers: liveLedgers.length, from: liveLedgers[0]?.index ?? null, to: liveLedgers.at(-1)?.index ?? null };
   c.ms = Math.round(performance.now() - t0);
@@ -735,12 +752,25 @@ async function explore({ id, seq = 0 }) {
   const explored = p.explored ?? { ledgerIndex: null, root: null, lines: null, fundedLines: null, objects: null, signerList: null, nfts: null, errors: {} };
   p.explored = explored;
   const ask = async (command, extra = {}) => {
-    try {
-      return (await stream.request({ command, account: address, ledger_index: 'validated', ...extra })).result;
-    } catch (err) {
-      explored.errors[command] = err?.code ?? err?.message ?? 'failed';
-      return null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const r = (await stream.request({ command, account: address, ledger_index: 'validated', ...extra })).result;
+        delete explored.errors[command];
+        return r;
+      } catch (err) {
+        explored.errors[command] = err?.code ?? err?.message ?? 'failed';
+        if (attempt === 0 && (err?.code === 'tooBusy' || err?.code === 'slowDown')) {
+          // the public node's quota: wait the time it states (capped at a minute), once, and say so
+          const stated = Number(/retry in ~(\d+)ms/.exec(err?.message ?? '')?.[1]);
+          const wait = Math.min(60000, Number.isFinite(stated) && stated > 0 ? stated + 500 : 3000);
+          explored.waiting = { command, ms: wait };
+          post({ type: 'explored', seq, id, part: 'waiting', explored });
+          await sleep(wait);
+          explored.waiting = null;
+        } else return null;
+      }
     }
+    return null;
   };
   const info = await ask('account_info');
   if (info?.account_data) {
@@ -751,7 +781,7 @@ async function explore({ id, seq = 0 }) {
   }
   post({ type: 'explored', seq, id, part: 'root', explored });
   await sleep(EXPLORE_PACE_MS);
-  const lines = await ask('account_lines', { limit: 400 });
+  const lines = await ask('account_lines', { limit: 200 });
   if (lines?.lines) {
     explored.lines = lines.lines.length + (lines.marker ? 1 : 0); // a marker means more beyond the page: counted as "400+"
     explored.linesMore = Boolean(lines.marker);
@@ -759,7 +789,7 @@ async function explore({ id, seq = 0 }) {
   }
   post({ type: 'explored', seq, id, part: 'lines', explored });
   await sleep(EXPLORE_PACE_MS);
-  const objects = await ask('account_objects', { limit: 400 });
+  const objects = await ask('account_objects', { limit: 200 });
   if (objects?.account_objects) {
     const byType = {};
     for (const o of objects.account_objects) byType[o.LedgerEntryType] = (byType[o.LedgerEntryType] ?? 0) + 1;
@@ -770,7 +800,7 @@ async function explore({ id, seq = 0 }) {
   }
   post({ type: 'explored', seq, id, part: 'objects', explored });
   await sleep(EXPLORE_PACE_MS);
-  const nfts = await ask('account_nfts', { limit: 400 });
+  const nfts = await ask('account_nfts', { limit: 200 });
   if (nfts?.account_nfts) {
     explored.nfts = nfts.account_nfts.length;
     explored.nftsMore = Boolean(nfts.marker);
@@ -799,6 +829,12 @@ self.onmessage = (e) => {
     case 'coverage':
       post({ type: 'coverage', coverage: universe.coverage(), line: coverageLine(universe.coverage(), { host, synthetic: Boolean(synthetic), state }) });
       break;
+    case 'moment': {
+      const base = caseFromState({ network: m.network === 'testnet' ? 'testnet' : 'mainnet', cast: m.cast ?? [], title: m.title ?? '' });
+      const c = momentFromLive({ base, window: live, question: m.question ?? '', host: host ?? '' });
+      post({ type: 'moment', seq: m.seq, case: c, reason: c ? null : 'no closed ledger in the window yet' });
+      break;
+    }
     case 'probe':
       probe(m).catch((err) => post({ type: 'probe-error', seq: m.seq, id: m.id, message: err?.message ?? String(err) }));
       break;

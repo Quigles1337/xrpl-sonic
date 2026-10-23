@@ -24,6 +24,12 @@ import { nameOf, KINDS } from './bodies.js';
 import { describeEvent, colourOf, OBJECTS } from './events.js';
 import { LIFE, LOUDNESS } from './motions.js';
 import { hexToRgb } from './overlay.js';
+import { UfoGestures, loadUfoState, saveUfoState, UFO_SENTENCE, HOLD_MS } from './ufo.js';
+import { describeCatch, historyLabel } from './probe.js';
+import { addAnnotation, serializeCase, caseFilename, encodeCase, validateCase } from '../case.js';
+import { buildHash } from '../params.js';
+import { SITE_URL } from '../explorers.js';
+import { REPLY_TRAILER_HEAD, exampleAnnotation } from '../describe.js';
 
 const query = new URLSearchParams(location.search);
 const network = query.get('network') === 'testnet' ? 'testnet' : 'mainnet';
@@ -38,7 +44,8 @@ const replay = (() => {
   if (/^[a-z][a-z0-9+.-]*:/i.test(v) || v.includes('..')) return null;
   return v;
 })();
-const pace = Math.max(0, Number(query.get('pace')) || 300);
+const pace = query.has('pace') && Number.isFinite(Number(query.get('pace'))) ? Math.max(0, Number(query.get('pace'))) : 300; // ?pace=0 is honoured: as fast as the worker reads
+const windowLedgers = Math.min(4000, Math.max(50, Number(query.get('window')) || 300)); // the live window's ledgers, for the probe's statistic
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const $ = (sel) => document.querySelector(sel);
@@ -85,6 +92,12 @@ const state = {
   objectsSeen: new Set(),
   ignitions: [], // { ledger, id, address, label }
   replayDone: false,
+  ufo: loadUfoState(), // { ufo: on, captionShown } under the sky's own key
+  hold: null, // a primary button down on a planet, waiting to be a hold
+  probe: null, // the probe in progress or the last one: { seq, id, address, locked, status, history, connections, catch, lines }
+  probeSeq: 0,
+  explored: new Map(), // id → what the exploration learned
+  moments: [], // the moments saved from the probe this session
 };
 const addresses = [null];
 
@@ -154,6 +167,51 @@ worker.onmessage = (e) => {
       break;
     case 'replay-done':
       state.replayDone = true;
+      break;
+    case 'probe-history':
+      if (state.probe && m.seq === state.probe.seq) {
+        state.probe.history = m.history;
+        state.probe.status = 'connections…';
+        renderProbe();
+      }
+      break;
+    case 'probe-page':
+      if (state.probe && m.seq === state.probe.seq) {
+        state.probe.status = `history: page ${m.pages}…`;
+        renderProbe();
+      }
+      break;
+    case 'probe-connections':
+      if (state.probe && m.seq === state.probe.seq) {
+        state.probe.connections = m.connections ?? [];
+        state.probe.status = 'measuring…';
+        sky.setCatch(interimCatch(state.probe));
+        renderProbe();
+      }
+      break;
+    case 'probe-catch':
+      onCatch(m);
+      break;
+    case 'probe-error':
+      if (state.probe && m.seq === state.probe.seq) {
+        state.probe.error = m.message;
+        renderProbe();
+      }
+      break;
+    case 'explored':
+      if (m.explored) state.explored.set(m.id, m.explored);
+      if (state.focus === m.id) worker.postMessage({ type: 'describe', id: m.id, cast: state.cast });
+      if (state.probe && state.probe.id === m.id) {
+        state.probe.explored = m.explored;
+        if (m.reason) state.probe.status = m.reason;
+        renderProbe();
+      }
+      break;
+    case 'explore-error':
+      console.warn('[universe] explore', m.message);
+      break;
+    case 'moment':
+      onMoment(m);
       break;
     case 'error':
       console.warn('[universe]', m.message);
@@ -257,7 +315,7 @@ async function start() {
   state.replayDone = false;
   startBtn.textContent = 'Stop';
   startBtn.setAttribute('aria-pressed', 'true');
-  worker.postMessage({ type: 'start', network, synthetic, seed, sound: state.sound, replay, pace });
+  worker.postMessage({ type: 'start', network, synthetic, seed, sound: state.sound, replay, pace, window: windowLedgers });
   if (state.sound) await engine.start();
 }
 
@@ -296,12 +354,17 @@ function toggleLayer(name) {
 // --- focus and the text equivalent ------------------------------------------------------------
 
 function onHover(id) {
+  sky.setUfo({ since: performance.now() }); // the beam fades to its new target
   if (state.focus) return; // a focused planet keeps the line
   if (id) worker.postMessage({ type: 'describe', id, hover: true, cast: state.cast });
   else focusLine.classList.add('hidden');
 }
 
 canvas.addEventListener('pointermove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  sky.setUfo({ over: true, x: e.clientX - rect.left, y: e.clientY - rect.top });
+  if (state.ufo.ufo) canvas.style.cursor = 'none';
+  if (state.hold && Math.hypot(e.clientX - state.hold.x, e.clientY - state.hold.y) > 4) cancelHold();
   if (state.focus || sky.drag) return;
   const m = sky.hitMotion(e.clientX, e.clientY);
   if (m) showEvent(m);
@@ -388,7 +451,10 @@ window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
   if (e.key === 'Escape') {
     if (!help.classList.contains('hidden')) help.classList.add('hidden');
-    else clearFocus();
+    else if (state.probe) {
+      clearProbe();
+      clearFocus();
+    } else clearFocus();
     return;
   }
   if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
@@ -399,7 +465,11 @@ window.addEventListener('keydown', (e) => {
   switch (e.key) {
     case ' ':
       e.preventDefault();
-      state.running ? stop() : start();
+      if (state.ufo.ufo && !e.shiftKey && state.focus) {
+        // the probe key: hold on the focused planet, and release (Shift+Space is Start/Stop while the UFO is on)
+        if (state.probe?.locked && state.probe.id === state.focus) releaseProbe();
+        else beginProbe(state.focus);
+      } else state.running ? stop() : start();
       break;
     case 'ArrowLeft':
       e.preventDefault();
@@ -442,10 +512,15 @@ window.addEventListener('keydown', (e) => {
       stepEvent(-1);
       break;
     case 'Enter':
-      if (state.focus && addresses[state.focus] && !synthetic) {
+      if (!state.focus || !addresses[state.focus] || synthetic) break;
+      if (e.shiftKey) {
         const url = explorerUrl(SONIC_EXPLORER, network, 'account', addresses[state.focus]);
         if (url) window.open(url, '_blank', 'noopener,noreferrer');
-      }
+      } else explore(state.focus);
+      break;
+    case 'u':
+    case 'U':
+      setUfo(!state.ufo.ufo);
       break;
     case 'p':
     case 'P':
@@ -473,6 +548,285 @@ window.addEventListener('keydown', (e) => {
 });
 $('#help-btn').addEventListener('click', () => help.classList.toggle('hidden'));
 $('#help-close').addEventListener('click', () => help.classList.add('hidden'));
+
+// --- the UFO and the probe (phase 2) ------------------------------------------------------------
+
+const ufoBtn = $('#ufo');
+const probeEl = $('#probe');
+const probeLines = $('#probe-lines');
+const probeStatus = $('#probe-status');
+const probeTitle = $('#probe-title');
+const captionEl = $('#caption');
+let captionTimer = 0;
+
+/** The name of a lit planet from its address when the page has not yet been told its id (a planet the probe made). */
+const nameOfLit = (id, address) => nameOf({ address: address ?? addresses[id], domain: state.domains.get(id) ?? null }, state.cast).name;
+
+/** One caption, the first time the sky opens in this browser: the UFO's sentence. */
+function showCaption(text, ms = 14000) {
+  captionEl.textContent = text;
+  captionEl.classList.remove('hidden');
+  clearTimeout(captionTimer);
+  captionTimer = setTimeout(() => captionEl.classList.add('hidden'), ms);
+}
+
+/** The UFO on or off: the switch, the key, the gestures all land here; remembered under the sky's own key. */
+function setUfo(on) {
+  state.ufo.ufo = Boolean(on);
+  saveUfoState(state.ufo);
+  ufoBtn.setAttribute('aria-pressed', String(state.ufo.ufo));
+  canvas.classList.toggle('ufo', state.ufo.ufo);
+  sky.setUfo({ on: state.ufo.ufo, since: performance.now() });
+  if (!state.ufo.ufo) releaseProbe();
+}
+ufoBtn.addEventListener('click', () => setUfo(!state.ufo.ufo));
+const gestures = new UfoGestures({ onToggle: () => setUfo(!state.ufo.ufo) });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault()); // over the sky canvas only, never elsewhere on the page
+canvas.addEventListener('mousedown', (e) => {
+  if (gestures.mousedown(e)) e.preventDefault();
+});
+canvas.addEventListener('touchstart', (e) => gestures.touchstart(e), { passive: true });
+canvas.addEventListener('pointerleave', () => sky.setUfo({ over: false }));
+
+/** A hold: the primary button down on a planet, HOLD_MS without moving; the sky's drag is let go and the probe begins. */
+function cancelHold() {
+  if (state.hold) clearTimeout(state.hold.timer);
+  state.hold = null;
+}
+canvas.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0 || !state.ufo.ufo) return;
+  const id = sky.hitTest(e.clientX, e.clientY);
+  if (!id) return;
+  const hold = { id, x: e.clientX, y: e.clientY, timer: 0 };
+  hold.timer = setTimeout(() => {
+    if (state.hold !== hold) return;
+    state.hold = null;
+    sky.drag = null;
+    beginProbe(id);
+  }, HOLD_MS);
+  state.hold = hold;
+});
+const onRelease = () => {
+  cancelHold();
+  releaseProbe();
+};
+canvas.addEventListener('pointerup', onRelease);
+canvas.addEventListener('pointercancel', onRelease);
+
+/** The probe begins on a planet: the catch of the last one goes out, the beam locks, the worker is asked, in the spec's order. */
+function beginProbe(id) {
+  if (!id || !addresses[id]) return 0;
+  const seq = ++state.probeSeq;
+  state.probe = { seq, id, address: addresses[id], startedAt: performance.now(), locked: true, status: 'history…', history: null, connections: [], catch: null, lines: [], error: null, explored: state.explored.get(id) ?? null };
+  sky.setCatch(null);
+  sky.setUfo({ locked: id, since: performance.now() });
+  focusOn(id, { look: false });
+  worker.postMessage({ type: 'probe', id, seq });
+  explore(id, seq);
+  renderProbe();
+  return seq;
+}
+
+/** Release retracts the beam; the catch stays lit. */
+function releaseProbe() {
+  if (!state.probe?.locked) return;
+  state.probe.locked = false;
+  sky.setUfo({ locked: 0, since: performance.now() });
+}
+
+/** Escape, or the readout's Close: the catch goes out. */
+function clearProbe() {
+  state.probe = null;
+  sky.setCatch(null);
+  sky.setUfo({ locked: 0 });
+  probeEl.classList.add('hidden');
+}
+
+/** Exploration proper: the planet loaded as the explorer loads it, from the node; nothing in a replay or a synthetic sky. */
+function explore(id, seq = ++state.probeSeq) {
+  if (!id || synthetic || replay) return;
+  worker.postMessage({ type: 'explore', id, seq });
+}
+
+const connectionCount = (label) => Number((/connected in the record: ([\d,]+)/.exec(label ?? '')?.[1] ?? '0').replace(/,/g, '')) || 0;
+/** The short label beside a lit planet: the pair's head and the record's word, in the readout's words. */
+function shortOf(l) {
+  const coh = l.labels?.coherence ?? '';
+  const head = coh.startsWith('in step') ? coh.split(' · ')[0] : coh.startsWith('not in step') ? 'not in step' : coh.startsWith('not judged') ? 'not judged' : '';
+  const n = connectionCount(l.labels?.connection);
+  const conn = l.touching ? `connected: ${n}` : 'not touching';
+  return [head, conn].filter(Boolean).join(' · ');
+}
+
+/** The connections, lit as they land, before the measures: an interim catch with the record's counts only. */
+function interimCatch(p) {
+  return { account: { id: p.id, address: p.address }, short: `probe · ${p.connections.length} connected · measuring…`, lit: p.connections.map((c) => ({ id: c.id, address: c.address, inStep: false, touching: true, short: `connected: ${c.count}` })) };
+}
+
+function onCatch(m) {
+  const p = state.probe;
+  if (!p || m.seq !== p.seq) return;
+  const c = m.catch;
+  for (const l of c.lit) l.short = shortOf(l);
+  c.short = `probe · ${c.lit.length} lit · ${c.coherence ? `${c.coherence.significant} in step of ${c.coherence.tested} tested` : 'no coherence'} · ${historyLabel(c.history).split(',')[0]}`;
+  p.catch = c;
+  p.lines = describeCatch(c, nameOfLit);
+  p.status = `${c.lit.length} lit · ${c.ms} ms`;
+  sky.setCatch(c);
+  renderProbe();
+  // the text equivalent: the catch in the readout's words through the focus line's status region, one line per lit planet
+  focusLine.classList.remove('hidden');
+  focusLine.innerHTML = '';
+  const kind = document.createElement('span');
+  kind.className = 'kind';
+  kind.textContent = 'probe';
+  const text = document.createElement('span');
+  text.textContent = [p.lines[0].replace(/^probe: /, ''), ...p.lines.slice(1)].join(' · '); // the kind span already says probe
+  focusLine.append(kind, text);
+}
+
+function renderProbe() {
+  const p = state.probe;
+  if (!p) return;
+  probeEl.classList.remove('hidden');
+  probeTitle.textContent = `The probe · ${nameOfLit(p.id, p.address)}`;
+  probeStatus.textContent = p.error ? `error: ${p.error}` : p.status;
+  probeLines.innerHTML = '';
+  const add = (text, cls) => {
+    const li = document.createElement('li');
+    if (cls) li.className = cls;
+    li.textContent = text;
+    probeLines.append(li);
+  };
+  if (p.history) add(historyLabel(p.history), 'head');
+  if (p.explored?.root) {
+    const x = p.explored;
+    const err = (k, pending) => (x.waiting?.command === k ? `${k}: waiting ${Math.round(x.waiting.ms / 1000)} s for the node’s quota` : x.errors?.[k] ? `${k}: ${x.errors[k]}` : pending);
+    add(`explored at #${Number(x.ledgerIndex ?? 0).toLocaleString('en-US')}: ${x.lines == null ? err('account_lines', 'lines…') : `${x.lines}${x.linesMore ? '+' : ''} trust lines, ${x.fundedLines ?? 0} funded`} · ${x.objects == null ? err('account_objects', 'objects…') : `${Object.entries(x.objects).map(([k, v]) => `${v} ${k}`).join(', ') || 'no objects'}${x.objectsMore ? ', more beyond the page' : ''}${x.signerList === true ? ' · a SignerList: guardians' : x.signerList === false ? ' · no SignerList' : ''}`} · ${x.nfts == null ? err('account_nfts', 'NFTs…') : `${x.nfts}${x.nftsMore ? '+' : ''} NFTs (moons)`}`, 'head');
+  }
+  if (p.catch) {
+    const lines = p.lines;
+    const headCount = lines.length - p.catch.lit.length;
+    lines.forEach((line, i) => add(line, i < headCount ? 'head' : p.catch.lit[i - headCount]?.inStep ? 'step' : ''));
+    add(`tiers: proximity, conservation, cadence and the record's connections are calculated; coherence is an observation (a correlation at a lag). Nothing here says who owns what.`, 'fine');
+  } else if (p.connections.length) {
+    add(`connected in the record: ${p.connections.length} planets, by count: ${p.connections
+      .slice(0, 12)
+      .map((c) => `${nameOfLit(c.id, c.address)} ${c.count}`)
+      .join(', ')}${p.connections.length > 12 ? ', …' : ''}`);
+  }
+}
+$('#probe-close').addEventListener('click', clearProbe);
+
+/** The clipboard, or a selected textarea when it is refused. */
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.append(ta);
+    ta.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch {
+      ok = false;
+    }
+    ta.remove();
+    return ok;
+  }
+}
+
+/** Copy for AI: what this is, the coverage, the last ledger's events with their hashes, then the catch under its own heading, then how to reply. */
+async function copyForAI() {
+  const p = state.probe;
+  if (!p?.catch) return false;
+  const cov = state.last?.coverageLine ?? coverageEl.textContent;
+  const lines = [
+    'xrpl-sonic universe · the probe’s catch · text for an assistant',
+    `generated ${new Date().toISOString()} · ${network} · ${state.renderer} renderer · probe v${p.catch.version}`,
+    `coverage: ${cov}`,
+    'This is what one page heard from a public node while it listened, never the whole ledger. Hashes and amounts are verbatim.',
+    '',
+    `## The last ledger’s events (${state.events.length}, ledger #${state.ledger ?? '?'})`,
+    ...state.events.slice(0, 200).map((e) => `${describeEvent(e, nameOfId)} · ${e.rule}${e.hash ? ` · ${e.hash}` : ''}`),
+    '',
+    '## The catch',
+    ...p.lines,
+    '',
+    'tiers: record proximity, flow conservation, cadence and the record’s connections are calculated from the records; coherence is an observation: a correlation at a lag, with its null. Nothing here infers ownership or intent.',
+    '',
+    `${REPLY_TRAILER_HEAD}example:\n${JSON.stringify([exampleAnnotation(state.events.find((e) => e.hash)?.hash ?? '0'.repeat(64))])}`,
+  ];
+  const ok = await copyText(lines.join('\n'));
+  probeStatus.textContent = ok ? 'copied for AI' : 'the clipboard refused';
+  return ok;
+}
+$('#probe-copy-ai').addEventListener('click', copyForAI);
+$('#probe-copy').addEventListener('click', async () => {
+  const p = state.probe;
+  if (!p?.lines.length) return;
+  probeStatus.textContent = (await copyText(p.lines.join('\n'))) ? 'readout copied' : 'the clipboard refused';
+});
+
+/** Save this moment, mid-probe: the worker builds the moment from its window with the probed account as the cast; the catch's lines become its notes. */
+function saveMoment() {
+  const p = state.probe;
+  if (!p?.catch) return;
+  const nm = names(p.id);
+  worker.postMessage({ type: 'moment', seq: p.seq, network, cast: [{ address: p.address, label: nm.source === 'cast' ? nm.name : 'Probed' }], question: `the probe of ${p.address}: what do the catch’s lines show?`, title: `probe · ${nm.name}` });
+  probeStatus.textContent = 'saving…';
+}
+$('#probe-save').addEventListener('click', saveMoment);
+
+async function onMoment(m) {
+  const p = state.probe;
+  if (!p || m.seq !== p.seq) return;
+  if (!m.case) {
+    probeStatus.textContent = `not saved: ${m.reason ?? 'no window'}`;
+    return;
+  }
+  let c = m.case;
+  const ledger = c.clips?.[0]?.to ?? state.ledger;
+  for (const [i, line] of p.lines.entries()) {
+    const lit = i >= p.lines.length - p.catch.lit.length ? p.catch.lit[i - (p.lines.length - p.catch.lit.length)] : null;
+    const r = addAnnotation(c, { text: line.slice(0, 500), anchor: { ledger }, kind: 'observation', evidence: lit?.evidence ?? [], source: 'xrpl-sonic universe probe', status: 'draft' });
+    if (r.case) c = r.case;
+  }
+  const v = validateCase(c);
+  if (!v.case) {
+    probeStatus.textContent = `not saved: ${v.errors[0] ?? 'invalid case'}`;
+    return;
+  }
+  c = v.case;
+  const blob = new Blob([serializeCase(c)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = caseFilename(c);
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  let link = null;
+  try {
+    link = `${SITE_URL}?network=${encodeURIComponent(network)}${buildHash({ case: await encodeCase(c) })}`;
+  } catch {
+    link = null;
+  }
+  const copied = link ? await copyText(link) : false;
+  probeStatus.textContent = `saved ${caseFilename(c)}${copied ? ' · link copied' : ''}`;
+  state.moments.push({ id: c.id, file: caseFilename(c), link });
+}
+
+// the switch as stored, the caption once
+setUfo(state.ufo.ufo);
+if (!state.ufo.captionShown) {
+  showCaption(UFO_SENTENCE);
+  state.ufo.captionShown = true;
+  saveUfoState(state.ufo);
+}
 
 // --- memory, for the bench harness ------------------------------------------------------------
 
@@ -516,6 +870,15 @@ window.xrplUniverse = {
   focusOn,
   travel,
   stepEvent,
+  probe: beginProbe,
+  releaseProbe,
+  clearProbe,
+  explore,
+  setUfo,
+  copyForAI,
+  saveMoment,
+  catch: () => state.probe?.catch ?? null,
+  probeState: () => state.probe,
   worker,
   engine,
 };
