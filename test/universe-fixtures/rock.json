@@ -1,0 +1,155 @@
+{
+  "object": "rock",
+  "verb": "place",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841942,
+  "hash": "20B9D3CE531BADDD6C25A303BB99E9DA38140AF6CC003845004DB82296DF6589",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:01Z",
+    "ctid": "C66D899600110000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "DDB3B8B3947D4F666CE88B95CFA4AB7BC0B37B6166A679118FD349A08FADD884",
+    "ledger_index": 107841942,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexNext": "0",
+              "IndexPrevious": "0",
+              "Owner": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
+              "RootIndex": "1BBEACDDD4D74F0AC4548C926F22916D6B00C59C24FFC036D6D66F0456A3A947"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "1BBEACDDD4D74F0AC4548C926F22916D6B00C59C24FFC036D6D66F0456A3A947",
+            "PreviousTxnID": "E114D0D2B44C87047C8AF47E7ADE21D7AFFDF22CBBE1A04ED7A83D13A7D4DF29",
+            "PreviousTxnLgrSeq": 107841941
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "Offer",
+            "LedgerIndex": "2B75F9043377FE7091246BF29646FC2884132336EF14252E1A202BBEC78C574B",
+            "NewFields": {
+              "Account": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
+              "BookDirectory": "49789A0B460DC77A2CED9349C432AEA97352345BA3C7313A5A042EA9A134312A",
+              "Sequence": 42636407,
+              "TakerGets": {
+                "currency": "CNY",
+                "issuer": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
+                "value": "849469"
+              },
+              "TakerPays": "100000000000"
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
+              "Balance": "95182846",
+              "Flags": 0,
+              "OwnerCount": 2,
+              "Sequence": 42636408
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "47AA01718D2EEC8C55C99463B8BA8BC4E1EDD346737FE9AC9A715B10653E7326",
+            "PreviousFields": {
+              "Balance": "95182856",
+              "Sequence": 42636407
+            },
+            "PreviousTxnID": "E114D0D2B44C87047C8AF47E7ADE21D7AFFDF22CBBE1A04ED7A83D13A7D4DF29",
+            "PreviousTxnLgrSeq": 107841941
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "ExchangeRate": "5a042ea9a134312a",
+              "Flags": 0,
+              "RootIndex": "49789A0B460DC77A2CED9349C432AEA97352345BA3C7313A5A042EA9A134312A",
+              "TakerGetsCurrency": "000000000000000000000000434E590000000000",
+              "TakerGetsIssuer": "CED6E99370D5C00EF4EBF72567DA99F5661BFB3A",
+              "TakerPaysCurrency": "0000000000000000000000000000000000000000",
+              "TakerPaysIssuer": "0000000000000000000000000000000000000000"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "49789A0B460DC77A2CED9349C432AEA97352345BA3C7313A5A042EA9A134312A"
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Account": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
+              "BookDirectory": "49789A0B460DC77A2CED9349C432AEA97352345BA3C7313A5A042EA9A134312A",
+              "BookNode": "0",
+              "Flags": 0,
+              "OwnerNode": "0",
+              "PreviousTxnID": "E114D0D2B44C87047C8AF47E7ADE21D7AFFDF22CBBE1A04ED7A83D13A7D4DF29",
+              "PreviousTxnLgrSeq": 107841941,
+              "Sequence": 42636406,
+              "TakerGets": {
+                "currency": "CNY",
+                "issuer": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
+                "value": "849469"
+              },
+              "TakerPays": "100000000000"
+            },
+            "LedgerEntryType": "Offer",
+            "LedgerIndex": "ED44DBFA9D534BDABF37F6CA43AB8CCCF6693BA4C24DEFF5BD6771B3CCB97C35"
+          }
+        }
+      ],
+      "TransactionIndex": 17,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
+      "Fee": "10",
+      "Flags": 0,
+      "LastLedgerSequence": 107841944,
+      "OfferSequence": 42636406,
+      "Sequence": 42636407,
+      "SigningPubKey": "022E70597C73E359D20C5939F9A9009B42D51DAD22E633762832E44336B95D177C",
+      "TakerGets": {
+        "currency": "CNY",
+        "issuer": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
+        "value": "849469"
+      },
+      "TakerPays": "100000000000",
+      "TransactionType": "OfferCreate",
+      "TxnSignature": "3045022100E2427C9EE534DF35421F2388E8054982EDBF889787FC0EED9F03F0628EF2D19B02204761F50162844049900F1F86EC1B4B54123569186917E1926104BBFFB7CAFF59",
+      "date": 846045241,
+      "hash": "20B9D3CE531BADDD6C25A303BB99E9DA38140AF6CC003845004DB82296DF6589",
+      "owner_funds": "285978.8441694578"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "place",
+      "object": "rock",
+      "rule": "place.offer.placed",
+      "from": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
+      "to": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
+      "via": [],
+      "at": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
+      "label": "rock: rUqq…qsZ7 placed an offer on CNY/rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y|XRP at 0.1177: 849469 CNY for 100,000 XRP"
+    },
+    {
+      "verb": "place",
+      "object": "blink",
+      "rule": "place.offer.cancelled",
+      "from": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
+      "to": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
+      "via": [],
+      "at": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
+      "label": "blink: an offer of rUqq…qsZ7 on CNY/rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y|XRP was replaced"
+    }
+  ]
+}

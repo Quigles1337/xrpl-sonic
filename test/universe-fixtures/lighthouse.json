@@ -1,0 +1,264 @@
+{
+  "object": "lighthouse",
+  "verb": "happen",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107842049,
+  "hash": "D34D0229649E606DDCF6C229F6A367935256606309AA801849C48C6409E66CF2",
+  "message": {
+    "close_time_iso": "2026-10-23T04:41:11Z",
+    "ctid": "C66D8A0100620000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "601DDF7B98B4D00E4396D4771B465B836F338311BA2237A4B90755D0F965F1EA",
+    "ledger_index": 107842049,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rsNvoAZ9MquZSRhu4cEY9wTv1VqHXpVPPt",
+              "Balance": "37619720",
+              "Flags": 0,
+              "OwnerCount": 2,
+              "Sequence": 92687402
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "8679971A92F68FE37E91045F15DD4DB2B6D0BF6052779903C041A2F2EFBA7598",
+            "PreviousFields": {
+              "Balance": "37619730",
+              "Sequence": 92687401
+            },
+            "PreviousTxnID": "E399383BF552EAF651F7CAB2FAC3A37BFDBD2F9C10DE87276DDD463C4637EDC0",
+            "PreviousTxnLgrSeq": 107841903
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "AssetClass": "63757272656E6379",
+              "Flags": 0,
+              "LastUpdateTime": 1792730463,
+              "OracleDocumentID": 1,
+              "Owner": "rsNvoAZ9MquZSRhu4cEY9wTv1VqHXpVPPt",
+              "OwnerNode": "0",
+              "PriceDataSeries": [
+                {
+                  "PriceData": {
+                    "AssetPrice": "4e898944",
+                    "BaseAsset": "XRP",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "4a37bdfa2285",
+                    "BaseAsset": "BTC",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "22e673bd66d",
+                    "BaseAsset": "ETH",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "3b9aca00",
+                    "BaseAsset": "524C555344000000000000000000000000000000",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "3b97bcc0",
+                    "BaseAsset": "5553444300000000000000000000000000000000",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "3b8722c0",
+                    "BaseAsset": "5553445400000000000000000000000000000000",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "4a1717bb5f25",
+                    "BaseAsset": "5742544300000000000000000000000000000000",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                }
+              ],
+              "Provider": "42616E642050726F746F636F6C"
+            },
+            "LedgerEntryType": "Oracle",
+            "LedgerIndex": "D463D13ACF77206306BE891DF410655213FBD2C1F2B58A492E7F556A41A44338",
+            "PreviousFields": {
+              "LastUpdateTime": 1792729864,
+              "PriceDataSeries": [
+                {
+                  "PriceData": {
+                    "AssetPrice": "4e781a5e",
+                    "BaseAsset": "XRP",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "4a35e6a44cbd",
+                    "BaseAsset": "BTC",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "22eaafa7080",
+                    "BaseAsset": "ETH",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "3b9aca00",
+                    "BaseAsset": "524C555344000000000000000000000000000000",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "3b9794f6",
+                    "BaseAsset": "5553444300000000000000000000000000000000",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "3b871d0e",
+                    "BaseAsset": "5553445400000000000000000000000000000000",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                },
+                {
+                  "PriceData": {
+                    "AssetPrice": "4a279c770520",
+                    "BaseAsset": "5742544300000000000000000000000000000000",
+                    "QuoteAsset": "USD",
+                    "Scale": 9
+                  }
+                }
+              ]
+            },
+            "PreviousTxnID": "E399383BF552EAF651F7CAB2FAC3A37BFDBD2F9C10DE87276DDD463C4637EDC0",
+            "PreviousTxnLgrSeq": 107841903
+          }
+        }
+      ],
+      "TransactionIndex": 98,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rsNvoAZ9MquZSRhu4cEY9wTv1VqHXpVPPt",
+      "AssetClass": "63757272656E6379",
+      "Fee": "10",
+      "LastUpdateTime": 1792730463,
+      "OracleDocumentID": 1,
+      "PriceDataSeries": [
+        {
+          "PriceData": {
+            "AssetPrice": "4a37bdfa2285",
+            "BaseAsset": "BTC",
+            "QuoteAsset": "USD",
+            "Scale": 9
+          }
+        },
+        {
+          "PriceData": {
+            "AssetPrice": "22e673bd66d",
+            "BaseAsset": "ETH",
+            "QuoteAsset": "USD",
+            "Scale": 9
+          }
+        },
+        {
+          "PriceData": {
+            "AssetPrice": "3b9aca00",
+            "BaseAsset": "524C555344000000000000000000000000000000",
+            "QuoteAsset": "USD",
+            "Scale": 9
+          }
+        },
+        {
+          "PriceData": {
+            "AssetPrice": "3b97bcc0",
+            "BaseAsset": "5553444300000000000000000000000000000000",
+            "QuoteAsset": "USD",
+            "Scale": 9
+          }
+        },
+        {
+          "PriceData": {
+            "AssetPrice": "3b8722c0",
+            "BaseAsset": "5553445400000000000000000000000000000000",
+            "QuoteAsset": "USD",
+            "Scale": 9
+          }
+        },
+        {
+          "PriceData": {
+            "AssetPrice": "4a1717bb5f25",
+            "BaseAsset": "5742544300000000000000000000000000000000",
+            "QuoteAsset": "USD",
+            "Scale": 9
+          }
+        },
+        {
+          "PriceData": {
+            "AssetPrice": "4e898944",
+            "BaseAsset": "XRP",
+            "QuoteAsset": "USD",
+            "Scale": 9
+          }
+        }
+      ],
+      "Provider": "42616E642050726F746F636F6C",
+      "Sequence": 92687401,
+      "SigningPubKey": "0369D05EB635D528CE04E1F7C98FAB2268C1D4FCB2F45568B09E6AB1F90F68B664",
+      "TransactionType": "OracleSet",
+      "TxnSignature": "3044022045F3301681C41BAD760B08BC3AA63A4ABD0B36168721110181F13D463496264E02207535D0129916095F3311B2A3F70F4EDD20DC9E27A1E201C9437088FC30DB6927",
+      "date": 846045671,
+      "hash": "D34D0229649E606DDCF6C229F6A367935256606309AA801849C48C6409E66CF2"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "happen",
+      "object": "lighthouse",
+      "rule": "happen.oracleset",
+      "from": null,
+      "to": null,
+      "via": [],
+      "at": "rsNvoAZ9MquZSRhu4cEY9wTv1VqHXpVPPt",
+      "label": "lighthouse: rsNv…VPPt published an oracle update (7 prices)"
+    }
+  ]
+}

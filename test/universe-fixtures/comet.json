@@ -1,0 +1,166 @@
+{
+  "object": "comet",
+  "verb": "travel",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841942,
+  "hash": "D293EF741CC985BED7C9ACD65D5644C477AEE87E0A141EEC577244831378DB33",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:01Z",
+    "ctid": "C66D8996001E0000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "DDB3B8B3947D4F666CE88B95CFA4AB7BC0B37B6166A679118FD349A08FADD884",
+    "ledger_index": 107841942,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rPTpLbCYamqHCVsCv4JB214mwp9EvCaYA8",
+              "Balance": "2306626",
+              "Flags": 0,
+              "OwnerCount": 1,
+              "Sequence": 107604704
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "008355F6F31CCF0142BEA1897C0114EAEE4CA79453D26BDAF965BB725774EB92",
+            "PreviousFields": {
+              "Balance": "2306638",
+              "Sequence": 107604703
+            },
+            "PreviousTxnID": "8660A185A0EAD7DCA3BFA5B42ACAFF04DFE851D1364AD57EA637F0A3FAC1B9DE",
+            "PreviousTxnLgrSeq": 107841940
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Balance": {
+                "currency": "4339425200000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "-294111503.31"
+              },
+              "Flags": 131072,
+              "HighLimit": {
+                "currency": "4339425200000000000000000000000000000000",
+                "issuer": "rPTpLbCYamqHCVsCv4JB214mwp9EvCaYA8",
+                "value": "400000000"
+              },
+              "HighNode": "0",
+              "LowLimit": {
+                "currency": "4339425200000000000000000000000000000000",
+                "issuer": "rBCf85rmfGBTAQrqyiNv5fxTvJ5A4EQXWg",
+                "value": "0"
+              },
+              "LowNode": "0"
+            },
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "A485980D80764B11DB58C8DF382951364E3A1596242DBB9EFED5B67BDEF707F5",
+            "PreviousFields": {
+              "Balance": {
+                "currency": "4339425200000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "-294111518.31"
+              }
+            },
+            "PreviousTxnID": "8660A185A0EAD7DCA3BFA5B42ACAFF04DFE851D1364AD57EA637F0A3FAC1B9DE",
+            "PreviousTxnLgrSeq": 107841940
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Balance": {
+                "currency": "4339425200000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "-115888496.69"
+              },
+              "Flags": 131072,
+              "HighLimit": {
+                "currency": "4339425200000000000000000000000000000000",
+                "issuer": "rGZxn437AMeTji1sUnbP4AT1zC6LNFpRei",
+                "value": "400000000"
+              },
+              "HighNode": "0",
+              "LowLimit": {
+                "currency": "4339425200000000000000000000000000000000",
+                "issuer": "rBCf85rmfGBTAQrqyiNv5fxTvJ5A4EQXWg",
+                "value": "0"
+              },
+              "LowNode": "0"
+            },
+            "LedgerEntryType": "RippleState",
+            "LedgerIndex": "C6EC505035C40C78717E8F23BD446BAF1FF116FFA6FB91618D58CDE290009093",
+            "PreviousFields": {
+              "Balance": {
+                "currency": "4339425200000000000000000000000000000000",
+                "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+                "value": "-115888481.69"
+              }
+            },
+            "PreviousTxnID": "8660A185A0EAD7DCA3BFA5B42ACAFF04DFE851D1364AD57EA637F0A3FAC1B9DE",
+            "PreviousTxnLgrSeq": 107841940
+          }
+        }
+      ],
+      "TransactionIndex": 30,
+      "TransactionResult": "tesSUCCESS",
+      "delivered_amount": {
+        "currency": "4339425200000000000000000000000000000000",
+        "issuer": "rBCf85rmfGBTAQrqyiNv5fxTvJ5A4EQXWg",
+        "value": "15"
+      }
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rPTpLbCYamqHCVsCv4JB214mwp9EvCaYA8",
+      "Amount": {
+        "currency": "4339425200000000000000000000000000000000",
+        "issuer": "rBCf85rmfGBTAQrqyiNv5fxTvJ5A4EQXWg",
+        "value": "15"
+      },
+      "DeliverMax": {
+        "currency": "4339425200000000000000000000000000000000",
+        "issuer": "rBCf85rmfGBTAQrqyiNv5fxTvJ5A4EQXWg",
+        "value": "15"
+      },
+      "Destination": "rGZxn437AMeTji1sUnbP4AT1zC6LNFpRei",
+      "Fee": "12",
+      "LastLedgerSequence": 107841960,
+      "Memos": [
+        {
+          "Memo": {
+            "MemoData": "38343938313539387C63313261316364373466646362343435333364663864373765303265303064386435626530653833633732663635313963333662383164623731383764346434"
+          }
+        },
+        {
+          "Memo": {
+            "MemoData": "363034383032353637"
+          }
+        }
+      ],
+      "Sequence": 107604703,
+      "SigningPubKey": "02D0767FF387937FDA2B661248F13BE0F149DDDB16864FECBE7C7C3F87EF750E49",
+      "SourceTag": 604802567,
+      "TransactionType": "Payment",
+      "TxnSignature": "304402202014881AF7080A3317A76F190F7D8B93E4D15622E79D7595F6107652B8313B1A022023F98DFF124EAFCD00902208993EAAB5ECC3C1DE398D637B66C64E781D7B3433",
+      "date": 846045241,
+      "hash": "D293EF741CC985BED7C9ACD65D5644C477AEE87E0A141EEC577244831378DB33"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "travel",
+      "object": "comet",
+      "rule": "travel.payment.direct",
+      "from": "rPTpLbCYamqHCVsCv4JB214mwp9EvCaYA8",
+      "to": "rGZxn437AMeTji1sUnbP4AT1zC6LNFpRei",
+      "via": [],
+      "at": "rPTpLbCYamqHCVsCv4JB214mwp9EvCaYA8",
+      "label": "comet: rPTp…aYA8 paid rGZx…pRei 15 C9BR"
+    }
+  ]
+}

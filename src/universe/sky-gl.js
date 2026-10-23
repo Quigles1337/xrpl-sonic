@@ -114,6 +114,36 @@ precision mediump float;
 varying vec4 vColour;
 void main() { gl_FragColor = vec4(vColour.rgb * vColour.a, vColour.a); }`;
 
+// screen-space primitives of the motion grammar: positions in CSS pixels, a colour per vertex
+const FLAT_VS = `
+attribute vec2 aPos;
+attribute vec4 aColour;
+attribute float aSize;
+uniform vec2 uViewport;
+uniform float uDpr;
+varying vec4 vColour;
+void main() {
+  gl_Position = vec4(aPos.x / uViewport.x * 2.0 - 1.0, 1.0 - aPos.y / uViewport.y * 2.0, 0.0, 1.0);
+  gl_PointSize = max(1.0, aSize * 2.0 * uDpr);
+  vColour = aColour;
+}`;
+
+const FLAT_FS = `
+precision mediump float;
+varying vec4 vColour;
+void main() { gl_FragColor = vec4(vColour.rgb * vColour.a, vColour.a); }`;
+
+const DOT_FS = `
+precision mediump float;
+varying vec4 vColour;
+void main() {
+  vec2 p = gl_PointCoord * 2.0 - 1.0;
+  float d = length(p);
+  if (d > 1.0) discard;
+  float a = vColour.a * smoothstep(1.0, 0.6, d);
+  gl_FragColor = vec4(vColour.rgb * a, a);
+}`;
+
 function compile(gl, type, src) {
   const sh = gl.createShader(type);
   gl.shaderSource(sh, src);
@@ -141,6 +171,13 @@ export class SkyGL extends SkyBase {
     this.glow = new Float32Array(1);
     this.points = program(gl, POINT_VS, POINT_FS);
     this.lines = program(gl, LINE_VS, LINE_FS);
+    this.flat = program(gl, FLAT_VS, FLAT_FS);
+    this.flatDots = program(gl, FLAT_VS, DOT_FS);
+    this.flatBuffers = { pos: gl.createBuffer(), colour: gl.createBuffer(), size: gl.createBuffer() };
+    this.flatLoc = {
+      line: { aPos: gl.getAttribLocation(this.flat, 'aPos'), aColour: gl.getAttribLocation(this.flat, 'aColour'), aSize: gl.getAttribLocation(this.flat, 'aSize'), uViewport: gl.getUniformLocation(this.flat, 'uViewport'), uDpr: gl.getUniformLocation(this.flat, 'uDpr') },
+      dot: { aPos: gl.getAttribLocation(this.flatDots, 'aPos'), aColour: gl.getAttribLocation(this.flatDots, 'aColour'), aSize: gl.getAttribLocation(this.flatDots, 'aSize'), uViewport: gl.getUniformLocation(this.flatDots, 'uViewport'), uDpr: gl.getUniformLocation(this.flatDots, 'uDpr') },
+    };
     this.buffers = { pos: gl.createBuffer(), size: gl.createBuffer(), hue: gl.createBuffer(), glow: gl.createBuffer(), kind: gl.createBuffer(), linePos: gl.createBuffer(), lineColour: gl.createBuffer(), nebPos: gl.createBuffer(), nebSize: gl.createBuffer(), nebHue: gl.createBuffer(), nebGlow: gl.createBuffer(), nebKind: gl.createBuffer() };
     this.loc = {
       p: { aPos: gl.getAttribLocation(this.points, 'aPos'), aSize: gl.getAttribLocation(this.points, 'aSize'), aHue: gl.getAttribLocation(this.points, 'aHue'), aGlow: gl.getAttribLocation(this.points, 'aGlow'), aKind: gl.getAttribLocation(this.points, 'aKind'), uTarget: gl.getUniformLocation(this.points, 'uTarget'), uYaw: gl.getUniformLocation(this.points, 'uYaw'), uPitch: gl.getUniformLocation(this.points, 'uPitch'), uDistance: gl.getUniformLocation(this.points, 'uDistance'), uViewport: gl.getUniformLocation(this.points, 'uViewport'), uFocal: gl.getUniformLocation(this.points, 'uFocal'), uBasePx: gl.getUniformLocation(this.points, 'uBasePx'), uDpr: gl.getUniformLocation(this.points, 'uDpr') },
@@ -280,6 +317,7 @@ export class SkyGL extends SkyBase {
     }
     lap('nebulae');
     this.drawLines(now);
+    this.drawPrimitivesGL(this.livePrimitives(now, cam, vp));
     lap('comets');
     this.overlay(near, now, cam, vp, nebulae);
     lap('overlay');
@@ -345,6 +383,110 @@ export class SkyGL extends SkyBase {
     this._attrib(this.buffers.linePos, this.loc.l.aPos, new Float32Array(pos), 3, true);
     this._attrib(this.buffers.lineColour, this.loc.l.aColour, new Float32Array(col), 4, true);
     gl.drawArrays(gl.LINES, 0, pos.length / 3);
+  }
+
+  /**
+   * Lines, dots, rings and darts of the motion grammar in WebGL: lines and ring polylines as LINES, dots as point
+   * sprites, darts as triangles, all in screen space through one flat program with a colour per vertex.
+   */
+  drawPrimitivesGL(p) {
+    const gl = this.gl;
+    const total = p.lines.length + p.dots.length + p.rings.length + p.darts.length;
+    if (!total) return;
+    const lp = [];
+    const lc = [];
+    const seg = (x0, y0, x1, y1, rgb, a) => {
+      lp.push(x0, y0, x1, y1);
+      lc.push(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, a, rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, a);
+    };
+    for (const l of p.lines) {
+      if (l.dash) {
+        // a dashed line as its dashes
+        const len = Math.hypot(l.x1 - l.x0, l.y1 - l.y0) || 1;
+        const on = l.dash[0];
+        const off = l.dash[1] ?? on;
+        for (let d = 0; d < len; d += on + off) {
+          const u0 = d / len;
+          const u1 = Math.min(1, (d + on) / len);
+          seg(l.x0 + (l.x1 - l.x0) * u0, l.y0 + (l.y1 - l.y0) * u0, l.x0 + (l.x1 - l.x0) * u1, l.y0 + (l.y1 - l.y0) * u1, l.rgb, l.a);
+        }
+      } else {
+        // width as parallel strands, since WebGL lines are one pixel
+        const w = Math.max(1, Math.round(l.w ?? 1));
+        const dx = l.x1 - l.x0;
+        const dy = l.y1 - l.y0;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = -dy / len;
+        const ny = dx / len;
+        for (let k = 0; k < w; k++) {
+          const off = (k - (w - 1) / 2) * 0.9;
+          seg(l.x0 + nx * off, l.y0 + ny * off, l.x1 + nx * off, l.y1 + ny * off, l.rgb, l.a / Math.sqrt(w));
+        }
+      }
+    }
+    for (const r of p.rings) {
+      const segs = r.hex ? 6 : 28;
+      const ry = r.r * (r.ry ?? 1);
+      for (let i = 0; i < segs; i++) {
+        const a0 = (i / segs) * Math.PI * 2;
+        const a1 = ((i + 1) / segs) * Math.PI * 2;
+        if (r.dash && i % 2) continue;
+        seg(r.x + Math.cos(a0) * r.r, r.y + Math.sin(a0) * ry, r.x + Math.cos(a1) * r.r, r.y + Math.sin(a1) * ry, r.rgb, r.a * (r.soft ? 0.5 : 1));
+      }
+    }
+    // darts as two triangles each, drawn as TRIANGLES in the same flat program
+    const tp = [];
+    const tc = [];
+    for (const d of p.darts) {
+      const c = Math.cos(d.angle);
+      const sn = Math.sin(d.angle);
+      const L = d.len;
+      const W = Math.max(1.5, L * 0.28);
+      const tip = [d.x + c * L, d.y + sn * L];
+      const left = [d.x - sn * W, d.y + c * W];
+      const back = [d.x - c * L * 0.6, d.y - sn * L * 0.6];
+      const right = [d.x + sn * W, d.y - c * W];
+      tp.push(...tip, ...left, ...back, ...tip, ...back, ...right);
+      for (let k = 0; k < 6; k++) tc.push(d.rgb[0] / 255, d.rgb[1] / 255, d.rgb[2] / 255, d.a);
+    }
+    gl.useProgram(this.flat);
+    gl.uniform2f(this.flatLoc.line.uViewport, this.width, this.height);
+    gl.uniform1f(this.flatLoc.line.uDpr, this.dpr);
+    if (lp.length) {
+      this._attrib(this.flatBuffers.pos, this.flatLoc.line.aPos, new Float32Array(lp), 2, true);
+      this._attrib(this.flatBuffers.colour, this.flatLoc.line.aColour, new Float32Array(lc), 4, true);
+      gl.disableVertexAttribArray(this.flatLoc.line.aSize);
+      gl.vertexAttrib1f(this.flatLoc.line.aSize, 1);
+      gl.drawArrays(gl.LINES, 0, lp.length / 2);
+    }
+    if (tp.length) {
+      this._attrib(this.flatBuffers.pos, this.flatLoc.line.aPos, new Float32Array(tp), 2, true);
+      this._attrib(this.flatBuffers.colour, this.flatLoc.line.aColour, new Float32Array(tc), 4, true);
+      gl.disableVertexAttribArray(this.flatLoc.line.aSize);
+      gl.vertexAttrib1f(this.flatLoc.line.aSize, 1);
+      gl.drawArrays(gl.TRIANGLES, 0, tp.length / 2);
+    }
+    if (p.dots.length) {
+      const dp = new Float32Array(p.dots.length * 2);
+      const dc = new Float32Array(p.dots.length * 4);
+      const ds = new Float32Array(p.dots.length);
+      p.dots.forEach((d, i) => {
+        dp[2 * i] = d.x;
+        dp[2 * i + 1] = d.y;
+        dc[4 * i] = d.rgb[0] / 255;
+        dc[4 * i + 1] = d.rgb[1] / 255;
+        dc[4 * i + 2] = d.rgb[2] / 255;
+        dc[4 * i + 3] = d.a;
+        ds[i] = d.square ? d.r * 1.4 : d.core ? d.r * 1.8 : d.r;
+      });
+      gl.useProgram(this.flatDots);
+      gl.uniform2f(this.flatLoc.dot.uViewport, this.width, this.height);
+      gl.uniform1f(this.flatLoc.dot.uDpr, this.dpr);
+      this._attrib(this.flatBuffers.pos, this.flatLoc.dot.aPos, dp, 2, true);
+      this._attrib(this.flatBuffers.colour, this.flatLoc.dot.aColour, dc, 4, true);
+      this._attrib(this.flatBuffers.size, this.flatLoc.dot.aSize, ds, 1, true);
+      gl.drawArrays(gl.POINTS, 0, p.dots.length);
+    }
   }
 
   /** The colour drawn at a CSS-pixel position, for the headless check that the shader's camera agrees with the JavaScript projection. */

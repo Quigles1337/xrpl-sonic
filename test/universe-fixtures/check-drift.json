@@ -1,0 +1,128 @@
+{
+  "object": "check-drift",
+  "verb": "travel",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841942,
+  "hash": "AB8F078363D85CBA7DB843F324B552EFAB0DCB792E8420807104EA205FAE4627",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:01Z",
+    "ctid": "C66D8996001F0000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "DDB3B8B3947D4F666CE88B95CFA4AB7BC0B37B6166A679118FD349A08FADD884",
+    "ledger_index": 107841942,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexPrevious": "e50",
+              "Owner": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+              "RootIndex": "AA627CF28D179DA5598BBD3B55F6CA66554CFC86D203933BA2E465275ADFE22E"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "1203B70ECE3E0AA610573EBC8B7CBF4BB7BB5CBEB69D53C937A04962417164E3",
+            "PreviousTxnID": "61E3F807CD17BB59E2B45F9B5320575B4F0B455CB5FB1C228860BBCBB0567BD6",
+            "PreviousTxnLgrSeq": 107841904
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "Check",
+            "LedgerIndex": "2FF0CDCC8DB9299724295BB25B622BF999B0C62E91B737CF1C0EBFAB0BABFA99",
+            "NewFields": {
+              "Account": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+              "Destination": "rMQSEwFL8NAwy9cLnV6FwtRa1FXaLMGc2r",
+              "DestinationNode": "24",
+              "OwnerNode": "e51",
+              "SendMax": {
+                "currency": "5452495050520000000000000000000000000000",
+                "issuer": "r9QYoVFNFZV1rZtFZEypPPpka2iEVDgqY1",
+                "value": "800949.7236739914"
+              },
+              "Sequence": 86112795
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+              "Balance": "3766152336",
+              "Flags": 0,
+              "OwnerCount": 2523,
+              "Sequence": 86112796
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "45FBEB27F9CF7B7A3815DFEB407A56DCAF66708B34E868AD3C9AA57B18B7BDE1",
+            "PreviousFields": {
+              "Balance": "3766152346",
+              "OwnerCount": 2522,
+              "Sequence": 86112795
+            },
+            "PreviousTxnID": "5E1899DD63596536469F13855691442F444F763B72B0ABA88E1378C54C89C514",
+            "PreviousTxnLgrSeq": 107841939
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexPrevious": "7",
+              "Owner": "rMQSEwFL8NAwy9cLnV6FwtRa1FXaLMGc2r",
+              "RootIndex": "3046D70923725F8569843E9D5263C7A21FCC0C880DA33818905880C7E4D46407"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "5FDD2BF2E8D8484331221B043DEC2B1E9378A7E8CE7575E343F02E29123EBB5B",
+            "PreviousTxnID": "27EC533E3BB03BE0BEB4C7645A611861D0F6623CA43CBE9FCB0ED7879CA086E0",
+            "PreviousTxnLgrSeq": 107841931
+          }
+        },
+        {
+          "ModifiedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "F282F00270117711E90E9A826AAAB00FAA2D4BBC6EB102A489D9368FD0EA6F4F",
+            "PreviousTxnID": "26F3533FAD437F09DDE8E1D883D2E7966420558FB8B6B201237CD5E6A3751CD8",
+            "PreviousTxnLgrSeq": 107841935
+          }
+        }
+      ],
+      "TransactionIndex": 31,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+      "Destination": "rMQSEwFL8NAwy9cLnV6FwtRa1FXaLMGc2r",
+      "Fee": "10",
+      "LastLedgerSequence": 107841944,
+      "SendMax": {
+        "currency": "5452495050520000000000000000000000000000",
+        "issuer": "r9QYoVFNFZV1rZtFZEypPPpka2iEVDgqY1",
+        "value": "800949.7236739914"
+      },
+      "Sequence": 86112795,
+      "SigningPubKey": "024B0EE62F067AA46830688C3C9962E47FC2FF55F252A45892D7CC30C5034AEB81",
+      "TransactionType": "CheckCreate",
+      "TxnSignature": "3045022100A760E95105D114F909BB57A972807AFFDF91246994B1986F3C3D32F0B7744A5702207487D67837D87CC1EDE706B261D887036212C49D6890F46730C141249CC99D24",
+      "date": 846045241,
+      "hash": "AB8F078363D85CBA7DB843F324B552EFAB0DCB792E8420807104EA205FAE4627"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "travel",
+      "object": "check-drift",
+      "rule": "travel.check.create",
+      "from": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+      "to": "rMQSEwFL8NAwy9cLnV6FwtRa1FXaLMGc2r",
+      "via": [],
+      "at": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+      "label": "check-drift: rPP3…ym68 wrote rMQS…Gc2r a check for up to 800,950 TRIPPR"
+    }
+  ]
+}

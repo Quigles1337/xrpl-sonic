@@ -1,0 +1,141 @@
+{
+  "object": "shimmer",
+  "verb": "happen",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841942,
+  "hash": "1CC5E39B5B2473451AB3C692F8D3347EBA3E7730C7ED403F0CB2A4202C5E6951",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:01Z",
+    "ctid": "C66D899600060000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "DDB3B8B3947D4F666CE88B95CFA4AB7BC0B37B6166A679118FD349A08FADD884",
+    "ledger_index": 107841942,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rN6sKcR1fUhM94Ae5tFtSiA54YZzt7XwNg",
+              "Balance": "17599756",
+              "Flags": 0,
+              "OwnerCount": 64,
+              "RegularKey": "rB1J5p8jLssgQjugEwUz2SvT2K9V2V2pfm",
+              "Sequence": 107688041,
+              "TicketCount": 45
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "09A29AC80C0C28E7AA25CFA4905A1C850E77EA6C33B270F4912B90F3A91DD860",
+            "PreviousFields": {
+              "Balance": "17599768",
+              "OwnerCount": 59,
+              "Sequence": 107688035,
+              "TicketCount": 40
+            },
+            "PreviousTxnID": "626C1DE598D0EEC3FA199BA5D6BF7465D297B74EC9076E76A9CE8F97435DE281",
+            "PreviousTxnLgrSeq": 107841941
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "Ticket",
+            "LedgerIndex": "1B4B7083D5CF320FC73869978EBB8A70D9CFF4F7DCACB724229219C4A493CC13",
+            "NewFields": {
+              "Account": "rN6sKcR1fUhM94Ae5tFtSiA54YZzt7XwNg",
+              "OwnerNode": "23",
+              "TicketSequence": 107688039
+            }
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "Ticket",
+            "LedgerIndex": "2A5828EB684AC9CE307A9958C6762923E9DAFD9BC3D431C93EBDA0E72409DEC5",
+            "NewFields": {
+              "Account": "rN6sKcR1fUhM94Ae5tFtSiA54YZzt7XwNg",
+              "OwnerNode": "23",
+              "TicketSequence": 107688040
+            }
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "Ticket",
+            "LedgerIndex": "3D04CF263BDF05F8E0A79EFBAF70D58DD924434029568ACB99CB261CB6A97D3F",
+            "NewFields": {
+              "Account": "rN6sKcR1fUhM94Ae5tFtSiA54YZzt7XwNg",
+              "OwnerNode": "23",
+              "TicketSequence": 107688036
+            }
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "Ticket",
+            "LedgerIndex": "5541760AEFBE1D3915B14A07611F2BAD20B069381EEF1DDA7EC6A2AE49F6FD20",
+            "NewFields": {
+              "Account": "rN6sKcR1fUhM94Ae5tFtSiA54YZzt7XwNg",
+              "OwnerNode": "23",
+              "TicketSequence": 107688038
+            }
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "Ticket",
+            "LedgerIndex": "6AC6A2100A6AEFFFCF9B272A4A8DF628ED56DAC0CCF67290312E7B87FF2F2257",
+            "NewFields": {
+              "Account": "rN6sKcR1fUhM94Ae5tFtSiA54YZzt7XwNg",
+              "OwnerNode": "23",
+              "TicketSequence": 107688037
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexPrevious": "22",
+              "Owner": "rN6sKcR1fUhM94Ae5tFtSiA54YZzt7XwNg",
+              "RootIndex": "00F9E591D8281B2F689464EA4D62A0CE3A1D68E833F89ED539360D3DA0C4507D"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "CB0863F9DE472473B34DD712C3176122BC183A5A2B9516136119CA1FDDAF7025",
+            "PreviousTxnID": "626C1DE598D0EEC3FA199BA5D6BF7465D297B74EC9076E76A9CE8F97435DE281",
+            "PreviousTxnLgrSeq": 107841941
+          }
+        }
+      ],
+      "TransactionIndex": 6,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rN6sKcR1fUhM94Ae5tFtSiA54YZzt7XwNg",
+      "Fee": "12",
+      "LastLedgerSequence": 107841945,
+      "Sequence": 107688035,
+      "SigningPubKey": "ED829429BF75C33FE6594765247091E8FD8440A82B3F19E8712620A599BB4114F6",
+      "TicketCount": 5,
+      "TransactionType": "TicketCreate",
+      "TxnSignature": "6D04323A1D214D3466613CBEA33CE3C22237E894BF61C721DC7AE7AF0DC5764CBDA85E55325D2264B364A6624F5732CC3D5CB4C1831590BD3D5ACF37ACAA410C",
+      "date": 846045241,
+      "hash": "1CC5E39B5B2473451AB3C692F8D3347EBA3E7730C7ED403F0CB2A4202C5E6951"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "happen",
+      "object": "shimmer",
+      "rule": "happen.ticketcreate",
+      "from": null,
+      "to": null,
+      "via": [],
+      "at": "rN6sKcR1fUhM94Ae5tFtSiA54YZzt7XwNg",
+      "label": "shimmer: rN6s…XwNg created 5 tickets"
+    }
+  ]
+}

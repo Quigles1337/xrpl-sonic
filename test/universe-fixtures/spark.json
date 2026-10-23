@@ -1,0 +1,69 @@
+{
+  "object": "spark",
+  "verb": null,
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841942,
+  "hash": "E81F032C74A67C437F9A3FDEA74305B977508F96B5BC09BCE22470C77F20D1A9",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:01Z",
+    "ctid": "C66D899600850000",
+    "engine_result": "tecINSUFFICIENT_RESERVE",
+    "engine_result_code": 141,
+    "engine_result_message": "Insufficient reserve to complete requested operation.",
+    "ledger_hash": "DDB3B8B3947D4F666CE88B95CFA4AB7BC0B37B6166A679118FD349A08FADD884",
+    "ledger_index": 107841942,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rD1L98MyBGJ4BJHinKyoCbtLwt7zitvaZN",
+              "Balance": "1478850",
+              "Flags": 65536,
+              "OwnerCount": 0,
+              "RegularKey": "ra6sDP9dEbPZHghwXranfYcp1Y251tey2F",
+              "Sequence": 107721889
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "EB5256E973456864444AF56D85F196D63B4304C46000968B24A124F3A9B448EE",
+            "PreviousFields": {
+              "Balance": "1478862",
+              "Sequence": 107721888
+            },
+            "PreviousTxnID": "A309B0ADB76B3E172800389AD0E0F60003791AF2D09FCBCBC04D31061DBC0EF5",
+            "PreviousTxnLgrSeq": 107841941
+          }
+        }
+      ],
+      "TransactionIndex": 133,
+      "TransactionResult": "tecINSUFFICIENT_RESERVE"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rD1L98MyBGJ4BJHinKyoCbtLwt7zitvaZN",
+      "Fee": "12",
+      "LastLedgerSequence": 107841949,
+      "Sequence": 107721888,
+      "SigningPubKey": "EDCFA03399ECFF33FE5B02E333656C1942E9587EB51C2CF55304D333B2D1F56748",
+      "TicketCount": 3,
+      "TransactionType": "TicketCreate",
+      "TxnSignature": "FB143C683BBCC4318B89BC532CD9150CC0AAD181595E514542E0F3E0309403DE10F70FC969C8AC2A7044D603DD47F6DFABEFF26EE281D03243782E44E226E30F",
+      "date": 846045241,
+      "hash": "E81F032C74A67C437F9A3FDEA74305B977508F96B5BC09BCE22470C77F20D1A9"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": null,
+      "object": "spark",
+      "rule": "spark",
+      "from": null,
+      "to": null,
+      "via": [],
+      "at": "rD1L98MyBGJ4BJHinKyoCbtLwt7zitvaZN",
+      "label": "spark: rD1L…vaZN: TicketCreate failed with tecINSUFFICIENT_RESERVE"
+    }
+  ]
+}

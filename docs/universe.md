@@ -152,6 +152,93 @@ Checked: `node --test` 399 pass (new `test/universe-labels.test.js`: the name ru
 
 Copies still in place, each with the request it waits for: `src/universe/projection.js` (R1), `hueOf` (R8), `LAYER_OF` (R10), `minimalEvent` (R9), the cadence read off judged pairs (R3), the host from the endpoint (R11), the door (R12). Each is switched and deleted in the same PR that lands its export.
 
+## Phase 1.5: the event vocabulary
+
+Four verbs, then a detail. Today every transaction in the sky is a comet or a flash; from this phase every event has one of four verbs a newcomer learns in a minute, and a detail an engineer checks against the record. **Travel**: something moved between planets. **Dock**: a standing relationship was made or changed. **Place**: something was put on or taken from a book. **Happen on the body**: the account itself changed. What has not earned a verb is a **spark** at the submitter's planet that never leaves it (a failed transaction, or a type below the threshold), and a Batch wrapper is a **tick** with no body: its inner transactions carry the weight. Every event inherits the field guide's hue for its category (`src/glyphs.js` draws it from `CATEGORIES` in `src/mapping.js`), so the two pages agree on colour. At far zoom the four verbs collapse into weather: flows between nebulae, streams toward stars, haze around books, glow on planets; detail appears only when the camera is close. This section is the agreed specification, written before the build on the recorded measurements below; the as-built record follows it. The boundaries are the session's; `docs/art.md` does not exist at the time of writing, so the look is the plate's: representational objects are stylised darts and marks in the plate's ignition language, never cartoons.
+
+### Measured first
+
+HISTOGRAM_TABLE
+
+What the recording says for the vocabulary, beyond the counts: three in four payments on mainnet tonight fail (bots' path-finding payments to themselves, `tfPartialPayment` set, cross-currency, mostly `tecPATH_DRY`), so most of what the stream calls a payment is a spark; of the payments that succeed, the self-payment through the book or a pool (the burn) outnumbers the direct comet; nearly half of the NFT offers arrive inside Batches; the Batch wrapper is the largest type by far and carries nothing of its own. Frequency decides loudness throughout: payments, offers and wrappers are small and quiet; account-control changes are rare and earn a motion you notice.
+
+### The vocabulary
+
+Each row: the object, its verb, the rule and the record fields that earn it, what is drawn, what stands still under reduced motion, and the fixture that proves it (a real recorded transaction under `test/universe-fixtures/`, or a TODO naming what was searched). The rule ids are `src/universe/events.js`; a row the record cannot support as the brief wrote it says so.
+
+| Object | Verb | Earned by (fields) | Drawn | Still | Fixture |
+| --- | --- | --- | --- | --- | --- |
+| comet | travel | `Payment`, success, Account ≠ Destination, one currency, no hops; size from log of `meta.delivered_amount` | the photon from sender to receiver with its tail | the line, head at the receiver | FIXTURE:comet |
+| bent-comet | travel | a payment whose `SendMax` differs from the amount, or with `Paths`, or that crossed `Offer` nodes or an AMM root; the hops are the issuers named by the RippleStates touched, the pools, and the owners of the crossed offers, in the order of the record (the record carries the set of hops, not their order on the path: a challenge to the brief's "each issuer in its path", drawn in record order) | the comet whose tail bends past each hop | the bent line | FIXTURE:bent-comet |
+| partial | travel | `tfPartialPayment` and `meta.delivered_amount` below `DeliverMax`/`Amount` | arrives short, labelled "delivered X of up to Y" | the short line with the label | FIXTURE:partial |
+| burn | travel | `Account = Destination` (a payment to self), success; the hops as above | a loop out of the sender's planet and back | a ring around the planet | FIXTURE:burn |
+| dust | travel | an XRP payment under one XRP | a faint brief comet | a faint short line | FIXTURE:dust |
+| shower | travel | five or more dust payments from one sender in one ledger (`collapseShowers`) | a meteor shower | faint short lines | FIXTURE:shower |
+| long-period | travel | `EscrowCreate` with `FinishAfter` (the period) | a dotted comet leaving | a dotted line | FIXTURE:long-period |
+| long-period-arrive | travel | `EscrowFinish`: the deleted `Escrow` node's Account and Destination | the comet arrives at the destination | dotted line, head at the destination | FIXTURE:long-period-arrive |
+| long-period-return | travel | `EscrowCancel`: the deleted `Escrow` node's Account | the comet returns home | dotted line, head at home | FIXTURE:long-period-return |
+| check-drift | travel | `CheckCreate`: Destination, `SendMax`; the check waits (a standing object) | a bead drifting into the destination's orbit and waiting | the bead in orbit | FIXTURE:check-drift |
+| check-cash | travel | `CheckCash`: the deleted `Check` node's Account and Destination, `Amount` or `DeliverMin` | the waiting bead lands | the bead at the destination | FIXTURE:check-cash |
+| check-cancel | travel | `CheckCancel`: the deleted `Check` node | the bead blinks out | nothing | FIXTURE:check-cancel |
+| moon-capture | travel | `NFTokenAcceptOffer`: the seller is the deleted sell `NFTokenOffer`'s Owner (else the accepting account), the buyer the deleted buy offer's Owner (else the accepting account); brokered when both offers are named | a moon captured from one orbit into another, via the broker | the moon at the buyer | FIXTURE:moon-capture |
+| reverse-comet | travel | `Clawback`: `Amount.issuer` is the holder, Account the issuer | a comet from holder to issuer in the trust colour | the line | FIXTURE:reverse-comet |
+| collapse | travel | `AccountDelete`: Destination, the deleted `AccountRoot`'s Balance | the planet collapses and its last XRP leaves as a final comet | the struck planet and the line | FIXTURE:collapse |
+| beam, beam-fund, beam-pulse | travel | `PaymentChannelCreate` (Destination, Amount), `Fund` and `Claim` (the `PayChannel` node's Account and Destination) | a standing beam; funding thickens it; a claim pulses along it | the beam; a mark on it | FIXTURE:beam |
+| rocket | dock | `TrustSet` with a limit above zero and no freeze or auth flag; the issuer is `LimitAmount.issuer`; balance from the RippleState | a dart launched by the submitter docking into orbit around the issuer; it does not land | the dart at the orbit | FIXTURE:rocket |
+| deorbit | dock | `TrustSet` with `LimitAmount.value` 0 | a de-orbit burn | a fading dart | FIXTURE:deorbit |
+| freeze | dock | `TrustSet` with `tfSetFreeze`, `tfClearFreeze`, `tfSetDeepFreeze` or `tfClearDeepFreeze` | the orbit locks and changes colour, no motion | the recoloured orbit | FIXTURE:freeze |
+| beacon | dock | `TrustSet` with `tfSetfAuth` | a docking beacon | the beacon | FIXTURE:beacon |
+| gate | dock | `DepositPreauth`: Authorize or Unauthorize | a thin line to the one account allowed in | the line | FIXTURE:gate |
+| ignite | dock | a planet whose holders cross the star threshold between two ledgers (the body rule `star.issuer`, the worker's kind transition) | the lattice's hexagon grows out of the planet: it is a star now | the star | the recorded hour replayed (acceptance) |
+| rock | place | an `Offer` created by the submitter (the facts layer's `offer.placed`): the book is the pair, the host the issuer of the issued side, the radius the price's band in its book | a rock set into the belt | the rock | FIXTURE:rock |
+| fill | place | an `OfferCreate` that consumed others' offers or took a pool leg (`exchange.fill`) | the taker's comet crossing the belt | the crossing line | FIXTURE:fill |
+| flare | place | a book offer consumed or partly consumed (`offer.removal.consumed`, `traded-unfunded`, or modified with a trade) | the consumed rock flares out | nothing | FIXTURE:flare |
+| blink | place | a rock cancelled, replaced or self-crossed (`offer.removal.cancelled`, `replaced`, `self-cross`) | the rock blinks out | nothing | FIXTURE:blink |
+| crumble | place | a rock swept untraded (`offer.removal.cleanup`: expired or unfunded), the facts layer's distinction | crumbles grey with no flash | a grey mark | FIXTURE:crumble |
+| binary-form, binary-brighten, binary-dim, satellite, binary-collapse | place | `AMMCreate` (the pool root's AMMID), `AMMDeposit`, `AMMWithdraw`, `AMMBid` (the `AMM` node's AuctionSlot Expiration), `AMMDelete` | a binary forms, brightens, dims, captures a satellite for the slot, collapses | the state | FIXTURE:binary-brighten |
+| ring | happen | `AccountSet` with no Domain and not `asfDisableMaster` (the flag is named) | a ring of light | the ring | FIXTURE:ring |
+| nameplate | happen | `AccountSet` with `Domain` | the ring and the nameplate the Domain gives | the nameplate | FIXTURE:nameplate |
+| darken | happen | `AccountSet` with `SetFlag` 4 (`asfDisableMaster`) | the planet darkens toward a black hole candidate | the darkened planet | FIXTURE:darken |
+| tilt | happen | `SetRegularKey` | the axis tilts | the tilted axis | FIXTURE:tilt |
+| guardians | happen | `SignerListSet`: `SignerEntries`, `SignerQuorum` | guardian moons in a ring, the quorum lit | the ring of moons | FIXTURE:guardians |
+| shimmer | happen | `TicketCreate` | a faint shimmer | a faint mark | FIXTURE:shimmer |
+| moon-form, moon-crumble, moon-beacon, moon-beacon-off | happen | `NFTokenMint`, `NFTokenBurn`, `NFTokenCreateOffer`, `NFTokenCancelOffer` | a moon forms, crumbles, shows or hides a beacon | the state | FIXTURE:moon-form |
+| lighthouse | happen | `OracleSet` (the cadence is the account's interval between updates over the window) | a lighthouse beam | the beam, still | FIXTURE:lighthouse |
+| badge | happen | `DIDSet`, `DIDDelete`, `Credential*`, `MPToken*` | a badge | the badge | FIXTURE:badge |
+| tick | — | `Batch` | a faint tick, no body | the tick | FIXTURE:tick |
+| spark | — | any failed transaction, or a type below the threshold without a design | the ignition's white-hot core at the planet, never leaving it | the spark | FIXTURE:spark |
+
+Rows challenged: the bent tail's hop order (the record carries which issuers, offers and pools a payment touched, not the path's order; drawn in record order and said so); moons as a count (an account's NFTs are not countable from the stream, as phase 1 found, so a moon forms where a mint happened and is captured where an accept happened, and the number of moons a planet carries is the number seen in this window, never the account's holdings); checks, beams, gates, guardian rings and rocks as standing objects (they persist for the session from the event that made them, and only until the event that removes them is heard: a belt shows the rocks placed while the page listened, not the book).
+
+### The four motions, in both renderers
+
+One grammar, `src/universe/motions.js`: a motion is an event in flight on the flight clock of phase 1 (`flightOf`, life per object from LIFE in ledger intervals), and `primitivesOf` turns it, each frame, into lines, dots, rings and darts in screen space that either renderer draws (the 2D canvas with its own calls; WebGL with a lines buffer, a point-sprite buffer and a triangle program for the darts). Under reduced motion `primitivesOf` returns the object's still marker, so every object has one in both renderers. The marks are the plate's: the comet is the photon with its tail, the spark its white-hot core, the flash the pulse ring, the rock the mote, the dart the spectral line's diamond turned along its path, the ring of light the pulse ring, the star's ignition the lattice's hexagon. Loudness is LOUDNESS: payments, offers and wrappers small and quiet, control changes noticed.
+
+Levels: at far zoom (the camera beyond 2.4 sky radii) no motion is drawn; the worker's weather for the ledger is (`weatherOf`): flows between the nebulae the two ends belong to, streams toward the stars docked into, haze around the hosts of the books placed on, glow on the planets things happened to, each with its count, drawn by `weatherPrimitives`. Closer, every motion is drawn; near, the standing objects too (the rocks of a belt at their price radius, the beads of waiting checks, the beams, the gates, the guardian rings, the moons, the satellites). The budget stands at 60 fps with 20,000 planets on WebGL with the motions of a mainnet ledger in flight; the sprites are one vertex each (point sprites), and the far zoom draws counts, not events.
+
+### Text and labels
+
+Every object at near zoom carries its rule and the record fields that earned it, as the bodies do: hovering a motion, or stepping through the ledger's events with `,` and `.`, puts the event's text in the focus line, `describeEvent` (`rocket: rA set a trust line to rB, 0 of up to 1,000 USD`) with the rule id and the evidence fields under it, the names by the name rule of phase 1. A screen reader travels the sky's events the way it travels its planets.
+
+### Build order
+
+1. Spec, histogram, the four-verb grammar in both renderers with the collapse to weather and the budget held.
+2. Dock: rockets, de-orbit, freeze, the ignition into a star.
+3. Travel: the comet family, partial, self-payment, dust and shower, the failed spark.
+4. Place: belts per book with price radius, fills, cancels, swept rocks; the AMM binary events.
+5. Happen on the body: the control changes first (signer moons, key tilt, master darkening), then the rest.
+6. Everything below the threshold stays the spark; the histogram lists what that excludes.
+
+### Tests and acceptance
+
+A real recorded transaction is the fixture for every object (`bench/extract-fixtures.mjs` over the recording: the message verbatim, the ledger, the events expected of it with verb, object, rule and label; `test/universe-fixtures/MISSING.md` lists the objects no example turned up for, with what was searched). `test/universe-events.test.js` pins each fixture's events, checks every object has a verb, a rule, a life, a loudness and a still, checks the weather and the showers, and checks `primitivesOf` under reduced motion for every object. Acceptance: headless checks per renderer for each verb; the recorded hour replayed through the page shows the four verbs and no object outside the vocabulary; the star-ignition moment visible on a real issuer; reduced motion gives still markers; the existing tests pass; and the beauty-gate line: a person who does not know what a ledger is watched two minutes and said what they felt.
+
+### Decisions to propose, not make
+
+1. **Where XRP lives in the sky.** XRP has no issuer, and every XRP book needs a second body for its belt. Proposed: the sun, a single luminary at the sky's origin, which no planet's home occupies (`homeOf` keeps every home away from the centre by construction); an XRP book's belt sits around the issuer star of its other side, with the sun's direction as the price axis, so a belt reads the same whichever side is XRP; XRP comets are lit by the sun's colour, the field guide's payment blue. Recommended, because it adds no body the record did not earn (the sun is the ledger's native asset, not an account) and it gives every XRP book a geometry without inventing a planet.
+2. **The rocket's exact shape.** Proposed: the spectral line's diamond (the field guide's offer glyph) turned along its path, three sparks behind it, docking as a dashed arc on the issuer's orbit. Recommended, because it is already in the ignition language and reads as a dart at every size.
+3. **Which rare types get a design now versus the spark.** Proposed: the account-control changes now (`SetRegularKey`, `SignerListSet`, `asfDisableMaster`, `AccountDelete`, `DepositPreauth`, `Clawback`), whatever their count, because each is a motion worth noticing; `OracleSet`, `DID*`, `Credential*` and `MPToken*` as drawn (the lighthouse and the badge) only once a recording holds a real example, the spark until then; everything else below the printed threshold stays the spark. Recommended, with the threshold printed in the histogram so the list is a fact of the recording, not a taste.
+
 ## The spike
 
 What was built on `feat/universe-spike`, what it measured, and what the numbers say. The harness is `src/universe/bench/`: `stream-hour.mjs` (the stream alone, in Node), `serve.mjs` (a static server with the two cross-origin-isolation headers that `performance.measureUserAgentSpecificMemory` needs), `cdp.mjs` and `frames.mjs` (frame time per renderer and size in headless Chrome), `hour.mjs` (an hour of the live sky in headless Chrome, memory and frame time each minute). Results are JSON under `bench/results/`. Real-GPU frame times were taken in the user's own Chrome through the same page's `window.xrplUniverse.stats()`.

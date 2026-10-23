@@ -1,0 +1,99 @@
+{
+  "object": "ring",
+  "verb": "happen",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107841942,
+  "hash": "38D2F10711B7EA1A7BDA5016335D0BD22CD162BFD1DB5E547A464C39E11C37D6",
+  "message": {
+    "close_time_iso": "2026-10-23T04:34:01Z",
+    "ctid": "C66D899600020000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "DDB3B8B3947D4F666CE88B95CFA4AB7BC0B37B6166A679118FD349A08FADD884",
+    "ledger_index": 107841942,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rHhFdAN1ho9S2U4hHr9vYANXdXrT1f6qcw",
+              "Balance": "20798524",
+              "Flags": 0,
+              "OwnerCount": 74,
+              "RegularKey": "rsufFEEdrkvziDiWJJeYPhysChQxK7Z71y",
+              "Sequence": 107688805,
+              "TicketCount": 40
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "51D7CE85C52273DE2032FDBFA204331FF38EC0D0AB10F4368AD4D67103E6A2C7",
+            "PreviousFields": {
+              "Balance": "20798536",
+              "OwnerCount": 75,
+              "TicketCount": 41
+            },
+            "PreviousTxnID": "25DF71888A06A072FCE935EB9C1E17DF80EF71199B9094EE8B83E5C278D08E63",
+            "PreviousTxnLgrSeq": 107841941
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexPrevious": "1d",
+              "Owner": "rHhFdAN1ho9S2U4hHr9vYANXdXrT1f6qcw",
+              "RootIndex": "6E702189696229D4B6821DE27008F65EBB21D44A0021701DDDFC2E5D42D8FC06"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "6D23112F226E7A9DD3E3C1140C40230D43AA2290224A0A2ED4375604847316B2",
+            "PreviousTxnID": "25DF71888A06A072FCE935EB9C1E17DF80EF71199B9094EE8B83E5C278D08E63",
+            "PreviousTxnLgrSeq": 107841941
+          }
+        },
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Account": "rHhFdAN1ho9S2U4hHr9vYANXdXrT1f6qcw",
+              "Flags": 0,
+              "OwnerNode": "1e",
+              "PreviousTxnID": "FFA8F542DBEB586A102D02CDFB3B2850E3DC00644BA4C994A794EAEC46F9B119",
+              "PreviousTxnLgrSeq": 107841047,
+              "TicketSequence": 107688748
+            },
+            "LedgerEntryType": "Ticket",
+            "LedgerIndex": "CDB05319478BE33004E1C0C0D7150FEDB45526F9912D2CEF23CD2EFE745A8E84"
+          }
+        }
+      ],
+      "TransactionIndex": 2,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rHhFdAN1ho9S2U4hHr9vYANXdXrT1f6qcw",
+      "Fee": "12",
+      "LastLedgerSequence": 107841945,
+      "Sequence": 0,
+      "SigningPubKey": "ED1AC541796087E87396CE059C0F0A6981088DA687FF039A715ABCEFA8A2274FA3",
+      "TicketSequence": 107688748,
+      "TransactionType": "AccountSet",
+      "TxnSignature": "13DCD5EF8131E64F3F089FC2B245343F035D1631354B008BDDB6BCA40602D838D26C51CFE04DF80D889F077A1979664BEC11F7FFAFF62F42AB2F1FE42F434309",
+      "date": 846045241,
+      "hash": "38D2F10711B7EA1A7BDA5016335D0BD22CD162BFD1DB5E547A464C39E11C37D6"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "happen",
+      "object": "ring",
+      "rule": "happen.accountset",
+      "from": null,
+      "to": null,
+      "via": [],
+      "at": "rHhFdAN1ho9S2U4hHr9vYANXdXrT1f6qcw",
+      "label": "ring: rHhF…6qcw changed its account settings"
+    }
+  ]
+}

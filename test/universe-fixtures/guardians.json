@@ -1,0 +1,131 @@
+{
+  "object": "guardians",
+  "verb": "happen",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107842081,
+  "hash": "84D0634165CCCCC369D7630F2EF0046F144878A1A1C57664FC4BF710C290AE54",
+  "message": {
+    "close_time_iso": "2026-10-23T04:43:21Z",
+    "ctid": "C66D8A21000C0000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "D1B9C324D35CAE51777773866796001F9AEB18728D4B66AAD94464AFD7C3B7A6",
+    "ledger_index": 107842081,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "23F849379B6FF7685CF65D89573962FC0A8B68B193C91E9274737A66C7F6582B",
+            "NewFields": {
+              "Owner": "rnJNEqViVo6FHBisLBt4HWqHhyK3qCVcBN",
+              "RootIndex": "23F849379B6FF7685CF65D89573962FC0A8B68B193C91E9274737A66C7F6582B"
+            }
+          }
+        },
+        {
+          "CreatedNode": {
+            "LedgerEntryType": "SignerList",
+            "LedgerIndex": "A492DEA29C80E49E6247014BF858B493CFDDCD339CF83CBB59517B56D370DDB7",
+            "NewFields": {
+              "Flags": 65536,
+              "Owner": "rnJNEqViVo6FHBisLBt4HWqHhyK3qCVcBN",
+              "SignerEntries": [
+                {
+                  "SignerEntry": {
+                    "Account": "rnAJo1VUfW79xgmps3tJRxjNX5fsTnAA7B",
+                    "SignerWeight": 1
+                  }
+                },
+                {
+                  "SignerEntry": {
+                    "Account": "rfmsQEbNAEVGEug1YC5dHrTwSBokU8BGt5",
+                    "SignerWeight": 1
+                  }
+                },
+                {
+                  "SignerEntry": {
+                    "Account": "rwzDQmAyh8rFQAB1Hbx9TB7hGosmjxjxob",
+                    "SignerWeight": 1
+                  }
+                }
+              ],
+              "SignerQuorum": 2
+            }
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rnJNEqViVo6FHBisLBt4HWqHhyK3qCVcBN",
+              "Balance": "5021554369",
+              "Flags": 0,
+              "OwnerCount": 1,
+              "Sequence": 107842075
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "FC36317C6B7D5924690D71DC42ADFAD357E80F9650668252F27FBD265FA9BED1",
+            "PreviousFields": {
+              "Balance": "5021554405",
+              "OwnerCount": 0,
+              "Sequence": 107842074
+            },
+            "PreviousTxnID": "6C1ED1E3A7E6BACE541C6DF34FAAE86818D067B6E9D792E7C7CBD727B3D04F28",
+            "PreviousTxnLgrSeq": 107842074
+          }
+        }
+      ],
+      "TransactionIndex": 12,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rnJNEqViVo6FHBisLBt4HWqHhyK3qCVcBN",
+      "Fee": "36",
+      "Flags": 0,
+      "LastLedgerSequence": 107842109,
+      "Sequence": 107842074,
+      "SignerEntries": [
+        {
+          "SignerEntry": {
+            "Account": "rwzDQmAyh8rFQAB1Hbx9TB7hGosmjxjxob",
+            "SignerWeight": 1
+          }
+        },
+        {
+          "SignerEntry": {
+            "Account": "rfmsQEbNAEVGEug1YC5dHrTwSBokU8BGt5",
+            "SignerWeight": 1
+          }
+        },
+        {
+          "SignerEntry": {
+            "Account": "rnAJo1VUfW79xgmps3tJRxjNX5fsTnAA7B",
+            "SignerWeight": 1
+          }
+        }
+      ],
+      "SignerQuorum": 2,
+      "SigningPubKey": "0390727CE5CBFBD641E299EE890171AF24E58694496B8B78C657EEB574F522D3B5",
+      "TransactionType": "SignerListSet",
+      "TxnSignature": "3045022100EC0A3354CBA9C05554358876DF60CD237C712ACFEF9227E4570342705A51E33C02204717CDE7C0DD7DE425EF82362943481B4A1C6EB10EE0E1F6F8E38C631B915961",
+      "date": 846045801,
+      "hash": "84D0634165CCCCC369D7630F2EF0046F144878A1A1C57664FC4BF710C290AE54"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "happen",
+      "object": "guardians",
+      "rule": "happen.signerlistset",
+      "from": null,
+      "to": null,
+      "via": [],
+      "at": "rnJNEqViVo6FHBisLBt4HWqHhyK3qCVcBN",
+      "label": "guardians: rnJN…VcBN set 3 signers with a quorum of 2"
+    }
+  ]
+}
