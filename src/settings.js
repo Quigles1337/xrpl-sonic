@@ -6,6 +6,9 @@ import { normalizeCast, CAST_MODES } from './cast.js';
 import { normalizeGeigerConfig, GEIGER_DEFAULTS } from './geiger.js';
 import { isValidAddress } from './mapping.js';
 
+/** The listening page's three modes (docs/ux.md): Listen is the plate, tape and sound; Watch adds the workbench; Learn the tours. */
+export const VIEWS = Object.freeze(['listen', 'watch', 'learn']);
+
 /** The interference field's modes (src/field.js): off, every cast pair, or one chosen pair. */
 export const FIELD_MODES = Object.freeze(['off', 'cast', 'pair']);
 
@@ -29,6 +32,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   pauseAtNotes: true, // honour annotations that ask the transport to pause
   exposure: false, // long-exposure plate: a fading trace of where tracks landed
   field: Object.freeze({ mode: 'off', pair: null }), // the interference field (src/field.js): off by default; `pair` is [addressA, addressB] in pair mode
+  view: 'listen', // the mode in force: listen, watch or learn (docs/ux.md); a case or replay link opens in watch
   geiger: Object.freeze({ enabled: false, ...GEIGER_DEFAULTS }), // the detector (src/geiger.js)
   health: Object.freeze({ poll: false, sound: false }), // observed fee pressure (src/health.js)
   midiOutput: '', // name of the preferred live MIDI output, re-selected after Connect
@@ -72,6 +76,7 @@ export function sanitizeSettings(input) {
   s.geiger = { enabled: input.geiger?.enabled === true, ...normalizeGeigerConfig(input.geiger) };
   s.health = { poll: input.health?.poll === true, sound: input.health?.sound === true };
   s.field = sanitizeField(input.field);
+  if (typeof input.view === 'string' && VIEWS.includes(input.view)) s.view = input.view;
   if (typeof input.midiOutput === 'string') s.midiOutput = input.midiOutput.slice(0, 120);
   const mode = input.castMode ?? input.accountMode; // accountMode: the key from before the cast existed
   if (typeof mode === 'string' && CAST_MODES[mode]) s.castMode = mode;

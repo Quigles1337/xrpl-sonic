@@ -13,6 +13,8 @@ import { el, option, svg, setGuard, reasonStrip, guarded } from './dom.js';
 import { TERMS, REASONS } from './vocabulary.js';
 import { isExampleCast } from './cast.js';
 import { createDrawer } from './ui-drawer.js';
+import { createLearnPanel } from './ui-learn.js';
+import { VIEWS } from './settings.js';
 import { createCastPanel } from './ui-cast.js';
 import { createCasePanel } from './ui-case.js';
 import { createTransportUI } from './ui-transport.js';
@@ -47,9 +49,12 @@ function stamp() {
  * @param {object} [args.healthActions] callbacks for the Node group (see ui-health.js)
  * @param {object} [args.midiActions]   callbacks for the MIDI group (see ui-midi.js)
  * @param {object} [args.fieldActions]  callbacks for the Field group (see ui-field.js): onChange({ field } | { bin }), binNow()
+ * @param {(view: string) => void} [args.onView]   the mode changed (listen, watch, learn)
+ * @param {(view: string) => void} [args.onDoor]   a door on the welcome overlay was chosen
+ * @param {object} [args.learnActions]  callbacks for the Learn panel (see ui-learn.js): onRun(id), onNext(), onBack(), onExit()
  * @param {{ recording: boolean, mimeType: string|null }} [args.capture]  what the browser supports
  */
-export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, onAi, onCopyAi, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, fieldActions, capture }) {
+export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, onAi, onCopyAi, onSnapshot, onRecord, onPreview, onInspect, transport, caseActions, inspector, geigerActions, healthActions, midiActions, fieldActions, onView, onDoor, learnActions, capture }) {
   const $ = (sel) => document.querySelector(sel);
   const startButtons = [$('#start'), $('#overlay-start')].filter(Boolean);
   const overlay = $('#overlay');
@@ -80,6 +85,12 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
   const aiCancel = $('#ai-cancel');
   const overlayLede = $('#overlay .lede');
   const fieldLine = $('#field-line');
+  const modeButtons = [...document.querySelectorAll('#modes .mode-btn')];
+  const workbench = $('#workbench');
+  const workbenchGroups = $('#workbench-groups');
+  const learn = $('#learn');
+  const learnGroups = $('#learn-groups');
+  const doors = [...document.querySelectorAll('.door[data-view]')];
   const defaultLede = overlayLede?.textContent ?? '';
 
   const update = (patch) => {
@@ -138,14 +149,39 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
     onAnnotate: inspector?.onAnnotate,
   });
 
-  // --- Panel toggle (mobile) -------------------------------------------------
+  // --- Settings panel toggle: a toggle in every mode, over the mode's own panel -----
   const setPanelOpen = (open) => {
     panel.classList.toggle('open', open);
     panelToggle.setAttribute('aria-expanded', String(open));
   };
   panelToggle.addEventListener('click', () => setPanelOpen(!panel.classList.contains('open')));
   panelClose?.addEventListener('click', () => setPanelOpen(false));
-  if (window.matchMedia('(min-width: 900px)').matches) setPanelOpen(true);
+
+  // --- The three modes (docs/ux.md): the switch in the top bar, the doors on the overlay ----
+  const setView = (view, { announce = true } = {}) => {
+    const v = VIEWS.includes(view) ? view : 'listen';
+    document.body.dataset.view = v;
+    for (const b of modeButtons) b.setAttribute('aria-pressed', String(b.dataset.view === v));
+    workbench?.classList.toggle('open', v === 'watch');
+    learn?.classList.toggle('open', v === 'learn');
+    if (announce) onView?.(v);
+  };
+  for (const b of modeButtons) b.addEventListener('click', () => setView(b.dataset.view));
+  // on a narrow screen the switch sits at the bottom edge, outside the top bar: a fixed element inside the bar would be contained by its backdrop filter
+  const modes = $('#modes');
+  const modesHome = modes?.nextElementSibling ?? null;
+  const topbar = modes?.parentElement ?? null;
+  const narrow = window.matchMedia('(max-width: 899px)');
+  const placeModes = () => {
+    if (!modes || !topbar) return;
+    if (narrow.matches) document.body.append(modes);
+    else if (modes.parentElement !== topbar) topbar.insertBefore(modes, modesHome);
+  };
+  placeModes();
+  narrow.addEventListener?.('change', placeModes);
+  $('#workbench-close')?.addEventListener('click', () => setView('listen'));
+  $('#learn-close')?.addEventListener('click', () => setView('listen'));
+  for (const d of doors) d.addEventListener('click', () => onDoor?.(d.dataset.view));
 
   // --- Field guide on the start screen ----------------------------------------
   if (overlayGuide) {
@@ -242,7 +278,18 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
   const healthPanel = createHealthPanel({ settings, ...(healthActions ?? {}) });
   const midiPanel = createMidiPanel({ settings, ...(midiActions ?? {}) });
   const fieldPanel = createFieldPanel({ settings, onChange: (patch) => ('field' in patch ? update(patch) : fieldActions?.onChange?.(patch)), binNow: fieldActions?.binNow });
-
+  const learnPanel = createLearnPanel(learnActions ?? {});
+  // the Moments group of the workbench: save this moment, Copy for AI, and the loaded moment's question
+  const momentNote = el('p', { class: 'moment-note', id: 'moment-note' });
+  const momentsGroup = el('section', { class: 'group moments-group' }, [
+    el('h2', { text: 'Moments' }),
+    el('p', { class: 'group-hint', text: TERMS.moment.sentence }),
+    el('div', { class: 'buttons' }, [
+      el('button', { type: 'button', class: 'btn small', id: 'wb-moment', text: 'Moment', title: 'Save this moment (S)', onclick: () => (momentPrompt?.classList.contains('hidden') ? openMomentPrompt() : closeMomentPrompt()) }),
+      el('button', { type: 'button', class: 'btn small', id: 'wb-ai', text: 'Copy for AI', title: TERMS.copyForAi.sentence, onclick: () => (aiBox?.classList.contains('hidden') ? onAi?.() : closeAiBox()) }),
+    ]),
+    momentNote,
+  ]);
   const snapshotBtn = el('button', { type: 'button', class: 'btn', id: 'snapshot', text: 'Snapshot', title: 'Save the scene as a PNG with a stats overlay', onclick: () => onSnapshot?.() });
   const recordBtn = el('button', { type: 'button', class: 'btn', id: 'record', text: 'Record 30 s', title: `Record 30 seconds of video and audio${capture?.mimeType ? ` (${capture.mimeType})` : ''}` });
   recordBtn.addEventListener('click', guarded(recordBtn, () => onRecord?.()));
@@ -290,10 +337,6 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
       row('Explorer links', explorer),
     ]),
     el('section', { class: 'group' }, [el('h2', { text: 'Transaction types' }), el('p', { class: 'group-hint', text: TERMS.transactionTypes.sentence }), el('div', { class: 'chips' }, categoryToggles)]),
-    castPanel.root,
-    fieldPanel.root,
-    casePanel.root,
-    geigerPanel.root,
     healthPanel.root,
     midiPanel.root,
     el('section', { class: 'group' }, [
@@ -318,6 +361,11 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
       ]),
     ]),
   );
+
+  // Watch: the workbench beside the plate; Learn: the tours
+  workbenchGroups?.append(castPanel.root, fieldPanel.root, momentsGroup, casePanel.root, geigerPanel.root);
+  learnGroups?.append(learnPanel.root);
+  setView(settings.view ?? 'listen', { announce: false });
 
   const statPlayed = $('#stat-played');
   const statDropped = $('#stat-dropped');
@@ -355,6 +403,14 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
     midiPanel,
     fieldPanel,
     drawer,
+    learn: learnPanel,
+    setView,
+    setPanelOpen,
+
+    /** The loaded moment's question (or any sentence about the case) under the Moments buttons; empty clears it. */
+    setMomentNote(text) {
+      momentNote.textContent = text ?? '';
+    },
 
     /** The pair under the pointer (src/field.js): its full readout line and its hashes, until closed. */
     showFieldLine({ label, line, detail = [] }) {
@@ -530,6 +586,7 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
       geigerPanel.applySettings();
       healthPanel.applySettings();
       fieldPanel.applySettings();
+      setView(settings.view ?? 'listen', { announce: false });
       applyLogVisibility();
     },
   };

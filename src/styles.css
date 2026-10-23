@@ -251,7 +251,7 @@ body.running .btn.primary {
   height: var(--topbar-h);
   z-index: 3;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   align-items: stretch;
   padding: 0 16px;
   padding-top: env(safe-area-inset-top);
@@ -2289,6 +2289,23 @@ body.mode-embed .inspector {
     padding-top: 8px;
   }
 
+  /* the mode switch moves to the bottom edge on a narrow screen (src/ui.js moves it out of the top bar, whose backdrop filter would otherwise contain it); the strip's example suffix goes */
+  body > .modes {
+    position: fixed;
+    left: 16px;
+    bottom: 40px;
+    z-index: 3;
+    display: flex;
+    border: 1px solid var(--line-strong);
+    background: var(--panel-solid);
+    border-radius: var(--radius);
+    padding: 2px;
+  }
+
+  .cast-chip.example::after {
+    content: none;
+  }
+
   /* The embed keeps its single-row strip; only the full page re-flows the buttons. */
   body:not(.mode-embed) .actions {
     display: contents;
@@ -2869,4 +2886,263 @@ body.blind .field-line {
 body.mode-overlay .drawer,
 body.blind .drawer {
   display: none;
+}
+
+/* ---------------------------------------------------------- the three modes (docs/ux.md, PR 2) */
+
+.modes {
+  gap: 2px;
+}
+
+.mode-btn {
+  appearance: none;
+  padding: 5px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.mode-btn:hover {
+  color: var(--text);
+}
+
+.mode-btn[aria-pressed="true"] {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.mode-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+body.mode-overlay .modes,
+body.mode-embed .modes,
+body.mode-embed .workbench,
+body.mode-embed .learn {
+  display: none !important;
+}
+
+/* the top bar carries what the mode needs; Start/Stop stays everywhere */
+body[data-view="listen"] #moment,
+body[data-view="listen"] #ai,
+body[data-view="learn"] #moment,
+body[data-view="learn"] #ai,
+body[data-view="learn"] #share {
+  display: none;
+}
+
+/* the workbench and the Learn panel sit where the settings panel sits; Settings overlays them when opened */
+.workbench,
+.learn {
+  z-index: 2;
+}
+
+#panel {
+  z-index: 3;
+}
+
+.workbench:not(.open),
+.learn:not(.open) {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .workbench,
+  .learn {
+    top: calc(var(--topbar-h) + 10px);
+    right: 16px;
+    bottom: 40px;
+    width: 332px;
+    border-radius: var(--radius-lg);
+  }
+
+  /* settings is a toggle in every mode; closed, it leaves the mode's own panel in view */
+  #panel:not(.open) {
+    display: none;
+  }
+}
+
+/* the three doors on the welcome overlay */
+.doors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.door {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 14px 16px;
+  text-align: left;
+  background: rgba(140, 170, 220, 0.06);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.door:hover,
+.door:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.door-name {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.door-line {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.overlay-card .lede:empty {
+  display: none;
+}
+
+.legend {
+  margin: 0 0 8px;
+  text-align: left;
+}
+
+.legend summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  list-style: none;
+}
+
+.legend summary::before {
+  content: "▸ ";
+  color: var(--accent);
+}
+
+.legend[open] summary::before {
+  content: "▾ ";
+}
+
+.legend .guide {
+  margin: 12px 0 8px;
+}
+
+@media (max-width: 599px) {
+  .doors {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* the Learn panel */
+.tours {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tour {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.tour-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tour-name {
+  font-weight: 600;
+}
+
+.tour-line {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.tour-step {
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.tour-step.hidden {
+  display: none;
+}
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.step-glyph {
+  color: var(--glyph);
+  filter: drop-shadow(0 0 4px var(--glyph));
+  display: inline-flex;
+}
+
+.step-title {
+  font-weight: 600;
+}
+
+.step-count {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.step-text {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* the Moments group */
+.moment-note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.moment-note:empty {
+  display: none;
+}
+
+/* the status text yields before the actions do */
+.status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 900px) and (max-width: 1440px) {
+  .actions .btn {
+    padding: 6px 10px;
+  }
 }

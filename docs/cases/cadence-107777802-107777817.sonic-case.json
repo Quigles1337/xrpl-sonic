@@ -1,0 +1,54 @@
+{
+  "format": "xrpl-sonic/case",
+  "version": 1,
+  "id": "cadence-107777802-107777817",
+  "title": "The market maker’s cadence, sixteen ledgers around #107,777,809",
+  "description": "The sample case’s cast over sixteen ledgers around it: enough for the readout to judge a pair (the guard is twelve ledgers) and few enough for the public cluster to serve within its quota; the fifty-ledger case in docs/cases is the fuller window.",
+  "network": "mainnet",
+  "clips": [
+    {
+      "from": 107777802,
+      "to": 107777817
+    }
+  ],
+  "cast": [
+    {
+      "address": "rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah",
+      "label": "Sender A",
+      "voice": "brass",
+      "pan": -0.6,
+      "colour": "#ffffff"
+    },
+    {
+      "address": "r33SNW2rSBkXGmn84FSKSY4RG4FJ7fUVhk",
+      "label": "Sender B",
+      "voice": "glass",
+      "pan": 0.6,
+      "colour": "#ffb3c6"
+    }
+  ],
+  "filters": {
+    "enabled": {
+      "payment": true,
+      "offer": true,
+      "trust": true,
+      "nft": true,
+      "escrow": true,
+      "paychan": true,
+      "amm": true,
+      "other": true
+    },
+    "includeFailed": false,
+    "quietThreshold": 0,
+    "castMode": "all"
+  },
+  "mapping": {
+    "version": "1.1.0",
+    "scale": "pentatonicMajor",
+    "key": "C"
+  },
+  "timing": {
+    "speed": 1
+  },
+  "annotations": []
+}
