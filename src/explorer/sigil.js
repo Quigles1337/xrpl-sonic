@@ -47,6 +47,11 @@ export function sigilSvg(address, size = 20) {
   return `<svg class="sigil" width="${px}" height="${px}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect width="24" height="24" rx="4" fill="${dim}"/>${rects.join('')}</svg>`;
 }
 
+/** The sigil's hue alone, without building the cells (docs/universe-requests.md, R8): the number sigilPattern() draws with, cheap enough to call per planet per ledger. */
+export function sigilHue(address) {
+  return hashString(String(address ?? '')) % 360;
+}
+
 /** The sigil's colour as a CSS string, for borders and rings beside it. */
 export function sigilColour(address) {
   const { hue, saturation, lightness } = sigilPattern(address);

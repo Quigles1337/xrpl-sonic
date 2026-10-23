@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { classify, parseRoute, formatRoute, routeFor, routeTitle } from '../src/explorer/route.js';
-import { sigilPattern, sigilSvg, sigilColour, SIGIL_CELLS } from '../src/explorer/sigil.js';
+import { sigilPattern, sigilSvg, sigilColour, sigilHue, SIGIL_CELLS } from '../src/explorer/sigil.js';
 
 const ADDR = 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah';
 const HASH = 'B247B77B8F7D6C2D9D4D3A2A1F0E9D8C7B6A5F4E3D2C1B0A9F8E7D6C5B4A3F2E';
@@ -90,6 +90,17 @@ describe('routes', () => {
 });
 
 describe('sigils', () => {
+  test('sigilHue is the sigil’s own hue, pinned equal to sigilPattern’s for every address (universe-requests.md R8)', () => {
+    const addresses = [ADDR, 'rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z', '', 'rrrrrrrrrrrrrrrrrrrrrhoLvTp', ...Array.from({ length: 500 }, (_, i) => `r${i.toString(36).padStart(8, 'x')}`)];
+    for (const a of addresses) {
+      const hue = sigilHue(a);
+      assert.equal(hue, sigilPattern(a).hue, a);
+      assert.ok(Number.isInteger(hue) && hue >= 0 && hue < 360);
+      assert.ok(sigilColour(a).startsWith(`hsl(${hue} `), 'the colour is drawn from the same hue');
+    }
+    assert.equal(sigilHue(undefined), sigilPattern(undefined).hue);
+  });
+
   test('deterministic, symmetric, never blank, distinct across addresses', () => {
     const a = sigilPattern(ADDR);
     assert.deepEqual(a, sigilPattern(ADDR));

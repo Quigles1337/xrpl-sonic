@@ -702,6 +702,34 @@ export function cadenceOf(z, maxLag, { positions = null, included = null, least 
   return best;
 }
 
+/**
+ * Each account's own cadence, independent of pairs (docs/universe-requests.md,
+ * R3): address → { period, r } or null, for every account of the frame, under
+ * the same guard as a pair (`minLedgers` ledgers used) and the same
+ * normalisation; null when the window is too short, the account has no series
+ * or its series is flat. The frame is read as given: bin it first if wanted.
+ * @param {object} frame  from frameFromScore(), frameFromLive() or frameFromAccountTx()
+ * @returns {Map<string, { period: number, r: number } | null>}
+ */
+export function cadences(frame, options = DEFAULTS) {
+  const o = normalizeOptions(options);
+  const out = new Map();
+  const ledgers = frame?.ledgers ?? [];
+  const included = ledgers.map((l) => l.included);
+  const positions = ledgers.map((l) => l.index);
+  const used = included.filter(Boolean).length;
+  const L = effectiveLag(o.maxLag, used);
+  for (const a of frame?.accounts ?? []) {
+    if (used < o.minLedgers || !frame.series?.has(a.address)) {
+      out.set(a.address, null);
+      continue;
+    }
+    const z = normalise(frame.series.get(a.address), included);
+    out.set(a.address, z.flat ? null : cadenceOf(z.z, L, { positions, included }));
+  }
+  return out;
+}
+
 /** The AR order limit for a frame: the option, or L when the option is 0. */
 export function orderLimit(options, L) {
   return options.maxOrder > 0 ? Math.min(options.maxOrder, L) : L;
@@ -829,12 +857,13 @@ export function coherence(input, options = DEFAULTS) {
   const used = included.filter(Boolean).length;
   const L = effectiveLag(o.maxLag, used);
   const P = orderLimit(o, L);
-  // each account's own cadence and AR order, when the window can bear it
+  // each account's own cadence (cadences(), independent of pairs) and AR order, when the window can bear it
+  const owned = cadences(frame, o);
   const own = (address) => {
     if (used < o.minLedgers) return { cadence: null, ar: null };
     const z = normalise(frame.series.get(address) ?? [], included);
     if (z.flat) return { cadence: null, ar: null };
-    return { cadence: cadenceOf(z.z, L, { positions, included }), ar: arFit(z.z, P, { positions, included }).order };
+    return { cadence: owned.get(address) ?? null, ar: arFit(z.z, P, { positions, included }).order };
   };
   const least = minShuffles(o.significance);
   const resolved = pairs.filter((p) => p.shuffle?.count >= least).length;

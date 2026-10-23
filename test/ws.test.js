@@ -224,3 +224,80 @@ describe('XrplStream', () => {
     assert.throws(() => new XrplStream({ endpoints: 'wss://x', WebSocketImpl: class {} }), /endpoints required/);
   });
 });
+
+describe('XrplStream subscribe result (universe-requests.md R11)', () => {
+  test('a hostid in the subscribe result goes out on the status callback as `subscribed` at once, the state stays connected, the response still reaches onMessage, and the hostid resets on reconnect', async () => {
+    const { FakeWebSocket, sockets } = makeFakeWebSocket((ws) => ws.open());
+    const statuses = [];
+    const messages = [];
+    const stream = new XrplStream({ endpoints: ['wss://a.example', 'wss://b.example'], WebSocketImpl: FakeWebSocket, onStatus: (s) => statuses.push(s), onMessage: (m) => messages.push(m) });
+    stream.connect();
+    await flush();
+    assert.equal(stream.hostid, null);
+    assert.ok(statuses.every((s) => s.hostid === null), 'null until the subscribe result names the node');
+    const ws = sockets[0];
+    ws.message({ id: SUBSCRIBE_COMMAND.id, status: 'success', type: 'response', result: { hostid: 'ABCD', ledger_index: 500, ledger_hash: 'A'.repeat(64), fee_base: 10, load_factor: 256 } });
+    const sub = statuses.find((s) => s.state === 'subscribed');
+    assert.deepEqual(sub, { state: 'subscribed', endpoint: 'wss://a.example', attempt: 0, hostid: 'ABCD' });
+    assert.equal(stream.state, 'connected', 'an event on the callback, not a state');
+    assert.equal(stream.hostid, 'ABCD');
+    assert.equal(messages.at(-1).result.hostid, 'ABCD', 'the response reaches onMessage as before (the page seeds its ledger index from it)');
+    assert.equal(statuses.filter((s) => s.state === 'connected').length, 1, 'connected is not announced twice');
+    assert.ok(!ws.sent.some((m) => m.command === 'server_info'), 'no server_info when the result named the node');
+    ws.drop();
+    await flush();
+    assert.equal(statuses.at(-1).state, 'reconnecting');
+    assert.equal(statuses.at(-1).hostid, 'ABCD', 'the last known name rides along until a new socket opens');
+    stream.close();
+    assert.equal(statuses.at(-1).state, 'idle');
+  });
+
+  test('a subscribe result without a hostid (today’s rippled and Clio) asks server_info once: rippled’s info.hostid names the node, Clio’s answer without one gives null, and so does a failed request', async () => {
+    const run = async (answer) => {
+      const { FakeWebSocket, sockets } = makeFakeWebSocket((ws) => ws.open());
+      const statuses = [];
+      const stream = new XrplStream({ endpoints: ['wss://a.example'], WebSocketImpl: FakeWebSocket, onStatus: (s) => statuses.push(s), onMessage: () => {} });
+      stream.connect();
+      await flush();
+      const ws = sockets[0];
+      ws.message({ id: SUBSCRIBE_COMMAND.id, status: 'success', type: 'response', result: { ledger_index: 1, fee_base: 10 } });
+      assert.ok(!statuses.some((s) => s.state === 'subscribed'), 'not named yet');
+      const sent = ws.sent.at(-1);
+      assert.equal(sent.command, 'server_info');
+      ws.message(answer(sent.id));
+      await flush();
+      stream.close();
+      return { statuses, stream, sent: ws.sent };
+    };
+    const rippled = await run((id) => ({ id, status: 'success', type: 'response', result: { info: { hostid: 'HUNTER', build_version: '3.4.1' } } }));
+    assert.deepEqual(rippled.statuses.find((s) => s.state === 'subscribed'), { state: 'subscribed', endpoint: 'wss://a.example', attempt: 0, hostid: 'HUNTER' });
+    assert.equal(rippled.sent.filter((m) => m.command === 'server_info').length, 1, 'asked once');
+    const clio = await run((id) => ({ id, status: 'success', type: 'response', result: { info: { clio_version: '2.8.0' } } }));
+    assert.deepEqual(clio.statuses.find((s) => s.state === 'subscribed'), { state: 'subscribed', endpoint: 'wss://a.example', attempt: 0, hostid: null });
+    const refused = await run((id) => ({ id, status: 'error', type: 'response', error: 'noPermission' }));
+    assert.deepEqual(refused.statuses.find((s) => s.state === 'subscribed'), { state: 'subscribed', endpoint: 'wss://a.example', attempt: 0, hostid: null });
+  });
+
+  test('a subscribe error still fails the connection; a socket that drops while server_info is pending names nothing', async () => {
+    const { FakeWebSocket, sockets } = makeFakeWebSocket((ws) => ws.open());
+    const statuses = [];
+    const stream = new XrplStream({ endpoints: ['wss://a.example'], WebSocketImpl: FakeWebSocket, onStatus: (s) => statuses.push(s), onMessage: () => {} });
+    stream.connect();
+    await flush();
+    sockets[0].message({ id: SUBSCRIBE_COMMAND.id, status: 'success', type: 'response', result: { ledger_index: 1 } });
+    sockets[0].drop();
+    await flush();
+    assert.ok(!statuses.some((s) => s.state === 'subscribed'));
+    assert.equal(statuses.at(-1).state, 'reconnecting');
+    stream.close();
+    const second = makeFakeWebSocket((ws) => ws.open());
+    const errors = [];
+    const s2 = new XrplStream({ endpoints: ['wss://a.example'], WebSocketImpl: second.FakeWebSocket, onStatus: (s) => errors.push(s), onMessage: () => {} });
+    s2.connect();
+    await flush();
+    second.sockets[0].message({ id: SUBSCRIBE_COMMAND.id, status: 'error', type: 'response', error: 'noPermission' });
+    assert.equal(errors.at(-1).state, 'reconnecting');
+    assert.match(errors.at(-1).error, /subscribe failed: noPermission/);
+    s2.close();
+  });
+});

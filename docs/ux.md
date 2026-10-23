@@ -17,6 +17,8 @@ Where today's groups go: Sound, Stream and Transaction types, Node, MIDI, Captur
 
 The welcome overlay offers the three doors with one line each, in the words of the README: Listen, "every transaction on the XRP Ledger becomes a sound, every ledger close a pulse"; Watch, "follow up to five accounts, each with a voice of its own, save a moment, read the coherence between them"; Learn, "three short tours: the legend, follow a payment, the market maker's cadence". The legend (the field guide tiles that are on the start screen today) stays one click away in every mode.
 
+A fourth door, **Universe**, and a link beside Explorer in every mode's top bar open the sky page, `universe.html` ([universe.md](universe.md): "the ledger is a sky: accounts are planets, transactions are celestial objects"), as [universe-requests.md](universe-requests.md) R12 asks. The page is not a mode and has no row above; nothing else on the listening page changes for it.
+
 The URL and hash contracts are unchanged: `#cast=`, `#account=`, `#replay=`, `#case=`, `?case=`, `?network=`, `?autostart=1`, `?overlay=1`, `?embed=1` open exactly as before. The mode is not in the URL; it is remembered with the settings, defaults to Listen, and a link that carries a case or a replay opens in Watch so the case is visible, as it was in the settings column before.
 
 ## The vocabulary

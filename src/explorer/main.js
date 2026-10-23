@@ -50,7 +50,7 @@ const api = new ExplorerApi({
   network,
   onStatus: (s) => {
     const dot = $('#status-dot');
-    dot.dataset.state = s.state === 'connected' ? 'connected' : s.state === 'idle' ? 'idle' : 'connecting';
+    dot.dataset.state = s.state === 'connected' || s.state === 'subscribed' ? 'connected' : s.state === 'idle' ? 'idle' : 'connecting';
     dot.title = s.endpoint ? `${s.state} · ${s.endpoint.replace(/^wss:\/\//, '')}` : s.state;
   },
   onLedger: (msg) => {

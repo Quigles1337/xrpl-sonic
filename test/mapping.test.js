@@ -17,6 +17,9 @@ import {
   extractAmount,
   decodeCurrency,
   categorize,
+  LAYERS,
+  LAYER_OF_CATEGORY,
+  layerOf,
   pitchFromAmount,
   amountToDegree,
   degreeToMidi,
@@ -564,5 +567,19 @@ describe('txToEventOrReason', () => {
     assert.equal(txToEventOrReason({ type: 'ledgerClosed' }).reason, 'notATransaction');
     assert.equal(txToEventOrReason(null).reason, 'notATransaction');
     assert.equal(txToEvent(failed), null, 'txToEvent is unchanged for existing callers');
+  });
+});
+
+describe('layers (universe-requests.md R10)', () => {
+  test('every category has a layer among the four and the rest; the grouping is the sky’s', () => {
+    assert.deepEqual(LAYERS, ['payment', 'dex', 'trust', 'nft', 'other']);
+    for (const c of CATEGORY_NAMES) assert.ok(LAYERS.includes(layerOf(c)), `${c} → ${layerOf(c)}`);
+    assert.deepEqual(Object.keys(LAYER_OF_CATEGORY).sort(), [...CATEGORY_NAMES].sort(), 'the table names every category and nothing else');
+    assert.deepEqual(['payment', 'offer', 'trust', 'nft', 'escrow', 'paychan', 'amm', 'other'].map(layerOf), ['payment', 'dex', 'trust', 'nft', 'payment', 'payment', 'dex', 'other'], 'the spike’s table, row for row');
+    assert.equal(layerOf('batch'), 'other');
+    assert.equal(layerOf('nope'), 'other');
+    assert.equal(layerOf(undefined), 'other');
+    assert.equal(layerOf(categorize('EscrowFinish')), 'payment');
+    assert.equal(layerOf(categorize('AMMDeposit')), 'dex');
   });
 });

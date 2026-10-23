@@ -59,7 +59,10 @@
       </div>
       <div class="actions">
         <a id="open-full" class="btn small open-full" href="https://quigles1337.github.io/xrpl-sonic/" target="_top" rel="noopener">Open full page</a>
-        <a class="btn explorer-link" href="explorer.html" title="Read the ledger: accounts, transactions, ledgers">Explorer</a>
+        <span class="pages">
+          <a class="btn explorer-link" href="explorer.html" title="Read the ledger: accounts, transactions, ledgers">Explorer</a>
+          <a class="btn universe-link" href="universe.html" title="The ledger as a sky: accounts are planets, transactions are celestial objects">Universe</a>
+        </span>
         <button id="moment" class="btn" type="button" title="Save this moment: the selection and what caught your attention, as a case file and a link (S)">Moment</button>
         <button id="ai" class="btn" type="button" title="Copy the loaded case as text an assistant can work from">Copy for AI</button>
         <button id="share" class="btn" type="button" title="Copy a link that replays the current ledger">Share</button>
@@ -151,10 +154,11 @@
         <h1>xrpl-sonic</h1>
         <p class="overlay-sub">A listening instrument for the XRP Ledger</p>
         <p class="lede"></p>
-        <div class="doors" role="group" aria-label="Three ways in">
+        <div class="doors" role="group" aria-label="Four ways in">
           <button type="button" class="door" id="door-listen" data-view="listen"><span class="door-name">Listen</span><span class="door-line">Every transaction on the XRP Ledger becomes a sound. Every ledger close, a pulse.</span></button>
           <button type="button" class="door" id="door-watch" data-view="watch"><span class="door-name">Watch</span><span class="door-line">Follow up to five accounts, each with a voice of its own; save a moment; read the coherence between them.</span></button>
           <button type="button" class="door" id="door-learn" data-view="learn"><span class="door-name">Learn</span><span class="door-line">Three short tours: the legend, follow a payment, the market maker’s cadence.</span></button>
+          <a class="door" id="door-universe" href="universe.html"><span class="door-name">Universe</span><span class="door-line">The ledger as a sky: accounts are planets, transactions are celestial objects.</span></a>
         </div>
         <details class="legend" id="overlay-legend">
           <summary>Legend</summary>
