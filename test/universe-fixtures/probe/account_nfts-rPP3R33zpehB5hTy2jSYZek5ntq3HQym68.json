@@ -1,0 +1,33 @@
+{
+ "fetchedAt": "2026-10-23T05:53:11.380Z",
+ "host": "wss://s2.ripple.com",
+ "account": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+ "command": "account_nfts",
+ "request": {
+  "command": "account_nfts",
+  "account": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+  "ledger_index": "validated",
+  "limit": 400
+ },
+ "responses": [
+  {
+   "result": {
+    "ledger_hash": "D99D19F3123CDC8C6CC5170F2D426A54BCF42352F355EE92CA3F2142C57F6CEE",
+    "ledger_index": 107843158,
+    "validated": true,
+    "account": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+    "account_nfts": [],
+    "limit": 400
+   },
+   "id": "fixture-6",
+   "status": "success",
+   "type": "response",
+   "warnings": [
+    {
+     "id": 2001,
+     "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+    }
+   ]
+  }
+ ]
+}

@@ -29,11 +29,18 @@ import { Clusters } from './cluster.js';
 import { SyntheticStream } from './synthetic.js';
 import { bodyOf, describeBody, KIND_CODES, THRESHOLDS } from './bodies.js';
 import { eventsOf, collapseShowers, weatherOf, describeEvent, OBJECTS } from './events.js';
+import { fetchAccountTx } from '../account-tx.js';
+import { CATEGORY_BY_CODE } from './records.js';
+import { touchGraph, randomWalk, conservation, seriesOf, cadence, coherenceAgainst, catchOf, historyLabel, DEFAULTS as PROBE_DEFAULTS } from './probe.js';
 
 const STEP_MS = 50; // layout relaxation cadence
 const FRAME_MS = 120; // at most this often, positions to the page
 const MAX_EVENTS_PER_LEDGER = 600;
 const COHERENCE_EVERY = 10; // closed ledgers
+const PROBE_PAGES = 5; // the history's pages at most, 200 entries each, one after the other
+const PROBE_COUNTERPARTIES = 10; // the busiest counterparties in the coherence list
+const PROBE_SHUFFLES = 100; // the null per pair in a probe: enough for the 95th, half the listening page's
+const EXPLORE_PACE_MS = 250; // between an exploration's requests
 const COHERENCE_TOP = 8;
 const SATELLITE_MS = 24 * 3600 * 1000; // an auction slot lasts a day
 
@@ -382,6 +389,7 @@ function attributes(ledgerIndex) {
   const period = new Uint8Array(n + 1);
   const r100 = new Uint8Array(n + 1);
   const core = new Int32Array(n + 1);
+  const moons = new Uint16Array(n + 1); // NFTs the exploration counted (account_nfts), 0 until explored
   const keys = [];
   const ignitions = [];
   const ledger = universe.currentLedger ?? 0;
@@ -406,6 +414,7 @@ function attributes(ledgerIndex) {
     period[id] = Math.min(255, b.period ?? 0);
     r100[id] = Math.min(255, Math.round((b.r ?? 0) * 100));
     core[id] = layout.core[id] || (layout.promoted[id] ? id : 0); // a satellite's core, or a core itself: in a galaxy either way
+    moons[id] = Math.min(65535, p.explored?.nfts ?? 0);
     if (b.kind === 'blackhole') keys.push([id, b.regularKey ?? null]);
     if (b.kind === 'star' && kinds[id] !== KIND_CODES.star && p.firstLedger != null && p.firstLedger < ledgerIndex) {
       const e = { verb: 'dock', object: 'ignite', category: 'trust', rule: OBJECTS.ignite.rule, hash: null, ledgerIndex, success: true, from: 0, to: id, via: [], at: id, evidence: [{ field: 'RippleState sides', value: `${b.holders} holders` }, { field: 'threshold', value: THRESHOLDS.starHolders }], detail: { holders: b.holders, threshold: THRESHOLDS.starHolders, address: p.address } };
@@ -416,7 +425,7 @@ function attributes(ledgerIndex) {
     }
     kinds[id] = kind[id];
   }
-  return { attrs: { n, size, hue, kind, known, rings, activity, lastLedger, holders, providers, period, r100, core }, keys, ignitions };
+  return { attrs: { n, size, hue, kind, known, rings, activity, lastLedger, holders, providers, period, r100, core, moons }, keys, ignitions };
 }
 
 function postLedger(l, event) {
@@ -465,7 +474,7 @@ function postLedger(l, event) {
       stability,
       memory: { records: universe.records.length, planets: universe.planetCount, edges: universe.edges.size, layoutEdges: layout.ea.length, clusters: clusters.unions, hubSkips: clusters.skippedHub, interned: universe.addresses.size, rocks: standing.rocks.size, checks: standing.checks.size },
     },
-    [attrs.size.buffer, attrs.hue.buffer, attrs.kind.buffer, attrs.known.buffer, attrs.rings.buffer, attrs.activity.buffer, attrs.lastLedger.buffer, attrs.holders.buffer, attrs.providers.buffer, attrs.period.buffer, attrs.r100.buffer, attrs.core.buffer],
+    [attrs.size.buffer, attrs.hue.buffer, attrs.kind.buffer, attrs.known.buffer, attrs.rings.buffer, attrs.activity.buffer, attrs.lastLedger.buffer, attrs.holders.buffer, attrs.providers.buffer, attrs.period.buffer, attrs.r100.buffer, attrs.core.buffer, attrs.moons.buffer],
   );
   addedSinceLedger = [];
   domainsSinceLedger = [];
@@ -601,6 +610,174 @@ function stop() {
   setState('idle', null);
 }
 
+// --- the probe ------------------------------------------------------------------------------
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const short = (a) => (typeof a === 'string' && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a);
+
+/** A planet for an address the history names, made if the sky has none (the record's counterparties become planets). */
+function ensurePlanet(address, ledger) {
+  if (typeof address !== 'string' || !/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(address)) return 0;
+  const had = universe.addresses.has(address) && universe.planets[universe.addresses.id(address)];
+  const p = universe.planet(address, ledger);
+  if (!had) {
+    layout.add(p.id, address, ledger);
+    clusters.add(p.id);
+    addedSinceLedger.push([p.id, address]);
+  }
+  return p.id;
+}
+
+/** The planets nearest a planet in the layout among those touched in the last `within` ledgers, by address. */
+function nearestActive(id, count, within = 12) {
+  const ledger = universe.currentLedger ?? 0;
+  const [x, y, z] = layout.position(id);
+  const out = [];
+  for (let other = 1; other <= universe.planetCount; other++) {
+    if (other === id || !layout.has(other)) continue;
+    const p = universe.planets[other];
+    if (!p || (p.lastLedger ?? 0) < ledger - within) continue;
+    const [px, py, pz] = layout.position(other);
+    out.push([Math.hypot(px - x, py - y, pz - z), other]);
+  }
+  out.sort((a, b) => a[0] - b[0]);
+  return out.slice(0, count).map(([, other]) => universe.addresses.string(other));
+}
+
+/**
+ * The probe, in the spec's order, each step posted as it lands: the history
+ * (bounded to PROBE_DEFAULTS.historyLedgers back from the ledger at the
+ * hold, through the stream, paced page by page; none in a replay or a
+ * synthetic sky, and the readout says so), the first-degree connections of
+ * the record lit with their counts (the history's counterparties made
+ * planets first), then the measures and the catch.
+ */
+async function probe({ id, seq = 0 }) {
+  const p = universe.planetById(id);
+  if (!p) {
+    post({ type: 'probe-error', seq, id, message: 'no such planet' });
+    return;
+  }
+  const t0 = performance.now();
+  const address = p.address;
+  const to = universe.currentLedger ?? 0;
+  const from = Math.max(1, to - PROBE_DEFAULTS.historyLedgers + 1);
+  let history;
+  let entries = [];
+  if (stream && !replay && !synthetic && to > 0) {
+    const r = await fetchAccountTx((cmd) => stream.request(cmd), address, { from, to, limit: 200, maxPages: PROBE_PAGES, onPage: (page) => post({ type: 'probe-page', seq, id, pages: page?.pages ?? 0, entries: page?.entries?.length ?? page?.entries ?? 0 }) });
+    entries = r.entries ?? [];
+    const inWindow = entries.filter((e) => universe.ledgers.has(Number(e.ledger_index ?? e.tx?.ledger_index ?? e.tx_json?.ledger_index))).length;
+    history = { from, to, records: entries.length, inWindow, more: r.pages >= PROBE_PAGES && Boolean(r.marker), missing: r.missing ?? [], host, pages: r.pages, error: r.error ?? null, source: 'account_tx' };
+  } else {
+    history = { from: null, to: null, records: 0, inWindow: null, more: false, missing: [], host: null, pages: 0, error: replay ? 'no history in a replay: the window is the record' : synthetic ? 'no history in a synthetic sky' : 'not connected: the window is the record', source: 'window' };
+  }
+  post({ type: 'probe-history', seq, id, history, label: historyLabel(history) });
+  // the history's counterparties become planets; the record's first-degree connections, lit with counts
+  const ledger = universe.currentLedger ?? 0;
+  let made = 0;
+  for (const e of entries) {
+    const tx = e.tx ?? e.tx_json ?? {};
+    for (const a of [tx.Account, tx.Destination]) if (a && a !== address && made < 200 && ensurePlanet(a, ledger) && !universe.addresses.has(a)) made += 1;
+  }
+  const edges = [];
+  for (const e of universe.edges.values()) if (e.a === id || e.b === id) edges.push([e.a === id ? e.b : e.a, e]);
+  edges.sort((x, y) => y[1].count - x[1].count);
+  post({ type: 'probe-connections', seq, id, connections: edges.slice(0, 60).map(([other, e]) => ({ id: other, address: universe.addresses.string(other), count: e.count, trust: Boolean(e.trust), byCategory: Array.from(e.byCategory ?? []) })), total: edges.length });
+  // the measures
+  const adj = touchGraph(universe.edges.values());
+  const walk = randomWalk(adj, id, { restart: PROBE_DEFAULTS.restart, iterations: PROBE_DEFAULTS.iterations });
+  const cons = history.source === 'account_tx' ? conservation(entries, address) : [];
+  const liveLedgers = live.ledgers;
+  const series = history.source === 'account_tx' ? seriesOf(entries, address, { from, to }) : liveLedgers.map((l) => l.accounts?.[address]?.count ?? 0);
+  const cad = { ...cadence(series), source: history.source === 'account_tx' ? 'its history' : 'the window' };
+  const counterparties = edges.slice(0, PROBE_COUNTERPARTIES).map(([other]) => universe.addresses.string(other));
+  const nearest = nearestActive(id, PROBE_DEFAULTS.nearest).filter((a) => !counterparties.includes(a));
+  const list = [address, ...counterparties, ...nearest];
+  const frame = frameFromLive(liveLedgers, { cast: list.map((a) => ({ address: a, label: short(a) })) });
+  const coh = coherenceAgainst(frame, address, list.slice(1), { ...COHERENCE_DEFAULTS, shuffles: PROBE_SHUFFLES });
+  const c = catchOf({
+    id,
+    address,
+    history,
+    walk,
+    edgesOf: (other) => universe.edge(id, other),
+    categoryNames: CATEGORY_BY_CODE,
+    coherence: coh,
+    conservation: cons,
+    cadence: cad,
+    idOf: (a) => (universe.addresses.has(a) ? universe.addresses.id(a) : 0),
+    addressOf: (other) => universe.addresses.string(other),
+    nearest,
+  });
+  c.window = { ledgers: liveLedgers.length, from: liveLedgers[0]?.index ?? null, to: liveLedgers.at(-1)?.index ?? null };
+  c.ms = Math.round(performance.now() - t0);
+  post({ type: 'probe-catch', seq, id, catch: c, madePlanets: made });
+}
+
+/**
+ * Exploration proper: the account as the explorer loads it (R7), the root
+ * and its trust lines first, then the objects (a SignerList among them
+ * decides the black hole rule) and the NFTs (moons), each request paced,
+ * each part posted as it lands and kept on the planet for the body rule.
+ */
+async function explore({ id, seq = 0 }) {
+  const p = universe.planetById(id);
+  if (!p) {
+    post({ type: 'explore-error', seq, id, message: 'no such planet' });
+    return;
+  }
+  if (!stream || replay || synthetic) {
+    post({ type: 'explored', seq, id, part: 'none', explored: null, reason: replay ? 'no exploration in a replay' : synthetic ? 'no exploration in a synthetic sky' : 'not connected' });
+    return;
+  }
+  const address = p.address;
+  const explored = p.explored ?? { ledgerIndex: null, root: null, lines: null, fundedLines: null, objects: null, signerList: null, nfts: null, errors: {} };
+  p.explored = explored;
+  const ask = async (command, extra = {}) => {
+    try {
+      return (await stream.request({ command, account: address, ledger_index: 'validated', ...extra })).result;
+    } catch (err) {
+      explored.errors[command] = err?.code ?? err?.message ?? 'failed';
+      return null;
+    }
+  };
+  const info = await ask('account_info');
+  if (info?.account_data) {
+    explored.ledgerIndex = info.ledger_index ?? info.ledger_current_index ?? null;
+    const d = info.account_data;
+    explored.root = { balance: d.Balance ?? null, ownerCount: d.OwnerCount ?? 0, flags: d.Flags ?? 0, regularKey: d.RegularKey ?? null, domain: d.Domain ?? null, sequence: d.Sequence ?? null };
+    if (d.Domain && !p.domain) p.domain = d.Domain;
+  }
+  post({ type: 'explored', seq, id, part: 'root', explored });
+  await sleep(EXPLORE_PACE_MS);
+  const lines = await ask('account_lines', { limit: 400 });
+  if (lines?.lines) {
+    explored.lines = lines.lines.length + (lines.marker ? 1 : 0); // a marker means more beyond the page: counted as "400+"
+    explored.linesMore = Boolean(lines.marker);
+    explored.fundedLines = lines.lines.filter((l) => l.balance && l.balance !== '0').length;
+  }
+  post({ type: 'explored', seq, id, part: 'lines', explored });
+  await sleep(EXPLORE_PACE_MS);
+  const objects = await ask('account_objects', { limit: 400 });
+  if (objects?.account_objects) {
+    const byType = {};
+    for (const o of objects.account_objects) byType[o.LedgerEntryType] = (byType[o.LedgerEntryType] ?? 0) + 1;
+    explored.objects = byType;
+    explored.objectsMore = Boolean(objects.marker);
+    explored.signerList = byType.SignerList > 0 ? true : objects.marker ? null : false; // null: a SignerList may be beyond the page
+    explored.signers = byType.SignerList > 0 ? (objects.account_objects.find((o) => o.LedgerEntryType === 'SignerList')?.SignerEntries?.length ?? 0) : 0;
+  }
+  post({ type: 'explored', seq, id, part: 'objects', explored });
+  await sleep(EXPLORE_PACE_MS);
+  const nfts = await ask('account_nfts', { limit: 400 });
+  if (nfts?.account_nfts) {
+    explored.nfts = nfts.account_nfts.length;
+    explored.nftsMore = Boolean(nfts.marker);
+  }
+  post({ type: 'explored', seq, id, part: 'nfts', explored, done: true });
+}
+
 self.onmessage = (e) => {
   const m = e.data ?? {};
   switch (m.type) {
@@ -621,6 +798,12 @@ self.onmessage = (e) => {
     }
     case 'coverage':
       post({ type: 'coverage', coverage: universe.coverage(), line: coverageLine(universe.coverage(), { host, synthetic: Boolean(synthetic), state }) });
+      break;
+    case 'probe':
+      probe(m).catch((err) => post({ type: 'probe-error', seq: m.seq, id: m.id, message: err?.message ?? String(err) }));
+      break;
+    case 'explore':
+      explore(m).catch((err) => post({ type: 'explore-error', seq: m.seq, id: m.id, message: err?.message ?? String(err) }));
       break;
     case 'memory':
       post({ type: 'memory', records: universe.records.length, planets: universe.planetCount, edges: universe.edges.size, layoutEdges: layout.ea.length, interned: universe.addresses.size, ledgers: universe.ledgers.size, liveLedgers: live.entries.length, rocks: standing.rocks.size });

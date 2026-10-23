@@ -1,0 +1,58 @@
+{
+ "fetchedAt": "2026-10-23T05:52:34.337Z",
+ "host": "wss://s2.ripple.com",
+ "account": "r9DW7jqMXqa32TaTujSxdxcpwnPgJayG8V",
+ "command": "account_info",
+ "request": {
+  "command": "account_info",
+  "account": "r9DW7jqMXqa32TaTujSxdxcpwnPgJayG8V",
+  "ledger_index": "validated"
+ },
+ "responses": [
+  {
+   "result": {
+    "account_data": {
+     "Account": "r9DW7jqMXqa32TaTujSxdxcpwnPgJayG8V",
+     "Balance": "1098041703",
+     "Flags": 67108864,
+     "LedgerEntryType": "AccountRoot",
+     "OwnerCount": 1242,
+     "PreviousTxnID": "FFBDD2E96A32E9D2591CC45285329DE3153A4617C6A0F4E2B9B48103EF9CA708",
+     "PreviousTxnLgrSeq": 107843123,
+     "RegularKey": "r9113rXqDFfC2T5CbwCFx4HHwADwr8efQF",
+     "Sequence": 105329932,
+     "index": "EC9D85F93A1146699C9A8E46E6F963BA5B87230F3491D43E0D1E83E1CC6D3D69"
+    },
+    "ledger_hash": "85541B2011067DCC20D32942858FF40D1332B9E4B3072BE9A7FA6F90B465548E",
+    "ledger_index": 107843148,
+    "validated": true,
+    "account_flags": {
+     "defaultRipple": false,
+     "depositAuth": false,
+     "disableMasterKey": false,
+     "disallowIncomingXRP": false,
+     "globalFreeze": false,
+     "noFreeze": false,
+     "passwordSpent": false,
+     "requireAuthorization": false,
+     "requireDestinationTag": false,
+     "disallowIncomingNFTokenOffer": true,
+     "disallowIncomingCheck": false,
+     "disallowIncomingPayChan": false,
+     "disallowIncomingTrustline": false,
+     "allowTrustLineClawback": false,
+     "allowTrustLineLocking": false
+    }
+   },
+   "id": "fixture-4",
+   "status": "success",
+   "type": "response",
+   "warnings": [
+    {
+     "id": 2001,
+     "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+    }
+   ]
+  }
+ ]
+}

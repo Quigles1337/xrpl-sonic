@@ -71,13 +71,34 @@ export function glowOf(planet, ledger, { halfLife = 6 } = {}) {
  */
 export function bodyOf(planet, { ledger = null, minHolders = STAR_HOLDERS } = {}) {
   const { size, known } = sizeFromBalance(planet?.balanceDrops);
-  const base = { size, sizeKnown: known, hue: hueOf(planet?.address), glow: glowOf(planet, ledger), frozen: Boolean(planet?.flags != null && planet.flags & LSF.globalFreeze), rings: planet?.peers?.size ?? 0, fundedRings: planet?.fundedLines ?? 0 };
+  const explored = planet?.explored ?? null;
+  const base = { size, sizeKnown: known, hue: hueOf(planet?.address), glow: glowOf(planet, ledger), frozen: Boolean(planet?.flags != null && planet.flags & LSF.globalFreeze), rings: explored?.lines ?? planet?.peers?.size ?? 0, fundedRings: explored?.fundedLines ?? planet?.fundedLines ?? 0, moons: explored?.nfts ?? 0, explored: explored ? { ledgerIndex: explored.ledgerIndex ?? null } : null };
   if (!planet) return { ...base, kind: 'planet', tier: 'observed', rule: 'planet.seen', evidence: [] };
   if (planet.deleted) return { ...base, kind: 'collapsed', tier: 'observed', rule: 'planet.collapse', evidence: [{ field: 'AffectedNodes.DeletedNode.AccountRoot', value: planet.address }] };
   if (planet.ammId) return { ...base, kind: 'binary', tier: 'observed', rule: 'binary.ammid', evidence: [{ field: 'AccountRoot.AMMID', value: planet.ammId }], providers: planet.providers?.size ?? 0 };
   if (planet.flags != null && planet.flags & LSF.disableMaster) {
     const key = planet.regularKey;
     const unusable = key == null || BLACKHOLE_KEYS.includes(key);
+    if (unusable && explored?.signerList === true) {
+      // the exploration found a SignerList among its objects: the account can be used; a planet with guardians
+      return { ...base, kind: 'planet', tier: 'observed', rule: 'planet.signerlist', evidence: [{ field: 'account_objects.SignerList', value: `${explored.signers ?? 0} signers at #${explored.ledgerIndex ?? '?'}` }], guardians: explored.signers ?? 0, regularKey: key ?? null };
+    }
+    if (unusable && explored?.signerList === false) {
+      // the exploration found none at the validated ledger: the rule, not the candidate
+      return {
+        ...base,
+        kind: 'blackhole',
+        tier: 'rule',
+        rule: 'blackhole.confirmed',
+        evidence: [
+          { field: 'AccountRoot.Flags', value: `0x${planet.flags.toString(16)} (lsfDisableMaster)` },
+          { field: 'AccountRoot.RegularKey', value: key ?? 'absent' },
+          { field: 'account_objects', value: `no SignerList at #${explored.ledgerIndex ?? '?'}` },
+        ],
+        regularKey: key ?? null,
+        confirmed: true,
+      };
+    }
     if (unusable) {
       return {
         ...base,
@@ -156,13 +177,13 @@ export function labelOf(body) {
     case 'binary':
       return `binary · AMM pool${body.providers ? ` · ${plural(body.providers, 'provider')}` : ''}`;
     case 'blackhole':
-      return `black hole? · master key disabled · key ${shortKey(body.regularKey)} unusable · a SignerList would reopen it`;
+      return body.confirmed ? `black hole · master key disabled · key ${shortKey(body.regularKey)} unusable · no SignerList (account_objects)` : `black hole? · master key disabled · key ${shortKey(body.regularKey)} unusable · a SignerList would reopen it`;
     case 'pulsar':
       return `pulsar · cadence ${plural(body.period ?? 0, 'ledger')} · r ${(body.r ?? 0).toFixed(2)} ≥ ${t.pulsarLeast.toFixed(2)}`;
     case 'collapsed':
       return 'collapsed · account deleted';
     default:
-      return '';
+      return body?.guardians ? `guardians · a SignerList of ${plural(body.guardians, 'signer')} (account_objects)` : '';
   }
 }
 
@@ -179,8 +200,8 @@ export function describeBody(planet, body, { ledger = null, cast = [] } = {}) {
   const named = nameOf(planet, cast);
   const name = named.source === 'address' ? named.name : `${named.name} (${shortAddress(planet.address)})`;
   const parts = [];
-  const kindWord = { planet: 'a planet', star: `a star · ${plural(b.holders ?? 0, 'holder')} in orbit (star ≥ ${THRESHOLDS.starHolders})`, binary: `a binary star · an AMM pool${b.providers ? ` with ${plural(b.providers, 'provider')}` : ''}`, blackhole: `a black hole candidate · master key disabled, regular key ${shortKey(b.regularKey)} unusable; a SignerList would reopen it`, pulsar: `a pulsar · cadence of ${plural(b.period ?? 0, 'ledger')}, r ${(b.r ?? 0).toFixed(2)} ≥ ${THRESHOLDS.pulsarLeast.toFixed(2)}`, collapsed: 'collapsed · its account was deleted' }[b.kind];
-  parts.push(`${name}: ${kindWord}`);
+  const kindWord = { planet: 'a planet', star: `a star · ${plural(b.holders ?? 0, 'holder')} in orbit (star ≥ ${THRESHOLDS.starHolders})`, binary: `a binary star · an AMM pool${b.providers ? ` with ${plural(b.providers, 'provider')}` : ''}`, blackhole: b.confirmed ? `a black hole · master key disabled, regular key ${shortKey(b.regularKey)} unusable, no SignerList among its objects at #${b.explored?.ledgerIndex ?? '?'}` : `a black hole candidate · master key disabled, regular key ${shortKey(b.regularKey)} unusable; a SignerList would reopen it`, pulsar: `a pulsar · cadence of ${plural(b.period ?? 0, 'ledger')}, r ${(b.r ?? 0).toFixed(2)} ≥ ${THRESHOLDS.pulsarLeast.toFixed(2)}`, collapsed: 'collapsed · its account was deleted' }[b.kind];
+  parts.push(`${name}: ${kindWord}${b.guardians ? ` with guardians · a SignerList of ${plural(b.guardians, 'signer')}` : ''}`);
   if (named.source === 'cast') parts.push('in the cast');
   else if (named.source === 'domain') parts.push('named by its on-ledger Domain');
   parts.push(b.sizeKnown ? `balance ${fmtXrp(planet.balanceDrops)}` : 'balance not yet seen');
@@ -188,6 +209,8 @@ export function describeBody(planet, body, { ledger = null, cast = [] } = {}) {
   if (b.rings) parts.push(`${plural(b.rings, 'trust line')} seen${b.fundedRings ? `, ${b.fundedRings} funded` : ''}`);
   if (planet.openOffers) parts.push(`${plural(planet.openOffers, 'open offer')} placed in this window`);
   if (planet.minted) parts.push(`${plural(planet.minted, 'NFT')} minted here`);
+  if (b.moons) parts.push(`${plural(b.moons, 'moon')} · ${plural(b.moons, 'NFT')} held (account_nfts)`);
+  if (b.explored) parts.push(`explored at ledger #${Number(b.explored.ledgerIndex ?? 0).toLocaleString('en-US')}`);
   if (b.frozen) parts.push('global freeze set');
   if (planet.created) parts.push('born in this window');
   if (planet.lastLedger != null) parts.push(`last seen in ledger #${Number(planet.lastLedger).toLocaleString('en-US')}`);

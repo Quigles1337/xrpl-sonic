@@ -1,0 +1,4035 @@
+{
+ "fetchedAt": "2026-10-23T05:52:34.856Z",
+ "host": "wss://s2.ripple.com",
+ "account": "r9DW7jqMXqa32TaTujSxdxcpwnPgJayG8V",
+ "command": "account_lines",
+ "request": {
+  "command": "account_lines",
+  "account": "r9DW7jqMXqa32TaTujSxdxcpwnPgJayG8V",
+  "ledger_index": "validated",
+  "limit": 400
+ },
+ "responses": [
+  {
+   "result": {
+    "account": "r9DW7jqMXqa32TaTujSxdxcpwnPgJayG8V",
+    "ledger_hash": "85541B2011067DCC20D32942858FF40D1332B9E4B3072BE9A7FA6F90B465548E",
+    "ledger_index": 107843148,
+    "validated": true,
+    "limit": 400,
+    "lines": [
+     {
+      "account": "rfcasq9uRbvwcmLFvc4ti3j8Qt1CYCGgHz",
+      "balance": "145192.1309197849",
+      "currency": "589",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN",
+      "balance": "9951771.355132806",
+      "currency": "50484E4958000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHKrPGdpaqNRqRvmsiqQhD6azqc4npWoLC",
+      "balance": "12497583.27758293",
+      "currency": "XQK",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3qWgpz2ry3BhcRJ8JE6rxM8esrfhuKp4R",
+      "balance": "5521.37946346614",
+      "currency": "RPR",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpj9MbbYR9w4smmjG7qJMFCitqDSdPwc28",
+      "balance": "169989.0307106041",
+      "currency": "MXI",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKVyXn1AhqMTvNA9hS6XkFjQNn2VE8Nz88",
+      "balance": "21968.14226920624",
+      "currency": "5245414C00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJMtvf5B3GbuFMrqybh5wYVXEH4QE8VyU1",
+      "balance": "9488818566.735555",
+      "currency": "586F676500000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNSYhWLhuHvmURwWbJPBKZMSPsyG5Qek17",
+      "balance": "13600.36324077295",
+      "currency": "PLR",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3qWgpz2ry3BhcRJ8JE6rxM8esrfhuKp4R",
+      "balance": "13031.55232803127",
+      "currency": "ASC",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4M4TzSypz2gRdS86hTM7oFcSs6yRmEPKZ",
+      "balance": "765994.8812386039",
+      "currency": "5348524F4F4D4945530000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rCSCManTZ8ME9EoLrSHHYKW8PPwWMgkwr",
+      "balance": "1133759.213504666",
+      "currency": "CSC",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4GD2HMVKJWhfzvgHcUL6frneuUACAzqwo",
+      "balance": "22496656.49344265",
+      "currency": "416D657269636146697273740000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rctArjqVvTHihekzDeecKo6mkTYTUSBNc",
+      "balance": "99182.91055832228",
+      "currency": "SGB",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rcxJwVnftZzXqyH9YheB8TgeiZUhNo1Eu",
+      "balance": "31927.96679186946",
+      "currency": "FLR",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raDZ4t8WPXkmDfJWMLBcNZmmSHmBC523NZ",
+      "balance": "2999209.771544975",
+      "currency": "ATM",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rszenFJoDdiGjyezQc8pME9KWDQH43Tswh",
+      "balance": "29.34632882362572",
+      "currency": "44524F5000000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHcU3JWTp7fnea3xgvbV8pCbEp9S3HjSUz",
+      "balance": "9429350.519752459",
+      "currency": "4342495244000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw",
+      "balance": "35278.33293447146",
+      "currency": "SHX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De",
+      "balance": "202.0571853027328",
+      "currency": "524C555344000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPxw83ZP6thv7KmG5DpAW4cDW55DZRZ9wu",
+      "balance": "17.0344735836132",
+      "currency": "5363686D65636B6C657300000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "ra9g3LAJm9xJu8Awe7oWzR6VXFB1mpFtSe",
+      "balance": "1951.418381094042",
+      "currency": "EVR",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDKJWtrPqKiMBzK9FTVvebMVec7FJtJLx6",
+      "balance": "8.302368246226934",
+      "currency": "486F72697A6F6E00000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfmS3zqrQrka8wVyhXifEeyTwe8AMz2Yhw",
+      "balance": "0.01063744110964076",
+      "currency": "5745544800000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rM8hNqA3jRJ5Zgp3Xf3xzdZcx2G37guiZk",
+      "balance": "22534.83898684286",
+      "currency": "5852504800000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGG3wQ4kUzd7Jnmk1n5NWPZjjut62kCBfC",
+      "balance": "10369.51024519507",
+      "currency": "41524D5900000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
+      "balance": "683.5661861886966",
+      "currency": "CNY",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rswh1fvyLqHizBS2awu1vs6QcmwTBd9qiv",
+      "balance": "15576.08647034915",
+      "currency": "XAH",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhCAT4hRdi2Y9puNdkpMzxrdKa5wkppR62",
+      "balance": "1031213.349190219",
+      "currency": "46555A5A59000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHLRdLwXiBZSD53ZQz8ogGJz25LzNCCjSz",
+      "balance": "2214.395802606112",
+      "currency": "4752494D00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rSTAYKxF2K77ZLZ8GoAwTqPGaphAqMyXV",
+      "balance": "1669398.238198443",
+      "currency": "STX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpooLMxfvoEPZcPxCfijtK3ZWaux1N1oVL",
+      "balance": "7785.685364339096",
+      "currency": "AMM",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B",
+      "balance": "0.000322209166206906",
+      "currency": "BTC",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwfGtVZKpPX6vb51xE5RGTgXkQ4W9wSUrz",
+      "balance": "956.4988036992856",
+      "currency": "53504C4153480000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGLEgQdktoN4Be5thhk6seg1HifGPBxY5Q",
+      "balance": "5580300.523391462",
+      "currency": "PLX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJNV9i4Q6zvRhpE2zjxgkvff3eGHQohZht",
+      "balance": "158278.6087318089",
+      "currency": "785354494B000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rLBnhMjV6ifEHYeV4gaS6jPKerZhQddFxW",
+      "balance": "14230.47631166687",
+      "currency": "5452535259000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rf5Jzzy6oAFBJjLhokha1v8pXVgYYjee3b",
+      "balance": "27885.4052505043",
+      "currency": "ARK",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGHtYnnigyuaHehWGfAdoEhkoirkGNdZzo",
+      "balance": "57810.2753649321",
+      "currency": "7363726170000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpwAnF1mMZRszxdinETFHwzGQiPgsv3jHR",
+      "balance": "43075.36361391483",
+      "currency": "4245525400000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rQGNXYxzZTh1zFENL6DeuWXWJ3VfV7NBsz",
+      "balance": "5114.10769158154",
+      "currency": "0371F10413CF46105951197FA8D8C1D01FC0EBB5",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhy4FUHtXrMZhbkBfeYvDv4nz6R7M4cu1t",
+      "balance": "40113.60441445876",
+      "currency": "BOX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBitcoiNXev8VoVxV7pwoQx1sSfonVP9i3",
+      "balance": "1.03217734036793",
+      "currency": "4249547800000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHkYNko6qCnLRcoGrDX59ZnW8fJry38vXX",
+      "balance": "972.65710153398",
+      "currency": "03D6DB4F1E964A48482160D80A46541900FCC553",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfxwXDzenkYoXSEbNA4cZjaT9FY3eeL47e",
+      "balance": "2246324.523961125",
+      "currency": "42524954544F0000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDLUtkyKUmzBLvbBYHxoBufbDH9SABU4JT",
+      "balance": "14047.46883457639",
+      "currency": "03AFB8AE7F07DFEDA321DF2FACE532C3088CF9F6",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsy5gECrwkE4Zi8cVz2goKd3UwBC42cnBN",
+      "balance": "792.018442931774",
+      "currency": "037D8C11334BFEAEEA4FB43B85101573D609CE39",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKDsnVfFMzdqrU8Bqno37d29L8ZW3hvrf8",
+      "balance": "55978.74711335407",
+      "currency": "5574696C69746558000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNS82yvYEthsh4bVz3NHAPL29ku5tyv5jQ",
+      "balance": "1031940.060488021",
+      "currency": "03B0434ED8E7952245412C667A168D75DDDD3AC5",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnNU5SePxo1zeSas7kSCopSLREcxEregzQ",
+      "balance": "18261.20982210452",
+      "currency": "0304926393DAF13F364FA7A0F50ADF7C0FA64219",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rEyL2U4eQcKvh94wNT4H1aXLLtCqTe9wLu",
+      "balance": "12624.53935595545",
+      "currency": "03E2D5EB0029F3495ED8A59951C53D2A582A6AD5",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwR9aY23R4Mg2uRaN8LdHzg7FDxjURXsdW",
+      "balance": "5083.20280254115",
+      "currency": "0330AF9CD0E2457CC64CDBB88371622D9D726497",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNLM77fjUEMXkkcRWC36Yn4iZJzBKTGTVw",
+      "balance": "16932.77131842048",
+      "currency": "034A5C89DC71AF754585C089ED7A3728FADE891E",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhTgEFomJMVZ1Q2Ykd4epSuZBVfFeh8JVB",
+      "balance": "23141.73273950613",
+      "currency": "03E69BC0ADE2531D97E599880431B0EF0DDF6398",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJbJwZHuvEXcAdwbNr2kR42EWq64gneCq9",
+      "balance": "1336.31612694374",
+      "currency": "038BF78C865AFDDE3B6985E15BE31B1D2E0640B8",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raadqNCqPHhqpb5HEMBjbfFa21YYu9GWfW",
+      "balance": "4754.705878943099",
+      "currency": "gei",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMFL2KuFPMuiujdbVGbMzNNjj5QKyd6dZf",
+      "balance": "36182.44424209166",
+      "currency": "586D656E00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMDk7nWgLubQTbQmQ4wTmSgSdoRQFbqkTC",
+      "balance": "701.241453544376",
+      "currency": "033F5E7AB7CB800BB96A9C096AFCF359F8F8522D",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpXvKz41X8UNXjUHxwQwwR6PTfetNu89gs",
+      "balance": "5184.421851177393",
+      "currency": "0397D955CDC318F0649D1A95E008223F39B2F6C9",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3VUCDwUazgiVKSRN6xUCWQnryHvJjneS6",
+      "balance": "2663.125612380694",
+      "currency": "0341CEF9D08E310F19B2DCEA4F1D630C87C3DB90",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpodGmAER1YSo2Z93WCiNYfd1fzszK8oR5",
+      "balance": "1994112.502672101",
+      "currency": "035B9C2DF56047693D5F62C3307D8C1D3B311C03",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPP54cpWqLULJLrHdA49WfYEMjhLaAccDh",
+      "balance": "60846.61489404982",
+      "currency": "03D18262F4723B73830A6BD9175BAEF15D1CA983",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rU99nBznoNWwfgEfVyszCsYUTgdEeviWr2",
+      "balance": "2.268398908302771",
+      "currency": "03B95FAE55D5BCE718FFB2042E85D8A06714DA69",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raidAoSsjn7J4moHXN313aaiftuqP4Krmn",
+      "balance": "25216.71588206013",
+      "currency": "414944414F000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rEonFEtRfAiMeb74pWuHwb28DvbjeTFvpt",
+      "balance": "18.90066361211054",
+      "currency": "0304A047370F6F66335C0B19E0722E2D5E767C62",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9YVoV64k5qkQY7yuxuWQsrbZvQumpYDsK",
+      "balance": "4.4224594877243",
+      "currency": "035E5762FD9CA11A47A5B36D01EE7B8EA156596E",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rQn5YNgD1xgxchkdWepeUErXjoYwSQZ5AA",
+      "balance": "567.1459590422841",
+      "currency": "037A144D524017F268D3265CE0CF55E98B4E5CD0",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMn48rSwi9iPNWYeSRKko6iYKLNF8P8Qps",
+      "balance": "3953236.368161822",
+      "currency": "03FF6ED952DA699EFFBD25DFF6850A33F7A24E78",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raxbnFA1MAiGZbjPtwPYT2cung2a2XzngL",
+      "balance": "4017.2237550715",
+      "currency": "030D9F3FA629DC07FFE80F1A0C56B1F080D6CAAD",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rtWxb375aDLyMb1GrucTPbGHw3wtUCQV6",
+      "balance": "1901.269283531626",
+      "currency": "0305596FDBA1D827A5A164C751B5C074E6342528",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJcxTChH6H2uXrvkatmxUG1W3dFpyQf6vW",
+      "balance": "5657.124663826715",
+      "currency": "0358CE5976C03F4DB71D9BC28A20221D63C0D7C7",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raiT9im82RwL8wXNYvW7vuAdEHdgqYKVEf",
+      "balance": "1681.39087866536",
+      "currency": "03C70043667D12ACFCFF3E3FEF949C8630498BAB",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNk5nr2XZ9ihHdbRNuVVxKGDWn9FvmKiEM",
+      "balance": "13684.1605266211",
+      "currency": "03B9EBB36F9127A762C4E75225C65FA27ED5D393",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnH2wNNDZz9nVsxEdfNAfxMJ2fGNvyB3oA",
+      "balance": "7051.610286483894",
+      "currency": "03DB290EBCB1B6E734E4D1FB5DA4F3F898D81C48",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBaATLCQUix73nVxD4szTjckPMtSXoPbq1",
+      "balance": "16078.51365591416",
+      "currency": "033D398E713207B9ADD69D40220A6A981FD6E426",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwXWjGcck4aGNJYxYp2gmAU1UmN9zZ96qp",
+      "balance": "6623.79348146173",
+      "currency": "0396B59F58B561BD822726785FFE5B0F980FB97A",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDarPR3MaCzcVMDFNVXd1Td6AttMtoZkdQ",
+      "balance": "4124.621691301672",
+      "currency": "03A21C27C70F4E37248E717F5AA055A8DDA222CE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rM4gPnqci7ELmJUJf4nsxTAsoTzn65mDg2",
+      "balance": "223489.91889296",
+      "currency": "0367C3B33D9B62C9A65CFDF32421179E52251818",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHtx5VtBvd88zQ8HcBox4iKBy4azsoNMpE",
+      "balance": "31.60401460204274",
+      "currency": "034A196E1928F7AFB83580E42A22F3CAB413309C",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rP898fSsaoMd4zBgoNTc2CdRMSvsMZKjPx",
+      "balance": "21790.39585543743",
+      "currency": "036CC5A41F89C3E8C15756D55B5FC059F26879D2",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rU3bUsnMbb7XmPpRCnz6RNV7okGJ27MwDj",
+      "balance": "5821.938864957051",
+      "currency": "0360A6C29A3C647FF3358206E268E061550DCF84",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9D6GtCCMDh5jnaiaHvfn1LutwDqsNtCyz",
+      "balance": "16511440.93214569",
+      "currency": "0376E9BF11F3397BC602C16BC17A50A9106BA1E8",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMCFwcqXx7nE3WyqQK3MeRVAno78yiVGWG",
+      "balance": "8631.30941964362",
+      "currency": "031A337430AEEB1ABB7522B9D8E017F2333F7571",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfi4gSDkBNREkVDo5vWRZW2Q1gR8ycAqdw",
+      "balance": "1319.316523255728",
+      "currency": "03A24E9744D3B91AD61C6633CC6E11CD8946F676",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDq7U7GNpuWR8w874VS6TEvKsS4Q2r5rBA",
+      "balance": "21426.01339086194",
+      "currency": "0305B3C94B394ED1B873F45E570D71FF09306481",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhMzNqWcHqSh5tuis4j5ZcRRv2zk3yvZY2",
+      "balance": "21230.14596671457",
+      "currency": "0368BD1B11265F3D4A1C0439E9A362A1BCCB0D25",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNyk8Z7jr1hKqYHKdPAeVp1CE7Mh8RQ1bR",
+      "balance": "2681125.337276153",
+      "currency": "03E92EE5345B2458AAAD15BEE15CDFFFAC3BF83F",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDwSdXWZinWxuRHbTf9wwtXZU2zMCBhFtK",
+      "balance": "14098.16066360476",
+      "currency": "03F6687F4764A9C6C2F74496AFECE92052F93181",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKDe7xPR4ekXieoPRjE93He7wLkBfF8R4o",
+      "balance": "3929.321905798089",
+      "currency": "0388BC036B16B3BD6596672F6EBFA5CDE840D38B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGthdqi5df68WS4nf2mUavQWTmbrADCL8B",
+      "balance": "6852.412845401036",
+      "currency": "03CDB6E8A7B6DA82D26B3A696183219C466BC00A",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rp5fiaUiG1h1LykMso2JsohywDJDUTgEhg",
+      "balance": "7783.830631594207",
+      "currency": "03C1C28B7010FC1F3784C05306752BAF2B28039B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rM8RHDRP92KgriTLTm4UMxBXsokXeyMJSF",
+      "balance": "381.5309635608189",
+      "currency": "034B2DE815CBE9D210FCFD642668279F0DC365C7",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwxohRycvxfw4jPtxFiTNj7m5pq1XtXLXp",
+      "balance": "213.6836117418659",
+      "currency": "03C664C5916038E589796ED291250E9516C1216B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsYfnJk5Q2p3PKEbauWxSMVicrF2E7nKBs",
+      "balance": "6486.272877165282",
+      "currency": "030636913E6C401D76D99481B37FF47039E2F0CF",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rE9LpC9jeqZEkvEaVQiKg7rGfT7BTyVQBj",
+      "balance": "79238.84315184528",
+      "currency": "035962DF7BEC3882C6B6F5BBC8507114C0D2DF28",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPTvwxLegSESc2sCKm5BWvgRTTDtk1Db3Q",
+      "balance": "62921.39545130168",
+      "currency": "036EB23D58AE889B547DCB9B9A65E0F176BF4A1F",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNhngQdQmYySmToUWkKGjgb4P16Zk8VA3p",
+      "balance": "170.6879970223473",
+      "currency": "0329BA4CB0EE07B850A50E3B6DFDECE282CF4F1F",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnzx2DnF6xadY6PWg2DvGdmzvTX8CYT8vf",
+      "balance": "137517.1266571576",
+      "currency": "03D7196C94E6D014C78DD0A29EB0CEC7764D3ADB",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNa9ytjtLSrgWqzBY9J3dmBPAR8PqQd3Ni",
+      "balance": "19387.70765138537",
+      "currency": "03629EB4BA31D8A37F264931CDA2A4AD229D77C1",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rEneV8c5UiCSdwrzVfxYALXuUFoxkF2Lop",
+      "balance": "190.05482058126",
+      "currency": "03416B731F19FB764013F2FA79B646B08DEADAED",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUz7J1hztTw9YQL41pZDLuRZVeAT593qdw",
+      "balance": "46880.35311982829",
+      "currency": "03635F6DAE09B3C1FF08B7298A13E83C647D2B61",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJGhgEgAg9GSepnHMwki1a6L1Mfi3M2nd2",
+      "balance": "24673.12707364335",
+      "currency": "03F75AFC26E509114FF480C848CD78EA3D8CD11A",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3KQ3WmaiWgSxUZmVXtwGWK8hgs7N1spj",
+      "balance": "87420.51481027376",
+      "currency": "035FD6DB0A722E8E25DDF8966BB1C42011CF36A5",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "ryhgFPX5qpj7M9npwTMt2CW8aPkKo3uoq",
+      "balance": "15912.9149684626",
+      "currency": "03B3A2232EB9DC311E61E1781F0BF2FD0D04D22B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnZzk4RTkN73rV1jJypZRc2fmPWpSYjWgM",
+      "balance": "51331.99152541979",
+      "currency": "032DFEE057D7DE014A60E1BCC3262DA648EE69ED",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNbebXm45yAYgVpnZTjGgpS8jvvpc6R6G1",
+      "balance": "6637.691276196088",
+      "currency": "037859BCA3685DFBEFFFBF1A79D0C852526D7406",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMsm7fooHjsEG7S9aaxjyVPji52FQJJHdb",
+      "balance": "71332.92079422165",
+      "currency": "031F583FC2062789F9E7421D58121D298BE6EA19",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJzcoQDyEuqoCz8apBwERvngkYeNeEhJYd",
+      "balance": "5338.961950784005",
+      "currency": "03E329BFE21C6004430C1B97802590C07B3ED088",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHgpGWqkFE4XGJ6tuhqTiRfx2VZbgESycb",
+      "balance": "184334.9970878953",
+      "currency": "03EEE880E35F3D96847438ED7AFC7D5C1B0115E0",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUUX515MHBPzgF77ho1Hn5YcUwbYBp79Rk",
+      "balance": "445.743760016074",
+      "currency": "0327EF79271A079DBFC89914FC17C1874F440923",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfUCpXMNYfSeMehnkU9AUzyMGBbufv9vAR",
+      "balance": "1281454.196623756",
+      "currency": "0399DD4DD5090584EED4551C9569840E6432927D",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKo7ha2iEzRhuxzZ4VYegZPJewFkQnVz5M",
+      "balance": "37119.0818851095",
+      "currency": "03BB9B1897BC8750175AF90097086AAA215B62D7",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9iiS6mVjVmHqnvUyRmRvMp8EZVaFVorKG",
+      "balance": "9847.412573190615",
+      "currency": "03563B8A2391FA054C73C51CEE00CBBC4AFA3B23",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHCUBUoigX7Jaq8jwaWCaP4ENh5bEvCS9m",
+      "balance": "1491.32616262079",
+      "currency": "0344DC4E63AFED3E158F0745122A4B66CE61F834",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfZCKxjcZ2fnKEjs4pkTKXVfrRKDmrtGY7",
+      "balance": "43960.65514870763",
+      "currency": "03D6CEC8CB4A4A130749A167A85C496A1EAE9D94",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rEP6dd9aVaw3gMwAyJFvK3ezZds9Rn76dc",
+      "balance": "400064.4746224924",
+      "currency": "032297D09A3B508EA2322D938C3C379C5DAB710E",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPXU7r6btrWNf8VoRspsrbJNTmNEoLg6TE",
+      "balance": "7442.34530955134",
+      "currency": "03B0E5141767D6A245A79C7B478D9A0AB0A612AA",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsFbjJbKRX8Pikccv8m7YAffLAvBaztNva",
+      "balance": "8889.973147448277",
+      "currency": "03CCD59209E83874962AA336DAE9324DDDCC5CD1",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDiXa7EJy2KkSvESs64uPsf7KAE1oBgf1C",
+      "balance": "7114.204282327492",
+      "currency": "03BD9A2579FEF3EC6911D93A3A8C2370A1D10E1B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMr5JcUSwt95vXLQjVqL1GhRLGRNsQb2HG",
+      "balance": "33814.30645490169",
+      "currency": "031CB2B804DAE9530B7D6C1E1DD67BEF019B46E5",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raEQGBiPAHsDqtSRj4txqS8bpUrf6jZBBW",
+      "balance": "12.76715828813677",
+      "currency": "039B784F971072F287A5EDAA14F0D09BB56F54FC",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3b9df5zSr3KTj86ZAtD9z8dUk1RMfaVwz",
+      "balance": "15473.314712426",
+      "currency": "03C7652DC7026259CA3D096FA9484F563A91A73D",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9Q1wEXF9fiQgcnH5v4TyV62UmEvZ7dqkv",
+      "balance": "27848.77679180074",
+      "currency": "031D6BDB6EAB61DA8FD17FFE8768C359BF2A2185",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfSWQYdSQN1CV4aFisonzD5YRYu3BHdEVx",
+      "balance": "25633.56193223296",
+      "currency": "0355181D4CD0B105900126CAA396DD7DE6161E5B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNbFiYcA4qbgiJ9HAqdKM7xaCZFi1PqsDy",
+      "balance": "47655.77819193241",
+      "currency": "0397AD746C1015C31F6371C66013E029BC89A0C5",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNot3G9LTRLrqRHsmeWdDWzV6HFEoHr2hg",
+      "balance": "301.8968287909259",
+      "currency": "03FC2CEB3079DACD2281E57ABED0DA076F946F26",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwBQaA4Lshsj4oYTx3RMcr8QiDu2Un8Dtg",
+      "balance": "12315759.24948289",
+      "currency": "030B171D0738A820699367A9E1CF06983D808E22",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGgAJQoc2xqcmm869XLCNE4GDL1MrPePhG",
+      "balance": "27137.84666758442",
+      "currency": "039F689261D335FB1DE8F282F1AAFFAF3C7DA792",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDvu53wW14rzpWMEX8mF6kxsxX5KiRMBcJ",
+      "balance": "16519.64450915683",
+      "currency": "03A3DF01B662085970D72E9E8EB5BEFD623EC3A6",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUkFEfojVQkpjUZWUXsSWcFQQNjG4Kxea8",
+      "balance": "33150894.44245114",
+      "currency": "0381F87C62A06032A96CD5DBBA57A473073BAD77",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBZQVCMWTtVyrcVgPiUdYZhwCTJr8SpJLq",
+      "balance": "28250.2111162245",
+      "currency": "03E70A1D8FB54E792771A73FB7CD1AE247511EDD",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHWfqPdQP7Tc6Remk3iybMFTkX7GUevgFL",
+      "balance": "7747.841249182299",
+      "currency": "03649C9CAA44D35DCEA6C853C2A8F44676D5849A",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rQNVzL7NfjoC4RkQGoc4cDQ1uDRUQfWZkA",
+      "balance": "250889.2616043304",
+      "currency": "03B71DA6C9D79F0999FFF9F01DDD966738ECA067",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwHaNxPW66A44S4P3VP8spRrPTEuVGQyJD",
+      "balance": "7825.778645770291",
+      "currency": "039E74098945AF64C082DE1782BD6B2C9D9CE0BE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9rEpysD8mCuXvu37cea1GPXtzBWaRtKbV",
+      "balance": "108970.634965111",
+      "currency": "03E9C55E3B1EEB47BA36A1F297CAFF0C9E14036E",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPiA1GK6er929sr8FtLa9m6PFdiWgGDYdR",
+      "balance": "7409.879895630174",
+      "currency": "030D071AEE1052FD61E5B42FB55E1E77F87BDF45",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9g99yr3YguvjMQHk9jar3yTHGvshDtLjt",
+      "balance": "76566.7442695777",
+      "currency": "031CD9B5006AD65599D032DA9D2DE950AD907FA3",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHnJMT7UX4GsTywEj8jKAygPXL2swakrab",
+      "balance": "0.2684946177152782",
+      "currency": "03FC9BB48A8EB0691076F4B7C7752DEEB7207097",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsuLuE4sD9nD9MCfbhnveaobEoV3v3knmC",
+      "balance": "8961.037741916828",
+      "currency": "0323D8D67781CE43FA07987433320C5E5E1529AE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raWr7Ah3dnEYG2gzqq3N1gXQjaDvEXHY86",
+      "balance": "2440.562471434106",
+      "currency": "039E342468B668C26F27519BAC27FB137FAE3DE8",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHsL64A9TJHbXYgXLbRX8SQZGAX4CPg6Kz",
+      "balance": "8726074.382214864",
+      "currency": "0348F50622F9B06B6C77090E6B391C920EB22E79",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raDoc6UDgRcP6zacot5qkGHLAXvUrgXp32",
+      "balance": "5596.037204054813",
+      "currency": "03C2A9FF4C87594F1E7E55E5DF6D1617D1126EEE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9Xzi4KsSF1Xtr8WHyBmUcvfP9FzTyG5wp",
+      "balance": "682.2589242221945",
+      "currency": "CTF",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPquvURXrKmytXps3tv2GbjoLRX8GsPaZw",
+      "balance": "2275.192720063086",
+      "currency": "03C33E252293F9DD7A478DA37C225308D34CD7C2",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rEpjJd2X91D4vy1wctrE8o1wrFn4Mpzn4H",
+      "balance": "317640.175339364",
+      "currency": "4652414354494F4E530000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHcYzU4FmrLfkou8y1wd5nvPNw6DqjVzka",
+      "balance": "1728.86472440641",
+      "currency": "0392D8CDE5E6D8DFD6B38873F0E4389815B57CB0",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9xvnzUWZJpDu3NA6MKHmKhKJQTRqCRgu9",
+      "balance": "453999.7851587047",
+      "currency": "RDL",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsJnZHEpBZ7xWhxkUQq1nrcK3Y7jEPGAzc",
+      "balance": "0.5075902171708521",
+      "currency": "03DC254D4E72E02374D216DB946F5A774F4EFCBD",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUVScWzLPzYCZBS2r91Yge77UU717QKJV3",
+      "balance": "35943.85997311128",
+      "currency": "030B0F93651C2D0F84F9FE7511F17F7AA4E87835",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnhtvpHsAgigmVemgtzt7pujj4gv6LVL2a",
+      "balance": "2138452890.482442",
+      "currency": "4C49485541000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsauKTfaxffVGFbFb8L3KncV1JGw9cMDgh",
+      "balance": "1874010.846634458",
+      "currency": "03EB7F8B2247EBEF05E9C6699188447290BC4CF2",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rH2eoHUWMZ1FgyPz1AGjbeJjBWn89g6y8g",
+      "balance": "8728.888759124885",
+      "currency": "0332F5BE2BAF93E1CC5470AA374F455B299BAB8E",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r32nbPw6cyt3KdxinB4ua6WSLRrrF4SXAC",
+      "balance": "87465631200.2633",
+      "currency": "4C61756768000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rp1qvtBXYNxdWd9wsun6V9KQ6kRNaKx8h4",
+      "balance": "97371.99658310797",
+      "currency": "03726D73B928DBC466AD7FA990C13750BE9D31C7",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfGCeDUdtbzKbXfgvrpG745qdC1hcZBz8S",
+      "balance": "842953.6385384058",
+      "currency": "SLT",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPvuCxw1m8u2SWTqtRN6ZEcb1xPbU4cPFR",
+      "balance": "10247.87094305597",
+      "currency": "XRT",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rK2Y8ngt722t5F96UBG22aBjY5NB9ZkyFm",
+      "balance": "7747.904818767638",
+      "currency": "NDA",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rrhYbDvw9r75bUXUQdDfQQMmQNGY9wgbgR",
+      "balance": "51498.38311412488",
+      "currency": "03A976F58AF97E8791150E8719E7F8D4FCD0D864",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhvf9fe6PP3GC8Bku2Ug7iQPjPDxYZfrxN",
+      "balance": "23.64178756190655",
+      "currency": "666",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4MczP3UQ4i7qbXx5r4cq9N36w4pyaPpqL",
+      "balance": "358716.8852059021",
+      "currency": "5354494D50590000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4UPddYeGeZgDhSGPkooURsQtmGda4oYQW",
+      "balance": "3511390.46391715",
+      "currency": "584D454D45000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwCq6TENSo3Hh9LKipXnLaxaeXBXKubqki",
+      "balance": "10282341422.01243",
+      "currency": "504F4E474F000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raKuLrHnkrriuS2RMJgU14k4wei8asj1W1",
+      "balance": "1946.655609239307",
+      "currency": "031E539E3BF13B4A5B59C907BE3F6C31CC473F9B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDUszWCpUKoxTbH2z8BVDxdTmNfvrR5gjy",
+      "balance": "11876.44215810439",
+      "currency": "03BB3CA0250B3A3304F396305119F03A81F01F14",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4y9wCasCKRmsm9jopHhtsH7HNuu4YXCNr",
+      "balance": "456985.6984125608",
+      "currency": "0363A8D252ABC92422449E58AC11662970627D85",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGJbFqiLdh23e9WigQ5sxTfFqTENveLX21",
+      "balance": "42527.32943737287",
+      "currency": "XOX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rh5jzTCdMRCVjQ7LT6zucjezC47KATkuvv",
+      "balance": "4605.752039815827",
+      "currency": "7853504543544152000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rURxaGdf9PpkYeU6ZXe7PuENVuBKk2iAV4",
+      "balance": "3549123.090996016",
+      "currency": "PBM",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4r2VmxV4CckSbireuwgvhcCUUsBzgJXif",
+      "balance": "289336.5077513241",
+      "currency": "035077442065DB508A34933EBB0E1BBFC6CC2089",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJwLNwaBUh9a7ajk9FeeLAuA791wVe3oyg",
+      "balance": "19037263.09409113",
+      "currency": "50524F4649540000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGHtf1GTfXEXSPxmZfnQrUMGUpajYqAuzS",
+      "balance": "30639.19880242517",
+      "currency": "4C494F4E53000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rp3TiXqjJKMCBZsY9LNjCkQjCHQXCELBAb",
+      "balance": "43181.57988296152",
+      "currency": "03E206D0E3F7A3F4042505096A08D7AE6BB35634",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfuzioNFTKArnU1PQD5BEF272vpbHMRoxU",
+      "balance": "0.4483871489801812",
+      "currency": "XIO",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsk1ujHro5gF7XGGRXyCmWoeZhwJMk8tc7",
+      "balance": "4310.214938109374",
+      "currency": "032B1C3ECB8FB9625D6805579088B255A2E07CE2",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsENFmELvj92orrCKTkDTug53MzwsB7zBd",
+      "balance": "57.4148225629351",
+      "currency": "24464C4950505900000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHXuEaRYnnJHbDeuBH5w8yPh5uwNVh5zAg",
+      "balance": "43181.35606751424",
+      "currency": "ELS",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4Fn7bWdtGNANq48sGBhFTXvszS47q3u79",
+      "balance": "191799.9950426714",
+      "currency": "BOO",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUQXurByxmKni4aLpuWMYMxxV5GWT1Azw2",
+      "balance": "21548604138.14137",
+      "currency": "5343485745504500000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rw4tietmzbPG2G66UudSGaQ5uYztNow3gQ",
+      "balance": "1565.911435339933",
+      "currency": "FML",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMs7mVYqyJQKs5MaDc2FZXL2g56YPbAgmP",
+      "balance": "15914.54853599957",
+      "currency": "03E00EF00A9E92187E7612C64C5841625593F190",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMJAXYsbNzhwp7FfYnAsYP5ty3R9XnurPo",
+      "balance": "264087.2446292613",
+      "currency": "XDX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rU14S16nNFJGfhn7KJsPk1qJij9g383imU",
+      "balance": "137.2988318767465",
+      "currency": "03B187388F5CB2B442C4029319B49C5DDD74D2D1",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9rRLst96Ue4YTDQkWWkX1ePB6p6Ye4FkA",
+      "balance": "2467370.936867063",
+      "currency": "58525061794E6574000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rp5CUgVjAhuthJs8LdjTXFdNWJzfQqc3p2",
+      "balance": "147.1414375134222",
+      "currency": "464C414D45000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rqpxiqUXggGH4PovqstUquwzKixiqrcdz",
+      "balance": "201022.0540623422",
+      "currency": "03DDCF861BEB1C321F87183CBD0220B17795BE7D",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhcyBrowwApgNonehKBj8Po5z4gTyRknaU",
+      "balance": "1398.621293938514",
+      "currency": "VGB",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKcj7mdNwijbG6NfzJBLcgJZBaix6tQVdJ",
+      "balance": "1000000000",
+      "currency": "5852504858000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsPqeamjpr3Bxu4LhtCgvJEAQusYRRg6Ha",
+      "balance": "157210.9396416277",
+      "currency": "4C554D4F53000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPrAEfVATUNDTJm9CUa8tYeD7oJrVdEGhU",
+      "balance": "23843.9325608661",
+      "currency": "4641524D00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rE8dJChTgdF4GD84z8Ah5NoNbVvMTqRMLk",
+      "balance": "67724.89135680858",
+      "currency": "BMT",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnh3kiVFSBJxhwa7RJmmafQrqhyn9SKyCj",
+      "balance": "10761896.22033273",
+      "currency": "57494E4400000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJztCAZEQvKcMSQTpKUZRJJjA11aUTk9Aw",
+      "balance": "2968495917713563e-3",
+      "currency": "5A45525053000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHjyBqFM5oQvXu1soWtATC4r1V6GBnhCQQ",
+      "balance": "38949.58181570665",
+      "currency": "3352444559450000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r34nbmtdzpjQa5HWHaWRvKZj657DNBNYxL",
+      "balance": "3873683.135599799",
+      "currency": "464F524556455200000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsU4M9r6MZ6nhZZvFSiK8uWfq4hfz8188t",
+      "balance": "112839.7686572306",
+      "currency": "5461626279000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9RftFhd6P9MzWsNkayH1Hb8rPzY5GkaGE",
+      "balance": "1971224563867889e-4",
+      "currency": "5045495045490000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpG9E7B3ocgaKqG7vmrsu3jmGwex8W4xAG",
+      "balance": "254669.1100501224",
+      "currency": "XAG",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpakCr61Q92abPXJnVboKENmpKssWyHpwu",
+      "balance": "5613.899694589538",
+      "currency": "457175696C69627269756D000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKHsxmaqf2SfcyU9LRi3VyjpAtyg6ZrQMp",
+      "balance": "128347.6940572823",
+      "currency": "4A454C4C59000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKtZqPGaiW8ejjaUccf13WuZLEXdzSz2CE",
+      "balance": "47646.14713884877",
+      "currency": "434952434C450000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raP6XZypcFR1WkDzaKjv91FtYRCURvePWW",
+      "balance": "2058549.873730496",
+      "currency": "IGC",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rXmagwMmnFtVet3uL26Q2iwk287SRvVMJ",
+      "balance": "0.05746887680445179",
+      "currency": "MAG",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwxrCZTjrxXmtYA6v6krDKjjFaRuUiAhvJ",
+      "balance": "56311.7725616938",
+      "currency": "62756C6C00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rU5wZyCbZ2WhT51SLDV12vUHtcsqJn9631",
+      "balance": "107364.1276317785",
+      "currency": "4849594F00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r37NJszgETCmYqUkPH7PmtkpVdsYBfMYSc",
+      "balance": "99976.54451066283",
+      "currency": "5249505441524400000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rspYcqzdPTjaUPmWg9i1vK5LJLSyfJUpH4",
+      "balance": "537.5083924016922",
+      "currency": "53454E5400000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rs5wxrBTSErywDDfPs5NY4Zorrca5QMGVd",
+      "balance": "313753.3682711448",
+      "currency": "4F70756C656E6365000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rExSpmk2PAqxKRTT3mhjCrCpqVasBra5v8",
+      "balance": "7750258.344218624",
+      "currency": "54494D4500000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnmJEi7hzEL34R7x48e732qvSnmF5wsLtQ",
+      "balance": "28.26187895335302",
+      "currency": "SPY",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMDfsTapNvFSo7irSe6gYpPmYj3EjqbcqF",
+      "balance": "77142.59562062495",
+      "currency": "5852504C4F4C0000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rLqUC2eCPohYvJCEBJ77eCCqVL2uEiczjA",
+      "balance": "4643891.608412353",
+      "currency": "5852646F67650000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBbu9c7zyuiDH4bq7uJhdLhzsRdEkSrYFX",
+      "balance": "149.3755196072167",
+      "currency": "NOX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUo5UNKiRGhLq4LVgbCzvx53DH65cgk5Dp",
+      "balance": "20911.66956744823",
+      "currency": "XRG",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9rCp6XCn3WiHWjMUs7c1GBZ85VsCFX4Ur",
+      "balance": "429165.677781547",
+      "currency": "XHO",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rskkPc3Eea3phZmzYqdoRFXeHg1GF7oVzG",
+      "balance": "33.13769277478658",
+      "currency": "PHX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rP9v5sQR5LqcB6Bk7xJSKqUoHytkHT1one",
+      "balance": "0.00003645231486179507",
+      "currency": "584F4E4500000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rG7jT6D4fHsipvVmPSbcnvDtFzXwwSR4qx",
+      "balance": "245791.1876203569",
+      "currency": "524942424C450000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rEVER8P58PdEvbLjcRMJSeiYYEwWwP8azo",
+      "balance": "9.334529589260809",
+      "currency": "457665726E6F7274680000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rXTKdHWuppSjkbiKoEv53bfxHAn1MxmTb",
+      "balance": "32119.24827345866",
+      "currency": "XTK",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4pXXQzJ8soYSX4QKeeW4BzRQS1PCtVYLJ",
+      "balance": "17190003.67365656",
+      "currency": "5345414C00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rXCoYSUnkpygdtfpz3Df8dKQuRZjM9UFi",
+      "balance": "1264.357822559157",
+      "currency": "78436F696E000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUkuT9TCDTP2oeAPsrCN7XKcHZfdvHvFkG",
+      "balance": "28257.7856016305",
+      "currency": "BRB",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r465PJyGWUE8su1oVoatht6cXZJTg1jc2m",
+      "balance": "6221.729034526875",
+      "currency": "XUM",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHyRZR465nHKsNfhqE6jZuk5rqNWhqpS4h",
+      "balance": "21942.1636759663",
+      "currency": "03197C06C3BD4C5D3E8ABAEE066CCFF9594C7134",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhYhn7s6z4HAfuJm7ehuSE7wxepRoUPwpi",
+      "balance": "13314.84193828244",
+      "currency": "424348414D500000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3YS7og21UrYRCdhXmU6rzDcMWoDo4f7hm",
+      "balance": "532054756.0426654",
+      "currency": "425249434B590000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJevHGVUzAUPSGxiECgqcNVNVjRkTBWD7T",
+      "balance": "96047.4183058186",
+      "currency": "4D4F555345000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9sH6YEVRyg8uYaKfyk1EfH36Lfq7a8PUD",
+      "balance": "44669.46928918349",
+      "currency": "544F544F00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfKYWZ84fm9eVEdoTcsQCo1WdqMPyaUF5z",
+      "balance": "2967953.123951105",
+      "currency": "5349474D41000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rcRzGWq6Ng3jeYhqnmM4zcWcUh69hrQ8V",
+      "balance": "1.669256463861976",
+      "currency": "LTC",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPLUfpGQtr75kCZxCK3fhPQyBue1GR8DuZ",
+      "balance": "3.324337349110014",
+      "currency": "434F504500000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rs1MKY54miDtMFEGyNuPd3BLsXauFZUSrj",
+      "balance": "37.46159907798398",
+      "currency": "FSE",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhLJ2ma5pScsxVhL5EQr71w3FgASVLwP84",
+      "balance": "3876.271079449036",
+      "currency": "BOX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBEARGUAsyu7tUw53rufQzFdWmJHpJEqFW",
+      "balance": "31323.36940446826",
+      "currency": "4245415200000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBFJGmWj6YaabVCxfsjiCM8pfYXs8xFdeC",
+      "balance": "787.5639778191428",
+      "currency": "UGA",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsax5bX1Z3ks7KBsApepAoCuX177aYAhwV",
+      "balance": "14150102.54801975",
+      "currency": "4A45535445520000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsoLo2S1kiGeCcn6hCUXVrCpGMWLrRrLZz",
+      "balance": "9089.141173106868",
+      "currency": "534F4C4F00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rCULtAKrKbQjk1Tpmg5hkw4dpcf9S9KCs",
+      "balance": "0.1427328492319651",
+      "currency": "43554C5400000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHWAiyNoH9DsefTnu24h55pa4bzVNsez8c",
+      "balance": "3042.895949495257",
+      "currency": "0307B2AFECE62D350D347B4ACA31B0F285EE8852",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9Qk4VGodriw2xKLG9sRbTXWgknkz9TkDd",
+      "balance": "50189848.62200744",
+      "currency": "5465646479000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rcoreNywaoz2ZCQ8Lg2EbSLnGuRBmun6D",
+      "balance": "1680.305827759906",
+      "currency": "434F524500000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r38o5rKYgTUg5Dgu2pDsC1xkroMbpivGJj",
+      "balance": "0.0157324737276214",
+      "currency": "5852504E4F4D4943530000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfQVVT7X5FynwK87EczgP2T8RQXmQcQSf",
+      "balance": "17763.3416003692",
+      "currency": "504947454F4E5300000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJfQFeHTZcnRsY4Ba5sJVKUhLs48E9apBn",
+      "balance": "125.4596277758357",
+      "currency": "5055505045540000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfAWYnEAkQGAhbESWAMdNccWJvdcrgugMC",
+      "balance": "444679.8120175828",
+      "currency": "4C41574153000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhdG26oZL6QKzSXsVfHGSzdXsTxR6RZ23X",
+      "balance": "175527.9059390071",
+      "currency": "OPM",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rEcEmvDWngqwJwgCCQfvuLHktz38axXraj",
+      "balance": "239168.7429344123",
+      "currency": "47547265617375727946696E616E6369616C0000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPg5kt8zehXjpavBz98pMjjdGQPnSiHmQ1",
+      "balance": "389088489.6163482",
+      "currency": "5354455645000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhqfkzGoPYjK8T3ybRbdYCn5Mvm6NbQx9s",
+      "balance": "14889.25783513326",
+      "currency": "03D6DB4F1E964A48482160D80A46541900FCC553",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rLVswmmeFkeisnS5GkdGykSxqJQFyrmDb1",
+      "balance": "20911.27350275674",
+      "currency": "032DC8AAB943147F872712E028338338F45720E5",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUEPZGJzUn6VzgakEkDbBmn63bMwVGE3Pn",
+      "balance": "420.5744505799196",
+      "currency": "03B75D51A268A5F1A282015A0FA7800A0ED5AAC3",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rafe4x2fTrgFXauqEfmyjHDmhFgqB1YYGv",
+      "balance": "16954.19155866403",
+      "currency": "XTR",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "ra74RsrET14Jzz9sGBgzdo1C1AdzMQTZ65",
+      "balance": "18698.73599779572",
+      "currency": "4749474100000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rphfaVBrGcmLc16XQ41wdVRB4978ePdE5q",
+      "balance": "1327.285962515042",
+      "currency": "031F0902A58C192D5A61955FCFAC456A56D841EE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rLvvgXHiL7weCDJr3uxaqnjc8aZuf4JNAV",
+      "balance": "367.1590418261132",
+      "currency": "466163746F726100000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnUkcYoUmmdkhTdYwVE6kq6Su7xjq2EjHQ",
+      "balance": "9305.440293246668",
+      "currency": "420",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rE2HYC1jehXeE9x5ze7NLnSFmGRLAEwt3",
+      "balance": "22060.37496423697",
+      "currency": "5045524359000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rXPMxBeefHGxx2K7g5qmmWq3gFsgawkoa",
+      "balance": "3212.342285231207",
+      "currency": "XPM",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rU7NbCtotTr75HQNDqtPbBPsrzcdFYPirQ",
+      "balance": "149492.0192511436",
+      "currency": "$RP",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnFdeZggmwKLXGaHvTL4aTwfEsPPXV5FHa",
+      "balance": "83958.10882421179",
+      "currency": "WBC",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9kzhatDuUyAxAYbbsZAbs8nLr3t7sa6Wk",
+      "balance": "1410.728969321873",
+      "currency": "LOX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rP1RDrCKQ6uvNbdTEnMPW8D2dYVfVsKKte",
+      "balance": "648779.2426183494",
+      "currency": "467269656E647300000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNNfA8skJdYTJBEewgquswU6vDSpehoD2Y",
+      "balance": "77907.52886022773",
+      "currency": "3454454C4C000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rZAVYxSNbmoFy8PxnWky2coW14sNax1EX",
+      "balance": "1248613.749102245",
+      "currency": "5852504947475900000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r319FqohpKLwjtcV2mosyC5sy125fDk4uH",
+      "balance": "11226.6803030585",
+      "currency": "41524D5900000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rM1J2Mc2eCSFpCz5QXxhDG2KWkGQWgy87r",
+      "balance": "14395.36358901653",
+      "currency": "BXE",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r93hE5FNShDdUqazHzNvwsCxL9mSqwyiru",
+      "balance": "9908.9046981301",
+      "currency": "52504C5300000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGGq6KDhhi8wkjBPG3QohwWGMhssu8fGtt",
+      "balance": "1822172.80114647",
+      "currency": "B2X",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKhaUHzBa78cPa44FL1GTvMLEZ1CkuB7WB",
+      "balance": "343516728.654794",
+      "currency": "5072696E63650000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rswiX7wDL25Go4wGdLJK1ssSMpUsRGosJR",
+      "balance": "406.3218004882723",
+      "currency": "OLX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsQkWcnduDq5RuXCYRiAKEoJBHgZWvrC6q",
+      "balance": "19420.58029850407",
+      "currency": "0374DE6E0CE45231103CA41B280BD3A61C4D25F8",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKSRMEYtTV81rLqfHfVAjT99gXrcrWryZW",
+      "balance": "209740.9105258614",
+      "currency": "4E4947485446414C4C0000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r96WFovuueDL4YXAxrAijSFP7hY1952zGy",
+      "balance": "437389.5596666526",
+      "currency": "4245525441000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfqa9E9K5CVQCREToT4Rrzg8rgjaeWKBKJ",
+      "balance": "29.42973984231512",
+      "currency": "434142414C000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rRbiKwcueo6MchUpMFDce9XpDwHhRLPFo",
+      "balance": "7.871596005542989",
+      "currency": "43525950544F0000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUb6vqMvz5jD3zvYsNN91kGVZQ3DX2HpHV",
+      "balance": "536573.7233526625",
+      "currency": "4A45535549544F52444552000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4oJgdKBntThowoBeDSzqVwgjwrCvJcas8",
+      "balance": "148271.3774165499",
+      "currency": "03710C053F5D7A6F4BC07B1A5C74CE99DC660F82",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfM8omKYuv2Cwq4d7dja4h8yG59P7bqfja",
+      "balance": "967073.2828745587",
+      "currency": "6E756B6564000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHuN7owFreLToAc7AREdXMipXbVt9SCpWy",
+      "balance": "601.2344370689804",
+      "currency": "03F8C683C16684ABB138B78F33BA5548924922D4",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9XVBep7doWB7mSxWCQmLrSNmUwUzJZAta",
+      "balance": "42857.94589632043",
+      "currency": "036ED4BEFBC04D008CAD17921282F9EB03C1D8D1",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNag3xV3LiMZoYy1v17bUiRa1xvWRJCMgy",
+      "balance": "425340.2846460094",
+      "currency": "42756C6C58525000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r4b3vrgndiw4mjnVhmyxqyyEtDwkb7fmgr",
+      "balance": "31004.50953700086",
+      "currency": "03279F6707AC62B7C84482EBD05294B661F66F92",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJEApMjV7KVVopB8NB1WXQpQYVu84vRGTa",
+      "balance": "44158733875.39815",
+      "currency": "5045504500000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rQLfUoZNafhTTJCoCt64isgCcmXdL5a5cp",
+      "balance": "2189482.808298669",
+      "currency": "5048415345520000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raBVqHE68Nc8Y5mJeDW1GBrxcnbpCj1Gyr",
+      "balance": "2900.421409458273",
+      "currency": "038968C7A4DDC2D4218E1588207DC8ACF37BB100",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rM2LZ53PobDBpEWZJp9cCAZhViRyy1TbyL",
+      "balance": "69462654.42133823",
+      "currency": "524F434B00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpWqN445vZpEok2TEzRE9txxAqUxcpxRtZ",
+      "balance": "8819711.825618408",
+      "currency": "436F666665650000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnq2gefqxjQ9UpPeRD7Nw1X1cujRVMxHqJ",
+      "balance": "237050.4831111752",
+      "currency": "484F444C00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9cmFHArUgJ4RYspiGV5JxGVCAnjBiNdcH",
+      "balance": "189585.1921844523",
+      "currency": "2447524F4B000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnNErmg9xVmcxxNZUwivbJSH6i9GUwYPFj",
+      "balance": "35431.6006034812",
+      "currency": "434F444544000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "razRVbPbtNtFt5TTa63XE122uRzoYooEpJ",
+      "balance": "60437.51779116038",
+      "currency": "4E4F525448000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rS5LWaqWuzmoiNpzgYJbPvD1bsRZTgDG7",
+      "balance": "0.005620398344547567",
+      "currency": "41535445524F4944000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMqZY49eXVxU9rgrHVix7jkLeZcEeni9nU",
+      "balance": "3107421.798306387",
+      "currency": "4352454154450000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "robeyK1nxGh6AKUSSXf3eqyigAWS6Frmw",
+      "balance": "0.00176182824117759",
+      "currency": "4F42455900000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rB9vJPXw8oabhm2AeDannNJ1J8GMrV8KZh",
+      "balance": "31249.0256705776",
+      "currency": "03C1920F7C0846E8CB5211F1292D364819D0E67B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3AkkD7pMGBgpEwTueSvRkfAd439D4YTWN",
+      "balance": "5962.558122038145",
+      "currency": "032DE65B15E7F8735785C7661F0224C779AED3BC",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBCNMMKxE4uiQ8ePZvyiL6DVKmeUZLBTJS",
+      "balance": "544594.271438442",
+      "currency": "524944444C457800000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rh4TFyLxKeqofBas1NQ87gRg9p7KaQN7LV",
+      "balance": "11539.11381141781",
+      "currency": "4C4F434B00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpBHny3yxV1BoTMFprEobaFsJqQwAikiyC",
+      "balance": "89.12863693405047",
+      "currency": "0380388072F106C8328A5387CC802797DF49F4EA",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfTEk1Z3N4Sx7yqfj6YDQyb9x9kAy35dLv",
+      "balance": "407.9197841734695",
+      "currency": "03942326F5F2FB5B84D23E09F907A64D9EC782CA",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnDfkzACJTBDwFC4GF1C7fdydhzRsUXPvr",
+      "balance": "63736.67852783994",
+      "currency": "03CAB0C81E444284A7DA07063CF97F1D139BE0A7",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rs2beK4hHT49mrfvov2hA14zJuYpeHDBvm",
+      "balance": "40997.21397208703",
+      "currency": "034450CC9064DF4B8A6F9F27A591EE1C9CE493CC",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9BEsBRJ91rtD7Sn85RyynuFm4rJPgUXwx",
+      "balance": "80456.36015272171",
+      "currency": "03B1E90E4FB7A4DC0B9AA7BD3380404260CD5BA4",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rXifgxfuxLzumWhTLNhQTp5VAL65ADKrt",
+      "balance": "6941741.131097406",
+      "currency": "03E87E68A2811161C547BAFBA61435B918F033F7",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9bfzMmDuwpo8P1Pz1DPidrZ5T46a6wid",
+      "balance": "39161.29530448934",
+      "currency": "03B92E01733A84049713921A32929EF9245A14EE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rM99YQudxMMeWp269XhfQ9Aqqzmk8zbKQc",
+      "balance": "66185.04190059118",
+      "currency": "038F56573B6353406D4E515B935482FD0BC148C3",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJFkkN56dzMQzQNQPKgopr4NKdpEk1n1oF",
+      "balance": "385333277.007",
+      "currency": "4D6F6A6F00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKk7mu1dNB25fsPEJ4quoQd5B8QmaxewKi",
+      "balance": "1073417.901716697",
+      "currency": "CX1",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raHJ4Jz9PYk356wWaDMYw79B17iWtfsSMi",
+      "balance": "78549559.01865914",
+      "currency": "404",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDXin13rqYFNdT5RHYi5mxkh4HSgUeSYxz",
+      "balance": "39972.7614637791",
+      "currency": "03471AE832EA90BACFAD901995AE04CDBBC42341",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPbXiK8wwM97HXyG6EEf41ug5fj61B2brC",
+      "balance": "24751.43439072957",
+      "currency": "7465737400000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3L6VQ43pjCysTW5tXHPmpBhBCiXiC2ULm",
+      "balance": "13366.52402879026",
+      "currency": "035A974C757FD61950C5FE3935FE7FA8ED127E43",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r99LZRNxxss7eSJqKTSEvp1Xd48JGh5Vp5",
+      "balance": "1170212111292365e-4",
+      "currency": "4352574E00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpyzaT6YVM3Bjpr8kEwq2rJGtWRnRQLcz6",
+      "balance": "144597.074676869",
+      "currency": "4252495A5A4C5900000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDpyFiCNn7m5Y4zqzP5W1bUUGG4SEffnom",
+      "balance": "23105.3789943629",
+      "currency": "4352415000000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPnMFmhsM6oXECzTwfo8sWbah128KgHj5u",
+      "balance": "119649.420197493",
+      "currency": "4C41445000000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfHHtrb9TP4ueCiW4PRVQ9KSmGPJ8u8kzS",
+      "balance": "72466.95161637664",
+      "currency": "03CDF78AAF5C9AA8F9B66999589D170419259E3B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJsUddDTqrQTUik8crhwTrCNNRtoSKKytw",
+      "balance": "461.0908602527243",
+      "currency": "5041494E00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rEAL3wLK8YmMV5EQeA9vXonstypXtNTPvk",
+      "balance": "7555868.631008301",
+      "currency": "5265616C46490000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3123ZPVrdNfwFeVSgX2zJE5N2YdJbq7wr",
+      "balance": "94329.14407111752",
+      "currency": "03A374A540AC84585DDF8A97F50E25E7D0775C4D",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rrntu3XavfjaTdwfxe8PMdhUdD1LJ8Q7Ry",
+      "balance": "9321.44479830586",
+      "currency": "03A49CA4E0C3849DF2F6CEB9B7F6E49B372F8B2B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "raKhUVtNw6B892bKtATUT3frX35oawfsey",
+      "balance": "386090.519790105",
+      "currency": "5844617767730000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsY3y1W74Hos2dNk59Ubm6BRPiVcDBCDDN",
+      "balance": "50.08698735546828",
+      "currency": "4C415A5A59000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMFdGub6RRZvjBofAncW34gw1jJMimFDu9",
+      "balance": "33688.20978509008",
+      "currency": "03187AA10E276FD1E50C078F7ACAF69260FBC28A",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9x2gBJncTSo8kK3kf7qE5qYoJCfSQoEkq",
+      "balance": "583045.5333507033",
+      "currency": "4348414F53000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rEUo2P65TfnhksXuietsjxUFCyYiiK83F5",
+      "balance": "2055.244981147502",
+      "currency": "4C45444745524755590000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rnTzS2P1Pb52CDThWB8854RdGdnbsjn8hR",
+      "balance": "70.91161836770723",
+      "currency": "03EC8241EEE87ADB0675D0540D2F29DD72B6C7B3",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rB1fs1sy5iBtzhVyvasBq2GBdv7EE7e5SR",
+      "balance": "65197.58941311562",
+      "currency": "03D54BBAEA240D7AC668655C8BC609DF508635F8",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNHeGnj4kqGSVyFzDcoyi3gsp1bdPuGeNK",
+      "balance": "480647117.530077",
+      "currency": "53656167756C6C43617368000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfmTr5TSwYZU3guVzdiy16nc5CvofaHaKE",
+      "balance": "6786.777044289324",
+      "currency": "03B3E9EDACB49D62EF5AA31D8C113CD6E27F523A",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3vqaky9RWFbGjaSBeqTS2y8pQSWX9ut4E",
+      "balance": "65552.13675569366",
+      "currency": "032E5B73DD43826B6537AC912102E91A9087F9DE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsEXqMHTKDfGzncfJ25XtB9ZY8jayTv7N3",
+      "balance": "6300413.455772763",
+      "currency": "4841494300000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJAvx8FtrLR3RyZyM1LyVQFxxsLdT1PmdS",
+      "balance": "1.293231611013834",
+      "currency": "584A4F5900000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGob8orxQE8n13JX6uEzrXRbR6EGMC6DMn",
+      "balance": "69867600.58176091",
+      "currency": "4D4F544845520000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9D5RhucFjzBmdXcwc68VRbG2EYr4zqJmF",
+      "balance": "375.5588630249893",
+      "currency": "504F4F4C00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHJGTuRZLakgmV4Dyb1m3Tj8MMCH4xAoYh",
+      "balance": "271434.4544560643",
+      "currency": "4241425941524D59000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMgrYs2XYgbGaLZ19HbUXfi9rpsaFQYwgc",
+      "balance": "32100.15106057405",
+      "currency": "524950504C450000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDwRu2DuAQ8zAeENK6eTSZDDYve7cFASmv",
+      "balance": "3622931.522612483",
+      "currency": "5A4F524249000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBk7B2WWHTNCt37h39SbhikQLebYRDiRiY",
+      "balance": "2.48206289728404",
+      "currency": "03F3F55D30732C26018F3995A5AF5F65E38A46BE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rRU4kDDRRbHjv9KiMwcQALpwuCGuiKXUs",
+      "balance": "751411.3702119692",
+      "currency": "03EB92FD23B8F7FEACBAE84AF604967A23EE8A71",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rMA8qzNESXV1KThACX3yk61zYt7hND8PDn",
+      "balance": "163878.4414552397",
+      "currency": "035F0B38F20975495A12BF1B2B5018FE5112E489",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9S9Xvbng6vavhrhMcr2ppdC3jaKfZHBG",
+      "balance": "7430.214883295115",
+      "currency": "03F13E13445C4F02EB5323128045CBB7760A61EA",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfAJaM2jr8frHwcXY52gLeqDEUmAFmzqFT",
+      "balance": "0.07274972584419208",
+      "currency": "5341564500000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rB1p8as5NeRRcjc2jpew35PW6CRzur5g8i",
+      "balance": "56755.4323399251",
+      "currency": "03DFE8D9C495B1E03FAC5F421C846AD932F6CA11",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3yW6SkxULrbtaGT4EQTtKc8XkvoFBkPBi",
+      "balance": "18568.88705311808",
+      "currency": "XRG",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsfCGsabdDMgkgpdKLDB9mjSynDv2nCrmy",
+      "balance": "5314.853293373174",
+      "currency": "037859BCA3685DFBEFFFBF1A79D0C852526D7406",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rzZEfkvqNCsHjs7HTGMNnQgZ5PUwtbPVC",
+      "balance": "488.2423213050431",
+      "currency": "03DDDEE71C7F1042679A27412147AAF4C8519B35",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9JVUKhSQDfMLDXiXWrkNgn4gazWAP7KEA",
+      "balance": "233322.2193362178",
+      "currency": "2450424C55000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfnMuYiECGMAHUkZdDw5K1c7gVdoiqkmJC",
+      "balance": "641.4144332952619",
+      "currency": "5852504252000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rf1Y8ecPtxvA2okvvUv7k7FQpyTLdEMJ2r",
+      "balance": "45912.02288200978",
+      "currency": "5343000000000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwyrhmGQpoN5ekggoe6QjJiatcsDJXJkNr",
+      "balance": "39416.54087434919",
+      "currency": "03468AC773D7910CD97CC849E0261AB46C5BAEA7",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rLUR2xrdeP77xUKW3S93jaA8k5h4JAwkix",
+      "balance": "1819114.875126244",
+      "currency": "4241504553000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rQrv2VwyNEsWy3soJCGKFeBgn1s4hRtUEa",
+      "balance": "7566.618680309483",
+      "currency": "03E84B1EAE2861BE702A4F5DEE47A573903E5F6B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJi2RXopygcV4auzZa7JLjChpWm2Yc1yEE",
+      "balance": "183013.0214105602",
+      "currency": "03F3A34249549DBCBFA0F1CCD76DA23AB5C76365",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGFGzsbNbuBowPVGP6gASv16ukQFrgUnb5",
+      "balance": "27744.47884348323",
+      "currency": "03C86FD6FD16F339B5EA094DA3AF98BA87AC35E0",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "reG97uKhPwdFDHGhwgMGqPSbgJpKoy5vb",
+      "balance": "9898.048103714751",
+      "currency": "0386B0AD82CA6EA9BE3C643F39EC21D1606598AE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rQa3LW1Au4GxGHzDBkCMKuPcn326w4Wcj2",
+      "balance": "0.6726073622823367",
+      "currency": "RDX",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDyzRLTk4eqYMJ86esHK5HPs1QHTJzjXwC",
+      "balance": "5.141779541681371",
+      "currency": "54415A5A00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rM1BJWAQ3hfCStboh4wCXTnGyHqcAvJZy3",
+      "balance": "264796.9409741157",
+      "currency": "2443616D656C546F650000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rhhyXaD64uJ2LmvvRhAPBjFsRvCcZfmC5N",
+      "balance": "24500.36148525972",
+      "currency": "03286CB1BEEC50BB341AE79D9FC2BCCD96D25063",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPLTrkdWoRN7tjuZVLdPaexTeGoYYXFPjk",
+      "balance": "65246208.11622444",
+      "currency": "50616C616E746972000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPS4GoLBSUuP54tC2Ge7RRg3KUdwKPN6Mu",
+      "balance": "20.47613134603133",
+      "currency": "037247C5C4172A3D45E0FE74A290449126319E7C",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGF1o7dsC776Hov8qKkPCN1wkVh18sz5bf",
+      "balance": "1142.356029044289",
+      "currency": "BOP",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHAXnHkZ8d5fB482Netb36JogNVRVwLvt3",
+      "balance": "9443.116135842664",
+      "currency": "03354E220696721AD3FD907C2F1D28B719534947",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwwZnCmzkJpU2EVWeBoW1rukmFp4fh1kuq",
+      "balance": "2.428660581920427",
+      "currency": "03779E20D8AE3E7B6F1903047FDEECEF582F67A3",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKej9auh2hUjxQELhxmVQr9ddZXJGNivrx",
+      "balance": "11179.69918148972",
+      "currency": "EXP",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r96Ny5BTU3z4Aw4BfiMJ7RTgDa5iE17u9t",
+      "balance": "14195609.43680406",
+      "currency": "474F415400000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwgNTwrsZKPe7xYCy4emjFAYpgnuioHSkd",
+      "balance": "2328735433.96276",
+      "currency": "4255524E00000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3qeoW8WSiCXL3wepbSKctuAVRLysjHQSv",
+      "balance": "2396.001150179348",
+      "currency": "030D34ED2B62CC343A3D2C5C5AD05790C3DF85F8",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rGPsXnzAkdv1FYKkhC59GRp3M42axDhE1d",
+      "balance": "57547.55903413196",
+      "currency": "QNT",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rETFEEEHX7kKkfjqw4M5qNZWy9u4qCXbWt",
+      "balance": "62.35561042520663",
+      "currency": "4652414E4B4C494E205852502045544600000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUN5Zxt3K1AnMRJgEWywDJT8QDMMeLH5ok",
+      "balance": "9.400945073404352",
+      "currency": "4155444400000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpjuvqrH37RGzb88UVibzCQYSNrM9FxJDy",
+      "balance": "6757171.216042566",
+      "currency": "6175726100000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBmpeviNT7Hs5E4vzW96v48oUo9bP3h2h7",
+      "balance": "158107.9612722205",
+      "currency": "030620B2DD1F755F63F8AAAF0F166E321CEA9B7D",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rKZtiVZwttY7FHJDrnF94nyxXS7sgdswBo",
+      "balance": "2028325.86020111",
+      "currency": "03D3BF66D6C2F7522FC140A7F5B9231CE5A7D409",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUDVxCZczHSYTch7bXBpwAwYFVWeAdNehv",
+      "balance": "135394.910206866",
+      "currency": "4772616273000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHvAodobuBRN2rM9DuVZYcEZdYC6g6Dbji",
+      "balance": "5513.720591543012",
+      "currency": "03B1E6E9D1574AC02FB6B26329F013A89871366E",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r39QdKR7nJQJi3yLRA6FmVGriynw7PrLUn",
+      "balance": "320946.7896467227",
+      "currency": "036A7E243B3434F9673AE6B0440B76F3407B042B",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rH4troC7Tq4xD6oyqq2zWqDLPjRNtfb6VR",
+      "balance": "205585.8112867556",
+      "currency": "038C551F589CEF557CC1456261EF6A20874C48CC",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rQwiEvvvuYPXeVsSTNtSPtU81cMTNXF52c",
+      "balance": "13558.78524736363",
+      "currency": "0308C6CF0A995A4D16E15CEB50F216945617FB99",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsHSBgeFAfvPGsdxh8teSCPk7TMVpWVsHE",
+      "balance": "68379.50464418848",
+      "currency": "03081F36518C9220F124C70C9A43ADFF3492070C",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rPKd6UEh2CeBtBVR7FNfiAjunNHtmDkTRS",
+      "balance": "2528.393403471023",
+      "currency": "534D554700000000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rfvoCTPe7VCYLqoaRCaYbQL1t8mM8kNE6X",
+      "balance": "27.29324097027676",
+      "currency": "038640E29227530475F3A7CEF60845A3912E4C91",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rBwkSDvArAtDN6vYDtnPgH69hRxTHAcN8p",
+      "balance": "28517.02032604984",
+      "currency": "037AF98FE73AF9DF3CE17059268C5CE33316FB8F",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r9xu7pdBEx4DdiatMqAUFodgxaPkfFU1Zw",
+      "balance": "176610.3499954998",
+      "currency": "XRH",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rND47ZuHb4Jq7yCT5xjJd1xwq697FPfVxv",
+      "balance": "0.500340761003926",
+      "currency": "HWR",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rHWrHbqho87ewGKjXpgLnn9DFtpgomKw7R",
+      "balance": "67633199.96058453",
+      "currency": "03261574FC64676BF65F9031C6347F52C4D5E6F2",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rUwZzhDKFLcgK87jeJumy5sfLk3XXKUDWh",
+      "balance": "424937403.8375579",
+      "currency": "515A696C6C610000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rwHWwXKiqfSMy5We5oYCZ9hkcvKKLniLyv",
+      "balance": "416047.9815749472",
+      "currency": "030ABD17473B2DB846A0D1FFFFB4FF74EFFF0373",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rDHFy7yQaZmms7FoHHRRr4QTv496zZ52EB",
+      "balance": "203.5028439907732",
+      "currency": "03F01E94E221CA2051AF4953D0170F00C0B59DC8",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNVMTogP91jDeT18nLVFfPT6eDqE6hwTBa",
+      "balance": "118935.2663642156",
+      "currency": "526964646C657200000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsRTiyiA1CLi4yTbjxD1RkDzs7ht3wr9Sj",
+      "balance": "3069.316433060205",
+      "currency": "033C879A22FB57A475B7CEBC3074D7762282E156",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rNGYW1bcLimwWh8zLpYJmk5ZEbMKRRjwWn",
+      "balance": "736258.9955423599",
+      "currency": "03BADF227786685D49FD16A7FAFFEEE845753721",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rsdDZFHp1GXp1GMacDFne2ekSjjfWmhvKu",
+      "balance": "771.7497755770799",
+      "currency": "4E42554E4E550000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rpy3D8XPac1uxtLMrAzhQiHopdqS6fxS3u",
+      "balance": "12074.22422513621",
+      "currency": "03A21C27C70F4E37248E717F5AA055A8DDA222CE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rLu6PbkBM9iLCoNLm7zypJNMrkpmuGNLbf",
+      "balance": "98.8008502129149",
+      "currency": "03A0DA71C07EDCE8D96317FC33A5DB59D54CEE6A",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rh2ZRAFPLURoT64L5GUZnJuDxZYjAu85DT",
+      "balance": "3607948.786420835",
+      "currency": "03365DEED7098CF076C4BF058BAA13BF0C7A95CE",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rJ8jyXpdAZhfxMamtLadk8LYFxd1ff6iKQ",
+      "balance": "72366.13011180789",
+      "currency": "5357495443480000000000000000000000000000",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rffSBusQG4wihpeewSAo7KZ89sAnXZBez5",
+      "balance": "4004.912704187444",
+      "currency": "034F39285A0CC1BB2BF9F02138B36E82711E60E8",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "rLB7g6yPFjZwSS7EHDVoGopFxjvUDZ7Hp3",
+      "balance": "1417467.657869912",
+      "currency": "03FF6AE301499D0A5087F8A36C56A7FF98E76ECC",
+      "limit": "1000000000",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     },
+     {
+      "account": "r3bo3Yd5vWrBCcpbqtMWxkbZML4pv2jHqA",
+      "balance": "1065912.045465344",
+      "currency": "egg",
+      "limit": "9999999999999999e80",
+      "limit_peer": "0",
+      "quality_in": 0,
+      "quality_out": 0,
+      "no_ripple": true
+     }
+    ],
+    "marker": "F03186356FDD2D18BC14014B48A4A3C2A9EF9A67F81D2BAC407F2B9CA84423E6,12"
+   },
+   "id": "fixture-5",
+   "status": "success",
+   "type": "response",
+   "warnings": [
+    {
+     "id": 2001,
+     "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+    }
+   ]
+  }
+ ]
+}
