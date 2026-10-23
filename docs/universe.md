@@ -81,6 +81,77 @@ A screen reader travels the same sky. `[` and `]` move a focus from planet to pl
 3. **Time scrubbing.** The transport over the window's records, as above; a moment saved from the sky.
 4. **Tours.** The Learn mode's form: a case with annotations that moves the camera (a `camera` anchor in the annotation, an owner's decision), reusing the transport and captions; three tours to start, mirroring the listening page's (the legend of bodies, follow a payment, a pulsar).
 
+## Phase 1: the live sky
+
+The agreed specification of the first phase, written on the owner's decisions of 2026-10-23 (all nine, listed below) before the build; the as-built record follows it. Scope: every transaction for the minutes watched; planets with the three levels; the coverage line naming the host; sound from the engine; WebGL from the first commit with the canvas fallback, both tested, reduced motion in both; keyboard travel and the text equivalent. The boundaries are the session's: `universe.html`, `src/universe/`, `docs/universe*.md`, `test/universe*`, nothing else edited.
+
+### Inherited from the plate
+
+Until `docs/art.md` lands (decision 3) the sky invents no palette, type or motion: it inherits the plate's. The tokens of `src/styles.css` (copied verbatim into `src/universe/universe.css`, since the stylesheet is not the sky's to edit), the same monospace stack, the field guide's category colours (`CATEGORIES` in `src/mapping.js`, Batch's `#d4a373` included), the sigil hue for a planet, glow sprites rendered once per colour and blitted (the plate's cost discipline), the ignition of a new body (a scale-in with a little overshoot and a white-hot core, the plate's 220 ms and 180 ms, none of it under reduced motion), the pulse ring at a ledger close (a ring from the centre, as the plate's), the camera's slow turn with drag-to-orbit, scroll to move closer and double-click to reset, and the nebula layer's ink for the clouds. The marks of the kinds are the field guide's shapes, not new ones: a **star** carries the lattice's hexagon in the trust colour (a star is made of trust lines); a **binary star** the pool's three overlapping rings in the AMM colour; a **black hole candidate** is a disc struck through in the pulse colour, the plate's treatment of a cancelled offer, with a dark core; a **collapsed** planet is struck through and dim; a **pulsar** has no mark of its own: its ignitions recur at its cadence, which is what a cadence looks like; a **comet** is the photon with its tail; a **flash** is the pulse ring in the category's colour, a Batch in the Batch colour (decision 6).
+
+### Names and labels
+
+A planet's name is its on-ledger `Domain` when its account root carried one in a record (decoded as the explorer decodes it), else the Watch cast's label when the address is in the cast, else the short address (decision 1; a curated list with a source per label is phase 2 and never a verified-owner claim). The cast is the listening page's (`src/settings.js`, the same storage key, so a cast set in Watch is highlighted here; `#cast=` and `#account=` in the hash as the listening page reads them): a cast member's planet wears a ring in its cast colour and its label is always drawn (decision 7).
+
+Every body's label prints the threshold of the rule that made it (decision 5), in the words of the vocabulary table: `star · 23 holders ≥ 3`; `binary · AMM pool · 2 providers`; `black hole? · master key disabled · key rrrr…BZbvji unusable · a SignerList would reopen it`; `pulsar · cadence 3 ledgers · r 0.96 ≥ 0.30`; `collapsed · account deleted`; a nebula's cloud reads `nebula · 12 planets ≥ 5 · edges ≥ 2 namings · hubs > 40 counterparties left out`. The thresholds are the spike's; the distributions they cut, from an hour of mainnet, are in the table below so a reader can see where each threshold falls.
+
+### Levels and renderers
+
+The three pixel levels stand (splat under 2.6 px, sprite to 8 px, body from 8 px, base size 1 px for a size-one planet at the reference depth). WebGL is the first renderer (decision 4): every planet a point sprite with the camera in the vertex shader, comets and flashes as lines, nebulae as soft points, and the marks and labels of the near bodies on a 2D overlay; the 2D canvas is the fallback the page takes by itself when WebGL is unavailable, and `?gl=0` asks for it. Both renderers share one data interface, one camera, one hit test and one text path, and both honour reduced motion: no turn, no inertia, no ignition flash, comets as still lines that fade, pulse rings still. The camera stays a copy of `src/projection.js` until R1 lands.
+
+### Sound
+
+The worker computes `txToEvent` for every record and posts the fields the engine reads (R9). The page schedules each note with `playAt(event, offset)` at its comet's arrival, or at its flash, with the same stagger across the ledger interval the comets fly on, so what you hear is what lands; the polyphony cap and the cooldowns are the engine's. Off by default; S or the Sound button turns it on from the gesture the browser requires.
+
+### Coverage, persistence, the synthetic sky
+
+The coverage line is the spike's: how long, which ledgers, heard of held, the provisional rest, the planets, the host (from the connection's endpoint; the node's own hostid when R11 lands), and that it is not the ledger. Nothing is persisted in this phase; the sky starts empty on load and will consume the local record cache the other session is building in its loader PR (decision 2), the export coming later from that cache. `?synthetic=N` stays behind its flag, labelled on the coverage line, never default (decision 9).
+
+### Requests in flight, copies kept
+
+R3, R8, R9, R10, R11 and R12 are being built by the other session as one PR; R2 lands in its loader PR; R1 later; R4 to R7 are phase 2. Each copy in `src/universe/` stays until its export lands and is then switched and deleted in the same PR: `projection.js` (R1), the hue computation in `bodies.js` (R8), the layer table in the renderers (R10), the minimal event shape posted by the worker (R9), the cadence read off judged pairs (R3), the host taken from the endpoint (R11), and the door into the sky (R12, which is the listening page's to add).
+
+### Acceptance
+
+1. `node --test` with the new tests on the recorded fixtures: the Batch category and colour, the labels with their thresholds, the cast highlight, the name rule.
+2. Headless Chrome on both renderers: reduced motion, the status regions, `[` `]` travel with the focus line, Escape, `?`, the layer keys, Space, the arrows, `0`, S turning the engine on, and the WebGL camera agreeing with the JavaScript projection (a pixel read back where a planet projects is lit).
+3. An hour on mainnet within the spike's measured envelope of frame time and memory.
+4. The coverage line against `txn_count` on the recorded fixtures.
+5. A person who does not know what a ledger is watched it for two minutes, and what they said, recorded here verbatim.
+
+### Distributions
+
+From `bench/distributions.mjs` against mainnet (xrplcluster.com), 60 minutes from 2026-10-23T01:26:16.885Z: 10,344 planets, 126,155 transactions heard of 126,155 (100.00%), 126,155 records kept. Each row is a threshold, what it cuts, and where the hour's values fell.
+
+| Threshold | Rule | The hour’s distribution |
+| --- | --- | --- |
+| Star: holders ≥ 3 | An issuer named by its holders’ trust lines in the records heard | 544 issuers seen, 336 at or above the bar; holders per issuer: 1–1: 32 · 2–2: 176 · 3–4: 128 · 5–9: 111 · 10–49: 80 · 50–199: 14 · 200+: 3; quantiles p10 2 · p25 2 · p50 3 · p75 7 · p90 15 · p99 110 |
+| Hub: counterparties > 40 | A planet with more counterparties never glues a cluster | 77 hubs of 10,344 planets; counterparties per planet: 0–0: 4,839 · 1–1: 1,554 · 2–2: 1,663 · 3–4: 1,435 · 5–9: 476 · 10–40: 300 · 41–199: 69 · 200–999: 8 · 1000+: 0; quantiles p10 0 · p25 0 · p50 1 · p75 2 · p90 4 · p99 30; the five busiest: 932 (planet, 1,234 submitted), 877 (star, 0 submitted), 793 (planet, 1,738 submitted), 607 (pulsar, 1,090 submitted), 333 (planet, 383 submitted) |
+| Cluster edge: ≥ 2 namings; nebula: ≥ 5 planets | Two planets named together twice or more are one cluster; a cluster of five is a nebula | 94 clusters of two or more, 11 nebulae holding 1,010 planets, the largest 870; sizes: 2–2: 61 · 3–4: 22 · 5–9: 4 · 10–49: 6 · 50–199: 0 · 200+: 1; 1,106 unions, 9,309 edges refused for a hub |
+| Pulsar: self-correlation ≥ 0.3 at a period ≥ 2 | A cadence from coherence over the live window, among the top 8 submitters | 18 accounts judged over 92 runs (53 ms each), 7 with a cadence at the last run; periods: 2–2: 3 · 3–3: 1 · 4–4: 1 · 5–7: 2 · 8+: 0; 98 distinct pairs ever in step |
+| Planet size: log10 of the XRP balance | From the last AccountRoot seen; unknown drawn hollow | balance seen for 8,006 planets, not for 2,338; XRP: 0–0: 521 · 1–9: 5,224 · 10–99: 522 · 100–999: 736 · 1000–9999: 523 · 10000–99999: 281 · 100000–999999: 125 · 1000000–9999999: 43 · 10000000+: 31; quantiles p10 1.07 · p25 1.15 · p50 1.69 · p75 20.8 · p90 1,994.25 · p99 814,736.4 |
+| Open offers (a count in the text) | Offer entries created minus deleted in the records heard | 121 planets with open offers: 1–1: 78 · 2–4: 29 · 5–9: 8 · 10–49: 6 · 50–199: 0 · 200+: 0 |
+| The kinds | By precedence: collapsed, binary, black hole candidate, star, pulsar, planet | planet 9,115 · blackhole 30 · star 335 · pulsar 7 · binary 423 · collapsed 434; 423 AMM pools, 30 black hole candidates, 150 born, 434 collapsed, 36 with an on-ledger Domain, 8 that minted an NFT |
+| Batch | A flash in the glyph’s colour | 39,702 Batch transactions (31.5% of those heard), 3,176 inner transactions flagged tfInnerBatchTxn |
+
+Two things the hour says about the thresholds, for the owner rather than the build: the hub bar at 40 counterparties does not stop a giant cluster from forming over an hour (the largest nebula held 870 of the 1,010 planets in nebulae), so a tighter bar or a recency window on cluster edges is a decision to revisit; and 434 collapsed planets against 150 born says AccountDelete is routine on mainnet (services recover reserves by deleting accounts), which the rule records as it should.
+
+### As built (phase 1)
+
+Branch `feat/universe-live-sky`, on main after the Batch glyph (#30) and the documents (#32). The spike's files were the starting point; what changed for the phase:
+
+- **WebGL first, the canvas as fallback.** `src/universe/main.js` builds `SkyGL` unless `?gl=0` asks for the canvas or WebGL is unavailable, in which case it builds `Sky` and says so in the console. Both extend one `SkyBase` (`src/universe/sky.js`): the camera, the data, the comets' clock, the pointer, the hit test and the overlay are one code path, and only the planets' pixels differ. `SkyGL.readPixel` lets the headless check read the colour where the JavaScript projection puts a planet; the check passes on both renderers, with the shader's camera agreeing with `project()`.
+- **The overlay shared** (`src/universe/overlay.js`): the ignitions (the plate's 220 ms scale-in with overshoot and 180 ms white-hot core; the 2D bodies also grow in, the WebGL points flash without growing), the ledger pulse (the plate's ring from the centre, 2.6 s to 1.25 world units, held still and small under reduced motion), the marks of the kinds from the field guide's shapes (the lattice's hexagon in the trust colour for a star, the pool's three rings in the AMM colour for a binary star, the cancelled offer's strike-through in the pulse colour for a black hole candidate and a collapsed planet), the funded-ring ellipses, the cast rings, the labels with their thresholds, the nebula labels and the pair labels. The sprites are the plate's `core` sprite (white centre, the colour at a tenth, the halo) in the planet's hue; the nebula washes use the plate's first nebula ink.
+- **Names and labels** (`src/universe/bodies.js`): `nameOf` (Domain, cast label, short address), `labelOf` (the threshold printed per kind), `nebulaLabel`, `castMemberOf`, `THRESHOLDS` (star 3, pulsar r 0.30 at a period of 2 or more, cluster edge 2, hub 40, nebula 5; the pulsar rule now checks the r as well as the period), and `describeBody` saying "in the cast" or "named by its on-ledger Domain". The worker posts the domains and the black hole candidates' keys with each ledger, and the attributes now carry holders, providers, period and r so the page labels without a round trip.
+- **The cast** is read as the listening page reads it (`loadSettings`, `parseHash`, `parseCastSpec`, `normalizeCast`): a cast in the hash wins, `#account=` is a cast of one, else the stored cast; `hashchange` and `storage` events re-read it, so a cast set in Watch in another tab is highlighted here at once. A member's planet wears its cast colour and its label is always drawn; the focus line names it by its label and says it is in the cast.
+- **Sound at arrival.** `flightOf` in `bodies.js` is the one clock: the i-th of k objects in a ledger starts at i/k of 85% of the interval, a comet lands at start + life, a flash is instant. The worker attaches the minimal engine event to each comet when sound is on; the page calls `playAt(event, arrival)`, so the note sounds when the comet lands. The engine's interval and expected count are set per ledger as the listening page sets them.
+- **Batch** is the field guide's ninth category: `CATEGORY_CODES` are derived from `CATEGORY_NAMES`, the per-category arrays are sized by it, and a Batch flash takes the glyph's colour `#d4a373`.
+- **The page** (`universe.html`): the spike label is gone from the title and the brand, `noindex` removed, the help explains the labels, the thresholds and the cast.
+
+Checked: `node --test` 399 pass (new `test/universe-labels.test.js`: the name rule, every label and its threshold, the cadence bar, the text equivalent's cast line, the flight clock, the Batch code and colour). `bench/check-a11y.mjs` on both renderers, 27 checks each: WebGL by default and `?gl=0` for the canvas, reduced motion reaching the renderer and the camera not turning, the status regions, the cast read from the hash and labelled Maker, a body label with its threshold, the WebGL point lit where the projection says, `[` `]` travel with the focus line, Escape, `?`, the layer keys, Space, the arrows, `0`, S turning the engine on and the engine playing, comets under reduced motion, no exceptions. The acceptance's fifth line (a person who does not know what a ledger is, two minutes, what they said) is the owner's to run and record here; it is not something the build can do.
+
+Copies still in place, each with the request it waits for: `src/universe/projection.js` (R1), `hueOf` (R8), `LAYER_OF` (R10), `minimalEvent` (R9), the cadence read off judged pairs (R3), the host from the endpoint (R11), the door (R12). Each is switched and deleted in the same PR that lands its export.
+
 ## The spike
 
 What was built on `feat/universe-spike`, what it measured, and what the numbers say. The harness is `src/universe/bench/`: `stream-hour.mjs` (the stream alone, in Node), `serve.mjs` (a static server with the two cross-origin-isolation headers that `performance.measureUserAgentSpecificMemory` needs), `cdp.mjs` and `frames.mjs` (frame time per renderer and size in headless Chrome), `hour.mjs` (an hour of the live sky in headless Chrome, memory and frame time each minute). Results are JSON under `bench/results/`. Real-GPU frame times were taken in the user's own Chrome through the same page's `window.xrplUniverse.stats()`.
@@ -195,14 +266,16 @@ The 2D canvas holds at 5,000 planets at 60 fps (6–7 ms a frame, half of them s
 
 ## The owner's decisions
 
-Listed, not made. Each changes phase 1.
+Made on 2026-10-23, one line each; the spike had listed them without making them.
 
-1. **Naming and labelling.** The spike labels a planet by its short address, and by its on-ledger `Domain` (decoded, [facts.md](facts.md)'s `decodeDomain`) when its root carried one in a record. Options: on-ledger Domain and the viewer's own labels only (the cast's labels, [case-format.md](case-format.md)); or a curated issuer list in the repository with a source for every entry (which the README would have to name as a source of names that are not the ledger's). The spike has no list.
-2. **Persistence.** The spike keeps nothing: reloading starts an empty sky. Options: a local cache of the compact records (IndexedDB; the coverage line would then have to say which minutes are from a cache and which live); export as a file (a case for the window through `momentFromLive`, which exists, plus a records file of the spike's compact format); or nothing, as now. The compact record is 73 bytes in a typed-array store and about 10× that as the JS object the spike keeps.
-3. **Art direction references.** The spike takes the observatory's tokens and the field guide's category colours and nothing else; planets glow in their sigil hue. References for the sky (a star atlas, an orrery, the cloud chamber already on the listening page) would settle the look of nebulae, comets and the marks of the kinds.
-4. **Whether WebGL is permitted.** Still no dependencies: the WebGL path is two shaders and the buffer code in `sky-gl.js`. The measurements below say what each path costs at each size; the decision is the owner's. If WebGL is permitted, the 2D canvas stays as the fallback (the page falls back by itself when WebGL is unavailable) and the explorer's constellation could share the camera (request R1).
-5. **The thresholds that make bodies.** Three holders for a star, forty counterparties for a hub, two namings for a cluster edge, five planets for a nebula, twelve warm ledgers, eight submitters for coherence. The spike's values are stated; they are parameters.
-6. **Batch.** 43% of the first minute's messages and the largest type over the hour; a flash in the spike. A flash in the field guide's new Batch colour (#30), or a body of its own (a bundle: the inner transactions' comets leaving one planet together).
-7. **Where the sky lives in the mode map.** A fourth door beside Listen, Watch and Learn; a page beside Explorer in every mode's top bar; or an entrance from Watch only. Request R12.
-8. **A `camera` anchor in annotations** for the tours of phase 4, which would be the first field a case gains for a page other than the listening page.
-9. **Whether the synthetic mode ships.** `?synthetic=N` is the measuring instrument; its coverage line says nothing here is the ledger. Keep it for the bench only, or keep it reachable.
+1. **Naming and labelling.** On-ledger Domain and the user's labels (the Watch cast's) only. A curated list is phase 2, with a source per label and never a verified-owner claim.
+2. **Persistence.** The local record cache, built by the other session in its loader PR; the sky consumes it. Export as a file comes later, from the cache.
+3. **Art direction.** Arrives in `docs/art.md` from the owner. Until it lands the sky inherits the plate's look exactly and invents no palette, type or motion of its own.
+4. **WebGL.** Permitted: hand-written, the canvas as the fallback, both paths tested, reduced motion in both.
+5. **Thresholds.** As proposed, printed on every body's label, with the hour's distributions in this document.
+6. **Batch.** A flash in the glyph's colour.
+7. **The mode map.** A fourth door and its own page; the Watch cast is highlighted in the sky; Learn jumps in at phase 4.
+8. **A camera anchor** in annotations: deferred to phase 4.
+9. **The synthetic mode.** Behind a flag, labelled on screen, never default.
+
+The spike's record of the options, as they were listed before the decisions, is in the history of this file (PR #32).
