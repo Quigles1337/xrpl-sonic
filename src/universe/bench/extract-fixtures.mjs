@@ -77,7 +77,8 @@ for await (const line of rl) {
     if (byLedger.size > 40) byLedger.delete(byLedger.keys().next().value);
   }
 }
-const missing = OBJECT_NAMES.filter((n) => !have.has(n));
-const md = ['# Missing fixtures', '', `Searched ${txs.toLocaleString('en-US')} transactions in ${file.replace(/\\/g, '/').split('/').pop()} (${lines.toLocaleString('en-US')} messages) for a real example of every object; these turned up none:`, '', ...missing.map((n) => `- TODO ${n}: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, ${n}); none seen. Drawn as the spark until a real example is recorded.`), '', 'Objects seen, with counts:', '', ...Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, v]) => `- ${k}: ${v.toLocaleString('en-US')}`), ''].join('\n');
+const missing = OBJECT_NAMES.filter((n) => !have.has(n) && n !== 'ignite'); // an ignition is a kind transition between ledgers, not a transaction: the replay check proves it
+const md = ['# Missing fixtures', '', `Searched ${txs.toLocaleString('en-US')} transactions in ${file.replace(/\\/g, '/').split('/').pop()} (${lines.toLocaleString('en-US')} messages) for a real example of every object; these turned up none:`, '', ...missing.map((n) => `- TODO ${n}: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, ${n}); none seen. Drawn as the spark until a real example is recorded.`),
+  '- ignite is not a transaction: a planet whose holders cross the star threshold between two ledgers; bench/check-verbs.mjs proves it on the replayed recording.', '', 'Objects seen, with counts:', '', ...Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, v]) => `- ${k}: ${v.toLocaleString('en-US')}`), ''].join('\n');
 writeFileSync(join(outDir, 'MISSING.md'), md);
 console.error(`${have.size} of ${OBJECT_NAMES.length} objects have a fixture; missing: ${missing.join(', ') || 'none'}`);
