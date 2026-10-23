@@ -49,7 +49,7 @@ const yaw0 = await page.evaluate('window.xrplUniverse.sky.camera.yaw');
 await sleep(1200);
 check('the camera does not turn on its own', (await page.evaluate('window.xrplUniverse.sky.camera.yaw')) === yaw0);
 check('the sky canvas has a role and a label', await page.evaluate(`(() => { const c = document.getElementById('sky'); return c.getAttribute('role') === 'img' && c.getAttribute('aria-label').length > 40 && c.tabIndex === 0; })()`));
-check('the coverage line is a status region and names the synthetic sky', await page.evaluate(`(() => { const c = document.getElementById('coverage'); return c.getAttribute('role') === 'status' && c.getAttribute('aria-live') === 'polite' && /^Synthetic sky: .* Nothing here is the ledger\\.$/.test(c.textContent.split('layout:')[0].trim()); })()`), await page.evaluate(`document.getElementById('coverage').textContent.slice(0, 120)`));
+check('the coverage line is a status region and names the synthetic sky', await page.evaluate(`(() => { const c = document.getElementById('coverage'); return c.getAttribute('role') === 'status' && c.getAttribute('aria-live') === 'polite' && /^Synthetic sky: .* Nothing here is the ledger\\.$/.test(c.querySelector('strong').textContent.trim()); })()`), await page.evaluate(`document.getElementById('coverage').textContent.slice(0, 120)`));
 check('the focus line starts hidden', await page.evaluate(`document.getElementById('focus-line').classList.contains('hidden')`));
 
 await key(']', ']', 'BracketRight');
