@@ -1,0 +1,2531 @@
+{
+  "network": "mainnet",
+  "endpoint": "wss://xrplcluster.com",
+  "startedAt": "2026-10-23T01:26:16.885Z",
+  "elapsedMinutes": 60,
+  "final": true,
+  "thresholds": {
+    "starHolders": 3,
+    "hubDegree": 40,
+    "clusterEdge": 2,
+    "nebulaSize": 5,
+    "pulsarLeast": 0.3,
+    "pulsarMinPeriod": 2,
+    "coherenceTop": 8
+  },
+  "coverage": {
+    "ledgersClosed": 923,
+    "expected": 126155,
+    "received": 126155,
+    "share": 1,
+    "transactions": 126155,
+    "dupes": 5787,
+    "failed": 24691
+  },
+  "planets": 10344,
+  "kinds": {
+    "planet": 9115,
+    "blackhole": 30,
+    "star": 335,
+    "pulsar": 7,
+    "binary": 423,
+    "collapsed": 434
+  },
+  "holdersPerIssuer": {
+    "issuers": 544,
+    "atOrAboveStar": 336,
+    "histogram": {
+      "1–1": 32,
+      "2–2": 176,
+      "3–4": 128,
+      "5–9": 111,
+      "10–49": 80,
+      "50–199": 14,
+      "200+": 3
+    },
+    "quantiles": {
+      "p10": 2,
+      "p25": 2,
+      "p50": 3,
+      "p75": 7,
+      "p90": 15,
+      "p99": 110
+    }
+  },
+  "degree": {
+    "histogram": {
+      "0–0": 4839,
+      "1–1": 1554,
+      "2–2": 1663,
+      "3–4": 1435,
+      "5–9": 476,
+      "10–40": 300,
+      "41–199": 69,
+      "200–999": 8,
+      "1000+": 0
+    },
+    "hubs": 77,
+    "quantiles": {
+      "p10": 0,
+      "p25": 0,
+      "p50": 1,
+      "p75": 2,
+      "p90": 4,
+      "p99": 30
+    },
+    "top": [
+      {
+        "degree": 932,
+        "kind": "planet",
+        "submitted": 1234,
+        "involved": 1237
+      },
+      {
+        "degree": 877,
+        "kind": "star",
+        "submitted": 0,
+        "involved": 882
+      },
+      {
+        "degree": 793,
+        "kind": "planet",
+        "submitted": 1738,
+        "involved": 1738
+      },
+      {
+        "degree": 607,
+        "kind": "pulsar",
+        "submitted": 1090,
+        "involved": 1092
+      },
+      {
+        "degree": 333,
+        "kind": "planet",
+        "submitted": 383,
+        "involved": 383
+      }
+    ]
+  },
+  "clusters": {
+    "groupsOfTwoOrMore": 94,
+    "nebulae": 11,
+    "histogram": {
+      "2–2": 61,
+      "3–4": 22,
+      "5–9": 4,
+      "10–49": 6,
+      "50–199": 0,
+      "200+": 1
+    },
+    "largest": 870,
+    "unions": 1106,
+    "hubSkips": 9309,
+    "planetsInNebulae": 1010
+  },
+  "balances": {
+    "known": 8006,
+    "unknown": 2338,
+    "xrpQuantiles": {
+      "p10": 1.07412,
+      "p25": 1.14994,
+      "p50": 1.694938,
+      "p75": 20.798,
+      "p90": 1994.252753,
+      "p99": 814736.39782
+    },
+    "histogramXrp": {
+      "0–0": 521,
+      "1–9": 5224,
+      "10–99": 522,
+      "100–999": 736,
+      "1000–9999": 523,
+      "10000–99999": 281,
+      "100000–999999": 125,
+      "1000000–9999999": 43,
+      "10000000+": 31
+    }
+  },
+  "openOffers": {
+    "planetsWithOpen": 121,
+    "histogram": {
+      "1–1": 78,
+      "2–4": 29,
+      "5–9": 8,
+      "10–49": 6,
+      "50–199": 0,
+      "200+": 0
+    }
+  },
+  "minted": 8,
+  "domains": 36,
+  "born": 150,
+  "collapsed": 434,
+  "pools": 423,
+  "blackholeCandidates": 30,
+  "cadences": {
+    "accountsJudged": 18,
+    "histogram": {
+      "2–2": 3,
+      "3–3": 1,
+      "4–4": 1,
+      "5–7": 2,
+      "8+": 0
+    },
+    "withCadence": 7,
+    "pairsInStepEver": 98,
+    "runs": 92,
+    "meanMs": 53
+  },
+  "batch": {
+    "outer": 39702,
+    "inner": 3176,
+    "shareOfTransactions": 0.315
+  },
+  "recordsKept": 126155,
+  "kindsOverTime": [
+    {
+      "ledger": 107839064,
+      "minute": 0.3,
+      "planets": 133,
+      "kinds": {
+        "planet": 116,
+        "star": 5,
+        "binary": 6
+      }
+    },
+    {
+      "ledger": 107839069,
+      "minute": 0.6,
+      "planets": 212,
+      "kinds": {
+        "planet": 186,
+        "star": 9,
+        "binary": 9,
+        "blackhole": 1
+      }
+    },
+    {
+      "ledger": 107839074,
+      "minute": 1,
+      "planets": 266,
+      "kinds": {
+        "planet": 236,
+        "star": 11,
+        "binary": 11,
+        "blackhole": 1
+      }
+    },
+    {
+      "ledger": 107839079,
+      "minute": 1.3,
+      "planets": 329,
+      "kinds": {
+        "planet": 290,
+        "star": 13,
+        "binary": 15,
+        "blackhole": 2
+      }
+    },
+    {
+      "ledger": 107839084,
+      "minute": 1.6,
+      "planets": 814,
+      "kinds": {
+        "planet": 766,
+        "star": 15,
+        "binary": 19,
+        "blackhole": 5
+      }
+    },
+    {
+      "ledger": 107839089,
+      "minute": 1.9,
+      "planets": 1123,
+      "kinds": {
+        "planet": 1064,
+        "star": 17,
+        "pulsar": 6,
+        "binary": 20,
+        "blackhole": 5
+      }
+    },
+    {
+      "ledger": 107839094,
+      "minute": 2.3,
+      "planets": 1167,
+      "kinds": {
+        "planet": 1107,
+        "star": 17,
+        "pulsar": 6,
+        "binary": 21,
+        "blackhole": 5
+      }
+    },
+    {
+      "ledger": 107839099,
+      "minute": 2.6,
+      "planets": 1211,
+      "kinds": {
+        "planet": 1146,
+        "pulsar": 5,
+        "star": 18,
+        "binary": 26,
+        "blackhole": 5
+      }
+    },
+    {
+      "ledger": 107839104,
+      "minute": 2.9,
+      "planets": 1267,
+      "kinds": {
+        "planet": 1191,
+        "pulsar": 5,
+        "star": 20,
+        "binary": 33,
+        "blackhole": 6
+      }
+    },
+    {
+      "ledger": 107839109,
+      "minute": 3.2,
+      "planets": 1444,
+      "kinds": {
+        "planet": 1360,
+        "star": 24,
+        "pulsar": 4,
+        "binary": 38,
+        "blackhole": 6
+      }
+    },
+    {
+      "ledger": 107839114,
+      "minute": 3.6,
+      "planets": 1469,
+      "kinds": {
+        "planet": 1380,
+        "star": 26,
+        "pulsar": 4,
+        "binary": 41,
+        "blackhole": 7
+      }
+    },
+    {
+      "ledger": 107839119,
+      "minute": 3.9,
+      "planets": 1489,
+      "kinds": {
+        "planet": 1399,
+        "pulsar": 4,
+        "star": 27,
+        "binary": 41,
+        "blackhole": 7
+      }
+    },
+    {
+      "ledger": 107839124,
+      "minute": 4.2,
+      "planets": 1563,
+      "kinds": {
+        "planet": 1466,
+        "pulsar": 4,
+        "star": 29,
+        "binary": 44,
+        "blackhole": 8
+      }
+    },
+    {
+      "ledger": 107839129,
+      "minute": 4.5,
+      "planets": 1684,
+      "kinds": {
+        "planet": 1575,
+        "star": 36,
+        "pulsar": 3,
+        "binary": 49,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839134,
+      "minute": 4.8,
+      "planets": 1719,
+      "kinds": {
+        "planet": 1605,
+        "star": 39,
+        "pulsar": 3,
+        "binary": 51,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839139,
+      "minute": 5.2,
+      "planets": 1755,
+      "kinds": {
+        "planet": 1640,
+        "star": 40,
+        "pulsar": 2,
+        "binary": 52,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839144,
+      "minute": 5.5,
+      "planets": 1772,
+      "kinds": {
+        "planet": 1654,
+        "star": 42,
+        "pulsar": 2,
+        "binary": 53,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839149,
+      "minute": 5.8,
+      "planets": 1796,
+      "kinds": {
+        "planet": 1675,
+        "star": 43,
+        "pulsar": 2,
+        "binary": 55,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839154,
+      "minute": 6.1,
+      "planets": 1812,
+      "kinds": {
+        "planet": 1689,
+        "star": 44,
+        "pulsar": 2,
+        "binary": 56,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839159,
+      "minute": 6.4,
+      "planets": 1986,
+      "kinds": {
+        "planet": 1851,
+        "star": 50,
+        "pulsar": 4,
+        "binary": 60,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839164,
+      "minute": 6.7,
+      "planets": 2011,
+      "kinds": {
+        "planet": 1875,
+        "star": 51,
+        "pulsar": 4,
+        "binary": 60,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839169,
+      "minute": 7.1,
+      "planets": 2123,
+      "kinds": {
+        "planet": 1978,
+        "star": 56,
+        "pulsar": 5,
+        "binary": 64,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839174,
+      "minute": 7.4,
+      "planets": 2154,
+      "kinds": {
+        "planet": 2005,
+        "star": 58,
+        "pulsar": 5,
+        "binary": 66,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839179,
+      "minute": 7.7,
+      "planets": 2187,
+      "kinds": {
+        "planet": 2041,
+        "star": 58,
+        "binary": 67,
+        "pulsar": 1,
+        "blackhole": 9
+      }
+    },
+    {
+      "ledger": 107839184,
+      "minute": 8.1,
+      "planets": 2598,
+      "kinds": {
+        "planet": 2447,
+        "blackhole": 10,
+        "star": 60,
+        "binary": 69,
+        "pulsar": 1
+      }
+    },
+    {
+      "ledger": 107839189,
+      "minute": 8.4,
+      "planets": 2900,
+      "kinds": {
+        "planet": 2721,
+        "blackhole": 10,
+        "star": 70,
+        "pulsar": 6,
+        "binary": 80
+      }
+    },
+    {
+      "ledger": 107839194,
+      "minute": 8.8,
+      "planets": 2914,
+      "kinds": {
+        "planet": 2735,
+        "blackhole": 10,
+        "star": 70,
+        "pulsar": 6,
+        "binary": 80
+      }
+    },
+    {
+      "ledger": 107839199,
+      "minute": 9.1,
+      "planets": 2934,
+      "kinds": {
+        "planet": 2753,
+        "blackhole": 10,
+        "star": 71,
+        "pulsar": 6,
+        "binary": 81
+      }
+    },
+    {
+      "ledger": 107839204,
+      "minute": 9.4,
+      "planets": 2952,
+      "kinds": {
+        "planet": 2771,
+        "blackhole": 10,
+        "star": 71,
+        "pulsar": 6,
+        "binary": 81
+      }
+    },
+    {
+      "ledger": 107839209,
+      "minute": 9.7,
+      "planets": 2973,
+      "kinds": {
+        "planet": 2791,
+        "blackhole": 10,
+        "star": 73,
+        "pulsar": 4,
+        "binary": 82
+      }
+    },
+    {
+      "ledger": 107839214,
+      "minute": 10,
+      "planets": 3026,
+      "kinds": {
+        "planet": 2838,
+        "blackhole": 10,
+        "star": 75,
+        "pulsar": 4,
+        "binary": 86
+      }
+    },
+    {
+      "ledger": 107839219,
+      "minute": 10.4,
+      "planets": 3052,
+      "kinds": {
+        "planet": 2859,
+        "blackhole": 10,
+        "pulsar": 8,
+        "star": 75,
+        "binary": 87
+      }
+    },
+    {
+      "ledger": 107839224,
+      "minute": 10.7,
+      "planets": 3080,
+      "kinds": {
+        "planet": 2884,
+        "blackhole": 10,
+        "pulsar": 8,
+        "star": 78,
+        "binary": 87
+      }
+    },
+    {
+      "ledger": 107839229,
+      "minute": 11,
+      "planets": 3119,
+      "kinds": {
+        "planet": 2920,
+        "blackhole": 10,
+        "pulsar": 8,
+        "star": 79,
+        "binary": 89
+      }
+    },
+    {
+      "ledger": 107839234,
+      "minute": 11.3,
+      "planets": 3160,
+      "kinds": {
+        "planet": 2957,
+        "blackhole": 11,
+        "pulsar": 8,
+        "star": 81,
+        "binary": 90
+      }
+    },
+    {
+      "ledger": 107839239,
+      "minute": 11.6,
+      "planets": 3178,
+      "kinds": {
+        "planet": 2977,
+        "blackhole": 11,
+        "star": 82,
+        "pulsar": 5,
+        "binary": 90
+      }
+    },
+    {
+      "ledger": 107839244,
+      "minute": 12,
+      "planets": 3186,
+      "kinds": {
+        "planet": 2985,
+        "blackhole": 11,
+        "star": 82,
+        "pulsar": 5,
+        "binary": 90
+      }
+    },
+    {
+      "ledger": 107839249,
+      "minute": 12.3,
+      "planets": 3220,
+      "kinds": {
+        "planet": 3018,
+        "blackhole": 11,
+        "star": 82,
+        "pulsar": 6,
+        "binary": 90
+      }
+    },
+    {
+      "ledger": 107839254,
+      "minute": 12.6,
+      "planets": 3234,
+      "kinds": {
+        "planet": 3030,
+        "blackhole": 13,
+        "star": 82,
+        "pulsar": 6,
+        "binary": 90
+      }
+    },
+    {
+      "ledger": 107839259,
+      "minute": 12.9,
+      "planets": 3246,
+      "kinds": {
+        "planet": 3043,
+        "blackhole": 13,
+        "star": 82,
+        "pulsar": 5,
+        "binary": 90
+      }
+    },
+    {
+      "ledger": 107839264,
+      "minute": 13.3,
+      "planets": 3278,
+      "kinds": {
+        "planet": 3074,
+        "blackhole": 13,
+        "star": 82,
+        "pulsar": 5,
+        "binary": 91
+      }
+    },
+    {
+      "ledger": 107839269,
+      "minute": 13.6,
+      "planets": 3949,
+      "kinds": {
+        "planet": 3735,
+        "blackhole": 13,
+        "star": 85,
+        "pulsar": 7,
+        "binary": 96
+      }
+    },
+    {
+      "ledger": 107839274,
+      "minute": 13.9,
+      "planets": 3993,
+      "kinds": {
+        "planet": 3771,
+        "blackhole": 13,
+        "star": 88,
+        "pulsar": 7,
+        "binary": 100,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839279,
+      "minute": 14.3,
+      "planets": 4018,
+      "kinds": {
+        "planet": 3789,
+        "blackhole": 13,
+        "star": 91,
+        "pulsar": 7,
+        "binary": 104,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839284,
+      "minute": 14.6,
+      "planets": 4041,
+      "kinds": {
+        "planet": 3807,
+        "blackhole": 13,
+        "star": 92,
+        "pulsar": 7,
+        "binary": 108,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839289,
+      "minute": 14.9,
+      "planets": 4065,
+      "kinds": {
+        "planet": 3831,
+        "blackhole": 13,
+        "star": 92,
+        "pulsar": 6,
+        "binary": 109,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839294,
+      "minute": 15.2,
+      "planets": 4075,
+      "kinds": {
+        "planet": 3840,
+        "blackhole": 13,
+        "star": 92,
+        "pulsar": 6,
+        "binary": 110,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839299,
+      "minute": 15.6,
+      "planets": 4295,
+      "kinds": {
+        "planet": 4055,
+        "blackhole": 14,
+        "star": 94,
+        "pulsar": 6,
+        "binary": 112,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839304,
+      "minute": 16,
+      "planets": 5254,
+      "kinds": {
+        "planet": 5010,
+        "blackhole": 14,
+        "star": 94,
+        "pulsar": 6,
+        "binary": 116,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839309,
+      "minute": 16.3,
+      "planets": 5297,
+      "kinds": {
+        "planet": 5048,
+        "blackhole": 14,
+        "star": 95,
+        "pulsar": 8,
+        "binary": 118,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839314,
+      "minute": 16.6,
+      "planets": 5308,
+      "kinds": {
+        "planet": 5058,
+        "blackhole": 14,
+        "star": 95,
+        "pulsar": 8,
+        "binary": 118,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839319,
+      "minute": 16.9,
+      "planets": 5312,
+      "kinds": {
+        "planet": 5061,
+        "blackhole": 14,
+        "star": 95,
+        "pulsar": 9,
+        "binary": 118,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839324,
+      "minute": 17.2,
+      "planets": 5329,
+      "kinds": {
+        "planet": 5077,
+        "blackhole": 14,
+        "star": 96,
+        "pulsar": 9,
+        "binary": 118,
+        "collapsed": 1
+      }
+    },
+    {
+      "ledger": 107839329,
+      "minute": 17.6,
+      "planets": 5338,
+      "kinds": {
+        "planet": 5085,
+        "blackhole": 14,
+        "star": 96,
+        "pulsar": 9,
+        "binary": 118,
+        "collapsed": 2
+      }
+    },
+    {
+      "ledger": 107839334,
+      "minute": 17.9,
+      "planets": 5350,
+      "kinds": {
+        "planet": 5096,
+        "blackhole": 15,
+        "star": 97,
+        "pulsar": 9,
+        "binary": 118,
+        "collapsed": 2
+      }
+    },
+    {
+      "ledger": 107839339,
+      "minute": 18.2,
+      "planets": 5368,
+      "kinds": {
+        "planet": 5113,
+        "blackhole": 15,
+        "star": 99,
+        "pulsar": 7,
+        "binary": 119,
+        "collapsed": 2
+      }
+    },
+    {
+      "ledger": 107839344,
+      "minute": 18.5,
+      "planets": 5379,
+      "kinds": {
+        "planet": 5124,
+        "blackhole": 15,
+        "star": 99,
+        "pulsar": 7,
+        "binary": 119,
+        "collapsed": 2
+      }
+    },
+    {
+      "ledger": 107839349,
+      "minute": 18.9,
+      "planets": 5733,
+      "kinds": {
+        "planet": 5473,
+        "blackhole": 15,
+        "pulsar": 9,
+        "star": 101,
+        "binary": 120,
+        "collapsed": 2
+      }
+    },
+    {
+      "ledger": 107839354,
+      "minute": 19.2,
+      "planets": 6250,
+      "kinds": {
+        "planet": 5988,
+        "blackhole": 15,
+        "pulsar": 9,
+        "star": 101,
+        "binary": 121,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839359,
+      "minute": 19.5,
+      "planets": 6290,
+      "kinds": {
+        "planet": 6023,
+        "blackhole": 15,
+        "pulsar": 10,
+        "star": 103,
+        "binary": 124,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839364,
+      "minute": 19.8,
+      "planets": 6371,
+      "kinds": {
+        "planet": 6097,
+        "blackhole": 17,
+        "pulsar": 10,
+        "star": 105,
+        "binary": 127,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839369,
+      "minute": 20.1,
+      "planets": 6424,
+      "kinds": {
+        "planet": 6143,
+        "blackhole": 17,
+        "pulsar": 10,
+        "star": 109,
+        "binary": 130,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839374,
+      "minute": 20.5,
+      "planets": 6472,
+      "kinds": {
+        "planet": 6178,
+        "blackhole": 17,
+        "pulsar": 10,
+        "star": 113,
+        "binary": 138,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839379,
+      "minute": 20.8,
+      "planets": 6542,
+      "kinds": {
+        "planet": 6235,
+        "blackhole": 17,
+        "star": 120,
+        "pulsar": 8,
+        "binary": 145,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839384,
+      "minute": 21.1,
+      "planets": 6575,
+      "kinds": {
+        "planet": 6264,
+        "blackhole": 17,
+        "star": 121,
+        "pulsar": 8,
+        "binary": 148,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839389,
+      "minute": 21.4,
+      "planets": 6625,
+      "kinds": {
+        "planet": 6308,
+        "blackhole": 17,
+        "star": 122,
+        "pulsar": 8,
+        "binary": 154,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839394,
+      "minute": 21.8,
+      "planets": 6655,
+      "kinds": {
+        "planet": 6332,
+        "blackhole": 17,
+        "star": 126,
+        "pulsar": 8,
+        "binary": 156,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839399,
+      "minute": 22.1,
+      "planets": 6680,
+      "kinds": {
+        "planet": 6356,
+        "blackhole": 17,
+        "star": 127,
+        "pulsar": 7,
+        "binary": 157,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839404,
+      "minute": 22.4,
+      "planets": 6702,
+      "kinds": {
+        "planet": 6376,
+        "blackhole": 17,
+        "star": 127,
+        "pulsar": 7,
+        "binary": 159,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839409,
+      "minute": 22.8,
+      "planets": 6736,
+      "kinds": {
+        "planet": 6411,
+        "blackhole": 17,
+        "star": 127,
+        "pulsar": 6,
+        "binary": 159,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839414,
+      "minute": 23.1,
+      "planets": 6925,
+      "kinds": {
+        "planet": 6586,
+        "blackhole": 17,
+        "star": 133,
+        "pulsar": 6,
+        "binary": 167,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839419,
+      "minute": 23.4,
+      "planets": 6966,
+      "kinds": {
+        "planet": 6618,
+        "blackhole": 17,
+        "star": 137,
+        "pulsar": 8,
+        "binary": 170,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839424,
+      "minute": 23.8,
+      "planets": 7004,
+      "kinds": {
+        "planet": 6651,
+        "blackhole": 17,
+        "star": 139,
+        "pulsar": 8,
+        "binary": 173,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839429,
+      "minute": 24.1,
+      "planets": 7027,
+      "kinds": {
+        "planet": 6676,
+        "blackhole": 17,
+        "star": 139,
+        "pulsar": 6,
+        "binary": 173,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839434,
+      "minute": 24.4,
+      "planets": 7038,
+      "kinds": {
+        "planet": 6686,
+        "blackhole": 17,
+        "star": 140,
+        "pulsar": 6,
+        "binary": 173,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839439,
+      "minute": 24.8,
+      "planets": 7049,
+      "kinds": {
+        "planet": 6695,
+        "blackhole": 17,
+        "star": 142,
+        "pulsar": 4,
+        "binary": 175,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839444,
+      "minute": 25.1,
+      "planets": 7064,
+      "kinds": {
+        "planet": 6710,
+        "blackhole": 17,
+        "star": 142,
+        "pulsar": 4,
+        "binary": 175,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839449,
+      "minute": 25.4,
+      "planets": 7085,
+      "kinds": {
+        "planet": 6728,
+        "blackhole": 17,
+        "star": 143,
+        "pulsar": 5,
+        "binary": 176,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839454,
+      "minute": 25.7,
+      "planets": 7092,
+      "kinds": {
+        "planet": 6735,
+        "blackhole": 17,
+        "star": 143,
+        "pulsar": 5,
+        "binary": 176,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839459,
+      "minute": 26.1,
+      "planets": 7103,
+      "kinds": {
+        "planet": 6744,
+        "blackhole": 17,
+        "star": 143,
+        "pulsar": 7,
+        "binary": 176,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839464,
+      "minute": 26.4,
+      "planets": 7126,
+      "kinds": {
+        "planet": 6765,
+        "blackhole": 17,
+        "star": 144,
+        "pulsar": 7,
+        "binary": 177,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839469,
+      "minute": 26.7,
+      "planets": 7134,
+      "kinds": {
+        "planet": 6771,
+        "blackhole": 17,
+        "star": 145,
+        "pulsar": 7,
+        "binary": 178,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839474,
+      "minute": 27.1,
+      "planets": 7267,
+      "kinds": {
+        "planet": 6900,
+        "blackhole": 17,
+        "star": 147,
+        "pulsar": 7,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839479,
+      "minute": 27.4,
+      "planets": 7286,
+      "kinds": {
+        "planet": 6917,
+        "blackhole": 17,
+        "star": 149,
+        "pulsar": 7,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839484,
+      "minute": 27.7,
+      "planets": 7296,
+      "kinds": {
+        "planet": 6927,
+        "blackhole": 17,
+        "star": 149,
+        "pulsar": 7,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839489,
+      "minute": 28,
+      "planets": 7307,
+      "kinds": {
+        "planet": 6938,
+        "blackhole": 17,
+        "star": 149,
+        "pulsar": 7,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839494,
+      "minute": 28.3,
+      "planets": 7324,
+      "kinds": {
+        "planet": 6954,
+        "blackhole": 17,
+        "star": 150,
+        "pulsar": 7,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839499,
+      "minute": 28.6,
+      "planets": 7338,
+      "kinds": {
+        "planet": 6968,
+        "blackhole": 17,
+        "star": 151,
+        "pulsar": 6,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839504,
+      "minute": 28.9,
+      "planets": 7352,
+      "kinds": {
+        "planet": 6981,
+        "blackhole": 18,
+        "star": 151,
+        "pulsar": 6,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839509,
+      "minute": 29.3,
+      "planets": 7364,
+      "kinds": {
+        "planet": 6993,
+        "blackhole": 18,
+        "star": 151,
+        "pulsar": 6,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839514,
+      "minute": 29.6,
+      "planets": 7378,
+      "kinds": {
+        "planet": 7006,
+        "blackhole": 18,
+        "star": 152,
+        "pulsar": 6,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839519,
+      "minute": 29.9,
+      "planets": 7482,
+      "kinds": {
+        "planet": 7111,
+        "blackhole": 18,
+        "star": 152,
+        "pulsar": 5,
+        "binary": 180,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839524,
+      "minute": 30.3,
+      "planets": 7533,
+      "kinds": {
+        "planet": 7161,
+        "blackhole": 18,
+        "star": 152,
+        "pulsar": 5,
+        "binary": 181,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839529,
+      "minute": 30.6,
+      "planets": 7544,
+      "kinds": {
+        "planet": 7171,
+        "blackhole": 18,
+        "star": 152,
+        "pulsar": 6,
+        "binary": 181,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839534,
+      "minute": 30.9,
+      "planets": 7560,
+      "kinds": {
+        "planet": 7187,
+        "blackhole": 18,
+        "star": 152,
+        "pulsar": 6,
+        "binary": 181,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839539,
+      "minute": 31.2,
+      "planets": 7570,
+      "kinds": {
+        "planet": 7196,
+        "blackhole": 18,
+        "star": 152,
+        "pulsar": 7,
+        "binary": 181,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839544,
+      "minute": 31.6,
+      "planets": 7617,
+      "kinds": {
+        "planet": 7238,
+        "blackhole": 18,
+        "star": 153,
+        "pulsar": 7,
+        "binary": 185,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839549,
+      "minute": 31.9,
+      "planets": 7625,
+      "kinds": {
+        "planet": 7245,
+        "blackhole": 18,
+        "star": 154,
+        "pulsar": 7,
+        "binary": 185,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839554,
+      "minute": 32.2,
+      "planets": 7637,
+      "kinds": {
+        "planet": 7257,
+        "blackhole": 18,
+        "star": 155,
+        "pulsar": 7,
+        "binary": 185,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839559,
+      "minute": 32.5,
+      "planets": 7646,
+      "kinds": {
+        "planet": 7264,
+        "blackhole": 18,
+        "star": 156,
+        "pulsar": 8,
+        "binary": 185,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839564,
+      "minute": 32.8,
+      "planets": 7674,
+      "kinds": {
+        "planet": 7288,
+        "blackhole": 18,
+        "star": 159,
+        "pulsar": 8,
+        "binary": 186,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839569,
+      "minute": 33.2,
+      "planets": 7717,
+      "kinds": {
+        "planet": 7332,
+        "blackhole": 18,
+        "star": 159,
+        "pulsar": 7,
+        "binary": 186,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839574,
+      "minute": 33.5,
+      "planets": 7739,
+      "kinds": {
+        "planet": 7350,
+        "blackhole": 18,
+        "star": 163,
+        "pulsar": 7,
+        "binary": 188,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839579,
+      "minute": 33.8,
+      "planets": 7752,
+      "kinds": {
+        "planet": 7362,
+        "blackhole": 18,
+        "star": 163,
+        "pulsar": 8,
+        "binary": 188,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839584,
+      "minute": 34.1,
+      "planets": 7778,
+      "kinds": {
+        "planet": 7387,
+        "blackhole": 18,
+        "star": 164,
+        "pulsar": 8,
+        "binary": 188,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839589,
+      "minute": 34.5,
+      "planets": 7803,
+      "kinds": {
+        "planet": 7411,
+        "blackhole": 18,
+        "star": 164,
+        "pulsar": 8,
+        "binary": 189,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839594,
+      "minute": 34.8,
+      "planets": 7844,
+      "kinds": {
+        "planet": 7443,
+        "blackhole": 19,
+        "star": 167,
+        "pulsar": 8,
+        "binary": 194,
+        "collapsed": 3
+      }
+    },
+    {
+      "ledger": 107839599,
+      "minute": 35.1,
+      "planets": 7859,
+      "kinds": {
+        "planet": 7458,
+        "blackhole": 19,
+        "star": 167,
+        "pulsar": 5,
+        "binary": 194,
+        "collapsed": 6
+      }
+    },
+    {
+      "ledger": 107839604,
+      "minute": 35.5,
+      "planets": 7983,
+      "kinds": {
+        "planet": 7579,
+        "blackhole": 19,
+        "star": 167,
+        "pulsar": 5,
+        "binary": 196,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839609,
+      "minute": 35.8,
+      "planets": 8000,
+      "kinds": {
+        "planet": 7590,
+        "blackhole": 19,
+        "star": 169,
+        "pulsar": 6,
+        "binary": 199,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839614,
+      "minute": 36.1,
+      "planets": 8021,
+      "kinds": {
+        "planet": 7608,
+        "blackhole": 19,
+        "star": 170,
+        "pulsar": 6,
+        "binary": 201,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839619,
+      "minute": 36.5,
+      "planets": 8035,
+      "kinds": {
+        "planet": 7622,
+        "blackhole": 19,
+        "star": 170,
+        "pulsar": 6,
+        "binary": 201,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839624,
+      "minute": 36.8,
+      "planets": 8048,
+      "kinds": {
+        "planet": 7633,
+        "blackhole": 19,
+        "star": 171,
+        "pulsar": 6,
+        "binary": 202,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839629,
+      "minute": 37.1,
+      "planets": 8071,
+      "kinds": {
+        "planet": 7655,
+        "blackhole": 19,
+        "star": 171,
+        "pulsar": 6,
+        "binary": 203,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839634,
+      "minute": 37.4,
+      "planets": 8096,
+      "kinds": {
+        "planet": 7677,
+        "blackhole": 19,
+        "star": 173,
+        "pulsar": 6,
+        "binary": 204,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839639,
+      "minute": 37.8,
+      "planets": 8109,
+      "kinds": {
+        "planet": 7690,
+        "blackhole": 19,
+        "star": 173,
+        "pulsar": 5,
+        "binary": 205,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839644,
+      "minute": 38.1,
+      "planets": 8119,
+      "kinds": {
+        "planet": 7699,
+        "blackhole": 19,
+        "star": 173,
+        "pulsar": 5,
+        "binary": 206,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839649,
+      "minute": 38.4,
+      "planets": 8140,
+      "kinds": {
+        "planet": 7713,
+        "blackhole": 19,
+        "star": 176,
+        "pulsar": 8,
+        "binary": 207,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839654,
+      "minute": 38.7,
+      "planets": 8150,
+      "kinds": {
+        "planet": 7719,
+        "blackhole": 19,
+        "star": 177,
+        "pulsar": 8,
+        "binary": 210,
+        "collapsed": 7
+      }
+    },
+    {
+      "ledger": 107839659,
+      "minute": 39,
+      "planets": 8171,
+      "kinds": {
+        "planet": 7738,
+        "blackhole": 19,
+        "star": 177,
+        "pulsar": 7,
+        "binary": 212,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839664,
+      "minute": 39.4,
+      "planets": 8182,
+      "kinds": {
+        "planet": 7747,
+        "blackhole": 20,
+        "star": 177,
+        "pulsar": 7,
+        "binary": 213,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839669,
+      "minute": 39.7,
+      "planets": 8200,
+      "kinds": {
+        "planet": 7760,
+        "blackhole": 22,
+        "star": 178,
+        "pulsar": 7,
+        "binary": 215,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839674,
+      "minute": 40,
+      "planets": 8218,
+      "kinds": {
+        "planet": 7774,
+        "blackhole": 22,
+        "star": 179,
+        "pulsar": 7,
+        "binary": 218,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839679,
+      "minute": 40.3,
+      "planets": 8337,
+      "kinds": {
+        "planet": 7880,
+        "blackhole": 22,
+        "star": 184,
+        "pulsar": 7,
+        "binary": 226,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839684,
+      "minute": 40.7,
+      "planets": 8351,
+      "kinds": {
+        "planet": 7892,
+        "blackhole": 23,
+        "star": 184,
+        "pulsar": 7,
+        "binary": 227,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839689,
+      "minute": 41,
+      "planets": 8379,
+      "kinds": {
+        "planet": 7916,
+        "blackhole": 23,
+        "star": 186,
+        "pulsar": 7,
+        "binary": 229,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839694,
+      "minute": 41.3,
+      "planets": 8393,
+      "kinds": {
+        "planet": 7930,
+        "blackhole": 23,
+        "star": 186,
+        "pulsar": 7,
+        "binary": 229,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839699,
+      "minute": 41.6,
+      "planets": 8405,
+      "kinds": {
+        "planet": 7943,
+        "blackhole": 23,
+        "star": 186,
+        "pulsar": 6,
+        "binary": 229,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839704,
+      "minute": 42,
+      "planets": 8425,
+      "kinds": {
+        "planet": 7958,
+        "blackhole": 23,
+        "star": 188,
+        "pulsar": 6,
+        "binary": 232,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839709,
+      "minute": 42.3,
+      "planets": 8431,
+      "kinds": {
+        "planet": 7963,
+        "blackhole": 23,
+        "star": 188,
+        "pulsar": 7,
+        "binary": 232,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839714,
+      "minute": 42.6,
+      "planets": 8440,
+      "kinds": {
+        "planet": 7972,
+        "blackhole": 23,
+        "star": 188,
+        "pulsar": 7,
+        "binary": 232,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839719,
+      "minute": 42.9,
+      "planets": 8457,
+      "kinds": {
+        "planet": 7985,
+        "blackhole": 24,
+        "pulsar": 8,
+        "star": 188,
+        "binary": 234,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839724,
+      "minute": 43.2,
+      "planets": 8499,
+      "kinds": {
+        "planet": 8024,
+        "blackhole": 24,
+        "pulsar": 8,
+        "star": 190,
+        "binary": 235,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839729,
+      "minute": 43.6,
+      "planets": 8538,
+      "kinds": {
+        "planet": 8064,
+        "blackhole": 24,
+        "star": 190,
+        "pulsar": 6,
+        "binary": 236,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839734,
+      "minute": 43.9,
+      "planets": 8546,
+      "kinds": {
+        "planet": 8071,
+        "blackhole": 24,
+        "star": 191,
+        "pulsar": 6,
+        "binary": 236,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839739,
+      "minute": 44.2,
+      "planets": 8568,
+      "kinds": {
+        "planet": 8092,
+        "blackhole": 24,
+        "star": 191,
+        "pulsar": 7,
+        "binary": 236,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839744,
+      "minute": 44.5,
+      "planets": 8578,
+      "kinds": {
+        "planet": 8099,
+        "blackhole": 24,
+        "star": 192,
+        "pulsar": 7,
+        "binary": 238,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839749,
+      "minute": 44.8,
+      "planets": 8632,
+      "kinds": {
+        "planet": 8118,
+        "blackhole": 24,
+        "star": 203,
+        "pulsar": 7,
+        "binary": 262,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839754,
+      "minute": 45.2,
+      "planets": 8708,
+      "kinds": {
+        "planet": 8136,
+        "blackhole": 24,
+        "star": 228,
+        "pulsar": 7,
+        "binary": 296,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839759,
+      "minute": 45.5,
+      "planets": 8764,
+      "kinds": {
+        "planet": 8158,
+        "blackhole": 24,
+        "star": 237,
+        "pulsar": 8,
+        "binary": 320,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839764,
+      "minute": 45.8,
+      "planets": 8843,
+      "kinds": {
+        "planet": 8190,
+        "blackhole": 24,
+        "star": 259,
+        "pulsar": 8,
+        "binary": 345,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839769,
+      "minute": 46.1,
+      "planets": 8899,
+      "kinds": {
+        "planet": 8205,
+        "blackhole": 24,
+        "star": 277,
+        "pulsar": 8,
+        "binary": 368,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839774,
+      "minute": 46.5,
+      "planets": 8924,
+      "kinds": {
+        "planet": 8215,
+        "blackhole": 24,
+        "star": 284,
+        "pulsar": 8,
+        "binary": 376,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839779,
+      "minute": 46.8,
+      "planets": 8949,
+      "kinds": {
+        "planet": 8237,
+        "blackhole": 24,
+        "star": 285,
+        "pulsar": 9,
+        "binary": 377,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839784,
+      "minute": 47.1,
+      "planets": 8963,
+      "kinds": {
+        "planet": 8246,
+        "blackhole": 24,
+        "star": 288,
+        "pulsar": 9,
+        "binary": 380,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839789,
+      "minute": 47.4,
+      "planets": 8970,
+      "kinds": {
+        "planet": 8250,
+        "blackhole": 24,
+        "star": 289,
+        "pulsar": 10,
+        "binary": 381,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839794,
+      "minute": 47.7,
+      "planets": 8983,
+      "kinds": {
+        "planet": 8261,
+        "blackhole": 24,
+        "star": 290,
+        "pulsar": 10,
+        "binary": 382,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839799,
+      "minute": 48.1,
+      "planets": 8992,
+      "kinds": {
+        "planet": 8270,
+        "blackhole": 24,
+        "star": 290,
+        "pulsar": 9,
+        "binary": 383,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839804,
+      "minute": 48.4,
+      "planets": 9015,
+      "kinds": {
+        "planet": 8284,
+        "blackhole": 24,
+        "star": 298,
+        "pulsar": 9,
+        "binary": 384,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839809,
+      "minute": 48.7,
+      "planets": 9035,
+      "kinds": {
+        "planet": 8284,
+        "blackhole": 26,
+        "star": 315,
+        "pulsar": 10,
+        "binary": 384,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839814,
+      "minute": 49,
+      "planets": 9038,
+      "kinds": {
+        "planet": 8287,
+        "blackhole": 26,
+        "star": 315,
+        "pulsar": 10,
+        "binary": 384,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839819,
+      "minute": 49.4,
+      "planets": 9194,
+      "kinds": {
+        "planet": 8441,
+        "blackhole": 26,
+        "star": 315,
+        "pulsar": 10,
+        "binary": 386,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839824,
+      "minute": 49.7,
+      "planets": 9350,
+      "kinds": {
+        "planet": 8596,
+        "blackhole": 26,
+        "star": 316,
+        "pulsar": 10,
+        "binary": 386,
+        "collapsed": 8
+      }
+    },
+    {
+      "ledger": 107839829,
+      "minute": 50,
+      "planets": 9368,
+      "kinds": {
+        "planet": 8606,
+        "blackhole": 26,
+        "star": 319,
+        "pulsar": 9,
+        "binary": 390,
+        "collapsed": 10
+      }
+    },
+    {
+      "ledger": 107839834,
+      "minute": 50.4,
+      "planets": 9378,
+      "kinds": {
+        "planet": 8615,
+        "blackhole": 26,
+        "star": 319,
+        "pulsar": 9,
+        "binary": 391,
+        "collapsed": 10
+      }
+    },
+    {
+      "ledger": 107839839,
+      "minute": 50.7,
+      "planets": 9398,
+      "kinds": {
+        "planet": 8635,
+        "blackhole": 27,
+        "star": 319,
+        "pulsar": 8,
+        "binary": 391,
+        "collapsed": 10
+      }
+    },
+    {
+      "ledger": 107839844,
+      "minute": 51,
+      "planets": 9408,
+      "kinds": {
+        "planet": 8644,
+        "blackhole": 27,
+        "star": 319,
+        "pulsar": 8,
+        "binary": 392,
+        "collapsed": 10
+      }
+    },
+    {
+      "ledger": 107839849,
+      "minute": 51.3,
+      "planets": 9625,
+      "kinds": {
+        "planet": 8649,
+        "blackhole": 27,
+        "star": 319,
+        "pulsar": 9,
+        "binary": 392,
+        "collapsed": 221
+      }
+    },
+    {
+      "ledger": 107839854,
+      "minute": 51.6,
+      "planets": 9640,
+      "kinds": {
+        "planet": 8654,
+        "blackhole": 27,
+        "star": 319,
+        "pulsar": 9,
+        "binary": 393,
+        "collapsed": 230
+      }
+    },
+    {
+      "ledger": 107839859,
+      "minute": 52,
+      "planets": 9649,
+      "kinds": {
+        "planet": 8660,
+        "blackhole": 27,
+        "star": 319,
+        "pulsar": 9,
+        "binary": 394,
+        "collapsed": 232
+      }
+    },
+    {
+      "ledger": 107839864,
+      "minute": 52.3,
+      "planets": 9656,
+      "kinds": {
+        "planet": 8667,
+        "blackhole": 27,
+        "star": 319,
+        "pulsar": 9,
+        "binary": 394,
+        "collapsed": 232
+      }
+    },
+    {
+      "ledger": 107839869,
+      "minute": 52.6,
+      "planets": 9702,
+      "kinds": {
+        "planet": 8672,
+        "blackhole": 27,
+        "star": 319,
+        "pulsar": 9,
+        "binary": 394,
+        "collapsed": 273
+      }
+    },
+    {
+      "ledger": 107839874,
+      "minute": 52.9,
+      "planets": 9876,
+      "kinds": {
+        "planet": 8680,
+        "blackhole": 27,
+        "star": 320,
+        "pulsar": 9,
+        "binary": 398,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839879,
+      "minute": 53.2,
+      "planets": 9884,
+      "kinds": {
+        "planet": 8688,
+        "blackhole": 27,
+        "star": 320,
+        "pulsar": 9,
+        "binary": 398,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839884,
+      "minute": 53.6,
+      "planets": 9896,
+      "kinds": {
+        "planet": 8699,
+        "blackhole": 27,
+        "star": 320,
+        "pulsar": 9,
+        "binary": 399,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839889,
+      "minute": 53.9,
+      "planets": 9912,
+      "kinds": {
+        "planet": 8711,
+        "blackhole": 28,
+        "pulsar": 12,
+        "star": 320,
+        "binary": 399,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839894,
+      "minute": 54.2,
+      "planets": 9921,
+      "kinds": {
+        "planet": 8719,
+        "blackhole": 28,
+        "pulsar": 12,
+        "star": 320,
+        "binary": 400,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839899,
+      "minute": 54.5,
+      "planets": 9928,
+      "kinds": {
+        "planet": 8724,
+        "blackhole": 28,
+        "pulsar": 12,
+        "star": 321,
+        "binary": 401,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839904,
+      "minute": 54.8,
+      "planets": 9935,
+      "kinds": {
+        "planet": 8731,
+        "blackhole": 28,
+        "pulsar": 12,
+        "star": 321,
+        "binary": 401,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839909,
+      "minute": 55.2,
+      "planets": 9942,
+      "kinds": {
+        "planet": 8739,
+        "blackhole": 28,
+        "star": 321,
+        "pulsar": 10,
+        "binary": 402,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839914,
+      "minute": 55.5,
+      "planets": 9960,
+      "kinds": {
+        "planet": 8756,
+        "blackhole": 28,
+        "star": 322,
+        "pulsar": 10,
+        "binary": 402,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839919,
+      "minute": 55.9,
+      "planets": 10068,
+      "kinds": {
+        "planet": 8858,
+        "blackhole": 28,
+        "pulsar": 10,
+        "star": 325,
+        "binary": 406,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839924,
+      "minute": 56.2,
+      "planets": 10093,
+      "kinds": {
+        "planet": 8881,
+        "blackhole": 28,
+        "pulsar": 10,
+        "star": 325,
+        "binary": 408,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839929,
+      "minute": 56.5,
+      "planets": 10119,
+      "kinds": {
+        "planet": 8907,
+        "blackhole": 28,
+        "star": 325,
+        "pulsar": 10,
+        "binary": 408,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839934,
+      "minute": 56.9,
+      "planets": 10132,
+      "kinds": {
+        "planet": 8916,
+        "blackhole": 28,
+        "star": 327,
+        "pulsar": 10,
+        "binary": 410,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839939,
+      "minute": 57.2,
+      "planets": 10159,
+      "kinds": {
+        "planet": 8936,
+        "blackhole": 29,
+        "star": 330,
+        "pulsar": 10,
+        "binary": 413,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839944,
+      "minute": 57.5,
+      "planets": 10175,
+      "kinds": {
+        "planet": 8951,
+        "blackhole": 29,
+        "star": 330,
+        "pulsar": 10,
+        "binary": 414,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839949,
+      "minute": 57.9,
+      "planets": 10194,
+      "kinds": {
+        "planet": 8969,
+        "blackhole": 29,
+        "star": 332,
+        "pulsar": 9,
+        "binary": 414,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839954,
+      "minute": 58.2,
+      "planets": 10266,
+      "kinds": {
+        "planet": 9041,
+        "blackhole": 29,
+        "star": 332,
+        "pulsar": 9,
+        "binary": 414,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839959,
+      "minute": 58.5,
+      "planets": 10278,
+      "kinds": {
+        "planet": 9053,
+        "blackhole": 29,
+        "star": 332,
+        "pulsar": 8,
+        "binary": 415,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839964,
+      "minute": 58.8,
+      "planets": 10302,
+      "kinds": {
+        "planet": 9074,
+        "blackhole": 30,
+        "star": 332,
+        "pulsar": 8,
+        "binary": 417,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839969,
+      "minute": 59.1,
+      "planets": 10325,
+      "kinds": {
+        "planet": 9092,
+        "blackhole": 30,
+        "star": 334,
+        "pulsar": 8,
+        "binary": 420,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839974,
+      "minute": 59.4,
+      "planets": 10333,
+      "kinds": {
+        "planet": 9099,
+        "blackhole": 30,
+        "star": 334,
+        "pulsar": 8,
+        "binary": 421,
+        "collapsed": 434
+      }
+    },
+    {
+      "ledger": 107839979,
+      "minute": 59.8,
+      "planets": 10341,
+      "kinds": {
+        "planet": 9108,
+        "blackhole": 30,
+        "star": 334,
+        "pulsar": 7,
+        "binary": 421,
+        "collapsed": 434
+      }
+    }
+  ]
+}

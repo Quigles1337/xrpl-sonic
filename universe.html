@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>xrpl-sonic universe — the ledger as a sky</title>
+    <meta name="description" content="The XRP Ledger's live stream as a sky. Accounts are planets, transactions are comets, and the page shows only what it has heard, never the whole ledger." />
+        <meta name="theme-color" content="#060a12" />
+    <meta name="color-scheme" content="dark" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23060a12'/%3E%3Crect x='2.5' y='2.5' width='59' height='59' rx='8' fill='none' stroke='%234cc9f0' stroke-opacity='.45' stroke-width='1.5'/%3E%3Ccircle cx='24' cy='28' r='7' fill='%234cc9f0'/%3E%3Ccircle cx='42' cy='40' r='3' fill='%234cc9f0' fill-opacity='.8'/%3E%3Ccircle cx='40' cy='20' r='2' fill='%234cc9f0' fill-opacity='.6'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="src/universe/universe.css" />
+  </head>
+  <body>
+    <canvas id="sky" tabindex="0" role="img" aria-label="The sky: every account the page has heard as a planet, every transaction as a comet. Use the arrow keys to orbit, plus and minus to move closer and further, bracket keys to travel from planet to planet; the line below reads each one."></canvas>
+    <canvas id="labels" aria-hidden="true"></canvas>
+
+    <header class="topbar">
+      <a class="brand" href="./" title="The listening page">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="10" r="3.2" fill="currentColor" stroke="none" />
+            <circle cx="16.5" cy="15.5" r="1.6" fill="currentColor" stroke="none" />
+            <circle cx="16" cy="6.5" r="1" fill="currentColor" stroke="none" />
+            <path d="M3 19c4-2 8-6 10-11" stroke-opacity=".5" />
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">xrpl-sonic</span>
+          <span class="brand-tag">Universe</span>
+        </span>
+      </a>
+      <div class="status" role="status">
+        <span id="status-dot" class="status-dot" data-state="idle"></span>
+        <span id="status-text">Ready</span>
+      </div>
+      <div class="readouts" aria-live="off">
+        <div class="readout"><span class="readout-label">Ledger</span><span id="r-ledger" class="readout-value">—</span></div>
+        <div class="readout"><span class="readout-label">Planets</span><span id="r-planets" class="readout-value">0</span></div>
+        <div class="readout"><span class="readout-label">Frame</span><span id="r-frame" class="readout-value">—</span></div>
+      </div>
+      <div class="actions">
+        <span class="layers" role="group" aria-label="Layers">
+          <span class="layer-label">Layers</span>
+          <button class="btn layer" type="button" data-layer="payment" aria-pressed="true" title="Payments: comets (P)" style="color:#4cc9f0"><span class="swatch" aria-hidden="true"></span>Pay</button>
+          <button class="btn layer" type="button" data-layer="trust" aria-pressed="true" title="Trust lines: rings and issuer links (T)" style="color:#9ee37d"><span class="swatch" aria-hidden="true"></span>Trust</button>
+          <button class="btn layer" type="button" data-layer="dex" aria-pressed="true" title="DEX and AMM: flashes at the planet (D)" style="color:#f9c74f"><span class="swatch" aria-hidden="true"></span>DEX</button>
+          <button class="btn layer" type="button" data-layer="nft" aria-pressed="true" title="NFTs: flashes at the planet (N)" style="color:#f72585"><span class="swatch" aria-hidden="true"></span>NFT</button>
+        </span>
+        <button id="sound" class="btn" type="button" aria-pressed="false" title="Sound from the listening page's engine (S)">Sound</button>
+        <a class="btn" href="explorer.html" title="Read the ledger: accounts, transactions, ledgers">Explorer</a>
+        <button id="help-btn" class="btn" type="button" title="Keys (?)" aria-haspopup="dialog">?</button>
+        <button id="start" class="btn primary" type="button" aria-pressed="false">Start</button>
+      </div>
+    </header>
+
+    <div id="focus-line" class="focus-line hidden" role="status" aria-live="polite"></div>
+    <p class="footer-keys" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>orbit <kbd>+</kbd><kbd>−</kbd>closer <kbd>[</kbd><kbd>]</kbd>planets <kbd>Enter</kbd>open <kbd>?</kbd>keys</p>
+    <div id="coverage" class="coverage" role="status" aria-live="polite">Press Start. The sky shows only what this page hears from a public node, for as long as it listens; it never claims to be the whole ledger.</div>
+
+    <div id="help" class="help hidden" role="dialog" aria-label="Keys" aria-modal="true">
+      <div class="help-card">
+        <h2>Keys</h2>
+        <dl class="keys">
+          <dt><kbd>Space</kbd></dt><dd>Start and stop listening</dd>
+          <dt><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Orbit the sky (drag does the same)</dd>
+          <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Move closer and further (scroll does the same)</dd>
+          <dt><kbd>0</kbd></dt><dd>Reset the camera</dd>
+          <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Travel from planet to planet, brightest first; the line above the coverage reads each one</dd>
+          <dt><kbd>Enter</kbd></dt><dd>Open the focused planet in the explorer</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Leave the planet, close this help</dd>
+          <dt><kbd>P</kbd> <kbd>T</kbd> <kbd>D</kbd> <kbd>N</kbd></dt><dd>Toggle the payment, trust, DEX and NFT layers</dd>
+          <dt><kbd>S</kbd></dt><dd>Sound on and off</dd>
+          <dt><kbd>?</kbd></dt><dd>This help</dd>
+        </dl>
+        <p>Every body is earned by data: a planet is an account that appeared in a validated transaction the page heard; a star issues a currency to at least three holders in those records; a black hole candidate has its master key disabled and an unusable regular key in its account root; a pulsar has a measured cadence. Every body's label prints the threshold that made it. A planet is named by its on-ledger Domain, else by the label the listening page's cast gives it (a cast member wears a ring in its cast colour), else by its short address. The coverage line says how much was heard. Nothing is stored; reloading starts an empty sky.</p>
+        <p>With <code>prefers-reduced-motion</code> the sky stands still: no slow turn, comets as still lines that fade.</p>
+        <button id="help-close" class="btn" type="button">Close</button>
+      </div>
+    </div>
+
+    <script type="module" src="src/universe/main.js"></script>
+  </body>
+</html>

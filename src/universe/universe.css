@@ -1,0 +1,431 @@
+/* UNIVERSE spike — the sky page.
+   The tokens are the observatory's (src/styles.css, src/explorer.css), copied
+   so the spike shares no stylesheet it cannot edit. A full-viewport canvas,
+   a command strip, the coverage line that never leaves the screen, and the
+   focus line a screen reader travels by. */
+
+:root {
+  --bg-0: #060a12;
+  --bg-1: #0b1120;
+  --panel: rgba(9, 14, 26, 0.84);
+  --panel-solid: rgba(9, 14, 26, 0.96);
+  --line: rgba(140, 170, 220, 0.14);
+  --line-strong: rgba(140, 170, 220, 0.3);
+  --text: #e8eefb;
+  --text-dim: #b7c2d9;
+  --muted: #7f8ca6;
+  --accent: #4cc9f0;
+  --accent-ink: #06121a;
+  --accent-soft: rgba(76, 201, 240, 0.14);
+  --accent-line: rgba(76, 201, 240, 0.45);
+  --ok: #52e3a4;
+  --warn: #f9c74f;
+  --err: #ff6b6b;
+  --pulse: #c8dcff;
+  --radius: 4px;
+  --radius-lg: 8px;
+  --topbar-h: 56px;
+  --font: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Mono", "SF Mono", ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-0);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ the canvases */
+
+#sky,
+#labels {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+#sky {
+  background: radial-gradient(ellipse at 50% 60%, #0a1324 0%, var(--bg-0)70%);
+  cursor: grab;
+  touch-action: none;
+}
+
+#sky:active {
+  cursor: grabbing;
+}
+
+#sky:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+#labels {
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------ the strip */
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 14px;
+  background: linear-gradient(to bottom, rgba(6, 10, 18, 0.92), rgba(6, 10, 18, 0.55));
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+  z-index: 3;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--accent);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
+}
+
+.brand-mark svg {
+  width: 18px;
+  height: 18px;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.brand-name {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.brand-tag,
+.label,
+.readout-label,
+.footer,
+.layer-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  box-shadow: 0 0 0 2px rgba(140, 170, 220, 0.12);
+}
+
+.status-dot[data-state="connected"] {
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+}
+
+.status-dot[data-state="connecting"],
+.status-dot[data-state="reconnecting"] {
+  background: var(--warn);
+}
+
+.readouts {
+  display: flex;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.readout {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.readout-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(140, 170, 220, 0.07);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  padding: 6px 11px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn:hover {
+  background: rgba(140, 170, 220, 0.14);
+  border-color: var(--accent-line);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.layers {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+}
+
+.layer {
+  padding: 5px 8px;
+}
+
+.layer .swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ------------------------------------------------------------ the lines */
+
+.coverage {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px 14px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  background: linear-gradient(to top, rgba(6, 10, 18, 0.94), rgba(6, 10, 18, 0.6));
+  border-top: 1px solid var(--line);
+  z-index: 3;
+}
+
+.coverage strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.coverage .fine {
+  color: var(--muted);
+  margin-left: 10px;
+}
+
+.focus-line {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: 54px;
+  max-width: 920px;
+  padding: 8px 12px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  z-index: 3;
+}
+
+.focus-line a {
+  color: var(--accent);
+}
+
+.focus-line .kind {
+  color: var(--accent);
+  margin-right: 8px;
+}
+
+/* ------------------------------------------------------------ help */
+
+.help {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(6, 10, 18, 0.72);
+  z-index: 5;
+}
+
+.help-card {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 18px 20px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+}
+
+.help-card h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.help-card p {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.keys {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.keys dt {
+  margin: 0;
+}
+
+.keys dd {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: center;
+  color: var(--text);
+  background: rgba(140, 170, 220, 0.08);
+}
+
+.footer-keys {
+  position: fixed;
+  right: 14px;
+  bottom: 54px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  z-index: 2;
+}
+
+.footer-keys kbd {
+  margin-right: 2px;
+}
+
+/* ------------------------------------------------------------ small screens and motion */
+
+@media (max-width: 760px) {
+  .brand-tag,
+  .readouts,
+  .footer-keys,
+  .layer-label {
+    display: none;
+  }
+
+  .topbar {
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .focus-line {
+    bottom: 64px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .status-dot {
+    transition: none;
+  }
+}
