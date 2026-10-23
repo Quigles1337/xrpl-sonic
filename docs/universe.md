@@ -158,7 +158,90 @@ Four verbs, then a detail. Today every transaction in the sky is a comet or a fl
 
 ### Measured first
 
-HISTOGRAM_TABLE
+From `bench/record-stream.mjs` against mainnet, 90 minutes from 2026-10-23T04:34:01.553Z: 1,385 ledgers, 198,274 transactions (distinct hashes), 682 MiB recorded. The spark threshold is 0.01% of the transactions heard (20 here): a type the vocabulary does not name stays the spark below it, and above it is owed a design.
+
+| Type | Count | Share | Inner (of a Batch) | Failed | In the sky |
+| --- | --- | --- | --- | --- | --- |
+| Batch | 65,491 | 33.03% | 0 (0%) | 0 (0%) | tick (the wrapper), no body |
+| OfferCreate | 55,282 | 27.88% | 957 (2%) | 8,237 (15%) | designed (see the vocabulary) |
+| Payment | 43,513 | 21.95% | 2,385 (6%) | 29,633 (68%) | designed (see the vocabulary) |
+| TicketCreate | 12,891 | 6.50% | 0 (0%) | 6,892 (53%) | designed (see the vocabulary) |
+| OfferCancel | 6,671 | 3.36% | 0 (0%) | 0 (0%) | designed (see the vocabulary) |
+| NFTokenCreateOffer | 4,734 | 2.39% | 1,756 (37%) | 76 (2%) | designed (see the vocabulary) |
+| AccountSet | 3,869 | 1.95% | 41 (1%) | 0 (0%) | designed (see the vocabulary) |
+| CheckCash | 2,378 | 1.20% | 59 (3%) | 2,190 (92%) | designed (see the vocabulary) |
+| TrustSet | 1,580 | 0.80% | 41 (3%) | 5 (0%) | designed (see the vocabulary) |
+| NFTokenCancelOffer | 659 | 0.33% | 1 (0%) | 0 (0%) | designed (see the vocabulary) |
+| CheckCancel | 450 | 0.23% | 0 (0%) | 0 (0%) | designed (see the vocabulary) |
+| CheckCreate | 347 | 0.18% | 0 (0%) | 0 (0%) | designed (see the vocabulary) |
+| NFTokenAcceptOffer | 99 | 0.05% | 31 (31%) | 32 (32%) | designed (see the vocabulary) |
+| SetRegularKey | 86 | 0.04% | 0 (0%) | 0 (0%) | designed (see the vocabulary) |
+| AMMDeposit | 74 | 0.04% | 0 (0%) | 17 (23%) | designed (see the vocabulary) |
+| OracleSet | 57 | 0.03% | 0 (0%) | 0 (0%) | designed (see the vocabulary) |
+| NFTokenMint | 29 | 0.01% | 0 (0%) | 0 (0%) | designed (see the vocabulary) |
+| AMMWithdraw | 21 | 0.01% | 0 (0%) | 6 (29%) | designed (see the vocabulary) |
+| NFTokenBurn | 17 | 0.01% | 2 (12%) | 0 (0%) | designed (see the vocabulary) |
+| AccountDelete | 13 | 0.01% | 0 (0%) | 1 (8%) | designed (see the vocabulary) |
+| AMMVote | 4 | 0.00% | 0 (0%) | 0 (0%) | spark (below the threshold, unnamed) |
+| AMMCreate | 4 | 0.00% | 0 (0%) | 0 (0%) | designed (see the vocabulary) |
+| AMMBid | 3 | 0.00% | 0 (0%) | 1 (33%) | designed (see the vocabulary) |
+| SignerListSet | 2 | 0.00% | 0 (0%) | 0 (0%) | designed (see the vocabulary) |
+
+The sub-kinds the rules cut, as counted in the same recording:
+
+| Sub-kind | Count |
+| --- | --- |
+| batch: 2 inner | 55,780 |
+| offercreate: XRP book | 48,297 |
+| failed (tec/other) | 47,090 |
+| offercreate: placed (Offer created) | 45,399 |
+| payment: cross-currency (SendMax differs from Amount) | 36,050 |
+| payment: self (Account = Destination) | 35,945 |
+| payment: tfPartialPayment set | 35,841 |
+| batch: 3 inner | 7,522 |
+| offercreate: tfFillOrKill | 7,354 |
+| offercreate: issued/issued book | 6,985 |
+| offercreate: tfSell | 6,427 |
+| payment: delivered less than asked (partial) | 6,010 |
+| payment: through a pool (AMM root) | 5,706 |
+| payment: issued currency | 4,994 |
+| nftoffer: buy | 4,617 |
+| accountset: no flag, no Domain | 3,867 |
+| payment: dust (under 1 XRP) | 3,332 |
+| offercreate: tfImmediateOrCancel | 2,406 |
+| checkcash: exact Amount | 2,378 |
+| payment: with Paths | 1,900 |
+| batch: 5 inner | 1,156 |
+| offercreate: crossed the book | 1,063 |
+| trustset: line created | 874 |
+| batch: 4 inner | 796 |
+| payment: crossed the book (Offer nodes) | 722 |
+| offercreate: through a pool | 643 |
+| trustset: limit 0 | 607 |
+| trustset: line deleted | 575 |
+| payment: funded a new account | 232 |
+| batch: 8 inner | 183 |
+| nftoffer: sell | 117 |
+| setregularkey: set | 86 |
+| ammdeposit: flags 0x80000 | 70 |
+| trustset: tfClearFreeze | 61 |
+| oracleset | 57 |
+| nftaccept: brokered (both offers) | 51 |
+| nftaccept: a sell offer | 46 |
+| batch: 6 inner | 33 |
+| batch: 7 inner | 21 |
+| accountdelete | 13 |
+| ammwithdraw: flags 0x20000 | 10 |
+| ammwithdraw: flags 0x200000 | 7 |
+| ammdeposit: flags 0x100000 | 4 |
+| offercreate: swept an untraded offer of someone else | 3 |
+| accountset: SetFlag 4 | 2 |
+| nftaccept: a buy offer | 2 |
+| ammwithdraw: flags 0x40000 | 2 |
+| signerlistset: quorum 2 of 3 | 1 |
+| ammwithdraw: flags 0x10000 | 1 |
+| ammwithdraw: flags 0x100000 | 1 |
+| signerlistset: quorum 1 of 2 | 1 |
 
 What the recording says for the vocabulary, beyond the counts: three in four payments on mainnet tonight fail (bots' path-finding payments to themselves, `tfPartialPayment` set, cross-currency, mostly `tecPATH_DRY`), so most of what the stream calls a payment is a spark; of the payments that succeed, the self-payment through the book or a pool (the burn) outnumbers the direct comet; nearly half of the NFT offers arrive inside Batches; the Batch wrapper is the largest type by far and carries nothing of its own. Frequency decides loudness throughout: payments, offers and wrappers are small and quiet; account-control changes are rare and earn a motion you notice.
 
@@ -168,45 +251,45 @@ Each row: the object, its verb, the rule and the record fields that earn it, wha
 
 | Object | Verb | Earned by (fields) | Drawn | Still | Fixture |
 | --- | --- | --- | --- | --- | --- |
-| comet | travel | `Payment`, success, Account ≠ Destination, one currency, no hops; size from log of `meta.delivered_amount` | the photon from sender to receiver with its tail | the line, head at the receiver | FIXTURE:comet |
-| bent-comet | travel | a payment whose `SendMax` differs from the amount, or with `Paths`, or that crossed `Offer` nodes or an AMM root; the hops are the issuers named by the RippleStates touched, the pools, and the owners of the crossed offers, in the order of the record (the record carries the set of hops, not their order on the path: a challenge to the brief's "each issuer in its path", drawn in record order) | the comet whose tail bends past each hop | the bent line | FIXTURE:bent-comet |
-| partial | travel | `tfPartialPayment` and `meta.delivered_amount` below `DeliverMax`/`Amount` | arrives short, labelled "delivered X of up to Y" | the short line with the label | FIXTURE:partial |
-| burn | travel | `Account = Destination` (a payment to self), success; the hops as above | a loop out of the sender's planet and back | a ring around the planet | FIXTURE:burn |
-| dust | travel | an XRP payment under one XRP | a faint brief comet | a faint short line | FIXTURE:dust |
-| shower | travel | five or more dust payments from one sender in one ledger (`collapseShowers`) | a meteor shower | faint short lines | FIXTURE:shower |
-| long-period | travel | `EscrowCreate` with `FinishAfter` (the period) | a dotted comet leaving | a dotted line | FIXTURE:long-period |
-| long-period-arrive | travel | `EscrowFinish`: the deleted `Escrow` node's Account and Destination | the comet arrives at the destination | dotted line, head at the destination | FIXTURE:long-period-arrive |
-| long-period-return | travel | `EscrowCancel`: the deleted `Escrow` node's Account | the comet returns home | dotted line, head at home | FIXTURE:long-period-return |
-| check-drift | travel | `CheckCreate`: Destination, `SendMax`; the check waits (a standing object) | a bead drifting into the destination's orbit and waiting | the bead in orbit | FIXTURE:check-drift |
-| check-cash | travel | `CheckCash`: the deleted `Check` node's Account and Destination, `Amount` or `DeliverMin` | the waiting bead lands | the bead at the destination | FIXTURE:check-cash |
-| check-cancel | travel | `CheckCancel`: the deleted `Check` node | the bead blinks out | nothing | FIXTURE:check-cancel |
-| moon-capture | travel | `NFTokenAcceptOffer`: the seller is the deleted sell `NFTokenOffer`'s Owner (else the accepting account), the buyer the deleted buy offer's Owner (else the accepting account); brokered when both offers are named | a moon captured from one orbit into another, via the broker | the moon at the buyer | FIXTURE:moon-capture |
-| reverse-comet | travel | `Clawback`: `Amount.issuer` is the holder, Account the issuer | a comet from holder to issuer in the trust colour | the line | FIXTURE:reverse-comet |
-| collapse | travel | `AccountDelete`: Destination, the deleted `AccountRoot`'s Balance | the planet collapses and its last XRP leaves as a final comet | the struck planet and the line | FIXTURE:collapse |
-| beam, beam-fund, beam-pulse | travel | `PaymentChannelCreate` (Destination, Amount), `Fund` and `Claim` (the `PayChannel` node's Account and Destination) | a standing beam; funding thickens it; a claim pulses along it | the beam; a mark on it | FIXTURE:beam |
-| rocket | dock | `TrustSet` with a limit above zero and no freeze or auth flag; the issuer is `LimitAmount.issuer`; balance from the RippleState | a dart launched by the submitter docking into orbit around the issuer; it does not land | the dart at the orbit | FIXTURE:rocket |
-| deorbit | dock | `TrustSet` with `LimitAmount.value` 0 | a de-orbit burn | a fading dart | FIXTURE:deorbit |
-| freeze | dock | `TrustSet` with `tfSetFreeze`, `tfClearFreeze`, `tfSetDeepFreeze` or `tfClearDeepFreeze` | the orbit locks and changes colour, no motion | the recoloured orbit | FIXTURE:freeze |
-| beacon | dock | `TrustSet` with `tfSetfAuth` | a docking beacon | the beacon | FIXTURE:beacon |
-| gate | dock | `DepositPreauth`: Authorize or Unauthorize | a thin line to the one account allowed in | the line | FIXTURE:gate |
+| comet | travel | `Payment`, success, Account ≠ Destination, one currency, no hops; size from log of `meta.delivered_amount` | the photon from sender to receiver with its tail | the line, head at the receiver | `comet.json`: Payment D293EF741CC9… in #107,841,942 |
+| bent-comet | travel | a payment whose `SendMax` differs from the amount, or with `Paths`, or that crossed `Offer` nodes or an AMM root; the hops are the issuers named by the RippleStates touched, the pools, and the owners of the crossed offers, in the order of the record (the record carries the set of hops, not their order on the path: a challenge to the brief's "each issuer in its path", drawn in record order) | the comet whose tail bends past each hop | the bent line | `bent-comet.json`: Payment A3F178F082AF… in #107,842,373 |
+| partial | travel | `tfPartialPayment` and `meta.delivered_amount` below `DeliverMax`/`Amount` | arrives short, labelled "delivered X of up to Y" | the short line with the label | `partial.json`: Payment 313B227D49B7… in #107,841,953 |
+| burn | travel | `Account = Destination` (a payment to self), success; the hops as above | a loop out of the sender's planet and back | a ring around the planet | `burn.json`: Payment 2FD0DEF662A1… in #107,841,942 |
+| dust | travel | an XRP payment under one XRP | a faint brief comet | a faint short line | `dust.json`: Payment 201E7F8429FF… in #107,841,943 |
+| shower | travel | five or more dust payments from one sender in one ledger (`collapseShowers`) | a meteor shower | faint short lines | `shower.json`: Payment … in #107,842,400 |
+| long-period | travel | `EscrowCreate` with `FinishAfter` (the period) | a dotted comet leaving | a dotted line | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
+| long-period-arrive | travel | `EscrowFinish`: the deleted `Escrow` node's Account and Destination | the comet arrives at the destination | dotted line, head at the destination | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
+| long-period-return | travel | `EscrowCancel`: the deleted `Escrow` node's Account | the comet returns home | dotted line, head at home | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
+| check-drift | travel | `CheckCreate`: Destination, `SendMax`; the check waits (a standing object) | a bead drifting into the destination's orbit and waiting | the bead in orbit | `check-drift.json`: CheckCreate AB8F078363D8… in #107,841,942 |
+| check-cash | travel | `CheckCash`: the deleted `Check` node's Account and Destination, `Amount` or `DeliverMin` | the waiting bead lands | the bead at the destination | `check-cash.json`: CheckCash EEDD705798AC… in #107,841,943 |
+| check-cancel | travel | `CheckCancel`: the deleted `Check` node | the bead blinks out | nothing | `check-cancel.json`: CheckCancel ADC23CB359E8… in #107,842,394 |
+| moon-capture | travel | `NFTokenAcceptOffer`: the seller is the deleted sell `NFTokenOffer`'s Owner (else the accepting account), the buyer the deleted buy offer's Owner (else the accepting account); brokered when both offers are named | a moon captured from one orbit into another, via the broker | the moon at the buyer | `moon-capture.json`: NFTokenAcceptOffer 9585B927A1DB… in #107,841,947 |
+| reverse-comet | travel | `Clawback`: `Amount.issuer` is the holder, Account the issuer | a comet from holder to issuer in the trust colour | the line | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
+| collapse | travel | `AccountDelete`: Destination, the deleted `AccountRoot`'s Balance | the planet collapses and its last XRP leaves as a final comet | the struck planet and the line | `collapse.json`: AccountDelete DC7C6D5679DC… in #107,842,159 |
+| beam, beam-fund, beam-pulse | travel | `PaymentChannelCreate` (Destination, Amount), `Fund` and `Claim` (the `PayChannel` node's Account and Destination) | a standing beam; funding thickens it; a claim pulses along it | the beam; a mark on it | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
+| rocket | dock | `TrustSet` with a limit above zero and no freeze or auth flag; the issuer is `LimitAmount.issuer`; balance from the RippleState | a dart launched by the submitter docking into orbit around the issuer; it does not land | the dart at the orbit | `rocket.json`: TrustSet 7110CDC48AC2… in #107,841,944 |
+| deorbit | dock | `TrustSet` with `LimitAmount.value` 0 | a de-orbit burn | a fading dart | `deorbit.json`: TrustSet 687CBC52C48B… in #107,841,969 |
+| freeze | dock | `TrustSet` with `tfSetFreeze`, `tfClearFreeze`, `tfSetDeepFreeze` or `tfClearDeepFreeze` | the orbit locks and changes colour, no motion | the recoloured orbit | `freeze.json`: TrustSet 5000CDE9AACA… in #107,841,945 |
+| beacon | dock | `TrustSet` with `tfSetfAuth` | a docking beacon | the beacon | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
+| gate | dock | `DepositPreauth`: Authorize or Unauthorize | a thin line to the one account allowed in | the line | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
 | ignite | dock | a planet whose holders cross the star threshold between two ledgers (the body rule `star.issuer`, the worker's kind transition) | the lattice's hexagon grows out of the planet: it is a star now | the star | the recorded hour replayed (acceptance) |
-| rock | place | an `Offer` created by the submitter (the facts layer's `offer.placed`): the book is the canonical pair (XRP first, else the sides in key order, so both directions are one book), the host the issuer of the issued side, the price in units of the second side per one of the first (an ask when the offer gets the first side, a bid when it gets the second), the radius the price's band among the book's standing rocks, so asks sit outside bids and the gap between them is the spread | a rock set into the belt | the rock | FIXTURE:rock |
-| fill | place | an `OfferCreate` that consumed others' offers or took a pool leg (`exchange.fill`) | the taker's comet crossing the belt | the crossing line | FIXTURE:fill |
-| flare | place | a book offer consumed or partly consumed (`offer.removal.consumed`, `traded-unfunded`, or modified with a trade) | the consumed rock flares out | nothing | FIXTURE:flare |
-| blink | place | a rock cancelled, replaced or self-crossed (`offer.removal.cancelled`, `replaced`, `self-cross`) | the rock blinks out | nothing | FIXTURE:blink |
-| crumble | place | a rock swept untraded (`offer.removal.cleanup`: expired or unfunded), the facts layer's distinction | crumbles grey with no flash | a grey mark | FIXTURE:crumble |
-| binary-form, binary-brighten, binary-dim, satellite, binary-collapse | place | `AMMCreate` (the pool root's AMMID), `AMMDeposit`, `AMMWithdraw`, `AMMBid` (the `AMM` node's AuctionSlot Expiration), `AMMDelete` | a binary forms, brightens, dims, captures a satellite for the slot, collapses | the state | FIXTURE:binary-brighten |
-| ring | happen | `AccountSet` with no Domain and not `asfDisableMaster` (the flag is named) | a ring of light | the ring | FIXTURE:ring |
-| nameplate | happen | `AccountSet` with `Domain` | the ring and the nameplate the Domain gives | the nameplate | FIXTURE:nameplate |
-| darken | happen | `AccountSet` with `SetFlag` 4 (`asfDisableMaster`) | the planet darkens toward a black hole candidate | the darkened planet | FIXTURE:darken |
-| tilt | happen | `SetRegularKey` | the axis tilts | the tilted axis | FIXTURE:tilt |
-| guardians | happen | `SignerListSet`: `SignerEntries`, `SignerQuorum` | guardian moons in a ring, the quorum lit | the ring of moons | FIXTURE:guardians |
-| shimmer | happen | `TicketCreate` | a faint shimmer | a faint mark | FIXTURE:shimmer |
-| moon-form, moon-crumble, moon-beacon, moon-beacon-off | happen | `NFTokenMint`, `NFTokenBurn`, `NFTokenCreateOffer`, `NFTokenCancelOffer` | a moon forms, crumbles, shows or hides a beacon | the state | FIXTURE:moon-form |
-| lighthouse | happen | `OracleSet` (the cadence is the account's interval between updates over the window) | a lighthouse beam | the beam, still | FIXTURE:lighthouse |
-| badge | happen | `DIDSet`, `DIDDelete`, `Credential*`, `MPToken*` | a badge | the badge | FIXTURE:badge |
-| tick | — | `Batch` | a faint tick, no body | the tick | FIXTURE:tick |
-| spark | — | any failed transaction, or a type below the threshold without a design | the ignition's white-hot core at the planet, never leaving it | the spark | FIXTURE:spark |
+| rock | place | an `Offer` created by the submitter (the facts layer's `offer.placed`): the book is the canonical pair (XRP first, else the sides in key order, so both directions are one book), the host the issuer of the issued side, the price in units of the second side per one of the first (an ask when the offer gets the first side, a bid when it gets the second), the radius the price's band among the book's standing rocks, so asks sit outside bids and the gap between them is the spread | a rock set into the belt | the rock | `rock.json`: OfferCreate 20B9D3CE531B… in #107,841,942 |
+| fill | place | an `OfferCreate` that consumed others' offers or took a pool leg (`exchange.fill`) | the taker's comet crossing the belt | the crossing line | `fill.json`: OfferCreate 6D97CD9031CC… in #107,841,943 |
+| flare | place | a book offer consumed or partly consumed (`offer.removal.consumed`, `traded-unfunded`, or modified with a trade) | the consumed rock flares out | nothing | `flare.json`: OfferCreate AEAE66AB3672… in #107,841,943 |
+| blink | place | a rock cancelled, replaced or self-crossed (`offer.removal.cancelled`, `replaced`, `self-cross`) | the rock blinks out | nothing | `blink.json`: OfferCreate 20B9D3CE531B… in #107,841,942 |
+| crumble | place | a rock swept untraded (`offer.removal.cleanup`: expired or unfunded), the facts layer's distinction | crumbles grey with no flash | a grey mark | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
+| binary-form, binary-brighten, binary-dim, satellite, binary-collapse | place | `AMMCreate` (the pool root's AMMID), `AMMDeposit`, `AMMWithdraw`, `AMMBid` (the `AMM` node's AuctionSlot Expiration), `AMMDelete` | a binary forms, brightens, dims, captures a satellite for the slot, collapses | the state | `binary-brighten.json`: AMMDeposit 1AE1BEADE4F6… in #107,841,955 |
+| ring | happen | `AccountSet` with no Domain and not `asfDisableMaster` (the flag is named) | a ring of light | the ring | `ring.json`: AccountSet 38D2F10711B7… in #107,841,942 |
+| nameplate | happen | `AccountSet` with `Domain` | the ring and the nameplate the Domain gives | the nameplate | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
+| darken | happen | `AccountSet` with `SetFlag` 4 (`asfDisableMaster`) | the planet darkens toward a black hole candidate | the darkened planet | `darken.json`: AccountSet 7EA9C2C95601… in #107,842,112 |
+| tilt | happen | `SetRegularKey` | the axis tilts | the tilted axis | `tilt.json`: SetRegularKey C2A4E5F0CD76… in #107,842,353 |
+| guardians | happen | `SignerListSet`: `SignerEntries`, `SignerQuorum` | guardian moons in a ring, the quorum lit | the ring of moons | `guardians.json`: SignerListSet 84D0634165CC… in #107,842,081 |
+| shimmer | happen | `TicketCreate` | a faint shimmer | a faint mark | `shimmer.json`: TicketCreate 1CC5E39B5B24… in #107,841,942 |
+| moon-form, moon-crumble, moon-beacon, moon-beacon-off | happen | `NFTokenMint`, `NFTokenBurn`, `NFTokenCreateOffer`, `NFTokenCancelOffer` | a moon forms, crumbles, shows or hides a beacon | the state | `moon-form.json`: NFTokenMint CD9752939271… in #107,841,964 |
+| lighthouse | happen | `OracleSet` (the cadence is the account's interval between updates over the window) | a lighthouse beam | the beam, still | `lighthouse.json`: OracleSet D34D0229649E… in #107,842,049 |
+| badge | happen | `DIDSet`, `DIDDelete`, `Credential*`, `MPToken*` | a badge | the badge | TODO: none in 90 minutes of mainnet; searched the recording for the type and the fields the rule reads |
+| tick | — | `Batch` | a faint tick, no body | the tick | `tick.json`: Batch 31B6C7509EB6… in #107,841,942 |
+| spark | — | any failed transaction, or a type below the threshold without a design | the ignition's white-hot core at the planet, never leaving it | the spark | `spark.json`: TicketCreate E81F032C74A6… in #107,841,942 |
 
 Rows challenged: the bent tail's hop order (the record carries which issuers, offers and pools a payment touched, not the path's order; drawn in record order and said so); moons as a count (an account's NFTs are not countable from the stream, as phase 1 found, so a moon forms where a mint happened and is captured where an accept happened, and the number of moons a planet carries is the number seen in this window, never the account's holdings); checks, beams, gates, guardian rings and rocks as standing objects (they persist for the session from the event that made them, and only until the event that removes them is heard: a belt shows the rocks placed while the page listened, not the book).
 
@@ -251,6 +334,20 @@ On 2026-10-23 the owner, looking at the live sky of phase 1.5, said it was chaot
 - **Sparks and ticks are quiet.** A failed transaction's spark is small and faint; a Batch wrapper's tick is drawn only at the near level, at a twelfth of a comet's loudness; a ticket's shimmer is fainter. Frequency decides loudness, as the phase 1.5 brief said.
 
 Everything else of the look stays the plate's. The rest of the owner's direction, when `docs/art.md` lands, applies on top of this.
+
+### As built (phase 1.5)
+
+Branch `feat/universe-four-verbs`, on phase 1 (`feat/universe-live-sky`, PR #36) on main. `docs/art.md` did not exist; the look was the plate's until the owner's art direction of 2026-10-23 (the section above): galaxies around their cores on an outer shell, a dim field, weather between galaxies, quiet sparks and ticks.
+
+- **Measured first.** `bench/record-stream.mjs` recorded 90 minutes of the stream verbatim (198,274 transactions, 682 MiB, outside the repository) with the histogram above; the threshold is printed there. `bench/extract-fixtures.mjs` took the first real example of each object from the recording into `test/universe-fixtures/` (34 of 48 objects; `MISSING.md` lists the rest with what was searched and the counts of every object seen). Three in four payments failed; the burn outnumbered the comet; nearly half the NFT offers arrived in Batches.
+- **The classifier** (`src/universe/events.js`): `eventsOf(tx, meta)` reads the record once and returns the events with verb, object, rule id, evidence fields and detail; offers go through the facts layer (`facts()`), so a rock, a flare, a blink and a crumble are its findings (`offer.placed`, `consumed`/`traded-unfunded`, `cancelled`/`replaced`/`self-cross`, `cleanup`); `collapseShowers` folds five or more dust payments of one sender in a ledger into a shower; `weatherOf` aggregates a ledger's events per cluster, star, host and planet; `describeEvent(e, nameOf)` is the text; `colourOf` the field guide's hue (a clawback's reverse comet takes the trust colour, the issuer's). `DESIGNED_TYPES` and `SPARK_THRESHOLD` are the histogram's verdicts.
+- **The grammar** (`src/universe/motions.js`): `primitivesOf(motion, screen, { reduced })` returns lines, dots, rings and darts for one object at one instant, or its still marker; `LIFE` and `LOUDNESS` per object; `rockAngle` and `beltRadius` place a rock in its book's belt by its price band; `weatherPrimitives` draws the far zoom from counts. Both renderers draw these: the 2D canvas with `drawPrimitives`, WebGL with a flat screen-space program (`drawPrimitivesGL`: lines and ring polylines as LINES with width as parallel strands, dashes as dashes, darts as triangles, dots as point sprites). `SkyBase.livePrimitives` chooses by camera distance: the weather beyond 2.4, the motions closer, the standing objects under 1.6; `hitMotion` finds the head under the pointer.
+- **The worker** keeps the standing objects (`stand()`: rocks by owner and sequence with their book's price range for the band, waiting checks by the CheckCreate's hash and resolved by the pair, beams by channel, gates, guardian rings, moons and beacons per planet, satellites for a day), posts them per ledger with the events (each with its sound event when sound is on), the weather, and the ignitions (a planet whose kind became star since the last ledger: `attributes()` keeps the kinds). Planets an event names that the record did not carry (an escrow's destination, a check's creator) are made so the motion has both ends. `start({ replay, pace })` feeds a recording line by line at `pace` ms per ledger close.
+- **The page** turns a ledger's events into motions on the flight clock (`flight`: the i-th of k events starts at i/k of 85% of the interval; a comet lands at start + life, a place, happen, spark or tick is instant), sounds each transaction's engine event at its arrival with `playAt`, reads an event into the focus line on hover (the head under the pointer) and with `,` and `.` (the last ledger's events), with the rule id and the evidence fields under the text, and counts verbs and objects seen (`stats().verbsSeen`, `objectsSeen`, `ignitions`, `counts`). `?replay=` and `?pace=` are the acceptance check's entrance; the coverage line says a recording is replayed.
+- **The budget.** On the real GPU (Brave (Chromium 155) on the user’s machine, 1536×741 CSS px at DPR 2, GPU string masked), WebGL at 20,000 synthetic planets with 197–137 motions in flight: 2.9 / 2.9 / 3.1 ms a frame (home / closer / inside), p95 under 3.7 ms, 61 fps at every view: the budget holds. Headless (SwiftShader, software): webgl 4.8 / 16.3 / 49.0 ms; 2d 117.6 / 109.8 / 62.1 ms; the 2D canvas is the fallback and does not hold at 20,000, as phase 1 measured. The synthetic stream makes payments only, so these motions are comets; the replay check below carries the real mix at about a thousand planets.
+- **Checked.** `node --test`: 453 pass (`test/universe-events.test.js`: every fixture's events pinned, the objects table, showers, weather, books, colours, the name rule in `describeEvent`, every object's motion and still in screen space, the partial's short reach, the rocket's dock and the de-orbit, the belt radius and angle, the weather primitives). `bench/check-verbs.mjs` on both renderers, replaying the recording at 60 ms a ledger for 900 ledgers (bench/check-verbs.mjs over 900 ledgers of the 90-minute recording, both renderers: the four verbs present (WebGL travel 10,430 · dock 1,337 · place 60,104 · happen 11,181; 2D travel 10,499 · dock 1,350 · place 60,905 · happen 11,243), no unnamed shape, 364 (WebGL) and 370 (2D) stars ignited on real issuers, 1,306 and 1,262 motions in flight at the end, every object with a still marker under reduced motion, no exceptions), all four verbs seen, no zoo (every object seen is in the vocabulary), the counts, a star ignited on a real issuer (364 and 370 ignitions; the moment is `bench/results/verbs-ignition-{webgl,2d}.png`, the planet focused with its label `star · 3 holders ≥ 3`), the coverage line naming the recording, motions in flight, the frame time (under the replay in software rendering, mean 6.1 ms and p95 8.8 ms (WebGL), mean 5.8 ms and p95 9.7 ms (2D); in Brave on the GPU, 20,000 planets with motions at 2.9/2.9/3.1 ms (61 fps)), `.` and `,` reading events with object, rule and evidence, hovering a head reading its event, a still marker for every object under reduced motion, reduced motion reaching the running renderer, no exceptions. `bench/check-a11y.mjs` on both renderers still passes. The beauty-gate line (a person who does not know what a ledger is watched two minutes and said what they felt) is the owner's to run and record here.
+
+Copies still in place: as phase 1's, plus the layer table now also in `src/universe/sky.js` (`LAYER_OF`, R10) until the requests PR lands.
 
 ## The spike
 

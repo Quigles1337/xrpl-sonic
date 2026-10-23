@@ -1,0 +1,127 @@
+{
+  "object": "check-cancel",
+  "verb": "travel",
+  "recordedFrom": "stream-mainnet-2026-10-23T04-34-01-552Z.ndjson",
+  "ledgerIndex": 107842394,
+  "hash": "ADC23CB359E80294389084A30D9E61FD62CA4D91A27E7461B1127DFC1FFB9BCF",
+  "message": {
+    "close_time_iso": "2026-10-23T05:03:40Z",
+    "ctid": "C66D8B5A00330000",
+    "engine_result": "tesSUCCESS",
+    "engine_result_code": 0,
+    "engine_result_message": "The transaction was applied. Only final in a validated ledger.",
+    "ledger_hash": "2174D73D05CE0E17BDB9C280F9F136991A42F87B17C6B5C54F0EBD11EA9D835D",
+    "ledger_index": 107842394,
+    "meta": {
+      "AffectedNodes": [
+        {
+          "DeletedNode": {
+            "FinalFields": {
+              "Account": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+              "Destination": "rGGbL5i8RMqcoBCNUiczUsUJdqR1WSY65L",
+              "DestinationNode": "24",
+              "Flags": 0,
+              "OwnerNode": "e20",
+              "PreviousTxnID": "69C929F41E611A587B5F6232D46AD4F156BB098C642DD61D2DA39E40BBD4013A",
+              "PreviousTxnLgrSeq": 107820423,
+              "SendMax": {
+                "currency": "10X",
+                "issuer": "rHdJyAfHSqPLhGSuY41ZAYhE7ycko5qtND",
+                "value": "0.01640882161908778"
+              },
+              "Sequence": 86102040
+            },
+            "LedgerEntryType": "Check",
+            "LedgerIndex": "01773048CD826B18C96BE7909338AFB4BE6753DCDAD27D07EAFF318B14662750"
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Account": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+              "Balance": "3766494305",
+              "Flags": 0,
+              "OwnerCount": 2522,
+              "Sequence": 86112808
+            },
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "45FBEB27F9CF7B7A3815DFEB407A56DCAF66708B34E868AD3C9AA57B18B7BDE1",
+            "PreviousFields": {
+              "Balance": "3766494315",
+              "OwnerCount": 2523,
+              "Sequence": 86112807
+            },
+            "PreviousTxnID": "0B1CE826B82F01D5DB567256841DA6A61038F487C07864049A135128400DF5AB",
+            "PreviousTxnLgrSeq": 107842291
+          }
+        },
+        {
+          "ModifiedNode": {
+            "LedgerEntryType": "AccountRoot",
+            "LedgerIndex": "653DB953912A7D524B721A821A87CC1C607633F8F82900D471B14E5FB4223F03",
+            "PreviousTxnID": "166C1AE0080B98DE9FB92C2030ED596E7F999F092ADDFB0B12B8F34BAB0FC8B6",
+            "PreviousTxnLgrSeq": 107842383
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexNext": "e21",
+              "IndexPrevious": "e1f",
+              "Owner": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+              "RootIndex": "AA627CF28D179DA5598BBD3B55F6CA66554CFC86D203933BA2E465275ADFE22E"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "8E0BF4CD2AE0169F0B0D4FBD1241CEC7FF48F6365EAF83862051D4C429CC682B",
+            "PreviousTxnID": "0C2B4CFDE2550B089AC4D303DF011C7D040467B6E56770E2BFF3EAB6685D7C99",
+            "PreviousTxnLgrSeq": 107820423
+          }
+        },
+        {
+          "ModifiedNode": {
+            "FinalFields": {
+              "Flags": 0,
+              "IndexPrevious": "23",
+              "Owner": "rGGbL5i8RMqcoBCNUiczUsUJdqR1WSY65L",
+              "RootIndex": "615C301EAC313C2BAA9FB7A509CB08C12CD8CEA062BB9EA1ED44AC34598303EC"
+            },
+            "LedgerEntryType": "DirectoryNode",
+            "LedgerIndex": "A60E7AC54DB7351CE248D20456F3EA729ADAD19517ECE77D5D4C3ECAC14CA3C8",
+            "PreviousTxnID": "10422F6BC56BFE7D253117817D904C504CF30F3F44A4940F7DFD26348BD37890",
+            "PreviousTxnLgrSeq": 107841904
+          }
+        }
+      ],
+      "TransactionIndex": 51,
+      "TransactionResult": "tesSUCCESS"
+    },
+    "status": "closed",
+    "transaction": {
+      "Account": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+      "CheckID": "01773048CD826B18C96BE7909338AFB4BE6753DCDAD27D07EAFF318B14662750",
+      "Fee": "10",
+      "LastLedgerSequence": 107842396,
+      "Sequence": 86112807,
+      "SigningPubKey": "024B0EE62F067AA46830688C3C9962E47FC2FF55F252A45892D7CC30C5034AEB81",
+      "TransactionType": "CheckCancel",
+      "TxnSignature": "3044022008AEA1F3FFAC997ED13BD421FCD510AEC61DB46154F491F42A4C15DFE33152C5022023C4EC274247D7C3A100B7238053A25BB7F15A9F10BF62FEE69C3C85903E1C63",
+      "date": 846047020,
+      "hash": "ADC23CB359E80294389084A30D9E61FD62CA4D91A27E7461B1127DFC1FFB9BCF"
+    },
+    "type": "transaction",
+    "validated": true
+  },
+  "expected": [
+    {
+      "verb": "travel",
+      "object": "check-cancel",
+      "rule": "travel.check.cancel",
+      "from": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+      "to": "rGGbL5i8RMqcoBCNUiczUsUJdqR1WSY65L",
+      "via": [],
+      "at": "rPP3R33zpehB5hTy2jSYZek5ntq3HQym68",
+      "label": "check-cancel: a check from rPP3…ym68 to rGGb…Y65L was cancelled"
+    }
+  ]
+}
