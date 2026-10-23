@@ -20,11 +20,13 @@
 //
 // Pure: no DOM, no network.
 
-import { categorize, parseAmount, decodeCurrency } from '../mapping.js';
+import { categorize, parseAmount, decodeCurrency, CATEGORY_NAMES } from '../mapping.js';
 
-/** The transaction categories of the field guide, as small integers; the sky colours by them. */
-export const CATEGORY_CODES = Object.freeze({ payment: 0, offer: 1, trust: 2, nft: 3, escrow: 4, paychan: 5, amm: 6, other: 7 });
-export const CATEGORY_BY_CODE = Object.freeze(Object.keys(CATEGORY_CODES));
+/** The transaction categories of the field guide (src/mapping.js CATEGORIES, in its order, Batch included), as small integers; the sky colours by them. */
+export const CATEGORY_BY_CODE = CATEGORY_NAMES;
+export const CATEGORY_CODES = Object.freeze(Object.fromEntries(CATEGORY_NAMES.map((c, i) => [c, i])));
+export const CATEGORY_COUNT = CATEGORY_NAMES.length;
+const OTHER = CATEGORY_CODES.other;
 
 /** Transaction types that matter to a body's rule beyond their category. 0 = any other type. */
 export const TYPE_CODES = Object.freeze({
@@ -226,7 +228,7 @@ export function compactRecord(tx, meta, { hash = null, ledgerIndex = null, resul
     ledger: Number.isInteger(Number(ledgerIndex)) ? Number(ledgerIndex) : null,
     index: Number.isInteger(Number(meta?.TransactionIndex)) ? Number(meta.TransactionIndex) : null,
     type: TYPE_CODES[type] ?? 0,
-    category: CATEGORY_CODES[categorize(type)] ?? 7,
+    category: CATEGORY_CODES[categorize(type)] ?? OTHER,
     success: result === 'tesSUCCESS' || meta?.TransactionResult === 'tesSUCCESS',
     account: intern(isAddress(tx?.Account) ? tx.Account : null),
     destination: intern(isAddress(tx?.Destination) ? tx.Destination : null),

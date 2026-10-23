@@ -1,22 +1,30 @@
-// UNIVERSE spike — the page.
+// UNIVERSE — the page.
 //
 // The worker (src/universe/worker.js) owns the stream, the records and the
 // layout; this module owns the canvas, the camera, the keyboard, the
-// coverage line and the focus line, and the sound through the listening
-// page's engine (src/audio.js). Query: ?synthetic=N for a made-up sky of N
-// planets (measuring), ?gl=1 for the WebGL path, ?autostart=1 to start on
-// load (the bench harness), ?network=testnet, ?seed=N.
+// coverage line and the focus line, the Watch cast (the listening page's
+// settings and the hash, read as it reads them), the name rule, and the
+// sound through the listening page's engine (src/audio.js), scheduled at
+// each comet's arrival. WebGL is the first renderer and the 2D canvas the
+// fallback the page takes by itself (docs/universe.md, decision 4).
+// Query: ?gl=0 for the canvas; ?synthetic=N for a made-up sky of N planets
+// (measuring, behind its flag and labelled); ?autostart=1 to start on load
+// (the bench harness); ?network=testnet; ?seed=N.
 
 import { AudioEngine } from '../audio.js';
 import { explorerUrl, SONIC_EXPLORER } from '../explorers.js';
+import { loadSettings } from '../settings.js';
+import { parseHash } from '../params.js';
+import { normalizeCast, parseCastSpec } from '../cast.js';
 import { Sky } from './sky.js';
 import { SkyGL } from './sky-gl.js';
+import { nameOf, flightOf, KINDS } from './bodies.js';
 
 const query = new URLSearchParams(location.search);
 const network = query.get('network') === 'testnet' ? 'testnet' : 'mainnet';
 const synthetic = Math.max(0, Math.min(200000, Number(query.get('synthetic')) || 0));
 const seed = Number(query.get('seed')) || 1337;
-const wantGl = query.get('gl') === '1';
+const wantCanvas = query.get('gl') === '0';
 const autostart = query.get('autostart') === '1';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -29,36 +37,79 @@ const startBtn = $('#start');
 const soundBtn = $('#sound');
 const help = $('#help');
 
+/** The Watch cast: the listening page's settings (the same storage), a cast in the hash winning over the stored one, #account= as a cast of one (as src/main.js does). */
+function readCast() {
+  const settings = loadSettings();
+  const urlState = parseHash(location.hash);
+  if (urlState.cast) {
+    const { cast } = parseCastSpec(urlState.cast);
+    if (cast.length) return cast;
+  }
+  if (urlState.account) return normalizeCast([{ address: urlState.account, label: 'Watched' }]);
+  return Array.isArray(settings.cast) ? normalizeCast(settings.cast) : [];
+}
+
 const state = {
   running: false,
   sound: false,
   ledger: null,
   planets: 0,
   focus: 0,
-  focusList: [], // ids by brightness for [ ] travel
+  focusList: [],
   focusIndex: -1,
-  last: null, // the last ledger message
+  last: null,
   memorySamples: [],
   startedAt: null,
   layers: { payment: true, trust: true, dex: true, nft: true },
   renderer: 'none',
+  cast: readCast(),
+  domains: new Map(), // id → hex Domain
+  keys: new Map(), // id → regular key of a black hole candidate (null when absent)
 };
+const addresses = [null];
 
 let sky;
 try {
-  sky = wantGl ? new SkyGL(canvas, labels, { reduced: reducedMotion.matches, onHover }) : new Sky(canvas, labels, { reduced: reducedMotion.matches, onHover });
-  state.renderer = wantGl ? 'webgl' : '2d';
+  if (wantCanvas) throw new Error('canvas asked for');
+  sky = new SkyGL(canvas, labels, { reduced: reducedMotion.matches, onHover });
+  state.renderer = 'webgl';
 } catch (err) {
-  console.warn('[universe] WebGL unavailable, using the 2D canvas', err);
+  if (!wantCanvas) console.warn('[universe] WebGL unavailable, using the 2D canvas', err?.message ?? err);
   sky = new Sky(canvas, labels, { reduced: reducedMotion.matches, onHover });
   state.renderer = '2d';
 }
 sky.onClick = (id) => (id ? focusOn(id, { look: false }) : clearFocus());
 reducedMotion.addEventListener?.('change', (e) => sky.setReduced(e.matches));
 
+/** The name rule for a planet the page knows: Domain, else the cast's label, else the short address. */
+const names = (id) => nameOf({ address: addresses[id], domain: state.domains.get(id) ?? null }, state.cast);
+/** The body of a planet from the last ledger's attributes, as the labels need it. */
+const bodies = (id) => {
+  const a = state.last?.attrs;
+  if (!a || id > a.n) return { kind: 'planet' };
+  return { kind: KINDS[a.kind[id]] ?? 'planet', holders: a.holders[id], providers: a.providers[id], period: a.period[id], r: a.r100[id] / 100, regularKey: state.keys.get(id) ?? null };
+};
+sky.setResolvers({ names, bodies });
+
+function applyCast() {
+  const map = new Map();
+  for (let id = 1; id < addresses.length; id++) {
+    const m = state.cast.find((c) => c.address === addresses[id]);
+    if (m) map.set(id, m);
+  }
+  sky.setCast(map);
+}
+window.addEventListener('hashchange', () => {
+  state.cast = readCast();
+  applyCast();
+});
+window.addEventListener('storage', () => {
+  state.cast = readCast();
+  applyCast();
+});
+
 const engine = new AudioEngine({ volume: 0.5 });
 const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
-const addresses = [null];
 
 worker.onmessage = (e) => {
   const m = e.data ?? {};
@@ -77,6 +128,7 @@ worker.onmessage = (e) => {
       onLedger(m);
       break;
     case 'described':
+      if (m.hover && state.focus) break; // a focused planet keeps the line
       showFocus(m);
       break;
     case 'error':
@@ -91,12 +143,29 @@ function onLedger(m) {
   state.ledger = m.index;
   state.planets = m.attrs.n;
   state.last = m;
-  for (const [id, address] of m.added) addresses[id] = address;
+  let castChanged = false;
+  for (const [id, address] of m.added) {
+    addresses[id] = address;
+    if (state.cast.some((c) => c.address === address)) castChanged = true;
+  }
+  for (const [id, hex] of m.domains) state.domains.set(id, hex);
+  state.keys = new Map(m.keys);
+  if (castChanged || !sky.cast.size) applyCast();
   sky.setPositions(m.positions, m.attrs.n);
   sky.setAttributes(m.attrs, m.added, m.index);
   sky.setNebulae(m.nebulae);
   sky.setPairs(m.pairs);
-  sky.addComets(m.comets, m.intervalMs);
+  sky.ledgerClosed();
+  // the comets and flashes of the ledger, on one clock for the picture and the sound
+  const now = performance.now();
+  const k = m.comets.length;
+  const timed = m.comets.map((c, i) => ({ ...c, ...flightOf(c, i, k, m.intervalMs, now) }));
+  sky.addComets(timed, m.intervalMs);
+  if (state.sound && engine.state === 'running') {
+    engine.setLedgerInterval(m.intervalMs / 1000);
+    engine.setExpectedCount(k);
+    for (const c of timed) if (c.event) engine.playAt(c.event, (c.arrival - now) / 1000);
+  }
   $('#r-ledger').textContent = `#${Number(m.index).toLocaleString('en-US')}`;
   $('#r-planets').textContent = Number(m.attrs.n).toLocaleString('en-US');
   coverageEl.innerHTML = '';
@@ -115,12 +184,7 @@ function onLedger(m) {
   for (let id = 1; id <= a.n; id++) ids.push(id);
   ids.sort((p, q) => a.activity[q] - a.activity[p] || a.size[q] - a.size[p]);
   state.focusList = ids.slice(0, 200);
-  if (state.sound && m.events.length) {
-    engine.setLedgerInterval(m.intervalMs / 1000);
-    engine.setExpectedCount(m.events.length);
-    for (const ev of m.events) engine.play(ev);
-  }
-  if (state.focus) worker.postMessage({ type: 'describe', id: state.focus });
+  if (state.focus) worker.postMessage({ type: 'describe', id: state.focus, cast: state.cast });
 }
 
 // --- the frame loop ------------------------------------------------------------
@@ -184,7 +248,7 @@ function toggleLayer(name) {
 
 function onHover(id) {
   if (state.focus) return; // a focused planet keeps the line
-  if (id) worker.postMessage({ type: 'describe', id, hover: true });
+  if (id) worker.postMessage({ type: 'describe', id, hover: true, cast: state.cast });
   else focusLine.classList.add('hidden');
 }
 
@@ -192,7 +256,7 @@ function focusOn(id, { look = true } = {}) {
   state.focus = id;
   sky.setFocus(id);
   if (look) sky.lookAt(id);
-  worker.postMessage({ type: 'describe', id });
+  worker.postMessage({ type: 'describe', id, cast: state.cast });
 }
 
 function clearFocus() {
@@ -346,6 +410,9 @@ async function memory() {
 window.xrplUniverse = {
   state,
   sky,
+  addresses,
+  names,
+  bodies,
   stats: () => ({ ...sky.stats(), renderer: state.renderer, ledger: state.ledger, planets: state.planets, running: state.running, synthetic, coverage: state.last?.coverage ?? null, stability: state.last?.stability ?? null, memory: state.last?.memory ?? null, coherence: state.last?.coherence ?? null }),
   memory,
   start,

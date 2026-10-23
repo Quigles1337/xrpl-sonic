@@ -31,11 +31,20 @@ const key = async (text, keyName = text, code = `Key${text.toUpperCase()}`) => {
 };
 
 await page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
-await page.navigate(`${site}universe.html?synthetic=300&gl=${gl}&autostart=1&seed=3`);
+await page.navigate(`${site}universe.html?synthetic=300${gl === '1' ? '' : '&gl=0'}&autostart=1&seed=3#cast=rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah~Maker~brass~-0.6`);
 await waitFor(page, 'window.xrplUniverse && window.xrplUniverse.stats().planets >= 300', { timeoutMs: 60000 });
 await sleep(1500);
 
+check(gl === '1' ? 'WebGL is the renderer by default' : '?gl=0 gives the 2D canvas', (await page.evaluate('window.xrplUniverse.stats().renderer')) === (gl === '1' ? 'webgl' : '2d'));
 check('reduced motion reaches the renderer', await page.evaluate('window.xrplUniverse.sky.reduced === true'));
+check('the cast in the hash is read and labelled as the listening page labels it', await page.evaluate(`window.xrplUniverse.state.cast.length === 1 && window.xrplUniverse.state.cast[0].label === 'Maker' && window.xrplUniverse.state.cast[0].address === 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah'`));
+check('a body label prints its threshold', await page.evaluate(`(() => { const u = window.xrplUniverse; const a = u.state.last.attrs; for (let id = 1; id <= a.n; id++) { const b = u.bodies(id); if (b.kind !== 'planet') return true; } return a.n > 0; })()`));
+if (gl === '1') {
+  // the shader's camera agrees with the JavaScript projection: the brightest planet's pixel is lit where project() puts it
+  const lit = await page.evaluate(`(() => { const u = window.xrplUniverse; const s = u.sky.screen; const a = u.state.last.attrs; let best = 0; for (let id = 1; id <= a.n; id++) if (s.depth[id] > 0 && s.r[id] > s.r[best]) best = id; u.sky.draw(performance.now()); const px = u.sky.readPixel(s.x[best], s.y[best]); const off = u.sky.readPixel(8, 8); return JSON.stringify({ best, r: +s.r[best].toFixed(1), px, off }); })()`);
+  const p = JSON.parse(lit);
+  check('the WebGL point lands where the projection says', p.best > 0 && Math.max(p.px[0], p.px[1], p.px[2]) > 60 && Math.max(p.off[0], p.off[1], p.off[2]) < 40, lit);
+}
 const yaw0 = await page.evaluate('window.xrplUniverse.sky.camera.yaw');
 await sleep(1200);
 check('the camera does not turn on its own', (await page.evaluate('window.xrplUniverse.sky.camera.yaw')) === yaw0);

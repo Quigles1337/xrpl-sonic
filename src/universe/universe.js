@@ -19,7 +19,7 @@
 // Pure: no DOM, no network, no canvas.
 
 import { unwrapTransactionMessage, extractAmount, RIPPLE_EPOCH_OFFSET } from '../mapping.js';
-import { Interner, compactRecord, rootsOf, linesOf, issuerOfLine, offersOf, TYPE_CODES } from './records.js';
+import { Interner, compactRecord, rootsOf, linesOf, issuerOfLine, offersOf, TYPE_CODES, CATEGORY_COUNT } from './records.js';
 
 export const DEFAULT_MAX_RECORDS = 250000;
 /** Ledgers kept for hash deduplication and coverage; the live stream trails a ledger's transactions by several ledgers, so this is generous. */
@@ -69,7 +69,7 @@ export class Universe {
         involved: 0,
         sentPayments: 0,
         receivedPayments: 0,
-        byCategory: [0, 0, 0, 0, 0, 0, 0, 0],
+        byCategory: new Array(CATEGORY_COUNT).fill(0),
         activity: 0,
         balanceDrops: null,
         flags: null,
@@ -259,7 +259,7 @@ export class Universe {
     const key = edgeKey(a, b);
     let e = this.edges.get(key);
     if (!e) {
-      e = { a: Math.min(a, b), b: Math.max(a, b), count: 0, byCategory: [0, 0, 0, 0, 0, 0, 0, 0], trust: false, firstLedger: ledger, lastLedger: ledger };
+      e = { a: Math.min(a, b), b: Math.max(a, b), count: 0, byCategory: new Array(CATEGORY_COUNT).fill(0), trust: false, firstLedger: ledger, lastLedger: ledger };
       this.edges.set(key, e);
       this.planets[a].degree += 1;
       this.planets[b].degree += 1;
