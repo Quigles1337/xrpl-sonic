@@ -436,6 +436,11 @@ export function createUI({ settings, onChange, onToggleRun, onShare, onMoment, o
       if (running && !window.matchMedia('(min-width: 900px)').matches) setPanelOpen(false);
     },
 
+    /** The Session panel's Node line: the host, and the node's hostid once the subscribe result named it. */
+    setNode(text) {
+      statNode.textContent = text || '—';
+    },
+
     setStatus(state, text, endpoint) {
       statusDot.dataset.state = state;
       statusText.textContent = text;

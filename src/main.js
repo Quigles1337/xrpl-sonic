@@ -795,6 +795,9 @@ function onStatus(s) {
         runCase(session.pending);
       }
       break;
+    case 'subscribed':
+      ui.setNode(s.hostid ? `${host} (${s.hostid})` : host); // the node's own name, from the subscribe result
+      break;
     case 'reconnecting':
       ui.setStatus('reconnecting', `Reconnecting (${host}) in ${Math.round((s.delayMs ?? 0) / 1000)} s…`, s.endpoint);
       if (s.error) ui.logMessage(`Connection lost: ${s.error}`, 'error');

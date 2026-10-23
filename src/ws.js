@@ -29,7 +29,9 @@ export class XrplStream {
    * @param {object} opts
    * @param {string[]} opts.endpoints  WebSocket URLs to rotate through
    * @param {(msg: object) => void} opts.onMessage  every parsed JSON message
-   * @param {(status: {state: string, endpoint: string|null, attempt: number, error?: string}) => void} [opts.onStatus]
+   * @param {(status: {state: string, endpoint: string|null, attempt: number, hostid: string|null, error?: string}) => void} [opts.onStatus]
+   *   the state changes (connecting, connected, reconnecting, idle), and one event that is not a state change: `subscribed`, after the
+   *   subscribe result, carrying the node's `hostid` (see _named); every status object carries the hostid once it is known (null before)
    * @param {(json: string) => void} [opts.onRaw]  raw text (optional, for debugging)
    * @param {typeof WebSocket} [opts.WebSocketImpl]  override for tests
    */
@@ -49,6 +51,7 @@ export class XrplStream {
     this.watchdogTimer = null;
     this.lastMessageAt = 0;
     this.state = 'idle';
+    this.hostid = null; // the node's name from the subscribe result, once it arrives
     this.pending = new Map(); // request id → {resolve, reject, timer}
     this.requestSeq = 0;
   }
@@ -149,7 +152,7 @@ export class XrplStream {
 
   _setState(state, extra = {}) {
     this.state = state;
-    this.onStatus({ state, endpoint: this.endpoint, attempt: this.attempt, ...extra });
+    this.onStatus({ state, endpoint: this.endpoint, attempt: this.attempt, hostid: this.hostid, ...extra });
   }
 
   _open() {
@@ -166,6 +169,7 @@ export class XrplStream {
     ws.onopen = () => {
       if (this.ws !== ws) return;
       this.attempt = 0;
+      this.hostid = null;
       this.lastMessageAt = Date.now();
       ws.send(JSON.stringify(SUBSCRIBE_COMMAND));
       this._setState('connected');
@@ -183,9 +187,14 @@ export class XrplStream {
         return;
       }
       if (this._settleRequest(msg)) return;
-      if (msg && msg.id === SUBSCRIBE_COMMAND.id && msg.status === 'error') {
-        this._fail(`subscribe failed: ${msg.error ?? 'unknown'}`);
-        return;
+      if (msg && msg.id === SUBSCRIBE_COMMAND.id) {
+        if (msg.status === 'error') {
+          this._fail(`subscribe failed: ${msg.error ?? 'unknown'}`);
+          return;
+        }
+        // the node's name goes out on the status callback as an event (the state stays connected); the response
+        // itself still reaches onMessage, which seeds the ledger index from it
+        this._named(ws, msg.result);
       }
       this.onMessage(msg);
     };
@@ -198,6 +207,28 @@ export class XrplStream {
       this.ws = null;
       this._fail(`socket closed (${ev?.code ?? '?'})`);
     };
+  }
+
+  /**
+   * The node's name after the subscribe result: the result's `hostid` when the
+   * node sends one (rippled's API v1 did; current rippled and Clio do not),
+   * else `server_info`'s `info.hostid` (rippled answers it; Clio has no hostid
+   * and gives null). Goes out on the status callback as the `subscribed`
+   * event with the state unchanged; nothing is sent if the socket went away.
+   */
+  async _named(ws, result) {
+    let hostid = typeof result?.hostid === 'string' && result.hostid ? result.hostid : null;
+    if (!hostid) {
+      try {
+        const r = await this.request({ command: 'server_info' }, { timeoutMs: 8000 });
+        hostid = typeof r?.result?.info?.hostid === 'string' && r.result.info.hostid ? r.result.info.hostid : null;
+      } catch {
+        hostid = null;
+      }
+    }
+    if (this.ws !== ws) return;
+    this.hostid = hostid;
+    this.onStatus({ state: 'subscribed', endpoint: this.endpoint, attempt: this.attempt, hostid });
   }
 
   _fail(error) {

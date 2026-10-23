@@ -902,3 +902,31 @@ export const VOICE_NAMES = Object.freeze(['pluck', 'hat', 'pad', 'bell', 'swell'
 
 /** Cast voices (src/cast.js CAST_VOICES). */
 export const CAST_VOICE_SYNTHS = Object.freeze(['marimba', 'glass', 'brass', 'reed', 'pulse']);
+
+/**
+ * The engine's event contract (docs/universe-requests.md, R9): the fields
+ * play(), playAt() and the voices read from an event, and nothing else, so a
+ * caller that posts only these (a worker, a replay) gets the same sound as
+ * the page. `required` are read for every event; `voice` by the voices;
+ * `optional` when present: `sub` the whale sub-bass, `voice` and `pan` a
+ * cast member's, `cues` the other involved members, each { voice, pan }.
+ * `pitch`, `colour`, `size`, `hash` and the rest of a mapped event are not
+ * read. test/universe-requests.test.js checks the engine's source against
+ * this list.
+ */
+export const EVENT_FIELDS = Object.freeze({
+  required: Object.freeze(['category', 'sound', 'velocity', 'duration']),
+  voice: Object.freeze(['freq', 'notes', 'variant', 'timbre']),
+  optional: Object.freeze(['sub', 'voice', 'pan', 'cues']),
+  cue: Object.freeze(['voice', 'pan']),
+});
+
+/** An event reduced to the contract: the fields above, copied, cues reduced to theirs. */
+export function minimalEvent(event) {
+  if (!event || typeof event !== 'object') return null;
+  const out = {};
+  for (const k of [...EVENT_FIELDS.required, ...EVENT_FIELDS.voice, ...EVENT_FIELDS.optional]) if (event[k] !== undefined) out[k] = event[k];
+  if (Array.isArray(event.cues)) out.cues = event.cues.map((c) => Object.fromEntries(EVENT_FIELDS.cue.filter((k) => c?.[k] !== undefined).map((k) => [k, c[k]])));
+  if (Array.isArray(out.notes)) out.notes = [...out.notes];
+  return out;
+}

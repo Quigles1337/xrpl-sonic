@@ -33,6 +33,7 @@ import {
   pairDetailLines,
   followText,
   beatOf,
+  cadences,
   logVolume,
   normalizeOptions,
   arFit,
@@ -580,6 +581,31 @@ describe('coherence: the checked-in cases', () => {
     const series = new Map(accounts.map((x) => [x.address, fx.accounts.find((y) => y.address === x.address)[measure === 'volume' ? 'volumes' : 'counts']]));
     return { source: 'score', measure, ledgers, accounts, series, totals, chosen: fx.case.cast?.length ? 'cast' : `top ${topK} submitters` };
   }
+  test('cadences(frame): every account’s own cadence, independent of pairs, the same numbers the report names beside each account (universe-requests.md R3)', () => {
+    const fx = windowFixture('window-107777790-107777839');
+    const frame = frameFromFixture(fx);
+    const own = cadences(frame);
+    assert.deepEqual([...own.keys()], frame.accounts.map((a) => a.address), 'one entry per account of the frame, in order');
+    const [A, B] = frame.accounts.map((a) => a.address);
+    assert.deepEqual({ period: own.get(A).period, r: Number(own.get(A).r.toFixed(2)) }, { period: 3, r: 0.96 }, 'Sender A keeps a three-ledger cadence');
+    assert.equal(own.get(B), null, 'Sender B has none');
+    const report = coherence(frame);
+    assert.deepEqual(report.accounts.map((x) => x.cadence), [own.get(A), own.get(B)], 'the report’s per-account cadence is this map');
+    assert.deepEqual(report.pairs[0].cadence, { a: own.get(A), b: own.get(B) }, 'and the pair’s cadences are the same numbers');
+    // the guard: a window shorter than minLedgers gives null for every account; twelve ledgers, the guard, carry the cadence; a lone account still gets it, no pair needed
+    const cut = (n) => ({ ...frame, ledgers: frame.ledgers.slice(0, n), series: new Map([...frame.series].map(([k, v]) => [k, v.slice(0, n)])) });
+    assert.deepEqual([...cadences(cut(11)).values()], [null, null]);
+    assert.equal(cadences(cut(12)).get(A).period, 3);
+    assert.equal(cadences(cut(12), { minLedgers: 13 }).get(A), null, 'the guard is the option');
+    const alone = { ...frame, accounts: [frame.accounts[0]] };
+    assert.equal(cadences(alone).get(A).period, 3, 'no pair is needed');
+    // an account without a series, and a flat one, are null; an empty frame is an empty map
+    assert.equal(cadences({ ...frame, accounts: [...frame.accounts, { address: 'rNoSeries', label: 'none' }] }).get('rNoSeries'), null);
+    assert.equal(cadences({ ...frame, series: new Map([[A, new Array(50).fill(2)], [B, frame.series.get(B)]]) }).get(A), null, 'a constant series has no cadence');
+    assert.deepEqual([...cadences(null)], []);
+    assert.deepEqual([...cadences(frameFromLive(new LiveWindow()))], []);
+  });
+
   const row = (p) => [p.a.label, p.b.label, Number(p.r.toFixed(2)), p.lag, p.n, p.overlap, p.a.events, p.b.events, p.shuffle.above, p.shuffle.count];
   /** The phase 1.5 shape: raw r, lag and null; prewhitened r, lag and null; the AR orders; the residual rows. */
   const wrow = (p) => [p.a.label, p.b.label, Number(p.r.toFixed(2)), p.lag, p.shuffle.above, p.shuffle.count, Number(p.white.r.toFixed(2)), p.white.lag, p.white.shuffle.above, p.white.shuffle.count, p.white.ar.a, p.white.ar.b, p.white.n];

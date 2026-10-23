@@ -238,6 +238,15 @@ export function categorize(txType) {
   return 'other';
 }
 
+/** The layers of the sky page (docs/universe-requests.md, R10): the categories grouped into four, and the rest. */
+export const LAYERS = Object.freeze(['payment', 'dex', 'trust', 'nft', 'other']);
+export const LAYER_OF_CATEGORY = Object.freeze({ payment: 'payment', escrow: 'payment', paychan: 'payment', offer: 'dex', amm: 'dex', trust: 'trust', nft: 'nft', batch: 'other', other: 'other' });
+
+/** The layer of a category: payment (Payment, Escrow*, PaymentChannel*), dex (Offer*, AMM*), trust, nft, else other. */
+export function layerOf(category) {
+  return LAYER_OF_CATEGORY[category] ?? 'other';
+}
+
 // ---------------------------------------------------------------------------
 // Pitch
 // ---------------------------------------------------------------------------
