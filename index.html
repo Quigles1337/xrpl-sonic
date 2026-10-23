@@ -32,6 +32,11 @@
           <span class="brand-tag">Ledger sonification</span>
         </span>
       </div>
+      <div id="modes" class="modes" role="group" aria-label="Mode">
+        <button type="button" class="mode-btn" data-view="listen" aria-pressed="true" title="The plate, the tape and the sound">Listen</button>
+        <button type="button" class="mode-btn" data-view="watch" aria-pressed="false" title="A workbench beside the plate: cast, case, moments, coherence, Copy for AI, Import notes">Watch</button>
+        <button type="button" class="mode-btn" data-view="learn" aria-pressed="false" title="Three short tours: the legend, follow a payment, the market maker’s cadence">Learn</button>
+      </div>
       <div class="status" role="status">
         <span id="status-dot" class="status-dot" data-state="idle"></span>
         <span id="status-text" class="status-text">Ready</span>
@@ -109,10 +114,26 @@
 
     <aside id="panel" class="panel" aria-label="Settings">
       <div class="panel-head">
-        <span class="panel-title">Instrument panel</span>
+        <span class="panel-title">Settings</span>
         <button id="panel-close" class="icon-btn" type="button" aria-label="Close settings" title="Close">&times;</button>
       </div>
       <div id="controls" class="controls"></div>
+    </aside>
+
+    <aside id="workbench" class="panel workbench" aria-label="Watch">
+      <div class="panel-head">
+        <span class="panel-title">Watch</span>
+        <button id="workbench-close" class="icon-btn" type="button" aria-label="Back to Listen" title="Back to Listen">&times;</button>
+      </div>
+      <div id="workbench-groups" class="controls"></div>
+    </aside>
+
+    <aside id="learn" class="panel learn" aria-label="Learn">
+      <div class="panel-head">
+        <span class="panel-title">Learn</span>
+        <button id="learn-close" class="icon-btn" type="button" aria-label="Back to Listen" title="Back to Listen">&times;</button>
+      </div>
+      <div id="learn-groups" class="controls"></div>
     </aside>
 
     <section id="log-wrap" class="log-wrap" aria-label="Transaction log">
@@ -129,9 +150,16 @@
         </span>
         <h1>xrpl-sonic</h1>
         <p class="overlay-sub">A listening instrument for the XRP Ledger</p>
-        <p class="lede">Every transaction on the XRP Ledger becomes a sound. Every ledger close, a pulse.</p>
-        <div id="overlay-guide" class="guide" aria-label="What each transaction type looks like"></div>
-        <button id="overlay-start" class="btn primary big" aria-pressed="false" data-idle="Start listening" data-running="Stop">Start listening</button>
+        <p class="lede"></p>
+        <div class="doors" role="group" aria-label="Three ways in">
+          <button type="button" class="door" id="door-listen" data-view="listen"><span class="door-name">Listen</span><span class="door-line">Every transaction on the XRP Ledger becomes a sound. Every ledger close, a pulse.</span></button>
+          <button type="button" class="door" id="door-watch" data-view="watch"><span class="door-name">Watch</span><span class="door-line">Follow up to five accounts, each with a voice of its own; save a moment; read the coherence between them.</span></button>
+          <button type="button" class="door" id="door-learn" data-view="learn"><span class="door-name">Learn</span><span class="door-line">Three short tours: the legend, follow a payment, the market maker’s cadence.</span></button>
+        </div>
+        <details class="legend" id="overlay-legend">
+          <summary>Legend</summary>
+          <div id="overlay-guide" class="guide" aria-label="What each transaction type looks like"></div>
+        </details>
         <p class="fine">
           Your browser connects directly to a public XRPL node over WebSocket. Nothing is sent anywhere else.
           Sound starts after you press Start; turn your volume down first.

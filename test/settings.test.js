@@ -154,3 +154,12 @@ describe('settings: the interference field (phase 2)', () => {
     assert.equal(sanitizeSettings({ field: 'cast' }).field.mode, 'off', 'not an object');
   });
 });
+
+describe('settings: the view (docs/ux.md, PR 2)', () => {
+  test('listen by default; watch and learn are kept; anything else is listen', () => {
+    assert.equal(sanitizeSettings(null).view, 'listen');
+    assert.equal(sanitizeSettings({ view: 'watch' }).view, 'watch');
+    assert.equal(sanitizeSettings({ view: 'learn' }).view, 'learn');
+    assert.equal(sanitizeSettings({ view: 'overlay' }).view, 'listen');
+  });
+});
