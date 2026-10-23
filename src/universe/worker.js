@@ -61,6 +61,7 @@ let intervalMs = 4000;
 const stepStats = { steps: 0, ms: 0, moved: 0, maxMoved: 0, movedShare: 0, warm: 0, pairs: 0 };
 let coherenceState = { pulsars: [], pairs: [], tested: 0, above: 0, at: null, ms: 0, window: null };
 const domainsSent = new Set();
+const oracleLast = new Map(); // address → ms of its last OracleSet, for the lighthouse's measured cadence
 let kinds = new Uint8Array(1); // the kind of every planet at the last ledger, for ignitions
 const counts = { verbs: { travel: 0, dock: 0, place: 0, happen: 0 }, objects: {}, spark: 0, tick: 0, transactions: 0 };
 
@@ -96,6 +97,7 @@ function resetAll() {
   counts.objects = {};
   counts.spark = counts.tick = counts.transactions = 0;
   for (const m of Object.values(standing)) m.clear();
+  oracleLast.clear();
 }
 
 /** The minimal event the engine plays (R9: the fields src/audio.js reads). */
@@ -256,6 +258,12 @@ function onTransaction(msg) {
       layout.add(p.id, a, ledger);
       clusters.add(p.id);
       addedSinceLedger.push([p.id, a]);
+    }
+    if (e.object === 'lighthouse' && e.at) {
+      const last = oracleLast.get(e.at);
+      const nowMs = performance.now();
+      e.detail.cadenceMs = last != null ? Math.round(nowMs - last) : null;
+      oracleLast.set(e.at, nowMs);
     }
     stand(e, ledger);
     if (e.verb) counts.verbs[e.verb] += 1;

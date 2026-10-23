@@ -1,0 +1,55 @@
+{
+  "at": "2026-10-23T05:00:50.276Z",
+  "note": "Brave (Chromium 155) on the user’s machine, 1536×741 CSS px at DPR 2, GPU string masked; synthetic 20,000 planets with the synthetic stream’s motions in flight (comets only: the generator makes payments); views sampled 4 s each with the camera re-asserted",
+  "results": [
+    {
+      "renderer": "webgl",
+      "actualRenderer": "webgl",
+      "planets": 20000,
+      "views": {
+        "home": {
+          "meanMs": 2.9,
+          "p50": 2.89,
+          "p95": 3.53,
+          "maxMs": 3.8,
+          "frames": 244,
+          "lod": {
+            "far": 9917,
+            "mid": 10083,
+            "near": 0,
+            "culled": 0
+          },
+          "motions": 197
+        },
+        "closer": {
+          "meanMs": 2.91,
+          "p50": 2.91,
+          "p95": 3.49,
+          "maxMs": 4.3,
+          "frames": 244,
+          "lod": {
+            "far": 10108,
+            "mid": 9892,
+            "near": 0,
+            "culled": 0
+          },
+          "motions": 168
+        },
+        "inside": {
+          "meanMs": 3.06,
+          "p50": 3.09,
+          "p95": 3.66,
+          "maxMs": 4.1,
+          "frames": 244,
+          "lod": {
+            "far": 10375,
+            "mid": 8483,
+            "near": 920,
+            "culled": 222
+          },
+          "motions": 137
+        }
+      }
+    }
+  ]
+}

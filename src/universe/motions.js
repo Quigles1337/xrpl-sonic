@@ -420,7 +420,9 @@ export function primitivesOf(m, s, { reduced = false, now = 0 } = {}) {
     case 'lighthouse': {
       if (!on(at)) return p;
       const L = Math.max(4, s.r[at]) * 4 + 10;
-      const ang = m.seed + (reduced ? 0 : (now / 900) * TAU);
+      // one turn per measured cadence (the account's interval between oracle updates); a second when none is measured yet
+      const period = Math.max(400, Math.min(20000, m.detail?.cadenceMs ?? 1000));
+      const ang = m.seed + (reduced ? 0 : (now / period) * TAU);
       p.lines.push({ x0: s.x[at], y0: s.y[at], x1: s.x[at] + Math.cos(ang) * L, y1: s.y[at] + Math.sin(ang) * L * 0.6, rgb: m.rgb, a: 0.55 * (1 - m.t * 0.5) * m.loud, w: 1.2 });
       return p;
     }

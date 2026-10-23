@@ -108,21 +108,35 @@ const logOf = (raw) => {
 };
 const currencyOf = (raw) => (typeof raw === 'string' ? 'XRP' : raw && typeof raw === 'object' ? decodeCurrency(raw.currency ?? '') : null);
 const issuerOf = (raw) => (raw && typeof raw === 'object' && isAddress(raw.issuer) ? raw.issuer : null);
-/** The book of an offer: the two sides as "CUR[/issuer]" strings, and its host body (the issuer of the issued side; both issuers for an issued/issued book). */
+/**
+ * The book of an offer as a canonical pair, so both directions of a pair are
+ * one book: XRP first when a side is XRP, else the sides in the order of
+ * their keys ("CUR/issuer"). `first` and `second` are the two sides, `key` the
+ * book, `hosts` the issuers (one for an XRP book, two for an issued pair).
+ */
 export function bookOf(takerGets, takerPays) {
   const side = (raw) => (typeof raw === 'string' ? { currency: 'XRP', issuer: null } : { currency: currencyOf(raw), issuer: issuerOf(raw) });
+  const keyOf = (s) => (s.issuer ? `${s.currency}/${s.issuer}` : s.currency);
   const gets = side(takerGets);
   const pays = side(takerPays);
-  const key = (s) => (s.issuer ? `${s.currency}/${s.issuer}` : s.currency);
-  const hosts = [gets.issuer, pays.issuer].filter(Boolean);
-  return { gets, pays, key: `${key(gets)}|${key(pays)}`, hosts, xrp: !gets.issuer || !pays.issuer };
+  const getsFirst = gets.currency === 'XRP' && !gets.issuer ? true : pays.currency === 'XRP' && !pays.issuer ? false : keyOf(gets) <= keyOf(pays);
+  const first = getsFirst ? gets : pays;
+  const second = getsFirst ? pays : gets;
+  const hosts = [first.issuer, second.issuer].filter(Boolean);
+  return { first, second, gets, pays, getsFirst, key: `${keyOf(first)}|${keyOf(second)}`, hosts, xrp: !first.issuer || !second.issuer };
 }
-/** The price of an offer as TakerPays per TakerGets, in the offer's own units. */
+/**
+ * The price of an offer on its canonical book: units of the second side per
+ * one of the first. An offer that gets the first side (its owner sells it)
+ * asks pays/gets; one that gets the second side bids gets/pays. Asks sit
+ * above bids on the one axis, and the gap between them is the spread.
+ */
 export function priceOf(takerGets, takerPays) {
   const g = parseAmount(takerGets);
   const p = parseAmount(takerPays);
-  if (!g || !p || !(g.value > 0)) return null;
-  return p.value / g.value;
+  if (!g || !p || !(g.value > 0) || !(p.value > 0)) return null;
+  const book = bookOf(takerGets, takerPays);
+  return book.getsFirst ? p.value / g.value : g.value / p.value;
 }
 
 /**
@@ -345,7 +359,7 @@ function offerEvents(tx, meta, nodes, base, ev, { takerComet }) {
   let consumed = 0;
   for (const o of fx.offers ?? []) {
     const b = bookFor(o);
-    const common = { at: o.owner, from: o.owner, to: b.book.hosts[0] ?? null, via: b.book.hosts.slice(1), evidence: [{ node: o.node, field: 'Offer.Account', value: o.owner }, { node: o.node, field: 'Offer.Sequence', value: o.sequence }, { field: 'book', value: b.book.key }, { field: 'price', value: b.price != null ? b.price.toPrecision(6) : 'unresolved' }], detail: { book: b.book.key, hosts: b.book.hosts, xrp: b.book.xrp, price: b.price, sequence: o.sequence, owner: o.owner, gets: b.gets, pays: b.pays, role: o.role, removal: o.removal ?? null } };
+    const common = { at: o.owner, from: o.owner, to: b.book.hosts[0] ?? null, via: b.book.hosts.slice(1), evidence: [{ node: o.node, field: 'Offer.Account', value: o.owner }, { node: o.node, field: 'Offer.Sequence', value: o.sequence }, { field: 'book', value: b.book.key }, { field: b.book.getsFirst ? 'ask (TakerPays per TakerGets)' : 'bid (TakerGets per TakerPays)', value: b.price != null ? b.price.toPrecision(6) : 'unresolved' }], detail: { book: b.book.key, hosts: b.book.hosts, xrp: b.book.xrp, price: b.price, side: b.book.getsFirst ? 'ask' : 'bid', sequence: o.sequence, owner: o.owner, gets: b.gets, pays: b.pays, role: o.role, removal: o.removal ?? null } };
     if (o.action === 'created' && o.role !== 'book') out.push(ev('rock', common));
     else if (o.removal === 'consumed' || o.removal === 'traded-unfunded' || (o.action === 'modified' && o.traded === 'yes' && o.role === 'book')) {
       consumed += 1;
@@ -434,7 +448,7 @@ export function describeEvent(e, nameOf = null) {
     case 'ignite':
       return say(`${a} became a star: ${d.holders} holders ≥ ${d.threshold}`);
     case 'rock':
-      return say(`${from} placed an offer on ${d.book} at ${d.price != null ? d.price.toPrecision(4) : 'an unresolved price'}: ${d.gets} for ${d.pays}`);
+      return say(`${from} placed ${d.side === 'bid' ? 'a bid' : 'an ask'} on ${d.book} at ${d.price != null ? d.price.toPrecision(4) : 'an unresolved price'}: ${d.gets} for ${d.pays}`);
     case 'fill':
       return say(`${from} took ${d.consumed} offer${d.consumed === 1 ? '' : 's'} on ${d.book}${d.amm ? ' and a pool' : ''} (${d.status ?? 'unresolved'})`);
     case 'flare':

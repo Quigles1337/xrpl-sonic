@@ -113,8 +113,8 @@ export function drawOverlay(ctx, s, a, o) {
     }
     ctx.globalCompositeOperation = 'source-over';
   }
-  // --- the marks of the kinds, and the cast rings, on the near bodies -----------------------
-  const near = o.near ?? [];
+  // --- the marks of the kinds, and the cast rings, on the near bodies; a crowded near level keeps the largest 240 --
+  const near = (o.near ?? []).length > 240 ? [...o.near].sort((p, q) => s.r[q] - s.r[p]).slice(0, 240) : o.near ?? [];
   for (const id of near) {
     const x = s.x[id];
     const y = s.y[id];

@@ -1,6 +1,6 @@
 # Missing fixtures
 
-Searched 83,062 transactions in stream-mainnet-2026-10-23T04-34-01-552Z.ndjson (83,371 messages) for a real example of every object; these turned up none:
+Searched 92,656 transactions in stream-mainnet-2026-10-23T04-34-01-552Z.ndjson (93,073 messages) for a real example of every object; these turned up none:
 
 - TODO bent-comet: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, bent-comet); none seen. Drawn as the spark until a real example is recorded.
 - TODO shower: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, shower); none seen. Drawn as the spark until a real example is recorded.
@@ -20,36 +20,36 @@ Searched 83,062 transactions in stream-mainnet-2026-10-23T04-34-01-552Z.ndjson (
 - TODO satellite: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, satellite); none seen. Drawn as the spark until a real example is recorded.
 - TODO binary-collapse: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, binary-collapse); none seen. Drawn as the spark until a real example is recorded.
 - TODO nameplate: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, nameplate); none seen. Drawn as the spark until a real example is recorded.
-- TODO tilt: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, tilt); none seen. Drawn as the spark until a real example is recorded.
-- TODO moon-crumble: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, moon-crumble); none seen. Drawn as the spark until a real example is recorded.
 - TODO badge: searched the recording for the transaction type and metadata its rule reads (src/universe/events.js, badge); none seen. Drawn as the spark until a real example is recorded.
 
 Objects seen, with counts:
 
-- tick: 36,613
-- spark: 21,982
-- rock: 12,221
-- blink: 12,091
-- shimmer: 3,135
-- burn: 2,276
-- comet: 1,312
-- ring: 1,178
-- moon-beacon: 852
-- flare: 494
-- fill: 429
-- dust: 359
-- moon-beacon-off: 219
-- rocket: 162
-- check-drift: 85
-- check-cash: 68
-- deorbit: 38
+- tick: 38,832
+- spark: 23,442
+- rock: 15,774
+- blink: 15,609
+- shimmer: 3,307
+- burn: 2,674
+- comet: 1,614
+- ring: 1,413
+- moon-beacon: 1,341
+- flare: 570
+- fill: 494
+- dust: 456
+- moon-beacon-off: 285
+- rocket: 174
+- check-drift: 99
+- check-cash: 84
+- deorbit: 47
 - freeze: 29
-- moon-capture: 26
-- partial: 20
+- moon-capture: 27
+- partial: 25
 - moon-form: 20
-- binary-brighten: 13
-- binary-dim: 6
+- binary-brighten: 16
+- moon-crumble: 8
+- binary-dim: 7
+- lighthouse: 4
 - collapse: 4
-- lighthouse: 2
+- tilt: 2
 - guardians: 1
 - darken: 1

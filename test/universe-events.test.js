@@ -160,12 +160,16 @@ describe('showers, weather, books, colours', () => {
     assert.deepEqual(w.haze, [{ host: 'issuer', n: 1 }]);
     assert.deepEqual(w.glow.sort((p, q) => p.planet.localeCompare(q.planet)), [{ planet: 'a', n: 1 }, { planet: 'p', n: 2 }]);
   });
-  test('a book is its two sides and its hosts; an XRP book has one host; the price is pays per gets', () => {
-    const b = bookOf('1000000', { currency: 'USD', issuer: 'rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De', value: '2' });
+  test('a book is canonical (XRP first), its hosts the issuers; the price is units of the second side per one of the first, so an ask and a bid of one pair share one axis', () => {
+    const usd = { currency: 'USD', issuer: 'rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De', value: '2' };
+    const b = bookOf('1000000', usd);
     assert.equal(b.key, 'XRP|USD/rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De');
     assert.deepEqual(b.hosts, ['rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De']);
     assert.equal(b.xrp, true);
-    assert.equal(priceOf('1000000', { currency: 'USD', issuer: 'rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De', value: '2' }), 2);
+    assert.equal(priceOf('1000000', usd), 2, 'an ask: 2 USD per XRP');
+    const flipped = bookOf(usd, '1000000');
+    assert.equal(flipped.key, b.key, 'the other direction is the same book');
+    assert.equal(priceOf(usd, '1000000'), 2, 'a bid of 1 XRP for 2 USD is also 2 USD per XRP');
     const c = bookOf({ currency: 'EUR', issuer: 'rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah', value: '1' }, { currency: 'USD', issuer: 'rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z', value: '1.1' });
     assert.deepEqual(c.hosts, ['rBTwLga3i2gz3doX6Gva3MgEV8ZCD8jjah', 'rKNRrawfVS59C3tN1bBiUWc5wZQAfUPh7z']);
     assert.equal(c.xrp, false);

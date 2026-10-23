@@ -139,7 +139,7 @@
       "to": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
       "via": [],
       "at": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
-      "label": "rock: rUqq…qsZ7 placed an offer on CNY/rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y|XRP at 0.1177: 849469 CNY for 100,000 XRP"
+      "label": "rock: rUqq…qsZ7 placed a bid on XRP|CNY/rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y at 8.495: 849469 CNY for 100,000 XRP"
     },
     {
       "verb": "place",
@@ -149,7 +149,7 @@
       "to": "rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y",
       "via": [],
       "at": "rUqqN1KKvLSknssUXrLX48vtnNdpvaqsZ7",
-      "label": "blink: an offer of rUqq…qsZ7 on CNY/rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y|XRP was replaced"
+      "label": "blink: an offer of rUqq…qsZ7 on XRP|CNY/rKiCet8SdvWxPXnAgYarFUXMh1zCPz432Y was replaced"
     }
   ]
 }
