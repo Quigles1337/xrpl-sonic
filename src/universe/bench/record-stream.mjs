@@ -14,6 +14,17 @@
 // set on numbers. Requires Node 22+.
 //
 //   node src/universe/bench/record-stream.mjs [--minutes 60] [--dir C:/Users/LEET/xrpl-sonic-universe-data] [--network mainnet]
+//       [--timed] [--proposed] [--validations] [--fee-every 1000] [--host wss://s1.ripple.com]
+//
+// With --timed every line is { at, from, msg }: the local receive time in
+// milliseconds, the answering server (its endpoint, and its pubkey_node and
+// hostid from server_info when it answered), and the raw message (R19 in
+// docs/universe-requests.md, copied here until the shared recorder has it).
+// --proposed adds the transactions_proposed stream (a superset of
+// transactions: the in-flight ones have no meta and a ledger_current_index),
+// --validations the validations stream, and --fee-every N polls the fee
+// method every N milliseconds and records its result as a line of its own
+// (msg.type "fee"). The replay feeder reads both line shapes.
 
 import { createWriteStream, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,6 +37,11 @@ const opt = (name, fallback) => {
   return i >= 0 && args[i + 1] != null ? args[i + 1] : fallback;
 };
 const minutes = Math.max(1, Number(opt('minutes', 60)) || 60);
+const timed = args.includes('--timed') || args.includes('--proposed') || args.includes('--validations') || args.includes('--fee-every');
+const proposed = args.includes('--proposed');
+const validations = args.includes('--validations');
+const feeEvery = Math.max(0, Number(opt('fee-every', 0)) || 0);
+let serverIdentity = null; // { endpoint, pubkey_node, hostid } once server_info answers
 const dir = opt('dir', 'C:/Users/LEET/xrpl-sonic-universe-data');
 const network = NETWORKS[opt('network', 'mainnet')];
 if (!network || typeof globalThis.WebSocket !== 'function') {
@@ -147,12 +163,18 @@ function write(final = false) {
 }
 
 const stream = new XrplStream({
-  endpoints: network.endpoints,
+  endpoints: opt('host', null) ? [opt('host', null)] : network.endpoints,
   onStatus: (s) => console.error(`[status] ${s.state} ${s.endpoint}${s.error ? ` — ${s.error}` : ''}`),
   onRaw: (text) => {
     bytes += Buffer.byteLength(text, 'utf8');
-    out.write(text.replace(/\r?\n/g, ' '));
-    out.write('\n');
+    const flat = text.replace(/\r?\n/g, ' ');
+    if (timed) {
+      // the raw message is kept verbatim inside the envelope (no re-serialisation), with the time and the server
+      out.write(`{"at":${Date.now()},"from":${JSON.stringify(serverIdentity ?? { endpoint: stream.endpoint ?? null })},"msg":${flat}}\n`);
+    } else {
+      out.write(flat);
+      out.write('\n');
+    }
   },
   onMessage: (msg) => {
     messages += 1;
@@ -162,6 +184,7 @@ const stream = new XrplStream({
       return;
     }
     if (k !== 'transaction') return;
+    if (msg.validated === false || (!msg.meta && !msg.metadata)) return; // in flight (transactions_proposed): not a record, not in the histogram
     const u = unwrapTransactionMessage(msg);
     if (!u) return;
     const hash = typeof u.hash === 'string' ? u.hash.toUpperCase() : null;
@@ -173,6 +196,34 @@ const stream = new XrplStream({
   },
 });
 stream.connect();
+if (timed) {
+  // the answering server's identity, the extra streams and the fee poll, once connected
+  const onceConnected = setInterval(async () => {
+    if (!stream.ws || stream.ws.readyState !== 1) return;
+    clearInterval(onceConnected);
+    try {
+      const info = (await stream.request({ command: 'server_info' })).result?.info ?? {};
+      // a rippled node names itself (hostid, pubkey_node, build_version); a Clio front-end names its versions only
+      serverIdentity = { endpoint: stream.endpoint ?? null, pubkey_node: info.pubkey_node ?? null, hostid: info.hostid ?? null, build_version: info.build_version ?? null, clio_version: info.clio_version ?? null, libxrpl_version: info.libxrpl_version ?? null, rippled_version: info.rippled_version ?? null };
+      console.error(`[server] ${serverIdentity.hostid ?? (serverIdentity.clio_version ? `Clio ${serverIdentity.clio_version}` : '?')} ${serverIdentity.pubkey_node ?? serverIdentity.rippled_version ?? ''}`);
+    } catch (err) {
+      console.error(`[server] server_info failed: ${err?.message ?? err}`);
+    }
+    const streams = [...(proposed ? ['transactions_proposed'] : []), ...(validations ? ['validations'] : [])];
+    if (streams.length) await stream.request({ command: 'subscribe', streams }).catch((err) => console.error(`[subscribe] ${err?.message ?? err}`));
+    if (feeEvery) {
+      setInterval(async () => {
+        try {
+          const r = await stream.request({ command: 'fee' });
+          const line = JSON.stringify({ type: 'fee', at: Date.now(), result: r.result });
+          out.write(`{"at":${Date.now()},"from":${JSON.stringify(serverIdentity)},"msg":${line}}\n`);
+        } catch {
+          // a refused poll is a missing sample, not an error of the recording
+        }
+      }, feeEvery);
+    }
+  }, 250);
+}
 const timer = setInterval(() => {
   write(false);
   const elapsed = (Date.now() - startedAt) / 60000;

@@ -9,7 +9,7 @@
 // motion arrives at once; frame time inside a galaxy under the budget (the
 // software bound); no exceptions.
 //
-//   node src/universe/bench/check-fractal.mjs --recording <file in the data mount> [--gl 1|0] [--pace 40] [--ledgers 150]
+//   node src/universe/bench/check-fractal.mjs --recording <file in the data mount> [--gl 1|0] [--pace 40] [--ledgers 150] [--forecast 1|0]
 
 import { launch, openPage, waitFor, sleep } from './cdp.mjs';
 
@@ -21,6 +21,7 @@ const opt = (name, fallback) => {
 const recording = opt('recording', null);
 const gl = opt('gl', '1');
 const pace = Number(opt('pace', 40));
+const forecast = opt('forecast', '1'); // 0: the page without the next-ledger forecast, to compare the layout's cost
 const ledgers = Number(opt('ledgers', 150));
 if (!recording) {
   console.error('usage: node src/universe/bench/check-fractal.mjs --recording <file> [--gl 1|0] [--pace ms] [--ledgers n]');
@@ -40,7 +41,7 @@ const key = async (text, keyName = text, code = `Key${text.toUpperCase()}`, type
   await sleep(120);
 };
 
-await page.navigate(`${site}universe.html?replay=/data/${encodeURIComponent(recording)}&pace=${pace}&autostart=1${gl === '1' ? '' : '&gl=0'}`);
+await page.navigate(`${site}universe.html?replay=/data/${encodeURIComponent(recording)}&pace=${pace}&autostart=1${gl === '1' ? '' : '&gl=0'}${forecast === '0' ? '&forecast=0' : ''}`);
 await waitFor(page, `window.xrplUniverse && window.xrplUniverse.stats().coverage && window.xrplUniverse.stats().coverage.ledgersClosed >= ${ledgers}`, { timeoutMs: 600000, everyMs: 1000 });
 await page.evaluate('window.xrplUniverse.stop()');
 await sleep(1500);

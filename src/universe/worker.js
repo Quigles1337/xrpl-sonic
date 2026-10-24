@@ -35,6 +35,10 @@ import { fetchAccountTx } from '../account-tx.js';
 import { CATEGORY_BY_CODE } from './records.js';
 import { forestOf } from './forest.js';
 import { BookState, candidatesOf, sharedPriceAt, assetOf, rateOf, DEFAULTS as SHARED_PRICE_DEFAULTS } from './shared-price.js';
+import { RowBuilder, isInFlight } from './forecast/rows.js';
+import { Forecaster } from './forecast/forecaster.js';
+import { EventStudies, quotesOf, sideOf } from './forecast/events.js';
+import { parseBookChanges, bookChangesFromFacts, crossCheck, describeCheck, orient, BookCloses } from './forecast/books.js';
 import { touchGraph, randomWalk, conservation, seriesOf, cadence, coherenceAgainst, catchOf, historyLabel, fetchRecentHistory, frameFromWindow, DEFAULTS as PROBE_DEFAULTS } from './probe.js';
 
 const STEP_MS = 50; // layout relaxation cadence
@@ -57,6 +61,22 @@ const WINDOW_LEDGERS = 300; // the sky's live window: longer than the listening 
 let windowLedgers = WINDOW_LEDGERS; // the window asked for at start (?window=N), 50..4000
 let live = new LiveWindow({ max: windowLedgers });
 let books = new BookState(); // the replay's offers from the Offer nodes (the live measure reads the node)
+let arrivedAt = new Map(); // ledger index → local arrival time in ms (live: this worker's clock; replay: the recording's, when timed)
+let replayServer = null; // the answering server of a timed recording
+let validationsSeen = 0;
+// Part B (docs/universe.md, "Phase 3B"): the rows, the forecaster, the event studies, the research switch
+let rows = new RowBuilder();
+let forecaster = null;
+let studies = new EventStudies();
+const flags = { forecast: true, nowcast: false, research: false };
+let feeTimer = 0;
+let serverInfo = null; // a recorded server_info answer (a timed recording's), or the live one's
+let lastShared = null; // the shared-price measure's last loops { ledger, loops, given }
+let lastNowcast = null; // the last nowcast's readout
+let forecastSeq = 0;
+let holds = { arrivals: false, proposed: false, fee: false }; // what a replayed recording turned out to hold
+let session = []; // { row, fingerprint } of the rows the forecaster read, for the parity fixture (the last 400)
+let research = { closes: new BookCloses(), queue: [], inFlight: false, skipped: 0, errors: 0, lastCheck: null, lastError: null };
 
 let stream = null;
 let synthetic = null;
@@ -102,6 +122,18 @@ function resetAll() {
   clusters = new Clusters();
   live = new LiveWindow({ max: windowLedgers });
   books = new BookState();
+  arrivedAt = new Map();
+  replayServer = null;
+  validationsSeen = 0;
+  rows = new RowBuilder({ keepTransactions: flags.research });
+  forecaster = flags.forecast ? new Forecaster({ mode: flags.nowcast ? 'nowcast' : 'forecast' }) : null;
+  studies = new EventStudies();
+  serverInfo = null;
+  lastShared = null;
+  lastNowcast = null;
+  holds = { arrivals: false, proposed: false, fee: false };
+  session = [];
+  research = { closes: new BookCloses(), queue: [], inFlight: false, skipped: 0, errors: 0, lastCheck: null, lastError: null };
   addedSinceLedger = [];
   domainsSinceLedger = [];
   domainsSent.clear();
@@ -236,7 +268,17 @@ function toIds(e) {
   return { ...e, from: idOf(e.from), to: idOf(e.to), via: (e.via ?? []).map(idOf), at: idOf(e.at), hops: e.detail?.hops ?? 0 };
 }
 
+/** Every transaction message: an in-flight one (transactions_proposed) is the nowcast's only; a validated one feeds the sky, then the rows (after the book state took it, so a row's quotes include its last transaction). */
 function onTransaction(msg) {
+  if (isInFlight(msg)) {
+    noteProposed(msg);
+    return;
+  }
+  onTransactionSky(msg);
+  for (const row of rows.noteTransaction(msg)) pushRow(row);
+}
+
+function onTransactionSky(msg) {
   const r = universe.noteTransaction(msg);
   if (!r) return;
   const ledger = r.ledger;
@@ -301,10 +343,26 @@ function onTransaction(msg) {
   moved = true;
 }
 
-function onLedger(msg) {
+function onLedger(msg, recordedAt = null) {
+  {
+    const arrived = Number.isFinite(recordedAt) ? recordedAt : replay || synthetic ? null : Date.now();
+    if (Number.isFinite(recordedAt)) holds.arrivals = true;
+    const L = Number(msg?.ledger_index);
+    const done = rows.noteClose(msg, arrived);
+    for (const row of done) if (row.index < L) pushRow(row);
+    if (forecaster && flags.nowcast && Number.isInteger(L)) {
+      const out = forecaster.nowcastFor(L, rows.inflight(L));
+      if (out) {
+        lastNowcast = out;
+        post({ type: 'nowcast', index: L, lines: out.lines, shown: out.shown });
+      }
+    }
+    for (const row of done) if (row.index === L) pushRow(row);
+  }
   const l = universe.noteLedger(msg);
   if (!l) return;
   live.noteLedger(msg);
+  arrivedAt.set(l.index, recordedAt ?? (replay ? null : Date.now())); // R21 copied: the local arrival time of each close (a replay's comes from a timed recording, else none)
   const now = performance.now();
   if (lastCloseAt) intervalMs = Math.min(30000, Math.max(1000, now - lastCloseAt));
   lastCloseAt = now;
@@ -564,9 +622,32 @@ async function feedReplay(url, pace, abort) {
       } catch {
         continue;
       }
+      // a timed recording wraps each message as { at, from, msg } (R19): the arrival time is the recording's, not the replay's
+      let recordedAt = null;
+      if (msg && typeof msg === 'object' && msg.msg && typeof msg.msg === 'object' && Number.isFinite(msg.at)) {
+        recordedAt = msg.at;
+        if (!replayServer && msg.from) replayServer = msg.from;
+        msg = msg.msg;
+      }
+      if (msg?.result?.info && !serverInfo) {
+        serverInfo = msg.result.info; // a timed recording's server_info answer names the server it heard
+        continue;
+      }
+      if (msg?.type === 'fee') {
+        noteFee(msg.result, recordedAt);
+        continue;
+      }
+      if (msg?.type === 'validationReceived') {
+        validationsSeen += 1;
+        continue;
+      }
+      if (msg?.type === 'transaction' && (msg.validated === false || (!msg.meta && !msg.metadata))) {
+        noteProposed(msg, recordedAt);
+        continue;
+      }
       const kind = classifyMessage(msg);
       if (kind === 'ledger') {
-        onLedger(msg);
+        onLedger(msg, recordedAt);
         await sleep(pace);
         if (abort.signal.aborted) return;
       } else if (kind === 'transaction') onTransaction(msg);
@@ -576,9 +657,12 @@ async function feedReplay(url, pace, abort) {
   setState('idle', null);
 }
 
-function start({ network = 'mainnet', synthetic: count = 0, seed = 1337, sound = false, perLedger = 150, replay: replayUrl = null, pace = 300, window: windowAsked = WINDOW_LEDGERS } = {}) {
+function start({ network = 'mainnet', synthetic: count = 0, seed = 1337, sound = false, perLedger = 150, replay: replayUrl = null, pace = 300, window: windowAsked = WINDOW_LEDGERS, forecast = true, nowcast = false, research: researchOn = false } = {}) {
   stop();
   windowLedgers = Math.min(4000, Math.max(50, Number(windowAsked) || WINDOW_LEDGERS));
+  flags.forecast = forecast !== false;
+  flags.nowcast = Boolean(nowcast);
+  flags.research = Boolean(researchOn);
   resetAll();
   soundOn = Boolean(sound);
   stepTimer = setTimeout(stepLayout, STEP_MS);
@@ -613,6 +697,31 @@ function start({ network = 'mainnet', synthetic: count = 0, seed = 1337, sound =
     },
   });
   stream.connect();
+  // once connected: the server's name; behind the nowcast switch the proposed stream and a fee poll every 1,000 ms (R19's capture, live)
+  const once = setInterval(async () => {
+    if (!stream || !stream.ws || stream.ws.readyState !== 1) return;
+    clearInterval(once);
+    try {
+      serverInfo = (await stream.request({ command: 'server_info' })).result?.info ?? null;
+    } catch {
+      serverInfo = null;
+    }
+    if (!flags.nowcast || !stream) return;
+    try {
+      await stream.request({ command: 'subscribe', streams: ['transactions_proposed'] });
+    } catch (err) {
+      post({ type: 'error', message: `nowcast: transactions_proposed refused: ${err?.message ?? err}` });
+    }
+    clearInterval(feeTimer);
+    feeTimer = setInterval(async () => {
+      if (!stream) return;
+      try {
+        noteFee((await stream.request({ command: 'fee' })).result, Date.now());
+      } catch {
+        // a refused poll is a missing sample
+      }
+    }, 1000);
+  }, 250);
 }
 
 function stop() {
@@ -624,12 +733,137 @@ function stop() {
     stream.close();
     stream = null;
   }
+  clearInterval(feeTimer);
+  feeTimer = 0;
   if (replay) {
     replay.abort.abort();
     replay = null;
   }
   synthetic = null;
   setState('idle', null);
+}
+
+// --- Part B: the rows, the forecast, the nowcast, the event studies, the research switch -----------------------
+
+/** The answering server, named from what its server_info carries: a rippled node's hostid, or a Clio front-end's versions. */
+function serverName() {
+  const i = serverInfo;
+  const where = replay ? (replayServer?.endpoint ?? 'a recording') : host || 'the node';
+  if (!i) return where;
+  if (i.hostid) return `${i.hostid} (${where})`;
+  if (i.clio_version) return `Clio ${i.clio_version}${i.rippled_version ? `, rippled ${i.rippled_version}` : ''} (${where})`;
+  return where;
+}
+
+/** An in-flight transaction (transactions_proposed), for the nowcast. */
+function noteProposed(msg) {
+  holds.proposed = true;
+  rows.noteProposed(msg);
+}
+
+/** A fee method result, polled live behind the nowcast switch or read from a timed recording. */
+function noteFee(result, at = null) {
+  if (!result) return;
+  holds.fee = true;
+  rows.noteFee(result, { at, server: serverName() });
+}
+
+/** Our book key ("CODE/issuer|…", sorted) as rippled's ("XRP|issuer/CODE"). */
+function rippledBookKey(book) {
+  const [x, y] = book.split('|').map((a) => (a === 'XRP' ? 'XRP' : `${a.split('/')[1]}/${a.split('/')[0]}`));
+  return orient(x, y).join('|');
+}
+
+/** The event studies' drift one ledger on for a rippled book key and a trade's side, turned to rippled's rate (side A per side B, XRP per token for an XRP book). */
+function driftFor(key, sign) {
+  const [a, b] = key.split('|');
+  const ours = [a, b].map((s) => (s === 'XRP' ? 'XRP' : `${s.split('/')[1]}/${s.split('/')[0]}`));
+  const book = [...ours].sort().join('|');
+  const d = studies.drift(book, 1); // the mean signed move: in the taker's direction
+  if (d == null || !sign) return null;
+  const m = sign * d; // the expected mid move (our orientation, the second asset per the first) for a trade on this side
+  // our mid is the second asset per the first in sorted order; rippled's rate is A per B
+  const first = book.split('|')[0];
+  const sameWay = first === ours[1]; // our first asset is rippled's B: our price is A per B
+  return sameWay ? m : 1 / (1 + m) - 1;
+}
+
+/** The books of a row with a trade above the studies' threshold, as rippled keys, each with the side of its largest such trade. */
+function largeSides(row) {
+  const best = new Map();
+  for (const t of row.trades) {
+    if (studies.threshold == null || t.xrp < studies.threshold) continue;
+    const key = rippledBookKey(t.book);
+    if (!best.has(key) || t.xrp > best.get(key).xrp) best.set(key, { xrp: t.xrp, sign: sideOf(t.book, t.got) });
+  }
+  return new Map([...best].map(([k, v]) => [k, v.sign]));
+}
+
+/** Ask book_changes for each finished row, one at a time through the node, and cross-check it (research switch, live only). */
+function researchRow(row) {
+  if (!flags.research) return;
+  if (!stream) {
+    research.unavailable = replay ? 'a replay has no node here to read book_changes from (the bench reads it for a recording: bench/forecast-recording.mjs --research)' : 'no node';
+    return;
+  }
+  research.queue.push(row);
+  while (research.queue.length > 4) {
+    research.queue.shift();
+    research.skipped += 1;
+  }
+  pumpResearch();
+}
+
+async function pumpResearch() {
+  if (research.inFlight || !stream) return;
+  const row = research.queue.shift();
+  if (!row) return;
+  research.inFlight = true;
+  try {
+    const result = (await stream.request({ command: 'book_changes', ledger_index: row.index })).result;
+    const method = parseBookChanges(result);
+    const check = crossCheck(method, bookChangesFromFacts(row.transactions ?? []).books);
+    research.closes.noteCheck(check, { heard: row.heard, txnCount: row.txnCount });
+    const sides = largeSides(row);
+    research.closes.note(row.index, method, { large: new Set(sides.keys()), driftOf: (key) => driftFor(key, sides.get(key)) });
+    research.lastCheck = describeCheck(row.index, check, { heard: row.heard, txnCount: row.txnCount });
+  } catch (err) {
+    research.errors += 1;
+    research.lastError = err?.message ?? String(err);
+  }
+  research.inFlight = false;
+  if (research.queue.length) setTimeout(pumpResearch, 250);
+}
+
+/** What a replayed recording holds, in a line (a live sky holds what its switches asked for). */
+function holdsLine() {
+  if (!replay) return `live from ${serverName()} · nowcast ${flags.nowcast ? 'on (the proposed stream and a fee poll every 1,000 ms)' : 'off (?nowcast=1)'} · research switch ${flags.research ? 'on' : 'off (?research=1)'}`;
+  const has = [holds.arrivals ? 'local arrival times' : null, holds.proposed ? 'proposed transactions' : null, holds.fee ? 'fee results' : null, validationsSeen ? `${validationsSeen.toLocaleString('en-US')} validations` : null].filter(Boolean);
+  return has.length ? `this recording holds ${has.join(', ')} · heard from ${serverName()}` : 'this recording holds raw stream messages only: no local arrival times, no proposed transactions, no fee results, so no close interval and no nowcast';
+}
+
+/** A finished row: Part A's loops attached, the event studies fed, the research switch asked, the forecaster fed, the readout posted. */
+function pushRow(row) {
+  if (lastShared && !lastShared.given && lastShared.ledger <= row.index) {
+    row.loops = lastShared.loops;
+    lastShared.given = true;
+  } else row.loops = [];
+  // the event studies: the active books' quotes as this row finishes, then its trades
+  const active = studies.activeBooks();
+  if (active.size) studies.noteQuotes(row.index, quotesOf(books, active));
+  for (const t of row.trades) studies.noteTrade(row.index, t.book, t.xrp, t.got);
+  researchRow(row);
+  if (!forecaster) return;
+  const out = forecaster.push(row);
+  if (!out) return;
+  const fingerprint = forecaster.fingerprint();
+  const { trades, tokenTrades, ...kept } = row;
+  session.push({ row: kept, fingerprint });
+  if (session.length > 400) session.shift();
+  const reports = studies.report();
+  const studyLines = [`event studies: ${studies.trades.toLocaleString('en-US')} taker trades with an XRP side seen, ${studies.studies} studies completed over ${studies.curves.size} book${studies.curves.size === 1 ? '' : 's'} · the threshold ${studies.threshold == null ? 'forming (20 trades)' : `${Math.round(studies.threshold).toLocaleString('en-US')} XRP (the 90th percentile of fills)`} · w = ${studies.w} · quotes from the offers seen in the window at face value (offers placed before it are unseen, funding is not in the record) · candidate signals, not used by any forecast here`, ...reports.slice(0, 3).map((r) => `  ${r.line}`)];
+  const researchLines = flags.research ? (research.unavailable ? [`research switch on: ${research.unavailable}`] : [...research.closes.describe(), studies.paperLine(), ...(research.lastCheck ? [research.lastCheck] : []), ...(research.skipped || research.errors ? [`book_changes skipped ${research.skipped}, failed ${research.errors}${research.lastError ? ` (${research.lastError})` : ''}`] : [])]) : [];
+  post({ type: 'forecast', seq: ++forecastSeq, index: row.index, next: out.next, mode: out.mode, lines: out.lines, nowcastLines: lastNowcast?.lines ?? null, studyLines, researchLines, holds: holdsLine(), shown: out.shown, records: out.records, accountRecord: out.accountRecord, loopRecord: out.loopRecord, intervalRecord: out.intervalRecord, split: out.split, fingerprint, ms: out.ms });
 }
 
 // --- the probe ------------------------------------------------------------------------------
@@ -747,6 +981,10 @@ async function probe({ id, seq = 0 }) {
   c.window = { ledgers: liveLedgers.length, from: liveLedgers[0]?.index ?? null, to: liveLedgers.at(-1)?.index ?? null };
   c.ms = Math.round(performance.now() - t0);
   post({ type: 'probe-catch', seq, id, catch: c, madePlanets: made });
+  if (forecaster) {
+    const pr = forecaster.presenceOf(address);
+    if (pr) post({ type: 'forecast-presence', seq, id, line: pr.line, p: pr.p, method: pr.method });
+  }
 }
 
 /**
@@ -922,6 +1160,7 @@ async function sharedPrice({ id, seq = 0 }) {
   const nameOf = (a) => (typeof a === 'string' && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : (a ?? '?'));
   const r = sharedPriceAt({ ledger, focus: address, candidates: built.candidates, pools, excluded: built.excluded, selection: `${built.selection} · ${source}${liveNode ? ` · ${requests} requests${waited ? `, ${Math.round(waited / 1000)} s waited for the node’s quota` : ''}` : `, ${books.unseenCreations.toLocaleString('en-US')} offers first seen modified (created before the window)`}`, nameOf, replay: !liveNode });
   const idOf = (a) => (universe.addresses.has(a) ? universe.addresses.id(a) : 0);
+  lastShared = { ledger, given: false, loops: r.nerve.loops.map((loop) => ({ edge: loop.edge.afterFees, members: loop.members.length, offers: loop.cycle.filter((c) => !c.pool && c.owner != null && c.sequence != null).map((c) => `${c.owner}:${c.sequence}`) })) };
   post({
     type: 'shared-price',
     seq,
@@ -943,6 +1182,9 @@ self.onmessage = (e) => {
   switch (m.type) {
     case 'start':
       start(m);
+      break;
+    case 'forecast-session':
+      post({ type: 'forecast-session', options: { mode: flags.nowcast ? 'nowcast' : 'forecast' }, server: serverName(), rows: session.map((s) => s.row), fingerprints: session.map((s) => s.fingerprint) });
       break;
     case 'stop':
       stop();
