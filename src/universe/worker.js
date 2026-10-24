@@ -34,6 +34,7 @@ import { eventsOf, collapseShowers, weatherOf, describeEvent, OBJECTS } from './
 import { fetchAccountTx } from '../account-tx.js';
 import { CATEGORY_BY_CODE } from './records.js';
 import { forestOf } from './forest.js';
+import { BookState, candidatesOf, sharedPriceAt, assetOf, rateOf, DEFAULTS as SHARED_PRICE_DEFAULTS } from './shared-price.js';
 import { touchGraph, randomWalk, conservation, seriesOf, cadence, coherenceAgainst, catchOf, historyLabel, fetchRecentHistory, frameFromWindow, DEFAULTS as PROBE_DEFAULTS } from './probe.js';
 
 const STEP_MS = 50; // layout relaxation cadence
@@ -55,6 +56,7 @@ let clusters = new Clusters();
 const WINDOW_LEDGERS = 300; // the sky's live window: longer than the listening page's 50, for the probe's statistic
 let windowLedgers = WINDOW_LEDGERS; // the window asked for at start (?window=N), 50..4000
 let live = new LiveWindow({ max: windowLedgers });
+let books = new BookState(); // the replay's offers from the Offer nodes (the live measure reads the node)
 
 let stream = null;
 let synthetic = null;
@@ -99,6 +101,7 @@ function resetAll() {
   layout = new Layout({ capacity: 4096 });
   clusters = new Clusters();
   live = new LiveWindow({ max: windowLedgers });
+  books = new BookState();
   addedSinceLedger = [];
   domainsSinceLedger = [];
   domainsSent.clear();
@@ -237,6 +240,10 @@ function onTransaction(msg) {
   const r = universe.noteTransaction(msg);
   if (!r) return;
   const ledger = r.ledger;
+  {
+    const u = unwrapTransactionMessage(msg);
+    if (u) books.apply(u.tx, u.meta, ledger);
+  }
   for (const id of r.newPlanets) {
     layout.add(id, universe.addresses.string(id), ledger);
     clusters.add(id);
@@ -818,6 +825,119 @@ async function explore({ id, seq = 0 }) {
   post({ type: 'explored', seq, id, part: 'nfts', explored, done: true });
 }
 
+// --- shared price (phase 3A) ------------------------------------------------------------------------
+
+const bookKey = (a, b) => [a, b].sort().join('|');
+const assetSpec = (asset) => (asset === 'XRP' ? { currency: 'XRP' } : { currency: asset.split('/')[0], issuer: asset.split('/')[1] });
+
+/**
+ * The shared-price measure for a probed planet (docs/universe.md, Part A).
+ * Live: the account's offers, every book its offers touch in both
+ * directions, the issuers' TransferRate from their roots and each book's
+ * pool, all at the latest validated ledger, one request at a time through
+ * the stream's node (R18 copied). Replay or a stopped sky: the book state
+ * from the Offer nodes, at face.
+ */
+async function sharedPrice({ id, seq = 0 }) {
+  const p = universe.planetById(id);
+  if (!p) {
+    post({ type: 'shared-price-error', seq, id, message: 'no such planet' });
+    return;
+  }
+  const t0 = performance.now();
+  const address = p.address;
+  const rates = new Map();
+  for (let other = 1; other <= universe.planetCount; other++) {
+    const q = universe.planets[other];
+    if (q?.transferRate) rates.set(q.address, rateOf(q.transferRate));
+  }
+  const liveNode = Boolean(stream && !replay && !synthetic);
+  let ledger = universe.currentLedger ?? 0;
+  let focusOffers = [];
+  const bookOffers = new Map();
+  const pools = [];
+  let requests = 0;
+  let source = 'the book state from the window’s Offer nodes, at face';
+  let waited = 0;
+  const ask = async (cmd) => {
+    for (let attempt = 0; ; attempt++) {
+      requests += 1;
+      try {
+        return (await stream.request(cmd)).result;
+      } catch (err) {
+        if (err?.code === 'actNotFound' || err?.code === 'actMalformed') return null;
+        if ((err?.code === 'tooBusy' || err?.code === 'slowDown') && attempt < 2) {
+          // the public node's quota: wait the time it states (capped at a minute), twice at most, and say so
+          const stated = Number(/retry in ~(\d+)ms/.exec(err?.message ?? '')?.[1]);
+          const wait = Math.min(60000, Number.isFinite(stated) && stated > 0 ? stated + 500 : 3000);
+          waited += wait;
+          post({ type: 'shared-price-waiting', seq, id, ms: wait, command: cmd.command });
+          await sleep(wait);
+          continue;
+        }
+        throw err;
+      }
+    }
+  };
+  if (liveNode) {
+    const v = await ask({ command: 'ledger', ledger_index: 'validated' });
+    ledger = Number(v?.ledger_index ?? v?.ledger?.ledger_index ?? ledger);
+    const own = await ask({ command: 'account_offers', account: address, ledger_index: ledger, limit: 200 });
+    focusOffers = (own?.offers ?? []).map((o) => ({ Account: address, Sequence: o.seq, TakerGets: o.taker_gets, TakerPays: o.taker_pays, quality: o.quality }));
+    source = `${own?.validated === false ? 'an unvalidated' : 'the validated'} ledger of the stream’s node`;
+    const booksInPlay = [...new Set(focusOffers.map((o) => bookKey(assetOf(o.TakerGets), assetOf(o.TakerPays))))].slice(0, 6);
+    const issuers = new Set();
+    for (const key of booksInPlay) {
+      const [a, b] = key.split('|');
+      const offers = [];
+      for (const [gets, pays] of [
+        [a, b],
+        [b, a],
+      ]) {
+        const r = await ask({ command: 'book_offers', taker_gets: assetSpec(gets), taker_pays: assetSpec(pays), ledger_index: ledger, limit: 60 });
+        for (const o of r?.offers ?? []) offers.push(o);
+        await sleep(150);
+      }
+      bookOffers.set(key, offers);
+      for (const asset of [a, b]) if (asset !== 'XRP') issuers.add(asset.split('/')[1]);
+      const amm = await ask({ command: 'amm_info', asset: assetSpec(a), asset2: assetSpec(b), ledger_index: ledger });
+      if (amm?.amm) pools.push({ account: amm.amm.account, amount: amm.amm.amount, amount2: amm.amm.amount2, trading_fee: amm.amm.trading_fee });
+      await sleep(150);
+    }
+    for (const issuer of [...issuers].slice(0, 6)) {
+      if (rates.has(issuer)) continue;
+      const info = await ask({ command: 'account_info', account: issuer, ledger_index: ledger });
+      rates.set(issuer, rateOf(info?.account_data?.TransferRate));
+      await sleep(150);
+    }
+  } else {
+    focusOffers = books.ofAccount(address);
+    const booksInPlay = [...new Set(focusOffers.map((o) => bookKey(assetOf(o.TakerGets), assetOf(o.TakerPays))))];
+    for (const key of booksInPlay) {
+      const [a, b] = key.split('|');
+      bookOffers.set(key, books.onBook(a, b));
+    }
+  }
+  const built = candidatesOf({ focus: address, focusOffers, bookOffers, rates, makersPerBook: SHARED_PRICE_DEFAULTS.makersPerBook, cap: SHARED_PRICE_DEFAULTS.candidates });
+  const nameOf = (a) => (typeof a === 'string' && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : (a ?? '?'));
+  const r = sharedPriceAt({ ledger, focus: address, candidates: built.candidates, pools, excluded: built.excluded, selection: `${built.selection} · ${source}${liveNode ? ` · ${requests} requests${waited ? `, ${Math.round(waited / 1000)} s waited for the node’s quota` : ''}` : `, ${books.unseenCreations.toLocaleString('en-US')} offers first seen modified (created before the window)`}`, nameOf, replay: !liveNode });
+  const idOf = (a) => (universe.addresses.has(a) ? universe.addresses.id(a) : 0);
+  post({
+    type: 'shared-price',
+    seq,
+    id,
+    ledger,
+    lines: r.lines,
+    all: r.all,
+    loops: r.nerve.loops.map((loop) => ({ members: loop.members.map((i) => ({ id: idOf(built.candidates[i].id), address: built.candidates[i].id })), edge: loop.edge.afterFees, nominal: loop.edge.nominal, room: loop.room, legs: loop.cycle.length })),
+    betti: r.betti,
+    candidates: built.candidates.length,
+    pools: pools.length,
+    requests,
+    ms: Math.round(performance.now() - t0),
+  });
+}
+
 self.onmessage = (e) => {
   const m = e.data ?? {};
   switch (m.type) {
@@ -848,6 +968,9 @@ self.onmessage = (e) => {
       post({ type: 'moment', seq: m.seq, case: c, covered: cut.length ? { from: cut[0].index, to: cut.at(-1).index, ledgers: cut.length, of: rows.length } : null, reason: c ? null : 'no closed ledger in the window yet' });
       break;
     }
+    case 'sharedPrice':
+      sharedPrice(m).catch((err) => post({ type: 'shared-price-error', seq: m.seq, id: m.id, message: err?.message ?? String(err) }));
+      break;
     case 'probe':
       probe(m).catch((err) => post({ type: 'probe-error', seq: m.seq, id: m.id, message: err?.message ?? String(err) }));
       break;

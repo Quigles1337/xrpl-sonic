@@ -152,6 +152,7 @@ export function rootsOf(meta) {
       regularKey: isAddress(f.RegularKey) ? f.RegularKey : null,
       domain: typeof f.Domain === 'string' && /^[0-9A-Fa-f]+$/.test(f.Domain) ? f.Domain : null,
       ammId: typeof f.AMMID === 'string' ? f.AMMID : null,
+      transferRate: Number.isInteger(Number(f.TransferRate)) && Number(f.TransferRate) > 0 ? Number(f.TransferRate) : null, // billionths; absent or 0 is parity
       sequence: Number.isInteger(Number(f.Sequence)) ? Number(f.Sequence) : null,
     });
   }

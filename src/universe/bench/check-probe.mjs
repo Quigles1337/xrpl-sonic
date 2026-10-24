@@ -130,6 +130,10 @@ check('the coherence label is the readout’s: pairs tested and the record check
 check('no label says "coordinated"', !JSON.stringify(p).match(/coordinat/i));
 check('the short label beside a lit planet is in the readout’s words', p.shorts.every((s) => /connected: \d+|not touching/.test(s)), p.shorts.join(' | '));
 check('the head has the two phase 3 slots and the cadence from the window', p.head && p.head.influence === 'not measured (phase 3)' && p.head.cadence && /cadence|no cadence/.test(p.head.cadence.label), p.head?.cadence?.label);
+await waitFor(page, 'window.xrplUniverse.probeState() && window.xrplUniverse.probeState().shared', { timeoutMs: 60000, everyMs: 500 });
+const shared = JSON.parse(await page.evaluate('JSON.stringify(window.xrplUniverse.probeState().shared)'));
+check('the shared-price measure answered on the replay from the book state', !shared.error && Array.isArray(shared.lines) && shared.lines.length >= 3, shared.error ?? `${shared.candidates} candidates, ${shared.loops?.length} loops, ${shared.ms} ms`);
+check('its readout states the replay’s limits and the nerve, never the forbidden words', (() => { const t = (shared.lines ?? []).join(' '); return /nerve: /.test(t) && /a replay: offers taken at face/.test(t) && /rippling through trust lines is out of scope/.test(t) && !/arbitrage|inefficient|diverse|equilibrium/i.test(t); })(), (shared.lines ?? []).slice(0, 2).join(' | ').slice(0, 160));
 check('the text equivalent reads the catch through the focus line', await page.evaluate(`(() => { const t = document.getElementById('focus-line').textContent; return t.startsWith('probe') && t.includes('record proximity'); })()`), (await page.evaluate(`document.getElementById('focus-line').textContent`)).slice(0, 120));
 check('the readout drawer shows the lines', await page.evaluate(`!document.getElementById('probe').classList.contains('hidden') && document.querySelectorAll('#probe-lines li').length >= 3`));
 check('Space again releases: the beam retracts, the catch stays lit', await (async () => {
