@@ -59,6 +59,7 @@
 
     <div id="focus-line" class="focus-line hidden" role="status" aria-live="polite"></div>
     <p id="caption" class="caption hidden" role="status"></p>
+    <p id="fly-hud" class="fly-hud hidden" aria-live="off"></p>
     <aside id="probe" class="probe hidden" role="region" aria-label="The probe's readout">
       <div class="probe-head">
         <h2 id="probe-title">The probe</h2>
@@ -72,7 +73,8 @@
         <button id="probe-copy" class="btn" type="button" title="Copy the readout's lines">Copy readout</button>
       </div>
     </aside>
-    <p class="footer-keys" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>orbit <kbd>+</kbd><kbd>−</kbd>closer <kbd>[</kbd><kbd>]</kbd>planets <kbd>,</kbd><kbd>.</kbd>events <kbd>Space</kbd>probe <kbd>U</kbd>UFO <kbd>Enter</kbd>explore <kbd>?</kbd>keys</p>
+    <p class="footer-keys" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>orbit <kbd>+</kbd><kbd>−</kbd>closer <kbd>[</kbd><kbd>]</kbd>planets <kbd>,</kbd><kbd>.</kbd>events <kbd>Space</kbd>probe <kbd>U</kbd>UFO <kbd>Enter</kbd>explore <kbd>F</kbd>fly <kbd>?</kbd>keys</p>
+    <p id="fly-keys" class="footer-keys hidden" aria-hidden="true"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>move <kbd>Q</kbd><kbd>E</kbd>down·up <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd>turn <kbd>+</kbd><kbd>−</kbd>speed <kbd>V</kbd>dive <kbd>F</kbd>leave <kbd>0</kbd>home</p>
     <div id="coverage" class="coverage" role="status" aria-live="polite">Press Start. The sky shows only what this page hears from a public node, for as long as it listens; it never claims to be the whole ledger.</div>
 
     <div id="help" class="help hidden" role="dialog" aria-label="Keys" aria-modal="true">
@@ -82,6 +84,8 @@
           <dt><kbd>Space</kbd></dt><dd>With the UFO on and a planet focused: hold the probe on it, and release it; otherwise start and stop listening</dd>
           <dt><kbd>Shift</kbd> <kbd>Space</kbd></dt><dd>Start and stop listening, always</dd>
           <dt><kbd>U</kbd></dt><dd>The UFO on and off (a double right-click on the sky and a two-finger double-tap do the same)</dd>
+          <dt><kbd>F</kbd></dt><dd>Fly: the camera becomes an eye among the planets. <kbd>W</kbd> <kbd>S</kbd> forward and back, <kbd>A</kbd> <kbd>D</kbd> sideways, <kbd>Q</kbd> <kbd>E</kbd> down and up, the arrows and a drag turn, the wheel moves, <kbd>+</kbd> <kbd>−</kbd> change the speed (slower near planets). <kbd>F</kbd> again returns to orbit; <kbd>0</kbd> to the home.</dd>
+          <dt><kbd>V</kbd></dt><dd>Dive to the focused planet (a double-click on a planet does the same): the eye arrives a dozen radii from it, facing it</dd>
           <dt><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Orbit the sky (drag does the same)</dd>
           <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Move closer and further (scroll does the same)</dd>
           <dt><kbd>0</kbd></dt><dd>Reset the camera</dd>

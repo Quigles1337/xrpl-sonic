@@ -14,7 +14,7 @@
 // takes when WebGL is unavailable.
 
 import { project, referenceScale } from './projection.js';
-import { SkyBase, CATEGORY_RGB, LAYER_OF_CATEGORY, BASE_PX, LOD, NEBULA_ZOOM } from './sky.js';
+import { SkyBase, CATEGORY_RGB, LAYER_OF_CATEGORY, BASE_PX, LOD, NEBULA_ZOOM, DEPTH_DIM } from './sky.js';
 
 const NEBULA_HUE = 207; // the plate's nebula ink [40, 120, 190] as a hue
 const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
@@ -33,6 +33,7 @@ uniform float uDistance;
 uniform vec2 uViewport;
 uniform float uFocal;
 uniform float uBasePx;
+uniform float uSizeDistance;
 uniform float uDpr;
 varying float vHue;
 varying float vGlow;
@@ -48,7 +49,7 @@ void main() {
   float z2 = -t.y * sp + z1 * cp;
   float depth = z2 + uDistance;
   gl_Position = vec4(x1 * uFocal * 2.0 / uViewport.x, y2 * uFocal * 2.0 / uViewport.y, 0.0, depth);
-  float radius = aSize * uBasePx * uDistance / max(depth, 0.001);
+  float radius = aSize * uBasePx * uSizeDistance / max(depth, 0.001);
   vRadius = radius;
   float halo = 2.4 + 2.0 * max(aGlow, 0.0);
   gl_PointSize = clamp(radius * halo * 2.0 * uDpr, 1.0, 128.0);
@@ -183,7 +184,7 @@ export class SkyGL extends SkyBase {
     };
     this.buffers = { pos: gl.createBuffer(), size: gl.createBuffer(), hue: gl.createBuffer(), glow: gl.createBuffer(), kind: gl.createBuffer(), linePos: gl.createBuffer(), lineColour: gl.createBuffer(), nebPos: gl.createBuffer(), nebSize: gl.createBuffer(), nebHue: gl.createBuffer(), nebGlow: gl.createBuffer(), nebKind: gl.createBuffer() };
     this.loc = {
-      p: { aPos: gl.getAttribLocation(this.points, 'aPos'), aSize: gl.getAttribLocation(this.points, 'aSize'), aHue: gl.getAttribLocation(this.points, 'aHue'), aGlow: gl.getAttribLocation(this.points, 'aGlow'), aKind: gl.getAttribLocation(this.points, 'aKind'), uTarget: gl.getUniformLocation(this.points, 'uTarget'), uYaw: gl.getUniformLocation(this.points, 'uYaw'), uPitch: gl.getUniformLocation(this.points, 'uPitch'), uDistance: gl.getUniformLocation(this.points, 'uDistance'), uViewport: gl.getUniformLocation(this.points, 'uViewport'), uFocal: gl.getUniformLocation(this.points, 'uFocal'), uBasePx: gl.getUniformLocation(this.points, 'uBasePx'), uDpr: gl.getUniformLocation(this.points, 'uDpr') },
+      p: { aPos: gl.getAttribLocation(this.points, 'aPos'), aSize: gl.getAttribLocation(this.points, 'aSize'), aHue: gl.getAttribLocation(this.points, 'aHue'), aGlow: gl.getAttribLocation(this.points, 'aGlow'), aKind: gl.getAttribLocation(this.points, 'aKind'), uTarget: gl.getUniformLocation(this.points, 'uTarget'), uYaw: gl.getUniformLocation(this.points, 'uYaw'), uPitch: gl.getUniformLocation(this.points, 'uPitch'), uDistance: gl.getUniformLocation(this.points, 'uDistance'), uViewport: gl.getUniformLocation(this.points, 'uViewport'), uFocal: gl.getUniformLocation(this.points, 'uFocal'), uBasePx: gl.getUniformLocation(this.points, 'uBasePx'), uSizeDistance: gl.getUniformLocation(this.points, 'uSizeDistance'), uDpr: gl.getUniformLocation(this.points, 'uDpr') },
       l: { aPos: gl.getAttribLocation(this.lines, 'aPos'), aColour: gl.getAttribLocation(this.lines, 'aColour'), uTarget: gl.getUniformLocation(this.lines, 'uTarget'), uYaw: gl.getUniformLocation(this.lines, 'uYaw'), uPitch: gl.getUniformLocation(this.lines, 'uPitch'), uDistance: gl.getUniformLocation(this.lines, 'uDistance'), uViewport: gl.getUniformLocation(this.lines, 'uViewport'), uFocal: gl.getUniformLocation(this.lines, 'uFocal') },
     };
     this.positionsDirty = true;
@@ -215,6 +216,7 @@ export class SkyGL extends SkyBase {
     gl.uniform1f(loc.uYaw, cam.yaw);
     gl.uniform1f(loc.uPitch, cam.pitch);
     gl.uniform1f(loc.uDistance, cam.distance);
+    if (loc.uSizeDistance) gl.uniform1f(loc.uSizeDistance, cam.sizeDistance ?? cam.distance);
     gl.uniform2f(loc.uViewport, this.width, this.height);
     gl.uniform1f(loc.uFocal, this.height / 2 / Math.tan(cam.fov / 2));
   }
@@ -269,6 +271,7 @@ export class SkyGL extends SkyBase {
       s.depth[id] = p.depth;
       this.glow[id] = this.glowOf(id, this.ledger);
       if (a.core && !a.core[id] && r < LOD.far) this.glow[id] = cam.distance >= NEBULA_ZOOM ? -0.18 : -0.5; // a field star, in no galaxy, is dust: negative glow carries its alpha to the shader
+      else if (a.depth && a.depth[id] >= 2 && cam.distance >= NEBULA_ZOOM) this.glow[id] = -DEPTH_DIM[Math.min(3, a.depth[id])]; // the deep levels dim at far zoom
       if (r < LOD.far) far += 1;
       else if (r < LOD.near) mid += 1;
       else near.push(id);

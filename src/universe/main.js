@@ -255,6 +255,7 @@ function onLedger(m) {
   sky.setPairs(m.pairs);
   sky.setStanding(m.standing);
   sky.setWeather(m.weather);
+  if (m.extent != null) sky.setExtent(m.extent);
   sky.ledgerClosed();
   // the events of the ledger as motions, on one clock for the picture and the sound
   const now = performance.now();
@@ -296,8 +297,18 @@ function onLedger(m) {
 // --- the frame loop ------------------------------------------------------------
 
 let raf = 0;
+let lastTs = 0;
+const held = new Set(); // the fly keys held down: w a s d q e
+let hudAt = 0;
 function frame(ts) {
   raf = requestAnimationFrame(frame);
+  const dt = lastTs ? Math.min(0.1, (ts - lastTs) / 1000) : 0;
+  lastTs = ts;
+  if (sky.fly.on && held.size && dt) sky.flyMove((held.has('w') ? 1 : 0) - (held.has('s') ? 1 : 0), (held.has('d') ? 1 : 0) - (held.has('a') ? 1 : 0), (held.has('e') ? 1 : 0) - (held.has('q') ? 1 : 0), dt);
+  if (ts - hudAt > 250) {
+    hudAt = ts;
+    updateHud();
+  }
   sky.draw(ts);
   if ((sky.frames & 31) === 0) {
     const s = sky.stats();
@@ -447,8 +458,17 @@ function stepEvent(step) {
 
 // --- keyboard ------------------------------------------------------------
 
+const FLY_KEYS = new Set(['w', 'a', 's', 'd', 'q', 'e']);
+window.addEventListener('keyup', (e) => held.delete(e.key.toLowerCase()));
+window.addEventListener('blur', () => held.clear());
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  if (sky.fly.on && FLY_KEYS.has(e.key.toLowerCase()) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    // flying, W A S D Q E move the eye (the layer and sound keys are the buttons meanwhile)
+    held.add(e.key.toLowerCase());
+    e.preventDefault();
+    return;
+  }
   if (e.key === 'Escape') {
     if (!help.classList.contains('hidden')) help.classList.add('hidden');
     else if (state.probe) {
@@ -489,15 +509,29 @@ window.addEventListener('keydown', (e) => {
       break;
     case '+':
     case '=':
-      sky.zoom(0.85);
+      if (sky.fly.on) sky.setFlySpeed(sky.fly.speed * 1.5);
+      else sky.zoom(0.85);
       break;
     case '-':
     case '_':
-      sky.zoom(1 / 0.85);
+      if (sky.fly.on) sky.setFlySpeed(sky.fly.speed / 1.5);
+      else sky.zoom(1 / 0.85);
+      break;
+    case 'f':
+    case 'F':
+      if (sky.fly.on) sky.leaveFly();
+      else sky.enterFly();
+      updateHud();
+      break;
+    case 'v':
+    case 'V':
+      if (state.focus) sky.diveTo(state.focus);
+      updateHud();
       break;
     case '0':
       sky.reset();
       clearFocus();
+      updateHud();
       break;
     case ']':
       travel(1);
@@ -828,6 +862,29 @@ if (!state.ufo.captionShown) {
   saveUfoState(state.ufo);
 }
 
+// --- the inside viewer's line ------------------------------------------------------------
+
+const hud = $('#fly-hud');
+const footerKeys = $('.footer-keys');
+const flyKeys = $('#fly-keys');
+function updateHud() {
+  const f = sky.flyInfo();
+  canvas.classList.toggle('flying', f.on);
+  if (!f.on) {
+    hud.classList.add('hidden');
+    footerKeys?.classList.remove('hidden');
+    flyKeys?.classList.add('hidden');
+    return;
+  }
+  hud.classList.remove('hidden');
+  footerKeys?.classList.add('hidden');
+  flyKeys?.classList.remove('hidden');
+  const a = state.last?.attrs;
+  const near = f.nearest > 0 ? nameOfId(f.nearest) : 'nothing';
+  const galaxy = a && f.nearest > 0 && f.nearest <= a.n && a.core[f.nearest] ? nameOfId(a.core[f.nearest]) : null;
+  hud.textContent = `flying · speed ×${f.speed.toFixed(f.speed < 1 ? 2 : 1)} · nearest ${near} at ${f.distance.toFixed(2)}${galaxy ? ` · in the galaxy of ${galaxy}` : ' · in the field'}${f.gliding ? ' · diving' : ''} · F leaves`;
+}
+
 // --- memory, for the bench harness ------------------------------------------------------------
 
 async function memory() {
@@ -879,6 +936,7 @@ window.xrplUniverse = {
   saveMoment,
   catch: () => state.probe?.catch ?? null,
   probeState: () => state.probe,
+  fly: { enter: () => sky.enterFly(), leave: () => sky.leaveFly(), dive: (id, opts) => sky.diveTo(id, opts), move: (f, s, u, dt) => sky.flyMove(f, s, u, dt), info: () => sky.flyInfo(), speed: (k) => sky.setFlySpeed(k) },
   worker,
   engine,
 };

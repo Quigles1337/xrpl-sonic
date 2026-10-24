@@ -231,7 +231,7 @@ export function drawOverlay(ctx, s, a, o) {
       const ly = nb.sy + nb.sr + 10;
       if (placed.some(([px, py]) => Math.abs(px - nb.sx) < 260 && Math.abs(py - ly) < 24)) continue;
       placed.push([nb.sx, ly]);
-      ctx.fillText(nb.core ? `galaxy · ${nb.size} planets around ${o.names(nb.root).name}` : nebulaLabel(nb.size), nb.sx, ly);
+      ctx.fillText(nb.core ? (nb.depth ? `${nb.size} planets around ${o.names(nb.root).name} · in the galaxy of ${o.names(nb.top).name}` : `galaxy · ${nb.size} planets around ${o.names(nb.root).name}`) : nebulaLabel(nb.size), nb.sx, ly);
     }
   }
   // --- pair labels ------------------------------------------------------------------------------
