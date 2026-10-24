@@ -267,11 +267,16 @@ export function drawProbe(ctx, s, o) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     let n = 0;
+    const placed = [];
     for (const l of c.lit) {
       if (!(s.depth[l.id] > 0) || n >= 24 || !l.short) continue;
+      const lx = s.x[l.id] + Math.max(6, s.r[l.id] + 4);
+      const ly = s.y[l.id] - 6;
+      if (placed.some(([px, py]) => Math.abs(px - lx) < 120 && Math.abs(py - ly) < 13)) continue; // the labels do not pile up; the readout has every line
+      placed.push([lx, ly]);
       n += 1;
       ctx.fillStyle = rgba(PULSE_RGB, l.inStep ? 0.95 : 0.7);
-      ctx.fillText(l.short, s.x[l.id] + Math.max(6, s.r[l.id] + 4), s.y[l.id] - 6);
+      ctx.fillText(l.short, lx, ly);
     }
     if (c.short) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
@@ -281,9 +286,10 @@ export function drawProbe(ctx, s, o) {
   const u = o.ufo;
   if (!u?.on || !u.over) return;
   const target = u.locked || o.hover || 0;
-  if (target > 0 && s.depth[target] > 0) {
-    const strength = reduced ? 1 : Math.min(1, (now - (u.since ?? now)) / 200);
-    drawBeam(ctx, { x: u.x, y: u.y - 8 }, { x: s.x[target], y: s.y[target] }, { strength, locked: Boolean(u.locked), reduced, rgb: PULSE_RGB, targetRadius: s.r[target] || 3 });
-  }
-  drawUfo(ctx, u.x, u.y, { t: now, reduced, rgb: PULSE_RGB });
+  const aimed = target > 0 && s.depth[target] > 0;
+  // over a planet the saucer floats higher, so the beam has length even when the pointer is on the planet itself
+  const strength = reduced ? 1 : Math.min(1, (now - (u.since ?? now)) / 200);
+  const lift = 14 + (aimed ? 22 * strength : 0);
+  if (aimed) drawBeam(ctx, { x: u.x, y: u.y - lift + 4 }, { x: s.x[target], y: s.y[target] }, { strength, locked: Boolean(u.locked), reduced, rgb: PULSE_RGB, targetRadius: s.r[target] || 3 });
+  drawUfo(ctx, u.x, u.y, { t: now, reduced, rgb: PULSE_RGB, lift });
 }

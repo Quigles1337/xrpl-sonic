@@ -23,6 +23,7 @@ import { XrplStream, NETWORKS } from '../ws.js';
 import { classifyMessage, txToEvent, ledgerToEvent, unwrapTransactionMessage } from '../mapping.js';
 import { LiveWindow, momentFromLive } from '../moment.js';
 import { caseFromState } from '../case.js';
+import { MAX_REPLAY_LEDGERS } from '../replay.js';
 import { frameFromLive, coherence, significant, DEFAULTS as COHERENCE_DEFAULTS } from '../coherence.js';
 import { Universe, coverageLine } from './universe.js';
 import { Layout } from './layout.js';
@@ -839,9 +840,12 @@ self.onmessage = (e) => {
       post({ type: 'coverage', coverage: universe.coverage(), line: coverageLine(universe.coverage(), { host, synthetic: Boolean(synthetic), state }) });
       break;
     case 'moment': {
+      // the case format caps a clip at the listening page's window (MAX_REPLAY_LEDGERS); the sky's window is longer, so the moment is its last stretch
       const base = caseFromState({ network: m.network === 'testnet' ? 'testnet' : 'mainnet', cast: m.cast ?? [], title: m.title ?? '' });
-      const c = momentFromLive({ base, window: live, question: m.question ?? '', host: host ?? '' });
-      post({ type: 'moment', seq: m.seq, case: c, reason: c ? null : 'no closed ledger in the window yet' });
+      const rows = live.ledgers;
+      const cut = rows.slice(-MAX_REPLAY_LEDGERS);
+      const c = momentFromLive({ base, window: cut, question: m.question ?? '', host: host ?? '' });
+      post({ type: 'moment', seq: m.seq, case: c, covered: cut.length ? { from: cut[0].index, to: cut.at(-1).index, ledgers: cut.length, of: rows.length } : null, reason: c ? null : 'no closed ledger in the window yet' });
       break;
     }
     case 'probe':

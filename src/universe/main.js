@@ -708,15 +708,19 @@ function onCatch(m) {
   p.status = `${c.lit.length} lit · ${c.ms} ms`;
   sky.setCatch(c);
   renderProbe();
-  // the text equivalent: the catch in the readout's words through the focus line's status region, one line per lit planet
+  // the text equivalent: the catch in the readout's words through the focus line's status region, one line per lit
+  // planet, for a screen reader; the eye gets one short line (the readout panel has every line)
   focusLine.classList.remove('hidden');
   focusLine.innerHTML = '';
   const kind = document.createElement('span');
   kind.className = 'kind';
   kind.textContent = 'probe';
   const text = document.createElement('span');
-  text.textContent = [p.lines[0].replace(/^probe: /, ''), ...p.lines.slice(1)].join(' · '); // the kind span already says probe
-  focusLine.append(kind, text);
+  text.textContent = `${nameOfLit(p.id, p.address)} · ${c.lit.length} lit · ${c.coherence ? `${c.coherence.significant} in step of ${c.coherence.tested} tested` : 'no coherence'} · ${historyLabel(c.history).split(' · ')[0]} · the readout has every line`;
+  const full = document.createElement('span');
+  full.className = 'sr-only';
+  full.textContent = [p.lines[0].replace(/^probe: /, ''), ...p.lines.slice(1)].join(' · ');
+  focusLine.append(kind, text, full);
 }
 
 function renderProbe() {
@@ -850,8 +854,9 @@ async function onMoment(m) {
     link = null;
   }
   const copied = link ? await copyText(link) : false;
-  probeStatus.textContent = `saved ${caseFilename(c)}${copied ? ' · link copied' : ''}`;
-  state.moments.push({ id: c.id, file: caseFilename(c), link });
+  const covered = m.covered && m.covered.ledgers < m.covered.of ? ` · the last ${m.covered.ledgers} of ${m.covered.of} ledgers (the case format’s limit)` : '';
+  probeStatus.textContent = `saved ${caseFilename(c)}${covered}${copied ? ' · link copied' : ''}`;
+  state.moments.push({ id: c.id, file: caseFilename(c), link, covered: m.covered ?? null });
 }
 
 // the switch as stored, the caption once
