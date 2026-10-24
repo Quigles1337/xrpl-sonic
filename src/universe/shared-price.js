@@ -434,7 +434,10 @@ export function consumedOffers(tx, meta) {
     const before = prev.TakerGets != null ? valueOf(prev.TakerGets) : null;
     const after = valueOf(fin.TakerGets);
     if (n.ModifiedNode && !(before > after)) continue;
-    out.push({ owner: fin.Account, sequence: fin.Sequence, gave: prev.TakerGets != null ? before - (n.DeletedNode ? 0 : after) : null, asset: assetOf(fin.TakerGets) });
+    const paysBefore = prev.TakerPays != null ? valueOf(prev.TakerPays) : null;
+    const paysAfter = valueOf(fin.TakerPays);
+    // the traded part is the previous amount less the final one, for a deleted offer too: an offer removed unfunded after a partial trade keeps its remainder in FinalFields
+    out.push({ owner: fin.Account, sequence: fin.Sequence, gave: before != null && Number.isFinite(after) ? before - after : null, asset: assetOf(fin.TakerGets), got: paysBefore != null && Number.isFinite(paysAfter) ? paysBefore - paysAfter : null, paysAsset: assetOf(fin.TakerPays) });
   }
   return out;
 }

@@ -449,3 +449,8 @@ kbd {
 .fly-hud { position: fixed; left: 16px; top: 64px; margin: 0; padding: 6px 10px; border: 1px solid rgba(200, 220, 255, 0.2); border-radius: 6px; background: rgba(6, 10, 18, 0.8); color: #c8dcff; font: 11px/1.4 var(--mono, ui-monospace, monospace); z-index: 5; max-width: min(92vw, 560px); }
 #sky.flying { cursor: crosshair; }
 #sky.flying.ufo { cursor: none; }
+
+/* --- phase 3B: the forecast panel ---------------------------------------------------------------- */
+.forecast { position: fixed; left: 12px; top: 96px; bottom: 88px; width: min(92vw, 520px); display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid rgba(200, 220, 255, 0.22); border-radius: 10px; background: rgba(6, 10, 18, 0.92); color: #dbe6ff; font: 12px/1.45 var(--mono, ui-monospace, monospace); z-index: 5; }
+.forecast .probe-lines { padding-left: 4ch; } /* room for two-digit line numbers */
+@media (max-width: 720px) { .forecast { left: 12px; right: 12px; width: auto; top: auto; bottom: 88px; max-height: 50vh; } }

@@ -46,6 +46,9 @@ const replay = (() => {
 })();
 const pace = query.has('pace') && Number.isFinite(Number(query.get('pace'))) ? Math.max(0, Number(query.get('pace'))) : 300; // ?pace=0 is honoured: as fast as the worker reads
 const windowLedgers = Math.min(4000, Math.max(50, Number(query.get('window')) || 300)); // the live window's ledgers, for the probe's statistic
+const forecastOn = query.get('forecast') !== '0'; // the next-ledger forecast (docs/universe.md, Phase 3B): on unless ?forecast=0
+const nowcastOn = query.get('nowcast') === '1'; // the nowcast: the proposed stream and a fee poll, labelled apart
+const researchOn = query.get('research') === '1'; // the research switch: book_changes, cross-checked; off by default
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const $ = (sel) => document.querySelector(sel);
@@ -98,6 +101,10 @@ const state = {
   probeSeq: 0,
   explored: new Map(), // id → what the exploration learned
   moments: [], // the moments saved from the probe this session
+  forecast: null, // the worker's last forecast readout
+  nowcast: null, // its last nowcast
+  forecastOpen: false,
+  sessionWaiters: [],
 };
 const addresses = [null];
 
@@ -194,6 +201,22 @@ worker.onmessage = (e) => {
       break;
     case 'shared-price':
       onSharedPrice(m);
+      break;
+    case 'forecast':
+      state.forecast = m;
+      if (state.forecastOpen) renderForecast();
+      break;
+    case 'nowcast':
+      state.nowcast = m;
+      break;
+    case 'forecast-presence':
+      if (state.probe && m.seq === state.probe.seq) {
+        state.probe.presence = m.line;
+        renderProbe();
+      }
+      break;
+    case 'forecast-session':
+      for (const resolve of state.sessionWaiters.splice(0)) resolve(m);
       break;
     case 'shared-price-waiting':
       if (state.probe && m.seq === state.probe.seq) {
@@ -341,7 +364,7 @@ async function start() {
   state.replayDone = false;
   startBtn.textContent = 'Stop';
   startBtn.setAttribute('aria-pressed', 'true');
-  worker.postMessage({ type: 'start', network, synthetic, seed, sound: state.sound, replay, pace, window: windowLedgers });
+  worker.postMessage({ type: 'start', network, synthetic, seed, sound: state.sound, replay, pace, window: windowLedgers, forecast: forecastOn, nowcast: nowcastOn, research: researchOn });
   if (state.sound) await engine.start();
 }
 
@@ -537,6 +560,10 @@ window.addEventListener('keydown', (e) => {
       if (sky.fly.on) sky.leaveFly();
       else sky.enterFly();
       updateHud();
+      break;
+    case 'g':
+    case 'G':
+      toggleForecast();
       break;
     case 'v':
     case 'V':
@@ -787,18 +814,66 @@ function renderProbe() {
     const headCount = lines.length - p.catch.lit.length;
     lines.forEach((line, i) => add(line, i < headCount ? 'head' : p.catch.lit[i - headCount]?.inStep ? 'step' : ''));
     add(`tiers: proximity, conservation, cadence and the record's connections are calculated; coherence is an observation (a correlation at a lag). Nothing here says who owns what.`, 'fine');
-  }
-  if (p.shared) {
-    add('shared price (limited arbitrage, after Chichilnisky 1993 and 1997; only the nerve, Helly and LP duality are used):', 'head');
-    for (const line of p.shared.lines ?? []) add(line, /^loop across/.test(line) ? 'step' : line.startsWith('  ') ? 'fine' : '');
-    if (p.shared.ms != null) add(`measured in the worker: ${p.shared.ms} ms, ${p.shared.candidates} candidates, ${p.shared.pools} pool${p.shared.pools === 1 ? '' : 's'}, ${p.shared.requests} requests`, 'fine');
   } else if (p.connections.length) {
     add(`connected in the record: ${p.connections.length} planets, by count: ${p.connections
       .slice(0, 12)
       .map((c) => `${nameOfLit(c.id, c.address)} ${c.count}`)
       .join(', ')}${p.connections.length > 12 ? ', …' : ''}`);
   }
+  if (p.shared) {
+    add('shared price (limited arbitrage, after Chichilnisky 1993 and 1997; only the nerve, Helly and LP duality are used):', 'head');
+    for (const line of p.shared.lines ?? []) add(line, /^loop across/.test(line) ? 'step' : line.startsWith('  ') ? 'fine' : '');
+    if (p.shared.ms != null) add(`measured in the worker: ${p.shared.ms} ms, ${p.shared.candidates} candidates, ${p.shared.pools} pool${p.shared.pools === 1 ? '' : 's'}, ${p.shared.requests} requests`, 'fine');
+  }
+  if (p.presence) add(`next ledger: ${p.presence}`, 'head');
 }
+
+// --- the forecast panel (Phase 3B) ------------------------------------------------------------
+
+const forecastEl = $('#forecast');
+const forecastLines = $('#forecast-lines');
+const forecastStatus = $('#forecast-status');
+const forecastTitle = $('#forecast-title');
+const forecastBtn = $('#forecast-btn');
+
+function toggleForecast(open = !state.forecastOpen) {
+  state.forecastOpen = open;
+  forecastBtn?.setAttribute('aria-pressed', String(open));
+  if (open) renderForecast();
+  else forecastEl.classList.add('hidden');
+}
+
+/** The forecast panel: what the record holds, the nowcast (when on), the forecast, the event studies, the research lines; never "will". */
+function renderForecast() {
+  forecastEl.classList.remove('hidden');
+  const f = state.forecast;
+  forecastLines.innerHTML = '';
+  const add = (text, cls) => {
+    const li = document.createElement('li');
+    if (cls) li.className = cls;
+    li.textContent = text;
+    forecastLines.append(li);
+  };
+  if (!forecastOn) {
+    forecastTitle.textContent = 'The forecast';
+    forecastStatus.textContent = 'off (?forecast=0)';
+    return;
+  }
+  if (!f) {
+    forecastTitle.textContent = 'The forecast';
+    forecastStatus.textContent = state.running ? 'waiting for the first finished ledger…' : 'press Start';
+    return;
+  }
+  forecastTitle.textContent = `The forecast · #${Number(f.next).toLocaleString('en-US')}`;
+  forecastStatus.textContent = `${f.mode} · ${f.ms.toFixed(1)} ms`;
+  add(f.holds, 'fine');
+  if (state.nowcast?.lines) for (const [i, line] of state.nowcast.lines.entries()) add(line, i === 0 ? 'head' : line.startsWith('  ') ? 'fine' : '');
+  for (const [i, line] of f.lines.entries()) add(line, i === 0 ? 'head' : i === 1 ? 'step' : line.startsWith('  ') ? 'fine' : '');
+  for (const line of f.studyLines ?? []) add(line, line.startsWith('  ') ? 'fine' : '');
+  for (const line of f.researchLines ?? []) add(line, '');
+}
+forecastBtn?.addEventListener('click', () => toggleForecast());
+$('#forecast-close')?.addEventListener('click', () => toggleForecast(false));
 $('#probe-close').addEventListener('click', clearProbe);
 
 /** The clipboard, or a selected textarea when it is refused. */
@@ -987,6 +1062,14 @@ window.xrplUniverse = {
   catch: () => state.probe?.catch ?? null,
   probeState: () => state.probe,
   sharedPrice: (id) => worker.postMessage({ type: 'sharedPrice', id, seq: state.probe?.seq ?? ++state.probeSeq }),
+  forecast: () => state.forecast,
+  nowcast: () => state.nowcast,
+  toggleForecast,
+  forecastSession: () =>
+    new Promise((resolve) => {
+      state.sessionWaiters.push(resolve);
+      worker.postMessage({ type: 'forecast-session' });
+    }),
   fly: { enter: () => sky.enterFly(), leave: () => sky.leaveFly(), dive: (id, opts) => sky.diveTo(id, opts), move: (f, s, u, dt) => sky.flyMove(f, s, u, dt), info: () => sky.flyInfo(), speed: (k) => sky.setFlySpeed(k) },
   worker,
   engine,

@@ -584,6 +584,118 @@ Synthetic Poisson and Hawkes streams with known parameters recovered within tole
 2. **The split.** 60/40 by ledgers, with the second recording (when made under R19) as the held-out set in preference.
 3. **The guess-then-resolve display**, in sight and sound, as proposed above.
 
+### As built (Part B)
+
+Branch `feat/universe-forecast`, from `feat/universe-shared-price` (PR #40), since #37 and #38 were still open and unmerged when it was cut (checked in git and on GitHub). Its first commit puts the request rows R18–R21 inside the request table, where they had been left after a bullet list and rendered as text; that commit went to PR #40 as well. No shared module edited.
+
+**The code.**
+
+- `src/universe/forecast/rows.js`: the one row builder the worker and the bench share. A ledger's row is finished when the transactions heard for it reach its `txn_count`, or at the next close. A transaction heard again is counted a duplicate; one first heard after its row finished is counted late; one for a ledger more than 64 rows behind is counted stale and opens no row. In-flight transactions are counted against the open ledger they were proposed in, and each open ledger keeps the last `fee` result read while it was open.
+- `sealed.js`: `SealedPast.at(N)` is the only way into the past; asking it for N+1 throws "sealed at #N: #N+1 is the future", and `guard()` names the feature that tried.
+- `ropes.js`: the six ropes per metric, with both bias corrections of the EWMA variance, their windows, "forming" below two, and wall-time labels from arrival times.
+- `wake.js`: the gap, the CUSUM and the change-point posterior, as below.
+- `models.js`: persistence, the EWMA, the server's heuristic, the one-signal ridges, the HMM, the Hawkes model, and the predictive laws behind their points and intervals.
+- `score.js`: per-ledger records, skill over shared ledgers, coverage, Brier, the 60/40 split and its sentence, the verdict.
+- `forecaster.js`: the forecast and the nowcast, the choice on the tuning part, the fallback, presence, loops, the close interval, the readout and the fingerprint.
+- `events.js`: the event studies. `books.js`: the research switch.
+- `dmath.js`: the deterministic elementary functions, as below.
+- **The page.** The forecast panel opens on G or the Forecast button, beside the probe. `?forecast=0` turns the forecaster off, `?nowcast=1` adds the proposed stream and a fee poll every 1,000 ms, and `?research=1` adds `book_changes` and its cross-check. The probe's readout gains a "next ledger:" line for the probed account. The panel's first line says what the recording or the live connection holds.
+- **The bench.** `record-stream.mjs --timed --proposed --validations --fee-every 1000` records `{ at, from, msg }` lines; `forecast-recording.mjs` evaluates a recording in Node through the same row builder; `check-forecast.mjs` checks the panel headless; `capture-forecast-session.mjs` records the parity fixture; `cusum-thresholds.mjs` prints the threshold table; `math-parity.mjs` compares the engines.
+
+**The recordings.** Two recordings, both outside the repository. The first is 90 minutes of raw stream lines from 2026-10-23: 1,385 ledgers, no local times, nothing in flight. The second is 35 minutes recorded under R19 on 2026-10-24 from `wss://s1.ripple.com`, which answers as Clio 2.8.0 with rippled 3.4.1 behind it: 543 ledgers, local arrival times, 67,328 validation messages, the proposed stream and 4,172 fee results. **Every model change below was made after looking at the first recording only.** No model choice was made on the second, which is the held-out recording; within each recording the model shown is chosen on the first 60% of resolved ledgers and reported on the last 40%. The wake's variants were compared on the counts of both, and the readings below say so.
+
+**What the recordings showed, and what it changed.**
+
+- **Re-deliveries.** On the first recording the stream sent 41,262 transactions a second time, 2 to 49 closes after their ledger's close, in 276 runs; only 11 genuine stragglers came after their row. On the second, the proposed stream carried every validated transaction a second time (69,868). Both are counted as duplicates and dropped by hash.
+- **Bursty counts.** On the first recording the median ledger held 74 transactions, the 90th percentile 473, the most 1,028, in runs of one to seven burst ledgers; the counts' lag-1 autocorrelation was 0.53 there and 0.44 on the second. The first evaluation, with each model's mean as its point and normal intervals, found that **nothing beat persistence**: the best, the Hawkes model, lost by 1.4%, and its Poisson interval covered 9% of outcomes. The score is the absolute error, whose consistent point forecast is the median (Gneiting, "Making and evaluating point forecasts", JASA 106, 2011). So every model now forecasts **the median of its own predictive law**, and its interval is that law's 10th to 90th percentile:
+  - the HMM, a mixture of its states' Poisson laws;
+  - the Hawkes model, a negative binomial with the fit's Pearson dispersion φ, the counts' spread beyond a Poisson law at the fitted rate (McCullagh & Nelder, *Generalized Linear Models*, 1989);
+  - the ridges, fitted on log(1 + x) with the median exp(μ) − 1.
+- **The HMM's numerics.** Its emissions underflowed: 1,000 transactions against rates of 68 and 186 is zero in every state. They are now scaled per count by the largest. Baum–Welch drove the fitted initial distribution to a point mass on the quiet state, and filtering a recent window from it emptied every state when the window opened on a burst; two forecasts ran to the quantile walk's cap of 200,000. The filter now starts from the chain's stationary distribution. Flat typed arrays and a relative stopping rule (an improvement under 10⁻⁷ of the log-likelihood) cut a three-state fit from 182 ms to 4 ms and the worst ledger from 308 ms to 20 ms, in Node, with the deterministic functions below.
+- **The wake.** Its parts and the measurements behind them:
+  - **The CUSUM** reads log(1 + count) against the longest formed rope. Its threshold is set for the stated in-control run length of 500 ledgers **at the residuals' measured lag-1 autocorrelation**, simulated on an AR(1) normal law (the approach of Lu & Reynolds, "CUSUM charts for monitoring an autocorrelated process", *Journal of Quality Technology* 33, 2001). On three synthetic AR(1) streams with autocorrelation 0.6 the observed run lengths were 476, 566 and 625 for 500, where the independence threshold gave about 40.
+  - **The threshold table.** The thresholds for autocorrelations 0 to 0.9 ship as a table computed with 2,000 runs a step: h from 5.07 at 0 to 37.8 at 0.9, each checked at 494 to 521 on 4,000 further runs. The worker never simulates.
+  - **The change-point posterior** stays Poisson–Gamma with a constant hazard of 1/200. Each ledger's evidence is weighed by one over the count's dispersion (variance over mean of the reference rope), the quasi-likelihood of an overdispersed Poisson count (Wedderburn, *Biometrika* 61, 1974). The predictives are taken in log space, so a burst cannot empty the posterior. On the first recording this cut flagged changes from 157 to 5; it still finds 12 of 14 planted ×1.5 and ×2 shifts there, with a median delay of 20 ledgers. It assumes independence within a run, so on the synthetic AR(1) streams it flagged a change about every 90 ledgers (330 in 30,000).
+  - **"P(change at this ledger)"** in the spec's sense, P(r = 0), is the hazard itself under a constant hazard: it read 0.005 at every ledger. The readout now gives P(r = 1), "P(a new run began at this ledger)".
+  - **The window.** A change counts within **8** ledgers, two of the short rope's half-lives. Within 5, the posterior found the new run but its mass passed one half only after the run was longer than 5, missing 6 of 40 planted +3 sd shifts. Within 8 it found all 40, with delay 3 at the median and 6 at most, and 2 false flags in 15,640 steady ledgers. Within 16 it raised 9.
+  - **The fee's wake** reads log(1 + fee), on the same scale in both its parts.
+  - **The type shares' wakes** use a Normal law with the reference rope's variance taken as known, not the Normal–Gamma the spec named: a share's variance moves slowly against its level, and a known variance keeps the posterior conjugate and cheap.
+- **The engines' arithmetic.** The first live parity capture left the Node replay at its fourth ledger, in the last bit of one interval. Between Chrome 157 (V8 15) and Node 22 (V8 12.4), `Math.exp`, `log`, `pow`, `expm1`, `log1p`, `sin` and `cos` differ in the last bit on 0.5% to 10% of inputs; only `sqrt` agrees (`bench/math-parity.mjs`, 2,000 inputs a function). Every function on the forecaster's path now comes from `dmath.js`, which uses basic operations only: exp and log ported from fdlibm with its notice kept, log1p and expm1 by Goldberg's and Kahan's identities, the log-gamma without the sine reflection, and normal draws by Marsaglia's polar method. Squares are products. It gives the same bits in both engines, and its log is about three times as slow as the native one (28 ns against 10).
+- **Signed event studies.** Each curve's mid is signed by the taker's side, positive when the mid moved the way the taker pushed it. Unsigned, a buy's move and a sell's cancelled. The research switch's book-close model takes the side of the large trade at hand. A trade is sized by its XRP side; trades on a token/token book are counted and not studied, having no XRP side to size them by.
+- **Paper trades**, behind the research switch only. After a large trade at N, they follow or fade the sign of the book's past signed move from N to N+8. That sign comes from at least 5 studies whose windows had closed by N. Each trade counts whether this event's own move went that way. Nothing is valued and no profit is kept or shown, and the line prints the blind spots: no own impact, no ordering lottery, no queue position, and mids at face value from the offers seen.
+
+**Tried and not kept.**
+
+- The dispersion with the autocorrelation factor (1 − ρ)/(1 + ρ) in the change-point weight. It cut false changes on the synthetic AR(1) stream from 330 to 4 in 30,000 ledgers, but found 1 of 14 planted shifts on the first recording.
+- Residuals whitened by a one-ledger autoregression (Alwan & Roberts, *Journal of Business & Economic Statistics* 6, 1988). They were unstable on the shorter recording: the whitened residuals' sd was 3.4.
+- Residuals clipped at ±3. This changed none of the second recording's 8 alarms.
+- The successive-difference dispersion for the weight. It raised 36 flags on the second recording, against 3 for variance over mean.
+
+**The results, held out.** Skill against persistence (1 − MAE/MAE of persistence) over the held-out ledgers, then the share of outcomes inside the 80% interval:
+
+| count at N+1 | first recording, 554 ledgers | second recording, 217 ledgers |
+| --- | --- | --- |
+| persistence (its MAE) | 75.5 · 87% | 71.2 · 88% |
+| Hawkes, negative binomial median | +0.169 · 91% | +0.169 · 93% |
+| HMM, Poisson-mixture median | +0.158 · 66% | +0.185 · 61% |
+| ridge on the previous count, log scale | +0.145 · 87% | +0.073 · 85% |
+| ridge on the h 4 rope, log scale | +0.129 · 87% | −0.018 · 85% |
+| EWMA h 16 | −0.125 · 91% | −0.246 · 89% |
+| combined (members that beat every baseline on the tuning part) | +0.179 · 90% | +0.125 · 87% |
+| shown (chosen on the tuning part) | +0.177 · 90% | +0.125 · 87% |
+
+The HMM's Poisson law within a state is too narrow for these counts, so its interval covers under its 80%. It is shown as measured.
+
+| nowcast at N, second recording, 217 ledgers | skill · coverage |
+| --- | --- |
+| ridge on the open ledger's current size, from the fee poll | +0.408 · 88% |
+| ridge on the proposed count | −0.061 · 83% |
+| the server's `expected_ledger_size`, 500 in all 4,172 results | −4.383 · 5% |
+
+| other targets | first recording | second recording |
+| --- | --- | --- |
+| type mix, L1 error (persistence) | 0.476 (0.521) | 0.473 (0.529) |
+| the 20 most active accounts, Brier (their rate alone) | 0.135 (0.137), 11,080 forecasts | 0.126 (0.128), 4,340 |
+| close interval from arrival times | not scored: no arrival times | coverage 76%, MAE 439 ms |
+| CUSUM alarms · changes flagged | 1 · 5 in 1,385 ledgers | 8 · 2 in 543 ledgers |
+
+- **Presence.** Cadence adds little over the rate alone.
+- **Alarms.** The second recording's 8 CUSUM alarms fall on clusters of burst ledgers, residuals of about +2 to +3 sd for several ledgers, which no AR(1) normal law describes; they are reported, not tuned away. The fee's wake raised 19 alarms there, at fee escalations.
+- **Loops.** No loop was taken in either recording (Part A's ground truth), so the loop target has no Brier score yet.
+- **Event studies, signed.** Trades above the 90th percentile of fills, 10 XRP on the first recording and 8 on the second, with the move one ledger on and its 80% band:
+
+  | book | first recording | second recording |
+  | --- | --- | --- |
+  | RLUSD/XRP | +1.5 bp (1.2 to 1.7) over 110 trades | +0.3 bp (0.2 to 0.5) over 66 |
+  | FUZZY/XRP | +13.3 bp (7.6 to 18.8) over 41 | +27.0 bp (16.4 to 38.4) over 36 |
+
+  The top of the book was not thinned on either.
+- **Research switch, over both recordings in full,** with `book_changes` read from `wss://s2.ripple.com` one ledger at a time:
+
+  | | first recording, 1,385 ledgers | second recording, 543 ledgers |
+  | --- | --- | --- |
+  | books cross-checked against the facts layer | all 1,377 matched | all 626 matched |
+  | persistence's miss of a book's next close (mean absolute error of log(close)) | 0.56% over 1,184 next trades | 2.40% over 556 next trades |
+  | the event-study drift after a large trade, skill against persistence | +0.08 over 105 | +0.00 over 68 |
+  | paper trades: the direction held | in 94 of 147, on 4 books | in 50 of 91, on 2 books |
+
+  rippled's `computeBookChanges` (`BookChanges.h`) counts modified and deleted offers that carry both final and previous amounts, skips an offer's own cancel, names XRP `XRP_drops`, and puts XRP on side A when a book has it, else the smaller asset. Its `open`, `close`, `high` and `low` are traded rates, not the top of the book the documentation describes. The book closes are scored per book on the log scale. A per-ledger record kept one book's error per ledger, and in drops per token unit the largest books' errors were the whole score.
+- **Timing.** The forecaster takes 1.5 ms a ledger in Node on average over the first recording's counts, and 20 ms at the worst ledger, a refit. In the browser's worker the panel showed 3.8 ms on WebGL and 4.2 ms on 2D at the checked ledger.
+
+**Checked.**
+
+- `node --test`: 579 pass, none skipped. Six forecast test files cover the sealed past and its leak test; the ropes; the wake (thresholds, false alarms through the ropes, planted shifts, the window, the autocorrelated stream); the models' recovery of planted Poisson, Hawkes and HMM parameters; the predictive laws and the HMM's guards; the Hawkes dispersion and its coverage; the weighed change-point evidence; the deterministic functions and their golden bits; the rows (arrival order, duplicates, re-deliveries, stale ledgers, in-flight counts, `book_changes` parsing and cross-check, book closes per book); the event studies (a planted impact curve, signing, paper trades); and the forecaster's readout, parity and nowcast.
+- `bench/check-forecast.mjs`: 22 checks on each renderer, on the second recording with the nowcast on. They cover the panel, its first line, the nowcast labelled apart and ahead, the forecast line with its record, the split and the verdict, the wake and the ropes, the close interval, the event studies, no "will" and no trade-signal word, the fingerprint, the probe's presence line, and no exceptions.
+- **Parity:** an 80-ledger live session of the page's worker replays in Node with the same fingerprint after every ledger, bit for bit. It covered ledgers #107,863,363 to #107,863,442 from xrplcluster.com, captured headless by `bench/capture-forecast-session.mjs`, and exercised persistence, the EWMA, both ridges, the HMM and the Hawkes model.
+- `bench/math-parity.mjs`: `dmath.js` gives the same bits in Node 22 and Chrome 157 on 12,000 results.
+- The earlier checks pass: `check-a11y`, `check-probe` with Part A's shared price, `check-fractal` and `check-verbs` (the layout step read 6.8 ms with the forecast on and 11.6 ms with it off, both under the 15 ms budget, so the measure is noise-dominated; the verbs check's frame time p95 was 8.4 ms).
+
+**Decisions to propose, not make**, beside the three above:
+
+4. **The wake's residual.** It could read residuals against the forecast shown, its own predictive law, instead of the long rope. Burst clusters the forecast already expects would then stop raising alarms.
+5. **The nowcast's lead signal.** The open ledger's current size from the fee poll beat persistence by 41%. It could lead the panel just before each close, with the poll's interval stated.
+6. **Book closes as a target.** The research switch's book closes could become a public target now that the cross-check holds on every book. The event-study drift after a large trade barely beats persistence there: +0.08 over 105 trades on the first recording and +0.00 over 68 on the second.
+
 ## The spike
 
 What was built on `feat/universe-spike`, what it measured, and what the numbers say. The harness is `src/universe/bench/`: `stream-hour.mjs` (the stream alone, in Node), `serve.mjs` (a static server with the two cross-origin-isolation headers that `performance.measureUserAgentSpecificMemory` needs), `cdp.mjs` and `frames.mjs` (frame time per renderer and size in headless Chrome), `hour.mjs` (an hour of the live sky in headless Chrome, memory and frame time each minute). Results are JSON under `bench/results/`. Real-GPU frame times were taken in the user's own Chrome through the same page's `window.xrplUniverse.stats()`.
