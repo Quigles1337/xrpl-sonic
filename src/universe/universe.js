@@ -203,6 +203,7 @@ export class Universe {
       p.regularKey = r.regularKey;
       if (r.domain) p.domain = r.domain;
       if (r.ammId) p.ammId = r.ammId;
+      if (r.transferRate != null) p.transferRate = r.transferRate;
       if (r.action === 'created') p.created = true;
       if (r.action === 'deleted') p.deleted = true;
     }

@@ -192,6 +192,21 @@ worker.onmessage = (e) => {
     case 'probe-catch':
       onCatch(m);
       break;
+    case 'shared-price':
+      onSharedPrice(m);
+      break;
+    case 'shared-price-waiting':
+      if (state.probe && m.seq === state.probe.seq) {
+        state.probe.status = `shared price: waiting ${Math.round(m.ms / 1000)} s for the node’s quota (${m.command})`;
+        renderProbe();
+      }
+      break;
+    case 'shared-price-error':
+      if (state.probe && m.seq === state.probe.seq) {
+        state.probe.shared = { error: m.message, lines: [`shared price: not measured (${m.message})`] };
+        renderProbe();
+      }
+      break;
     case 'probe-error':
       if (state.probe && m.seq === state.probe.seq) {
         state.probe.error = m.message;
@@ -705,7 +720,8 @@ function onCatch(m) {
   c.short = `probe · ${c.lit.length} lit · ${c.coherence ? `${c.coherence.significant} in step of ${c.coherence.tested} tested` : 'no coherence'} · ${historyLabel(c.history).split(',')[0]}`;
   p.catch = c;
   p.lines = describeCatch(c, nameOfLit);
-  p.status = `${c.lit.length} lit · ${c.ms} ms`;
+  p.status = `${c.lit.length} lit · ${c.ms} ms · shared price…`;
+  worker.postMessage({ type: 'sharedPrice', id: p.id, seq: p.seq }); // after the probe's own requests, so the node's quota is not asked for everything at once
   sky.setCatch(c);
   renderProbe();
   // the text equivalent: the catch in the readout's words through the focus line's status region, one line per lit
@@ -721,6 +737,30 @@ function onCatch(m) {
   full.className = 'sr-only';
   full.textContent = [p.lines[0].replace(/^probe: /, ''), ...p.lines.slice(1)].join(' · ');
   focusLine.append(kind, text, full);
+}
+
+/** Part A's lines join the readout and its loops light the sky: each loop member carries "loop · +x.xx% after fees". */
+function onSharedPrice(m) {
+  const p = state.probe;
+  if (!p || m.seq !== p.seq) return;
+  p.shared = m;
+  p.status = `${p.catch?.lit.length ?? 0} lit · ${p.catch?.ms ?? 0} ms · shared price ${m.loops.length ? `${m.loops.length} loop${m.loops.length === 1 ? '' : 's'}` : m.all ? 'one price fits' : 'measured'} · ${m.ms} ms`;
+  const c = sky.catch ?? (p.catch ? p.catch : null);
+  if (c && m.loops.length) {
+    const lit = new Map(c.lit.map((l) => [l.id, l]));
+    for (const loop of m.loops) {
+      const short = `loop · ${loop.edge >= 0 ? '+' : ''}${(100 * loop.edge).toFixed(2)}% after fees`;
+      for (const member of loop.members) {
+        if (!member.id || member.id === p.id) continue;
+        const had = lit.get(member.id);
+        if (had) had.short = `${short} · ${had.short}`;
+        else lit.set(member.id, { id: member.id, address: member.address, inStep: false, touching: true, short, labels: { connection: 'in a loop with the probed account', proximity: '', coherence: '', influence: 'not measured (phase 3)', motif: 'not measured (phase 3)' } });
+      }
+    }
+    c.lit = [...lit.values()];
+    sky.setCatch(c);
+  }
+  renderProbe();
 }
 
 function renderProbe() {
@@ -747,6 +787,11 @@ function renderProbe() {
     const headCount = lines.length - p.catch.lit.length;
     lines.forEach((line, i) => add(line, i < headCount ? 'head' : p.catch.lit[i - headCount]?.inStep ? 'step' : ''));
     add(`tiers: proximity, conservation, cadence and the record's connections are calculated; coherence is an observation (a correlation at a lag). Nothing here says who owns what.`, 'fine');
+  }
+  if (p.shared) {
+    add('shared price (limited arbitrage, after Chichilnisky 1993 and 1997; only the nerve, Helly and LP duality are used):', 'head');
+    for (const line of p.shared.lines ?? []) add(line, /^loop across/.test(line) ? 'step' : line.startsWith('  ') ? 'fine' : '');
+    if (p.shared.ms != null) add(`measured in the worker: ${p.shared.ms} ms, ${p.shared.candidates} candidates, ${p.shared.pools} pool${p.shared.pools === 1 ? '' : 's'}, ${p.shared.requests} requests`, 'fine');
   } else if (p.connections.length) {
     add(`connected in the record: ${p.connections.length} planets, by count: ${p.connections
       .slice(0, 12)
@@ -941,6 +986,7 @@ window.xrplUniverse = {
   saveMoment,
   catch: () => state.probe?.catch ?? null,
   probeState: () => state.probe,
+  sharedPrice: (id) => worker.postMessage({ type: 'sharedPrice', id, seq: state.probe?.seq ?? ++state.probeSeq }),
   fly: { enter: () => sky.enterFly(), leave: () => sky.leaveFly(), dive: (id, opts) => sky.diveTo(id, opts), move: (f, s, u, dt) => sky.flyMove(f, s, u, dt), info: () => sky.flyInfo(), speed: (k) => sky.setFlySpeed(k) },
   worker,
   engine,
