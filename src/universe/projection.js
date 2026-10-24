@@ -52,9 +52,9 @@ export function project(point, camera, viewport) {
   return { x: viewport.width / 2 + cx * scale, y: viewport.height / 2 - cy * scale, scale, depth };
 }
 
-/** Pixels per world unit at the target's depth: the reference size for sprites. */
+/** Pixels per world unit at the target's depth: the reference size for sprites. A camera may hold `sizeDistance` apart from its distance (the fly camera: the eye among the planets, sizes as from the home distance). */
 export function referenceScale(camera, viewport) {
-  return focal(camera, viewport) / (camera.distance ?? DEFAULT_CAMERA.distance);
+  return focal(camera, viewport) / (camera.sizeDistance ?? camera.distance ?? DEFAULT_CAMERA.distance);
 }
 
 /**

@@ -444,3 +444,8 @@ kbd {
 .probe-lines li .fine { color: rgba(200, 220, 255, 0.6); }
 .probe-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 @media (max-width: 720px) { .probe { left: 12px; right: 12px; width: auto; top: auto; bottom: 88px; max-height: 50vh; } }
+
+/* --- phase 2.5: the inside viewer --------------------------------------------------------------- */
+.fly-hud { position: fixed; left: 16px; top: 64px; margin: 0; padding: 6px 10px; border: 1px solid rgba(200, 220, 255, 0.2); border-radius: 6px; background: rgba(6, 10, 18, 0.8); color: #c8dcff; font: 11px/1.4 var(--mono, ui-monospace, monospace); z-index: 5; max-width: min(92vw, 560px); }
+#sky.flying { cursor: crosshair; }
+#sky.flying.ufo { cursor: none; }

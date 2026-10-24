@@ -23,6 +23,7 @@ import { XrplStream, NETWORKS } from '../ws.js';
 import { classifyMessage, txToEvent, ledgerToEvent, unwrapTransactionMessage } from '../mapping.js';
 import { LiveWindow, momentFromLive } from '../moment.js';
 import { caseFromState } from '../case.js';
+import { MAX_REPLAY_LEDGERS } from '../replay.js';
 import { frameFromLive, coherence, significant, DEFAULTS as COHERENCE_DEFAULTS } from '../coherence.js';
 import { Universe, coverageLine } from './universe.js';
 import { Layout } from './layout.js';
@@ -32,6 +33,7 @@ import { bodyOf, describeBody, KIND_CODES, THRESHOLDS } from './bodies.js';
 import { eventsOf, collapseShowers, weatherOf, describeEvent, OBJECTS } from './events.js';
 import { fetchAccountTx } from '../account-tx.js';
 import { CATEGORY_BY_CODE } from './records.js';
+import { forestOf } from './forest.js';
 import { touchGraph, randomWalk, conservation, seriesOf, cadence, coherenceAgainst, catchOf, historyLabel, fetchRecentHistory, frameFromWindow, DEFAULTS as PROBE_DEFAULTS } from './probe.js';
 
 const STEP_MS = 50; // layout relaxation cadence
@@ -341,42 +343,43 @@ function runCoherence() {
 }
 
 /**
- * Galaxies: every planet that is not a hub belongs to the hub it dealt with
- * most (its core), ranked among that hub's satellites by how often; a hub
- * with five or more satellites is a galaxy. Sets the layout's cores and
- * returns the galaxies with their centroid (the core) and disc radius.
+ * The forest (docs/universe.md, phase 2.5): every planet's parent is the
+ * busiest of its counterparties with more counterparties than it (a tie to
+ * the elder, the lower id, so a chain never loops); a planet with no bigger
+ * counterparty is a root. Children are ranked by count, the busiest first.
+ * Hands the tree to the layout and returns every node with
+ * THRESHOLDS.nebulaSize or more children as a galaxy (a root) or a cluster
+ * within its root's galaxy, with its subtree as the size and its disc.
  */
 function galaxies() {
-  const hub = THRESHOLDS.hubDegree;
-  const best = new Map(); // satellite id → { core, count }
-  for (const e of universe.edges.values()) {
-    const pa = universe.planets[e.a];
-    const pb = universe.planets[e.b];
-    if (!pa || !pb) continue;
-    const aHub = pa.degree > hub;
-    const bHub = pb.degree > hub;
-    if (aHub === bHub) continue;
-    const sat = aHub ? e.b : e.a;
-    const core = aHub ? e.a : e.b;
-    const cur = best.get(sat);
-    if (!cur || e.count > cur.count) best.set(sat, { core, count: e.count });
+  const n = universe.planetCount;
+  const f = forestOf({ edges: universe.edges.values(), degreeOf: (id) => universe.planets[id]?.degree ?? 0, present: (id) => Boolean(universe.planets[id]), count: n });
+  const { parent, children, kids, top, depth, subtree } = f;
+  for (const [node, list] of children) layout.setChildrenList(node, list.map(([child]) => child));
+  for (let id = 1; id <= n; id++) {
+    if (!parent[id] && layout.parent[id]) layout.setParent(id, 0, 0);
+    if (!kids[id] && layout.kids[id]) layout.setChildrenList(id, []);
   }
-  const members = new Map(); // core → [[sat, count]]
-  for (const [sat, { core, count }] of best) (members.get(core) ?? members.set(core, []).get(core)).push([sat, count]);
+  const ledger = universe.currentLedger ?? 0;
   const out = [];
-  for (const [core, list] of members) {
-    list.sort((x, y) => y[1] - x[1]);
-    list.forEach(([sat], rank) => layout.setCore(sat, core, rank));
-    if (list.length >= THRESHOLDS.nebulaSize) {
-      layout.promote(core, universe.currentLedger ?? 0);
-      for (const [sat] of list) layout.touch(sat, universe.currentLedger ?? 0);
-      const [x, y, z] = layout.position(core);
-      const disc = layout.discs.get(core);
-      out.push({ root: core, core: true, size: list.length + 1, x, y, z, r: layout.o.discBase * (0.6 + 0.55 * Math.sqrt(list.length)), normal: disc?.normal ?? [0, 1, 0], u: disc?.u ?? [1, 0, 0], v: disc?.v ?? [0, 0, 1] });
+  const galaxyRoots = new Set();
+  for (let id = 1; id <= n; id++) {
+    const isRoot = !parent[id];
+    if (isRoot) {
+      const galaxy = subtree[id] - 1 >= THRESHOLDS.nebulaSize;
+      if (galaxy) galaxyRoots.add(id);
+      if (Boolean(layout.galaxyRoot[id]) !== galaxy) layout.setGalaxyRoot(id, galaxy);
+    }
+    if (kids[id] >= THRESHOLDS.nebulaSize) {
+      for (const [child] of children.get(id)) layout.touch(child, ledger);
+      layout.touch(id, ledger);
+      const [x, y, z] = layout.position(id);
+      const disc = layout.discs.get(id);
+      out.push({ root: id, core: true, depth: depth[id], parent: parent[id], top: top[id], size: subtree[id], children: kids[id], x, y, z, r: layout.discRadius(id), normal: disc?.normal ?? [0, 1, 0], u: disc?.u ?? [1, 0, 0], v: disc?.v ?? [0, 0, 1] });
     }
   }
-  for (let id = 1; id <= universe.planetCount; id++) if (layout.core[id] && !best.has(id)) layout.setCore(id, 0, 0);
-  return { galaxies: out, coreOf: (id) => best.get(id)?.core ?? (members.has(id) ? id : 0) };
+  out.sort((a, b) => b.size - a.size);
+  return { galaxies: out, coreOf: (id) => (id > 0 && id <= n && galaxyRoots.has(top[id]) ? top[id] : 0), topOf: (id) => top[id] ?? 0, depthOf: (id) => depth[id] ?? 0 };
 }
 
 /** The per-planet attributes the page draws and labels from, as typed arrays indexed by id; and the ignitions: planets whose kind became star since the last ledger. */
@@ -395,6 +398,7 @@ function attributes(ledgerIndex) {
   const r100 = new Uint8Array(n + 1);
   const core = new Int32Array(n + 1);
   const moons = new Uint16Array(n + 1); // NFTs the exploration counted (account_nfts), 0 until explored
+  const depth = new Uint8Array(n + 1); // the planet's depth in its tree (0 a root), for the renderers' far dimming
   const keys = [];
   const ignitions = [];
   const ledger = universe.currentLedger ?? 0;
@@ -418,8 +422,9 @@ function attributes(ledgerIndex) {
     providers[id] = Math.min(255, b.providers ?? 0);
     period[id] = Math.min(255, b.period ?? 0);
     r100[id] = Math.min(255, Math.round((b.r ?? 0) * 100));
-    core[id] = layout.core[id] || (layout.promoted[id] ? id : 0); // a satellite's core, or a core itself: in a galaxy either way
+    core[id] = forestNow ? forestNow.coreOf(id) : 0; // the galaxy root of the planet's tree, 0 outside any galaxy (the dust)
     moons[id] = Math.min(65535, p.explored?.nfts ?? 0);
+    depth[id] = Math.min(255, forestNow ? forestNow.depthOf(id) : 0);
     if (b.kind === 'blackhole') keys.push([id, b.regularKey ?? null]);
     if (b.kind === 'star' && kinds[id] !== KIND_CODES.star && p.firstLedger != null && p.firstLedger < ledgerIndex) {
       const e = { verb: 'dock', object: 'ignite', category: 'trust', rule: OBJECTS.ignite.rule, hash: null, ledgerIndex, success: true, from: 0, to: id, via: [], at: id, evidence: [{ field: 'RippleState sides', value: `${b.holders} holders` }, { field: 'threshold', value: THRESHOLDS.starHolders }], detail: { holders: b.holders, threshold: THRESHOLDS.starHolders, address: p.address } };
@@ -430,13 +435,16 @@ function attributes(ledgerIndex) {
     }
     kinds[id] = kind[id];
   }
-  return { attrs: { n, size, hue, kind, known, rings, activity, lastLedger, holders, providers, period, r100, core, moons }, keys, ignitions };
+  return { attrs: { n, size, hue, kind, known, rings, activity, lastLedger, holders, providers, period, r100, core, moons, depth }, keys, ignitions };
 }
+
+let forestNow = null; // the forest of the last ledger, for the attributes and the probe
 
 function postLedger(l, event) {
   const cov = universe.coverage();
-  const { attrs, keys, ignitions } = attributes(l.index);
   const g = galaxies();
+  forestNow = g;
+  const { attrs, keys, ignitions } = attributes(l.index);
   const galaxyRoots = new Set(g.galaxies.map((x) => x.root));
   const nebulae = [...g.galaxies, ...clusters.nebulae(layout).filter((nb) => !nb.members.some((id) => galaxyRoots.has(id) || g.coreOf(id))).map(({ members, ...rest }) => rest)].slice(0, 200);
   const nebulaRoots = new Set(nebulae.map((nb) => nb.root));
@@ -476,10 +484,11 @@ function postLedger(l, event) {
       counts: { verbs: { ...counts.verbs }, objects: { ...counts.objects }, spark: counts.spark, tick: counts.tick, transactions: counts.transactions },
       coverage: cov,
       coverageLine: coverageLine(cov, { host, synthetic: Boolean(synthetic), state }) + (replay ? ' (a recording replayed, not the live stream)' : ''),
+      extent: layout.extent(),
       stability,
       memory: { records: universe.records.length, planets: universe.planetCount, edges: universe.edges.size, layoutEdges: layout.ea.length, clusters: clusters.unions, hubSkips: clusters.skippedHub, interned: universe.addresses.size, rocks: standing.rocks.size, checks: standing.checks.size },
     },
-    [attrs.size.buffer, attrs.hue.buffer, attrs.kind.buffer, attrs.known.buffer, attrs.rings.buffer, attrs.activity.buffer, attrs.lastLedger.buffer, attrs.holders.buffer, attrs.providers.buffer, attrs.period.buffer, attrs.r100.buffer, attrs.core.buffer, attrs.moons.buffer],
+    [attrs.size.buffer, attrs.hue.buffer, attrs.kind.buffer, attrs.known.buffer, attrs.rings.buffer, attrs.activity.buffer, attrs.lastLedger.buffer, attrs.holders.buffer, attrs.providers.buffer, attrs.period.buffer, attrs.r100.buffer, attrs.core.buffer, attrs.moons.buffer, attrs.depth.buffer],
   );
   addedSinceLedger = [];
   domainsSinceLedger = [];
@@ -700,10 +709,11 @@ async function probe({ id, seq = 0 }) {
   const cad = { ...cadence(series), source: history.source === 'account_tx' ? 'its history' : 'the window' };
   const counterparties = edges.slice(0, PROBE_COUNTERPARTIES).map(([other]) => universe.addresses.string(other));
   // galaxy-mates: the busiest satellites of the probed planet's core (or of the planet itself when it is a core), a burst that touched the same hub
-  const core = layout.core[id] || (layout.promoted[id] ? id : 0);
+  // siblings: the busiest children of the probed planet's parent (or, for a root, its own busiest children)
+  const around = layout.parent[id] || (layout.kids[id] ? id : 0);
   const mates = [];
-  if (core) {
-    for (let other = 1; other <= universe.planetCount && mates.length < 40; other++) if (other !== id && layout.core[other] === core) mates.push([layout.rank[other], other]);
+  if (around) {
+    for (let other = 1; other <= universe.planetCount && mates.length < 40; other++) if (other !== id && layout.parent[other] === around) mates.push([layout.rank[other], other]);
     mates.sort((a, b) => a[0] - b[0]);
   }
   const galaxyMates = mates.slice(0, PROBE_MATES).map(([, other]) => universe.addresses.string(other)).filter((a) => !counterparties.includes(a));
@@ -830,9 +840,12 @@ self.onmessage = (e) => {
       post({ type: 'coverage', coverage: universe.coverage(), line: coverageLine(universe.coverage(), { host, synthetic: Boolean(synthetic), state }) });
       break;
     case 'moment': {
+      // the case format caps a clip at the listening page's window (MAX_REPLAY_LEDGERS); the sky's window is longer, so the moment is its last stretch
       const base = caseFromState({ network: m.network === 'testnet' ? 'testnet' : 'mainnet', cast: m.cast ?? [], title: m.title ?? '' });
-      const c = momentFromLive({ base, window: live, question: m.question ?? '', host: host ?? '' });
-      post({ type: 'moment', seq: m.seq, case: c, reason: c ? null : 'no closed ledger in the window yet' });
+      const rows = live.ledgers;
+      const cut = rows.slice(-MAX_REPLAY_LEDGERS);
+      const c = momentFromLive({ base, window: cut, question: m.question ?? '', host: host ?? '' });
+      post({ type: 'moment', seq: m.seq, case: c, covered: cut.length ? { from: cut[0].index, to: cut.at(-1).index, ledgers: cut.length, of: rows.length } : null, reason: c ? null : 'no closed ledger in the window yet' });
       break;
     }
     case 'probe':

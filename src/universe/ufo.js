@@ -86,9 +86,9 @@ export class UfoGestures {
 const rgba = (rgb, a) => `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${Math.max(0, Math.min(1, a)).toFixed(3)})`;
 
 /** The saucer at a point: two diamonds, one flat, in the plate's spectral style; a soft light below; a slow hover bob unless reduced. */
-export function drawUfo(ctx, x, y, { t = 0, reduced = false, rgb = [255, 255, 255], scale = 1 } = {}) {
+export function drawUfo(ctx, x, y, { t = 0, reduced = false, rgb = [255, 255, 255], scale = 1, lift = 14 } = {}) {
   const bob = reduced ? 0 : Math.sin(t / 420) * 1.5;
-  const cy = y - 14 * scale + bob;
+  const cy = y - lift * scale + bob;
   ctx.save();
   ctx.lineJoin = 'round';
   // the light below: a faint disc
@@ -146,8 +146,8 @@ export function drawBeam(ctx, from, to, { strength = 1, locked = false, reduced 
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   const g = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
-  g.addColorStop(0, rgba(rgb, (locked ? 0.26 : 0.12) * s));
-  g.addColorStop(1, rgba(rgb, (locked ? 0.1 : 0.04) * s));
+  g.addColorStop(0, rgba(rgb, (locked ? 0.34 : 0.22) * s));
+  g.addColorStop(1, rgba(rgb, (locked ? 0.14 : 0.08) * s));
   ctx.fillStyle = g;
   ctx.beginPath();
   ctx.moveTo(from.x - 2 * nx, from.y - 2 * ny);

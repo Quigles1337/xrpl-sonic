@@ -26,17 +26,21 @@
 // went, and how many planets fell in each level, read by the bench harness.
 
 import { project, referenceScale, ringPoints, clampCamera } from './projection.js';
+import { FLY, FLY_LIMITS, axesOf, eyeOf, enterFly as enterFlyCamera, leaveFly as leaveFlyCamera, aheadOf, slowFactor, flyStep, diveGlide, glideCamera } from './flycam.js';
 import { CATEGORIES, CATEGORY_NAMES } from '../mapping.js';
 import { drawOverlay, drawProbe, hexToRgb } from './overlay.js';
 import { primitivesOf, weatherPrimitives, rockAngle, beltRadius } from './motions.js';
 
 export const CAMERA_HOME = Object.freeze({ yaw: 0.35, pitch: 0.28, distance: 5.2, fov: 1.0, target: Object.freeze([0, 0, 0]) });
-export const CAMERA_LIMITS = Object.freeze({ yaw: [-Infinity, Infinity], pitch: [-1.2, 1.2], distance: [0.25, 11] });
+export const CAMERA_LIMITS = Object.freeze({ yaw: [-Infinity, Infinity], pitch: [-1.2, 1.2], distance: [0.25, 24] });
+export { FLY, FLY_LIMITS };
 /** Pixel radius of a size-1 planet at the camera's reference depth: one pixel, so most of a sky is points. */
 export const BASE_PX = 1.0;
 export const LOD = Object.freeze({ far: 2.6, near: 8 });
 /** Camera distance from which nebulae are drawn. */
 export const NEBULA_ZOOM = 2.4;
+/** Brightness of the tree's levels at far zoom: a root and its children full, the deeper levels fainter, so the structure reads with depth. */
+export const DEPTH_DIM = Object.freeze([1, 1, 0.55, 0.35]);
 /** The plate's glow sprite size. */
 const SPRITE = 128;
 /** The plate's nebula ink: the first of its three washes. */
@@ -138,6 +142,11 @@ export class SkyBase {
     this.heads = []; // the motion heads of the last frame, for the hit test: [x, y, motion]
     this.intervalMs = 4000;
     this.screen = { x: new Float32Array(1), y: new Float32Array(1), r: new Float32Array(1), depth: new Float32Array(1) };
+    this.fly = { on: false, speed: 1 }; // the inside viewer (docs/universe.md, phase 2.5)
+    this.glide = null; // a dive in flight: { from, to, yaw0, pitch0, yaw, pitch, start, ms }
+    this.extent = 0; // the ball's radius, from the worker, for the camera's home
+    this.touched = false; // the camera has been moved by the user since the last home: the home no longer follows the ball
+    this.nearestCache = { at: -Infinity, id: 0, d: Infinity };
     this.frameTimes = [];
     this.frames = 0;
     this.lodCounts = { far: 0, mid: 0, near: 0, culled: 0 };
@@ -381,32 +390,167 @@ export class SkyBase {
   // --- camera -----------------------------------------------------------------
 
   orbit(dyaw, dpitch) {
-    this.camera = clampCamera({ ...this.camera, yaw: this.camera.yaw + dyaw, pitch: this.camera.pitch + dpitch }, CAMERA_LIMITS);
+    this.touched = true;
+    this.camera = clampCamera({ ...this.camera, yaw: this.camera.yaw + dyaw, pitch: this.camera.pitch + dpitch }, this.fly.on ? FLY_LIMITS : CAMERA_LIMITS);
   }
 
+  /** Closer and further in orbit; flying, the wheel and the keys move the eye forward and back instead. */
   zoom(factor) {
+    this.touched = true;
+    if (this.fly.on) {
+      this.flyMove(factor < 1 ? 1 : -1, 0, 0, 0.3);
+      return;
+    }
     this.camera = clampCamera({ ...this.camera, distance: this.camera.distance * factor }, CAMERA_LIMITS);
   }
 
+  /** The ball's radius, from the worker: the camera's home moves out with it. */
+  setExtent(r) {
+    this.extent = Number.isFinite(r) ? r : 0;
+    // an untouched camera at the home keeps the whole ball in view as the ball grows
+    if (!this.touched && !this.fly.on) this.camera = { ...this.camera, distance: this.homeDistance() };
+  }
+
+  /** The home distance: the plate's, or further when the ball has grown. */
+  homeDistance() {
+    return Math.max(CAMERA_HOME.distance, 2.2 * this.extent + 1.6);
+  }
+
   reset() {
-    this.camera = { ...CAMERA_HOME, target: [...CAMERA_HOME.target] };
+    this.touched = false;
+    this.fly = { on: false, speed: 1 };
+    this.glide = null;
+    this.camera = { ...CAMERA_HOME, target: [...CAMERA_HOME.target], distance: this.homeDistance() };
     this.spin = { yaw: 0, pitch: 0 };
   }
 
-  /** Aim the camera at a planet (keyboard travel): the target moves there, the distance closes in. */
+  /** Aim the camera at a planet (keyboard travel): the target moves there, the distance closes in; flying, a dive. */
   lookAt(id, { distance = 0.9 } = {}) {
     if (!id || id > this.n) return;
+    if (this.fly.on) {
+      this.diveTo(id);
+      return;
+    }
+    this.touched = true;
     const i = 3 * id;
     this.camera = clampCamera({ ...this.camera, target: [this.positions[i], this.positions[i + 1], this.positions[i + 2]], distance: Math.min(this.camera.distance, distance) }, CAMERA_LIMITS);
   }
 
-  /** Camera motion for a frame: inertia, then the plate's slow turn; neither under reduced motion. */
+  // --- the fly camera: the eye among the planets ------------------------------------------------------
+
+  /** The camera's axes in world space: forward (the view), right, up. */
+  axes() {
+    return axesOf(this.camera);
+  }
+
+  /** Where the eye is: the target, less the distance along the view. */
+  eye() {
+    return eyeOf(this.camera);
+  }
+
+  /** Flying: the eye stays where it was; the target moves to just ahead of it, the size reference holds at FLY.sizeDistance. */
+  enterFly() {
+    if (this.fly.on) return;
+    this.touched = true;
+    this.camera = enterFlyCamera(this.camera);
+    this.fly = { on: true, speed: this.fly.speed || 1 };
+    this.spin = { yaw: 0, pitch: 0 };
+    this.glide = null;
+  }
+
+  /** Back to orbit: around the point ahead of the eye (or the nearest planet when one is close), the size reference released. */
+  leaveFly() {
+    if (!this.fly.on) return;
+    const near = this.nearestPlanet();
+    let target = aheadOf(this.camera);
+    if (near.id && near.d < 0.6) {
+      const i = 3 * near.id;
+      target = [this.positions[i], this.positions[i + 1], this.positions[i + 2]];
+    }
+    this.camera = clampCamera(leaveFlyCamera(this.camera, target), CAMERA_LIMITS);
+    this.fly = { on: false, speed: this.fly.speed };
+    this.glide = null;
+  }
+
+  /** The nearest planet to the eye and its distance, scanned at most every 200 ms. */
+  nearestPlanet(now = performance.now()) {
+    if (now - this.nearestCache.at < 200) return this.nearestCache;
+    const e = this.eye();
+    let best = 0;
+    let bd = Infinity;
+    const p = this.positions;
+    for (let id = 1; id <= this.n; id++) {
+      const i = 3 * id;
+      const dx = p[i] - e[0];
+      const dy = p[i + 1] - e[1];
+      const dz = p[i + 2] - e[2];
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < bd) {
+        bd = d2;
+        best = id;
+      }
+    }
+    this.nearestCache = { at: now, id: best, d: Math.sqrt(bd) };
+    return this.nearestCache;
+  }
+
+  /**
+   * Move the eye: forward/back, right/left, up/down, for `dt` seconds at
+   * FLY.speed sky units a second times the speed factor, slowed in proportion
+   * to the distance to the nearest planet within FLY.slowWithin (a glide
+   * inside a galaxy, a crawl beside a planet).
+   */
+  flyMove(forward = 0, strafe = 0, up = 0, dt = 1 / 60) {
+    if (!this.fly.on || (!forward && !strafe && !up)) return;
+    const near = this.nearestPlanet();
+    const step = FLY.speed * (this.fly.speed || 1) * slowFactor(near.d) * dt;
+    this.camera = flyStep(this.camera, { forward, strafe, up }, step);
+    this.glide = null;
+  }
+
+  /** The speed factor, 0.1 to 16. */
+  setFlySpeed(factor) {
+    this.fly = { ...this.fly, speed: Math.max(0.1, Math.min(16, factor)) };
+  }
+
+  /**
+   * The dive: flying, the eye goes to FLY.diveDistance from the planet on
+   * the side it came from, facing it, with a glide of FLY.glideMs (at once
+   * under reduced motion or when asked).
+   */
+  diveTo(id, { reduced = this.reduced, now = performance.now() } = {}) {
+    if (!id || id > this.n) return;
+    if (!this.fly.on) this.enterFly();
+    const i = 3 * id;
+    this.glide = { ...diveGlide(this.camera, [this.positions[i], this.positions[i + 1], this.positions[i + 2]], now, { reduced }), id };
+    if (reduced) this._glideStep(now);
+  }
+
+  /** One frame of a glide: the eye and the angles move together; at the end they are exactly there. */
+  _glideStep(now) {
+    if (!this.glide) return;
+    const { camera, done } = glideCamera(this.camera, this.glide, now);
+    this.camera = camera;
+    if (done) this.glide = null;
+  }
+
+  /** Where the viewer is, for the HUD: flying, the speed, the eye, the nearest planet and its distance. */
+  flyInfo(now = performance.now()) {
+    const near = this.nearestPlanet(now);
+    return { on: this.fly.on, speed: this.fly.speed, eye: this.eye(), nearest: near.id, distance: near.d, gliding: Boolean(this.glide) };
+  }
+
+  /** Camera motion for a frame: a glide in flight; else inertia, then the plate's slow turn (never flying, never under reduced motion). */
   moveCamera() {
+    if (this.glide) {
+      this._glideStep(performance.now());
+      return;
+    }
     if (this.drag) return;
     if (Math.abs(this.spin.yaw) > 1e-4 || Math.abs(this.spin.pitch) > 1e-4) {
       this.orbit(this.spin.yaw, this.spin.pitch);
       this.spin = { yaw: this.spin.yaw * 0.92, pitch: this.spin.pitch * 0.92 };
-    } else if (!this.reduced) this.camera = { ...this.camera, yaw: this.camera.yaw + 0.0006 };
+    } else if (!this.reduced && !this.fly.on) this.camera = { ...this.camera, yaw: this.camera.yaw + 0.0006 };
   }
 
   _bindPointer() {
@@ -415,6 +559,7 @@ export class SkyBase {
     c.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       this.drag = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, lastT: performance.now(), moved: false };
+      this.touched = true;
       this.spin = { yaw: 0, pitch: 0 };
       c.setPointerCapture?.(e.pointerId);
     });
@@ -456,7 +601,11 @@ export class SkyBase {
       },
       { passive: false },
     );
-    c.addEventListener('dblclick', () => this.reset());
+    c.addEventListener('dblclick', (e) => {
+      const id = this.hitTest(e.clientX, e.clientY);
+      if (id) this.diveTo(id);
+      else this.reset();
+    });
   }
 
   resize() {
@@ -564,7 +713,7 @@ export class SkyBase {
   stats() {
     const p = percentiles(this.frameTimes);
     const mean = this.frameTimes.length ? this.frameTimes.reduce((x, y) => x + y, 0) / this.frameTimes.length : null;
-    return { renderer: this.renderer, frames: this.frames, sampled: this.frameTimes.length, meanMs: mean, ...p, maxMs: this.frameTimes.length ? Math.max(...this.frameTimes) : null, phase: this.phase, lod: this.lodCounts, planets: this.n, comets: this.comets.length, flashes: this.flashes.length, camera: { distance: this.camera.distance }, dpr: this.dpr, size: [this.width, this.height], gpu: this.gpuName?.() ?? null };
+    return { renderer: this.renderer, frames: this.frames, sampled: this.frameTimes.length, meanMs: mean, ...p, maxMs: this.frameTimes.length ? Math.max(...this.frameTimes) : null, phase: this.phase, lod: this.lodCounts, planets: this.n, comets: this.comets.length, flashes: this.flashes.length, camera: { distance: this.camera.distance, fly: this.fly.on }, dpr: this.dpr, size: [this.width, this.height], gpu: this.gpuName?.() ?? null };
   }
 }
 
@@ -659,7 +808,8 @@ export class Sky extends SkyBase {
           const rgb = HUE_TABLE[attrs.hue[id]];
           const glow = this.glowOf(id, ledger);
           const kind = attrs.kind[id];
-          const field = attrs.core ? (attrs.core[id] ? 1 : cam.distance >= NEBULA_ZOOM ? 0.2 : 0.7) : 1; // a field star, in no galaxy, is dimmer: dust at far zoom
+          const level = attrs.depth && cam.distance >= NEBULA_ZOOM ? DEPTH_DIM[Math.min(3, attrs.depth[id])] : 1; // the deep levels dim at far zoom
+          const field = (attrs.core ? (attrs.core[id] ? 1 : cam.distance >= NEBULA_ZOOM ? 0.2 : 0.7) : 1) * level; // a field star, in no galaxy, is dimmer: dust at far zoom
           const bright = (0.65 + 0.35 * glow) * (kind === 5 ? 0.3 : 1) * (attrs.known[id] ? 1 : 0.6) * field;
           const cr = rgb[0] * bright;
           const cg = rgb[1] * bright;

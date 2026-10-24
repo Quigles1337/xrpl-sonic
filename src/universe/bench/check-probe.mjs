@@ -91,6 +91,25 @@ check('the one caption said the sentence', await page.evaluate(`document.getElem
   check('the setting is remembered under the sky’s own key', await page.evaluate(`JSON.parse(localStorage.getItem('xrpl-sonic:universe:v1') || '{}').ufo === true && localStorage.getItem('xrpl-sonic:settings:v2') === null`));
 }
 
+// --- the probe, by the mouse: a press held on a planet for the hold time, then released ---------------
+{
+  const planet = JSON.parse(await page.evaluate(`JSON.stringify((() => { const u = window.xrplUniverse; const s = u.sky.screen; const a = u.state.last.attrs; let best = 0; for (let id = 1; id <= a.n; id++) if (s.depth[id] > 0 && s.r[id] >= 3 && s.x[id] > 200 && s.x[id] < 1080 && s.y[id] > 120 && s.y[id] < 680 && s.r[id] > (s.r[best] ?? 0)) best = id; return { id: best, x: s.x[best], y: s.y[best] }; })())`));
+  await mouse('mouseMoved', planet.x, planet.y);
+  await sleep(150);
+  await mouse('mousePressed', planet.x, planet.y, 'left', 1);
+  await sleep(250);
+  check('a short press is not yet a hold', await page.evaluate('window.xrplUniverse.probeState() === null'));
+  await sleep(450);
+  const held = JSON.parse(await page.evaluate('JSON.stringify((() => { const p = window.xrplUniverse.probeState(); return { on: Boolean(p), id: p?.id, locked: p?.locked, drag: Boolean(window.xrplUniverse.sky.drag) }; })())'));
+  check('a press held on a planet for the hold time probes it and locks the beam', held.on && held.id === planet.id && held.locked === true && !held.drag, JSON.stringify(held));
+  await mouse('mouseReleased', planet.x, planet.y, 'left', 1);
+  await sleep(150);
+  check('releasing the press retracts the beam and keeps the catch', await page.evaluate('window.xrplUniverse.probeState() && window.xrplUniverse.probeState().locked === false && window.xrplUniverse.sky.ufo.locked === 0'));
+  await waitFor(page, 'window.xrplUniverse.probeState() && (window.xrplUniverse.probeState().catch || window.xrplUniverse.probeState().error)', { timeoutMs: 120000, everyMs: 500 });
+  await key('Escape', 'Escape', 'Escape');
+  check('Escape puts that catch out', await page.evaluate('window.xrplUniverse.probeState() === null'));
+}
+
 // --- the probe, by the keyboard: focus the busiest planet, Space holds -------------------------
 // the busiest galaxy's core, a hub with counterparties (] would focus the most active planet, which may deal with nobody)
 await page.evaluate(`(() => { const u = window.xrplUniverse; const g = u.sky.nebulae.filter((n) => n.core).sort((a, b) => b.size - a.size)[0]; if (g) u.focusOn(g.root, { look: false }); })()`);
